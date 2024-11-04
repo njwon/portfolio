@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📁</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/font.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="use-credentials">
+    <script src="https://kit.fontawesome.com/14611643d9.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="cursor"></div>
+
+    <div class="page">
+        <div id="load" class="load">
+            jeongwon<br>portfolio
+        </div>
+
+        <div class="noise"></div>
+
+        <div class="menuwrap">
+            <menu>
+                <ul>
+                    <li><a href="#Home" onclick="setSection(0)"><img class="menuhome menuimg" src="img/menu/Home.png"
+                                alt=""></a></li>
+                    <li><a href="#About" onclick="setSection(1)"><img class="menuabout menuimg" src="img/menu/About.png"
+                                alt=""></a></li>
+                    <li><a href="#Skills" onclick="setSection(2)"><img class="menuskills menuimg"
+                                src="img/menu/Skills.png" alt=""></a></li>
+                    <li><a href="#Project" onclick="setSection(3)"><img class="menuproject menuimg"
+                                src="img/menu/Project.png" alt=""></a></li>
+                    <li><a href="#Contact" onclick="setSection(4)"><img class="menucontact menuimg"
+                                src="img/menu/Contact.png" alt=""></a></li>
+                </ul>
+            </menu>
+        </div>
+        <div class="container">
+            <section class="section" id="section1">
+
+                <div class="color tape tape2 pointerkill scroll-spy">
+                    <p>CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK
+                        THIS CLICK THIS CLICK THIS
+                        CLICK THIS CLICK THIS CLICK THIS</p>
+                </div>
+                <div class="color tape tape3 pointerkill scroll-spy">
+                    <p>CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK
+                        THIS CLICK THIS CLICK THIS
+                        CLICK THIS CLICK THIS CLICK THIS</p>
+                </div>
+                <div class="tv-container scroll-spy" onclick="changeVideo()">
+                    <img class="gray" src="img/home/tv.png" alt="TV 이미지"
+                        style="width: 90%; height: auto; position: absolute; z-index: 1;" />
+                    <div class="screen">
+
+                        <video id="tvVideo" autoplay muted loop>
+                            <source src="img/home/first.webm" type="video/webm" />
+                            브라우저가 비디오 태그를 지원하지 않습니다.
+                        </video>
+                    </div>
+                </div>
+
+            </section>
+            <section class="section" id="section2">
+                <div class="in-section2">
+                    <div class="about">
+                    <div class="aboutmain">
+                        <h1 class="about-gray"><a class="h1" href="">노정원</a></h1>
+                        <p class="about-gray">최근 수정 시각: <span id="datetime"></span></p>
+                        <div class="aboutjeong about-gray">분류: <a class="about-link">고등학생</a></div>
+                        <div class="aboutstart">
+                            <div class="mokcha about-gray">
+                                <div class="first">목차</div>
+                                <div class="mokcha-in" style="padding-left: 20px; margin-top: 12px; font-size: 15px;">
+                                    <span>
+                                        <a class="about-link" style="font-size: 15px;">1</a>
+                                    </span>
+                                    . 소개
+                                </div>
+                                <div style="padding-left: 20px; font-size: 15px;">
+                                    <span>
+                                        <a class="about-link" style="font-size: 15px;">2</a>
+                                    </span>
+                                    . 계기
+                                </div>
+                                <div style="padding-left: 20px; font-size: 15px;">
+                                    <span>
+                                        <a class="about-link" style="font-size: 15px;">3</a>
+                                    </span>
+                                    . 계획
+                                </div>
+                            </div>
+                            <table class="introduce about-gray">
+                                <tbody>
+                                    <tr class="tr">
+                                        <td colspan="2" style=" text-align:center;" data-="" class="aboutcolor">
+                                            <div class="tr-div">
+                                                <div class="tr-div-inner">
+                                                    <strong>
+                                                        <span style="font-size: 25px;">노정원</span>
+                                                        <br>
+                                                        <span>盧禎源｜Noh Jeong-won</span>
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr> <!--이름 -->
+                                    <tr>
+                                        <td colspan="2"
+                                            style="color: #f9f8f4; background-color: #2c2b29; text-align:center;"
+                                            data-="">
+                                            <div class="tr-div">
+                                                <div class="tr-div-inner" style="font-size: 0em;">
+                                                    <strong style="font-size: 0em;">
+                                                        <span><img src="img/about/me.png" alt="">
+                                                        </span>
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr> <!--얼굴 -->
+                                    <tr>
+                                        <td rowspan="2" class="aboutcolor" style="width:100px; text-align:center;">
+                                            <div class="table-div"><strong>출생</strong></div>
+                                        </td>
+                                        <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;"
+                                            data-="">
+                                            <div class="table-div">
+                                                2008년 8월 29일
+                                            </div>
+                                        </td>
+                                    <tr>
+                                        <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;">
+                                            <div class="table-div">
+                                                경기도 남양주시 덕소로97번길 80
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="aboutcolor" style="text-align:center;">
+                                            <div class="table-div aboutcolor"><strong>신체</strong></div>
+                                        </td>
+                                        <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;">
+                                            <div class="table-div">177cm, 68kg, A형, INFP</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="aboutcolor" style="text-align:center;">
+                                            <div class="table-div"><strong>종교</strong></div>
+                                        </td>
+                                        <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;">
+                                            <div class="table-div">기독교 <span class="minimi">(<a
+                                                        style="color: #0275d8;">유신론</a>)</span></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="aboutcolor" style="text-align:center;">
+                                            <div class="table-div"><strong>학력</strong></div>
+                                        </td>
+                                        <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;">
+                                            <div class="table-div">와부초등학교 <span class="minimi">(18회 / 졸업)</span></div>
+                                            <div class="table-div">예봉중학교 <span class="minimi">(14회 / 졸업)</span></div>
+                                            <div class="table-div">수원정보과학고등학교 <span class="minimi">(재학중)</span></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="aboutcolor" style="text-align:center;">
+                                            <div class="table-div"><strong>가족</strong></div>
+                                        </td>
+                                        <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;">
+                                            <div class="table-div">아버지 노현균, 어머니 오영희</div>
+                                            <div class="table-div">누나 노윤신</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="about-one" class="about-one about-gray">
+                            <h2 class="about-one-in">
+                                <div><a class="about-link" href="#toc">1.</a>
+                                <span>
+                                    소개
+                                </span></div>
+                                <div>
+                                    <a class="edit about-link" style="font-size: 15px;">
+                                        [편집]
+                                    </a>
+                                </div>
+                                
+                            </h2>
+                            <div class="realtext">안녕하세요. 수원정보과학고등학교에 재학중인 노정원이라고 합니다. 
+                                중학교때부터 프로그래밍과 정보보안에 많은 관심이 있었고 꿈을 찾아 특성화고에 왔습니다. 
+                                좋아하는 것에 빠져 계속 나아가는 열정을 가지고 열심히 공부하겠습니다.<br>
+                            </div>
+                        </div>
+                        <div id="about-two" class="about-one about-gray">
+                            <h2 class="about-one-in">
+                                <div><a class="about-link" href="#toc">2.</a>
+                                <span>
+                                    계기
+                                </span></div>
+                                <div>
+                                    <a class="edit about-link" style="font-size: 15px;">
+                                        [편집]
+                                    </a>
+                                </div>
+                                
+                            </h2>
+                            <div class="realtext">어릴때부터 메타버스 게임을 접하며 만들어 보고 싶다는 생각을 가지고 프로그래밍에 대한 꿈을 키워왔습니다.
+                                중학교에 들어가면서부터 정보보안에 빠지게 되었고 여러 분야를 돌아다니다 프로그래밍을 하게 되었습니다.<br>
+                            </div>
+                        </div>
+                        <div id="about-three" class="about-one about-gray">
+                            <h2 class="about-one-in">
+                                <div><a class="about-link" href="#toc">3.</a>
+                                <span>
+                                    계획
+                                </span></div>
+                                <div>
+                                    <a class="edit about-link" style="font-size: 15px;">
+                                        [편집]
+                                    </a>
+                                </div>
+                                
+                            </h2>
+                            <div class="realtext">특성화고등학교에서 내신을 준비하여 대학교에 가서 제가 좋아하던 분야인 정보보안과 미래가 유망한 AI기술을 공부하고자 합니다.<br>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <img  class="about-banner" src="img/about/banner.gif" alt="">
+                </div>
+                
+            </section>
+            <section class="section" id="section3">
+                <div class="skill"><img src="img/skills/skills.png" alt=""></div>
+                <div class="wrap">
+                    <div class="card">
+                        <div class="card_box">
+                            <div class="front"><img style="rotate: 3deg;" src="img/skills/html.png" alt=""></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card_box">
+                            <div class="front"><img style="rotate: -2deg;" src="img/skills/css.png" alt=""></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card_box">
+                            <div class="front"><img style="rotate: 4deg;" src="img/skills/c.png" alt=""></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card_box">
+                            <div class="front"><img style="rotate: -7deg;" src="img/skills/python.png" alt=""></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="section4">
+                <div class="project-right">
+                    <div class="mac window" onclick="changeText4()">
+                        <div class="top-nav">
+                            <i class="fa-solid fa-hard-drive"></i>
+                            <span id="datetime2"></span>
+                        </div>
+                    </div>
+                    <nav>
+                        <div onclick="changeText1()"><img src="img/project/potato.png" alt=""></div>
+                        <div onclick="changeText2()"><img style="width: 35px;" src="img/project/c.png" alt=""></div>
+                        <div onclick="changeText3()"><img src="img/project/python.png" alt=""></div>
+                    </nav>
+                </div>
+                <div class="project-left black">
+                    <div class="nav1 none">
+                        <div>potato.txt</div>
+                    </div>
+                    <div class="nav2 none">
+                        <div>c.txt</div>
+                    </div>
+                    <div class="nav3 none">
+                        <div>python.txt</div>
+                    </div>
+                    <div class="projects potato none">
+                        <h3>감자 전지 발표용 사이트</h3>
+                        <p>
+                            과학수행 발표용 ppt입니다. css와 html을 이용했습니다.<br>
+                            발표용 사이트이므로 보기쉽도록 프레젠테이션 느낌을 주도록 제작했습니다.<br>
+                            컴퓨터로만 사용할 웹페이지이기 때문에
+                            반응형 작업은 하지 않았습니다.<br>
+                            총 제작시간은 8시간입니다.<br><br>
+                            아래 이미지를 클릭하세요.
+                        </p>
+                        <a href="http://jwz7.dothome.co.kr/" target="_blank"><img src="img/project/potato2.png"
+                                alt=""></a>
+                    </div>
+                    <div class="projects c none">
+                        <h3>해결한 C 문제들</h3>
+                        <p>
+                            제가 이 학교에 와서 해결한 C 문제들입니다.<br>
+                            입출력, 조건문, 반복문 등등.. 다양한 문제를 해결했습니다.<br><br>
+                            아래 이미지를 클릭하세요.
+                        </p>
+                        <a href="https://codeup.kr/userinfo.php?user=24_1812" target="_blank"><img
+                                src="img/project/c2.png" alt=""></a>
+                    </div>
+                    <div class="projects python none">
+                        <h3>해결한 python 문제들</h3>
+                        <p>
+                            제가 이 학교에 와서 해결한 python 문제들입니다.<br>
+                            입출력, 조건문, 반복문 등등.. 다양한 문제를 해결했습니다.<br><br>
+                            아래 이미지를 클릭하세요.
+                        </p>
+                        <a href="https://codeup.kr/userinfo.php?user=24_1812" target="_blank"><img
+                                src="img/project/python2.png" alt=""></a>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="section5">
+                    <div>
+                        <div class="in-contact">
+                            <a class="fa-solid fa-phone" href="tel:010-5318-5001"></a>
+                            <div>010-5318-5001</div>
+                        </div>
+                        <div class="in-contact">
+                            <a href="mailto:njwon19@gmail.com" class="fa-solid fa-envelope"></a>
+                            <div>njwon19@gmail.com</div>
+                        </div>
+                        <div class="brands">
+                            <div class="instar">
+                                <a href="https://www.instagram.com/0ringle" target="_blank"
+                                    class="fa-brands fa-instagram"></a>
+                            </div>
+                            <div class="github">
+                                <a href="https://github.com/njwon" target="_blank" class="fa-brands fa-github"></a>
+                            </div>
+                        </div>
+                        <footer>
+                            <div>Copyright ©2024 All rights reserved by jeongwon.</div>
+                        </footer>
+                    </div>
+            </section>
+        </div>
+    </div>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
