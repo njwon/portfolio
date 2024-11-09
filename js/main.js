@@ -140,7 +140,7 @@ document.addEventListener('touchmove', (event) => {
     if (currentSection === totalSections - 1) {
         event.preventDefault();
     }
-});
+}, { passive: false });
 
 
 function setSection(index) {
