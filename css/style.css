@@ -17,7 +17,7 @@ body {
     filter: blur(0.7px);
     position:fixed;
     width:100%;
-    height:100%;
+    height:100%
 }
 
 a {
@@ -569,6 +569,10 @@ video {
     filter: sepia(30%);
 }
 
+.about-banner-top {
+    display: none;
+}
+
 .about:-webkit-scrollbar {
     display: none
         /* Chrome , Safari , Opera */
@@ -926,6 +930,7 @@ video {
     background-image: url('../img/project/c2.png');
     background-repeat: no-repeat;
     background-size: cover;
+    background-position: center;
     border-radius: 5px;
 }
 
@@ -936,6 +941,7 @@ video {
     background-image: url('../img/project/python2.png');
     background-repeat: no-repeat;
     background-size: cover;
+    background-position: center;
     border-radius: 5px;
 }
 
