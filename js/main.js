@@ -19,6 +19,7 @@ const project_left = document.querySelectorAll('.project-left')
 
 const cursorPointed = document.querySelector('.cursor');
 
+const width = window.innerWidth;
 
 const moveCursor = (e) => {
     const mouseY = e.clientY;
@@ -405,3 +406,6 @@ function changeVideo() {
                 mac.classList.remove('window3');
             });
         }
+
+      
+      
