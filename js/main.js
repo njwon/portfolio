@@ -37,7 +37,7 @@ window.addEventListener('load', () => {
 
     setTimeout(() => {
         load.style.zIndex = '-1'; // z-index 변경
-        loader.style.display = 'none'; // 로더 숨기기
+        load.style.display = 'none'; // 로더 숨기기
     }, 10000); // 애니메이션 시간과 동일하게 설정
 });
 
@@ -405,14 +405,3 @@ function changeVideo() {
                 mac.classList.remove('window3');
             });
         }
-
-
-        // 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            updateText();
-            window.addEventListener('wheel', onScroll);
-            window.addEventListener('touchstart', onTouchStart);
-            window.addEventListener('touchmove', onTouchMove);
-        });
-      
-      
