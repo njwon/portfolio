@@ -9,7 +9,7 @@
         height: 100px;
         background-color: black;
         margin: 0 0 1em;
-        border-radius: 4px;
+        border-radius: 6px;
     }
     .wrap {
         left: calc(70% - 650px)
