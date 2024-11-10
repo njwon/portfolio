@@ -977,11 +977,9 @@ video {
 
 .project-right nav {
     width: 70%;
-    height: 7%;
     border-radius: 15px;
     background-color: #ddddddce;
     filter: blur(100%);
-    /* margin-bottom: 20px; */
     z-index: 3;
     position: relative;
     margin: 0 auto;
