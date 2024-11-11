@@ -3,6 +3,7 @@ let about = document.querySelector('.about')
 let touchStartY = 0; // 터치 시작 Y 좌표
 let scrolling = false; // 스크롤 제어 플래그
 let currentVideoIndex = 0;
+let aaa = 0;
 
 const sections = document.querySelectorAll('.section');
 const totalSections = sections.length;
@@ -421,7 +422,6 @@ function changeText4() {
 }
 
 function checkBottomBarOnDevice() {
-    let aaa = 0;
     if (viewportHeight > deviceHeight) {
         aaa = 1;
     } else {
