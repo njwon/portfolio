@@ -436,7 +436,7 @@ function checkBottomBar() {
         document.body.classList.add('bottom-bar-visible');  // 하단바가 있을 때 스타일 적용 (예시)
     } else {
         console.log('하단바가 숨겨져 있습니다.');
-        aaa = 2;
+        aaa = 3;
         document.body.classList.remove('bottom-bar-visible');  // 하단바가 없을 때 스타일 적용
     }
 }
