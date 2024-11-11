@@ -18,8 +18,6 @@ const nav2 = document.querySelectorAll('.nav2')
 const nav3 = document.querySelectorAll('.nav3')
 const mac = document.querySelectorAll('.mac')
 const project_left = document.querySelectorAll('.project-left')
-const deviceHeight = window.screen.height;
-const viewportHeight = window.innerHeight;
 
 
 const cursorPointed = document.querySelector('.cursor');
@@ -421,13 +419,30 @@ function changeText4() {
     });
 }
 
-function checkBottomBarOnDevice() {
-    if (viewportHeight > deviceHeight) {
+function checkBottomBar() {
+    // 화면의 전체 높이 (뷰포트 크기)
+    const windowHeight = window.innerHeight;
+    // 문서의 높이 (스크롤 포함된 전체 내용 높이)
+    const docHeight = document.documentElement.scrollHeight;
+    // 현재 보이는 화면 영역 높이 (스크롤 제외된 부분)
+    const viewportHeight = document.documentElement.clientHeight;
+
+    // 하단바가 보이는지 여부 판단
+    // 1. 화면 높이가 문서의 총 높이보다 작고, 
+    // 2. window.innerHeight와 document.documentElement.clientHeight가 다르면 하단바가 보이는 것으로 판단
+    if (windowHeight < docHeight && windowHeight !== viewportHeight) {
+        console.log('하단바가 보이고 있습니다.');
         aaa = 1;
+        document.body.classList.add('bottom-bar-visible');  // 하단바가 있을 때 스타일 적용 (예시)
     } else {
+        console.log('하단바가 숨겨져 있습니다.');
         aaa = 2;
+        document.body.classList.remove('bottom-bar-visible');  // 하단바가 없을 때 스타일 적용
     }
 }
 
-window.addEventListener('resize', checkBottomBarOnDevice);
-checkBottomBarOnDevice(); // 페이지 로드 시 확인
+// 화면 크기 변경 시마다 하단바 상태 확인
+window.addEventListener('resize', checkBottomBar);
+
+// 초기 상태 확인
+checkBottomBar();
