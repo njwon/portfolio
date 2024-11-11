@@ -421,7 +421,7 @@ function changeText4() {
 }
 
 function checkBottomBarOnDevice() {
-    const aaa = 0;
+    let aaa = 0;
     if (viewportHeight > deviceHeight) {
         aaa = 1;
     } else {
