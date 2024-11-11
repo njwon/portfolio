@@ -421,10 +421,11 @@ function changeText4() {
 }
 
 function checkBottomBarOnDevice() {
+    const aaa = 0;
     if (viewportHeight > deviceHeight) {
-        console.log('하단바가 나타나 있습니다.');
+        aaa = 1;
     } else {
-        console.log('하단바가 없습니다.');
+        aaa = 2;
     }
 }
 
