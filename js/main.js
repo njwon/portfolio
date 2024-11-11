@@ -17,6 +17,8 @@ const nav2 = document.querySelectorAll('.nav2')
 const nav3 = document.querySelectorAll('.nav3')
 const mac = document.querySelectorAll('.mac')
 const project_left = document.querySelectorAll('.project-left')
+const deviceHeight = window.screen.height;
+const viewportHeight = window.innerHeight;
 
 
 const cursorPointed = document.querySelector('.cursor');
@@ -418,5 +420,13 @@ function changeText4() {
     });
 }
 
+function checkBottomBarOnDevice() {
+    if (viewportHeight > deviceHeight) {
+        console.log('하단바가 나타나 있습니다.');
+    } else {
+        console.log('하단바가 없습니다.');
+    }
+}
 
-
+window.addEventListener('resize', checkBottomBarOnDevice);
+checkBottomBarOnDevice(); // 페이지 로드 시 확인
