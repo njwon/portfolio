@@ -538,7 +538,7 @@ video {
     color: #212529;
     color: var(--espejo-text-color);
     font-display: swap;
-    font-family: "Pretendard JP", Pretendard, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR", "NanumBarunGothic", Roboto, "Segoe UI", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif, emoji;
+    font-family: "Pretendard-Regular";
     font-family: var(--espejo-page-font-family-var);
     font-size: 15px;
     font-size: var(--espejo-page-font-size-var);
@@ -787,6 +787,7 @@ video {
 
 .minimi {
     font-size: .6333333333em;
+    color: #0275d8;
 }
 
 .about-one {
