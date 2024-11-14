@@ -4,15 +4,6 @@
         justify-content: center;
     }
 
-    .menuimg{
-        transition: 2s;
-    }
-
-    .menuimg:active {
-        pointer-events: none;
-        transition: 2s;
-    }
-
     .about{
         margin-bottom: 10vh;
         height: 70vh;
