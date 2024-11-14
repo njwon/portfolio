@@ -4,6 +4,10 @@
         justify-content: center;
     }
 
+        menu ul li {
+        margin-bottom: 30px;
+    }
+    
     .about{
         margin-bottom: 10vh;
         height: 70vh;
