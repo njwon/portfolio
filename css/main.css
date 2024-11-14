@@ -5,7 +5,8 @@
     }
 
     .about{
-        margin-bottom: 50px;
+        margin-bottom: 10vh;
+        height: 70vh;
     }
 
     .about-banner {
@@ -26,10 +27,29 @@
         margin-left: 70px;
     }
     .project-right{
-        margin-bottom: 50px;
+        margin-bottom: 10vh;
+        height: 70vh;
     }
     .project-left{
-        margin-bottom: 50px;
+        margin-bottom: 10vh;
+        height: 70vh;
+    }
+    .fa-hard-drive {
+        font-size: 20px;
+    }
+    #datetime2 {
+        font-size: 11px;
+    }
+    .nav1 div,
+    .nav2 div,
+    .nav3 div {
+        font-size: 13px;
+    }
+    .projects h3 {
+        font-size: 20px;
+    }
+    .projects p {
+        font-size: 15px;
     }
 }
 
