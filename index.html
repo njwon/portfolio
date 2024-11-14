@@ -3,12 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="고등학교 1학년 학생인 노정원의 웹 포트폴리오 사이트">
     <title>📁</title>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/font.css" />
     <link rel="stylesheet" href="css/main.css">
-    <link rel="icon" href="img/noise/Sarah.webp"/>
+    <link rel="icon" href="img/noise/Sarah.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="use-credentials">
     <script src="https://kit.fontawesome.com/14611643d9.js" crossorigin="anonymous"></script>
     <style>
@@ -28,16 +29,16 @@
         <div class="menuwrap">
             <menu>
                 <ul>
-                    <li><a href="#Home" onclick="setSection(0)"><img class="menuhome menuimg" src="img/menu/Home.png"
+                    <li><a href="#Home" onclick="setSection(0)" aria-label=" "><img class="menuhome menuimg" src="img/menu/Home.png"
                                 alt=""></a></li>
-                    <li><a href="#About" onclick="setSection(1)"><img class="menuabout menuimg" src="img/menu/About.png"
+                    <li><a href="#About" onclick="setSection(1)" aria-label=" "><img class="menuabout menuimg" src="img/menu/About.png"
                                 alt=""></a></li>
-                    <li><a href="#Skills" onclick="setSection(2)"><img class="menuskills menuimg"
-                                src="img/menu/Skills.png" alt=""></a></li>
-                    <li><a href="#Project" onclick="setSection(3)"><img class="menuproject menuimg"
-                                src="img/menu/Project.png" alt=""></a></li>
-                    <li><a href="#Contact" onclick="setSection(4)"><img class="menucontact menuimg"
-                                src="img/menu/Contact.png" alt=""></a></li>
+                    <li><a href="#Skills" onclick="setSection(2)" aria-label=" "><img class="menuskills menuimg" src="img/menu/Skills.png"
+                        alt=""></a></li>
+                    <li><a href="#Project" onclick="setSection(3)" aria-label=" "><img class="menuproject menuimg" src="img/menu/Project.png"
+                        alt=""></a></li>
+                    <li><a href="#Contact" onclick="setSection(4)" aria-label=" "><img class="menucontact menuimg" src="img/menu/Contact.png"
+                        alt=""></a></li>
                 </ul>
             </menu>
         </div>
@@ -71,9 +72,10 @@
                 <div class="in-section2">
                     <div class="about">
                         <div class="aboutmain">
-                            <h1 class="about-gray"><a class="h1" href="">노정원</a></h1>
+                            <h1 class="about-gray"><a class="h1" href="#About" onclick="setSection(1)"></a>노정원</a></h1>
                             <p class="about-gray">최근 수정 시각: <span id="datetime"></span></p>
-                            <div class="aboutjeong about-gray">분류: <a class="about-link">고등학생</a></div>
+                            <div class="aboutjeong about-gray">분류: <a class="about-link" href="#About"
+                                    onclick="setSection(1)">고등학생</a></div>
                             <img class="about-banner-top" src="" alt="">
                             <div class="aboutstart">
                                 <div class="mokcha about-gray">
@@ -81,19 +83,22 @@
                                     <div class="mokcha-in"
                                         style="padding-left: 20px; margin-top: 12px; font-size: 15px;">
                                         <span>
-                                            <a class="about-link" style="font-size: 15px;">1</a>
+                                            <a class="about-link" style="font-size: 15px;" href="#About"
+                                                onclick="setSection(1)">1</a>
                                         </span>
                                         . 소개
                                     </div>
                                     <div style="padding-left: 20px; font-size: 15px;">
                                         <span>
-                                            <a class="about-link" style="font-size: 15px;">2</a>
+                                            <a class="about-link" style="font-size: 15px;" href="#About"
+                                                onclick="setSection(1)">2</a>
                                         </span>
                                         . 계기
                                     </div>
                                     <div style="padding-left: 20px; font-size: 15px;">
                                         <span>
-                                            <a class="about-link" style="font-size: 15px;">3</a>
+                                            <a class="about-link" style="font-size: 15px;" href="#About"
+                                                onclick="setSection(1)">3</a>
                                         </span>
                                         . 계획
                                     </div>
@@ -112,7 +117,8 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                        </tr> <!--이름 -->
+                                        </tr>
+                                        <!--이름 -->
                                         <tr>
                                             <td colspan="2"
                                                 style="color: #f9f8f4; background-color: #2c2b29; text-align:center;"
@@ -126,7 +132,8 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                        </tr> <!--얼굴 -->
+                                        </tr>
+                                        <!--얼굴 -->
                                         <tr>
                                             <td rowspan="2" class="aboutcolor" style="width:100px; text-align:center;">
                                                 <div class="table-div"><strong>출생</strong></div>
@@ -157,8 +164,8 @@
                                                 <div class="table-div"><strong>종교</strong></div>
                                             </td>
                                             <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;">
-                                                <div class="table-div">기독교 <span class="minimi">(<a
-                                                            style="color: #0275d8;">유신론</a>)</span></div>
+                                                <div class="table-div">기독교 <span
+                                                        class="minimi">(<span>유신론</span>)</span></div>
                                             </td>
                                         </tr>
                                         <tr>
