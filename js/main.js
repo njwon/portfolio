@@ -2,10 +2,14 @@ let currentSection = 0;
 let about = document.querySelector('.about')
 let touchStartY = 0; // 터치 시작 Y 좌표
 let scrolling = false; // 스크롤 제어 플래그
+let currentVideoIndex = 0;
+let aaa = 0;
 
 const sections = document.querySelectorAll('.section');
 const totalSections = sections.length;
 const computedStyle = window.getComputedStyle(sections[currentSection]);
+const height = computedStyle.height; // CSS에서 지정한 높이 가져오기
+const Click = 0
 const potato = document.querySelectorAll('.potato')
 const c = document.querySelectorAll('.c')
 const py = document.querySelectorAll('.python')
@@ -14,7 +18,11 @@ const nav2 = document.querySelectorAll('.nav2')
 const nav3 = document.querySelectorAll('.nav3')
 const mac = document.querySelectorAll('.mac')
 const project_left = document.querySelectorAll('.project-left')
+
+
 const cursorPointed = document.querySelector('.cursor');
+
+const width = window.innerWidth;
 
 if (cursorPointed) {
     const moveCursor = (e) => {
@@ -102,7 +110,6 @@ document.addEventListener('touchend', (event) => {
 });
 
 function handleScrollDown() {
-    const height = computedStyle.height; // CSS에서 지정한 높이 가져오기
     if (currentSection === 1) {
         if (about.scrollHeight - about.clientHeight <= about.scrollTop + 5) {
             currentSection++;
@@ -157,7 +164,12 @@ function setSection(index) {
 
 function scrollToSection(index) {
     sections.forEach((section, i) => {
+        // if (currentSection === 2 || currentSection === 4) {
+        //     section.style.transform = `translateY(-${index * 100}vh - 30px)`;
+        // }
+        // else {
         section.style.transform = `translateY(-${index * 100}vh)`;
+        // }
     });
 }
 
@@ -168,7 +180,6 @@ const videos = [
 ];
 
 function changeVideo() {
-    let currentVideoIndex = 0;
     const videoElement = document.getElementById('tvVideo');
     videoElement.pause(); // 현재 영상 멈추기
 
@@ -407,3 +418,31 @@ function changeText4() {
         mac.classList.remove('window3');
     });
 }
+
+function checkBottomBar() {
+    // 화면의 전체 높이 (뷰포트 크기)
+    const windowHeight = window.innerHeight;
+    // 문서의 높이 (스크롤 포함된 전체 내용 높이)
+    const docHeight = document.documentElement.scrollHeight;
+    // 현재 보이는 화면 영역 높이 (스크롤 제외된 부분)
+    const viewportHeight = document.documentElement.clientHeight;
+
+    // 하단바가 보이는지 여부 판단
+    // 1. 화면 높이가 문서의 총 높이보다 작고, 
+    // 2. window.innerHeight와 document.documentElement.clientHeight가 다르면 하단바가 보이는 것으로 판단
+    if (windowHeight < docHeight && windowHeight !== viewportHeight) {
+        console.log('하단바가 보이고 있습니다.');
+        aaa = 1;
+        document.body.classList.add('bottom-bar-visible');  // 하단바가 있을 때 스타일 적용 (예시)
+    } else {
+        console.log('하단바가 숨겨져 있습니다.');
+        aaa = 3;
+        document.body.classList.remove('bottom-bar-visible');  // 하단바가 없을 때 스타일 적용
+    }
+}
+
+// 화면 크기 변경 시마다 하단바 상태 확인
+window.addEventListener('resize', checkBottomBar);
+
+// 초기 상태 확인
+checkBottomBar();
