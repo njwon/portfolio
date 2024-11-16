@@ -29,16 +29,16 @@
         <div class="menuwrap">
             <menu>
                 <ul>
-                    <li><a href="#Home" onclick="setSection(0)" aria-label=" "><img class="menuhome menuimg" src="img/menu/Home.png"
-                                alt=""></a></li>
-                    <li><a href="#About" onclick="setSection(1)" aria-label=" "><img class="menuabout menuimg" src="img/menu/About.png"
-                                alt=""></a></li>
-                    <li><a href="#Skills" onclick="setSection(2)" aria-label=" "><img class="menuskills menuimg" src="img/menu/Skills.png"
-                        alt=""></a></li>
-                    <li><a href="#Project" onclick="setSection(3)" aria-label=" "><img class="menuproject menuimg" src="img/menu/Project.png"
-                        alt=""></a></li>
-                    <li><a href="#Contact" onclick="setSection(4)" aria-label=" "><img class="menucontact menuimg" src="img/menu/Contact.png"
-                        alt=""></a></li>
+                    <li><a href="#Home" onclick="setSection(0)" aria-label=" "><img class="menuhome menuimg"
+                                src="img/menu/Home.png" alt=""></a></li>
+                    <li><a href="#About" onclick="setSection(1)" aria-label=" "><img class="menuabout menuimg"
+                                src="img/menu/About.png" alt=""></a></li>
+                    <li><a href="#Skills" onclick="setSection(2)" aria-label=" "><img class="menuskills menuimg"
+                                src="img/menu/Skills.png" alt=""></a></li>
+                    <li><a href="#Project" onclick="setSection(3)" aria-label=" "><img class="menuproject menuimg"
+                                src="img/menu/Project.png" alt=""></a></li>
+                    <li><a href="#Contact" onclick="setSection(4)" aria-label=" "><img class="menucontact menuimg"
+                                src="img/menu/Contact.png" alt=""></a></li>
                 </ul>
             </menu>
         </div>
@@ -135,7 +135,7 @@
                                         </tr>
                                         <!--얼굴 -->
                                         <tr>
-                                            <td rowspan="2" class="aboutcolor" style="width:100px; text-align:center;">
+                                            <td rowspan="2" class="aboutcolor" style="width:20%; text-align:center;">
                                                 <div class="table-div"><strong>출생</strong></div>
                                             </td>
                                             <td style="text-align:left; border: 1px solid #ddd; padding: 5px 10px;"
@@ -257,25 +257,35 @@
             <section class="section" id="section3">
                 <div class="skill"><img src="img/skills/skills.png" alt=""></div>
                 <div class="wrap">
-                    <div class="card">
+                    <div class="webcard nones">
                         <div class="card_box">
                             <div class="front"><img style="rotate: 3deg;" src="img/skills/html.png" alt=""></div>
                         </div>
-                    </div>
-                    <div class="card">
                         <div class="card_box">
                             <div class="front"><img style="rotate: -2deg;" src="img/skills/css.png" alt=""></div>
                         </div>
                     </div>
-                    <div class="card">
+                    <div class="card_box non">
+                        <div class="front"><img style="rotate: 3deg;" src="img/skills/html.png" alt=""></div>
+                    </div>
+                    <div class="card_box non">
+                        <div class="front"><img style="rotate: -2deg;" src="img/skills/css.png" alt=""></div>
+                    </div>
+                    <div class="codingcard nones">
                         <div class="card_box">
                             <div class="front"><img style="rotate: 4deg;" src="img/skills/c.png" alt=""></div>
                         </div>
-                    </div>
-                    <div class="card">
+
                         <div class="card_box">
                             <div class="front"><img style="rotate: -7deg;" src="img/skills/python.png" alt=""></div>
                         </div>
+
+                    </div>
+                    <div class="card_box non">
+                        <div class="front"><img style="rotate: 4deg;" src="img/skills/c.png" alt=""></div>
+                    </div>
+                    <div class="card_box non">
+                        <div class="front"><img style="rotate: -7deg;" src="img/skills/python.png" alt=""></div>
                     </div>
                 </div>
             </section>
@@ -286,6 +296,37 @@
                             <i class="fa-solid fa-hard-drive"></i>
                             <span id="datetime2"></span>
                         </div>
+                        <div class="right1 none">
+                            <h3>감자 전지 발표용 사이트</h3>
+                            <p>
+                                과학수행 발표용 ppt입니다. css와 html을 이용했습니다.<br>
+                                컴퓨터로만 사용할 웹페이지이기 때문에
+                                반응형 작업은 하지 않았습니다.<br>
+                                아래 이미지를 클릭하세요.
+                            </p>
+                            <a href="http://jwz7.dothome.co.kr/" target="_blank"><img src="img/project/potato2.png"
+                                    alt=""></a>
+                        </div>
+                        <div class="right2 none">
+                            <h3>해결한 C 문제들</h3>
+                            <p>
+                                제가 이 학교에 와서 해결한 C 문제들입니다.<br>
+                                입출력, 조건문, 반복문 등등.. 다양한 문제를 해결했습니다.<br><br>
+                                아래 이미지를 클릭하세요.
+                            </p>
+                            <a href="https://codeup.kr/userinfo.php?user=24_1812" target="_blank"><img
+                                    src="img/project/c2.png" alt=""></a>
+                        </div>
+                        <div class="right3 none">
+                            <h3>해결한 python 문제들</h3>
+                            <p>
+                                제가 이 학교에 와서 해결한 python 문제들입니다.<br>
+                                입출력, 조건문, 반복문 등등.. 다양한 문제를 해결했습니다.<br><br>
+                                아래 이미지를 클릭하세요.
+                            </p>
+                            <a href="https://codeup.kr/userinfo.php?user=24_1812" target="_blank"><img
+                                    src="img/project/python2.png" alt=""></a>
+                        </div>
                     </div>
                     <nav>
                         <div onclick="changeText1()"><img src="img/project/potato.png" alt=""></div>
@@ -293,7 +334,7 @@
                         <div onclick="changeText3()"><img src="img/project/python.png" alt=""></div>
                     </nav>
                 </div>
-                <div class="project-left black">
+                <div class="project-left black non">
                     <div class="nav1 none">
                         <div>potato.txt</div>
                     </div>
@@ -307,10 +348,8 @@
                         <h3>감자 전지 발표용 사이트</h3>
                         <p>
                             과학수행 발표용 ppt입니다. css와 html을 이용했습니다.<br>
-                            발표용 사이트이므로 보기쉽도록 프레젠테이션 느낌을 주도록 제작했습니다.<br>
                             컴퓨터로만 사용할 웹페이지이기 때문에
                             반응형 작업은 하지 않았습니다.<br>
-                            총 제작시간은 8시간입니다.<br><br>
                             아래 이미지를 클릭하세요.
                         </p>
                         <a href="http://jwz7.dothome.co.kr/" target="_blank"><img src="img/project/potato2.png"
