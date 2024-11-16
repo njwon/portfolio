@@ -185,7 +185,7 @@ a {
     justify-content: center;
     align-items: center;
     position: fixed;
-    font-size: 150px;
+    font-size: 13vw;
     text-align: left;
     margin: 0 auto;
     background-color: #dbe3e311;
@@ -663,7 +663,7 @@ video {
 
 .introduce {
     background-color: #fff;
-    width: 420px;
+    width: 50%;
     border: 2px solid #2c2b29;
     text-indent: 0;
     display: table;
@@ -774,7 +774,7 @@ video {
     right: 0;
     top: 0;
     box-sizing: border-box;
-    width: 420px;
+    width: 100%;
     text-align: center;
     overflow: clip;
 }
@@ -1062,6 +1062,10 @@ video {
     width: 90%;
 }
 
+.projects {
+    display: scroll;
+}
+
 .projects h3 {
     font-family: 'S-CoreDream-3Light', serif;
     font-size: smaller;
@@ -1080,6 +1084,14 @@ video {
 
 .none {
     display: none;
+}
+
+.nones{
+    display: none;
+}
+
+.non{
+    display: block;
 }
 
 #section5 {
