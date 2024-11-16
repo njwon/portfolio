@@ -13,6 +13,9 @@ const Click = 0
 const potato = document.querySelectorAll('.potato')
 const c = document.querySelectorAll('.c')
 const py = document.querySelectorAll('.python')
+const right1 = document.querySelectorAll('.right1')
+const right2 = document.querySelectorAll('.right2')
+const right3 = document.querySelectorAll('.right3')
 const nav1 = document.querySelectorAll('.nav1')
 const nav2 = document.querySelectorAll('.nav2')
 const nav3 = document.querySelectorAll('.nav3')
@@ -233,10 +236,13 @@ const onScroll = (event) => {
 };
 
 const wrap = document.querySelector('.wrap');
+const down = document.querySelector('.down');
 const card_box = document.querySelector('.card_box');
 
 wrap.addEventListener('click', () => {
-    wrap.classList.toggle('spread');
+    if (window.innerWidth > 767) {
+        wrap.classList.toggle('spread');
+    }
 });
 
 const onTouchStart = (event) => {
@@ -264,120 +270,171 @@ const onTouchMove = (event) => {
 };
 
 function changeText1() {
-    mac.forEach(mac => {
-        mac.classList.remove('window');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.remove('black');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.add('white');
-    });
-    potato.forEach(potato => {
-        potato.classList.remove('none');
-    });
-    nav1.forEach(nav1 => {
-        nav1.classList.remove('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.add('window1');
-    });
-    c.forEach(c => {
-        c.classList.add('none');
-    });
-    nav2.forEach(nav2 => {
-        nav2.classList.add('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.remove('window2');
-    });
-    py.forEach(py => {
-        py.classList.add('none');
-    });
-    nav3.forEach(nav3 => {
-        nav3.classList.add('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.remove('window3');
-    });
+    if (window.innerWidth > 767) {
+        mac.forEach(mac => {
+            mac.classList.remove('window');
+        });
+        mac.forEach(mac => {
+            mac.classList.add('window1');
+        });
+        mac.forEach(mac => {
+            mac.classList.remove('window2');
+        });
+        mac.forEach(mac => {
+            mac.classList.remove('window3');
+        });
+        project_left.forEach(project_left => {
+            project_left.classList.remove('black');
+        });
+        project_left.forEach(project_left => {
+            project_left.classList.add('white');
+        });
+        potato.forEach(potato => {
+            potato.classList.remove('none');
+            potato.classList.remove('nones');
+        });
+        nav1.forEach(nav1 => {
+            nav1.classList.remove('none');
+        });
+        c.forEach(c => {
+            c.classList.add('none');
+            c.classList.add('nones');
+        });
+        nav2.forEach(nav2 => {
+            nav2.classList.add('none');
+        });
+        py.forEach(py => {
+            py.classList.add('none');
+            py.classList.add('nones');
+        });
+        nav3.forEach(nav3 => {
+            nav3.classList.add('none');
+        });
+    }
+    else if(window.innerWidth < 767) {
+        right1.forEach(right1 => {
+            right1.classList.add('nones');
+        });
+        right2.forEach(right2 => {
+            right2.classList.remove('nones');
+        });
+        right3.forEach(right3 => {
+            right3.classList.remove('nones');
+        });
+    }
+
 }
 
 function changeText2() {
-    mac.forEach(mac => {
-        mac.classList.remove('window');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.remove('black');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.add('white');
-    });
-    potato.forEach(potato => {
-        potato.classList.add('none');
-    });
-    nav1.forEach(nav1 => {
-        nav1.classList.add('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.remove('window1');
-    });
-    c.forEach(c => {
-        c.classList.remove('none');
-    });
-    nav2.forEach(nav2 => {
-        nav2.classList.remove('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.add('window2');
-    });
-    py.forEach(py => {
-        py.classList.add('none');
-    });
-    nav3.forEach(nav3 => {
-        nav3.classList.add('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.remove('window3');
-    });
+    if (window.innerWidth > 767) {
+        mac.forEach(mac => {
+            mac.classList.remove('window');
+        });
+        project_left.forEach(project_left => {
+            project_left.classList.remove('black');
+        });
+        project_left.forEach(project_left => {
+            project_left.classList.add('white');
+        });
+        potato.forEach(potato => {
+            potato.classList.add('none');
+            potato.classList.add('nones');
+        });
+        nav1.forEach(nav1 => {
+            nav1.classList.add('none');
+        });
+        mac.forEach(mac => {
+            mac.classList.remove('window1');
+        });
+        c.forEach(c => {
+            c.classList.remove('none');
+            c.classList.remove('nones');
+        });
+        nav2.forEach(nav2 => {
+            nav2.classList.remove('none');
+        });
+        mac.forEach(mac => {
+            mac.classList.add('window2');
+        });
+        py.forEach(py => {
+            py.classList.add('none');
+            py.classList.add('nones');
+        });
+        nav3.forEach(nav3 => {
+            nav3.classList.add('none');
+        });
+        mac.forEach(mac => {
+            mac.classList.remove('window3');
+        });
+    }
+
+    else if(window.innerWidth < 767) {
+        right1.forEach(right1 => {
+            right1.classList.remove('nones');
+        });
+        right2.forEach(right2 => {
+            right2.classList.add('nones');
+        });
+        right3.forEach(right3 => {
+            right3.classList.remove('nones');
+        });
+    }
 }
 
 function changeText3() {
-    mac.forEach(mac => {
-        mac.classList.remove('window');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.remove('black');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.add('white');
-    });
-    potato.forEach(potato => {
-        potato.classList.add('none');
-    });
-    nav1.forEach(nav1 => {
-        nav1.classList.add('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.remove('window1');
-    });
-    c.forEach(c => {
-        c.classList.add('none');
-    });
-    nav2.forEach(nav2 => {
-        nav2.classList.add('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.remove('window2');
-    });
-    py.forEach(py => {
-        py.classList.remove('none');
-    });
-    nav3.forEach(nav3 => {
-        nav3.classList.remove('none');
-    });
-    mac.forEach(mac => {
-        mac.classList.add('window3');
-    });
+    if (window.innerWidth > 767) {
+        mac.forEach(mac => {
+            mac.classList.remove('window');
+        });
+        project_left.forEach(project_left => {
+            project_left.classList.remove('black');
+        });
+        project_left.forEach(project_left => {
+            project_left.classList.add('white');
+        });
+        potato.forEach(potato => {
+            potato.classList.add('none');
+            potato.classList.add('nones');
+        });
+        nav1.forEach(nav1 => {
+            nav1.classList.add('none');
+        });
+        mac.forEach(mac => {
+            mac.classList.remove('window1');
+        });
+        c.forEach(c => {
+            c.classList.add('none');
+            c.classList.add('nones');
+        });
+        nav2.forEach(nav2 => {
+            nav2.classList.add('none');
+        });
+        mac.forEach(mac => {
+            mac.classList.remove('window2');
+        });
+        py.forEach(py => {
+            py.classList.remove('none');
+            py.classList.remove('nones');
+        });
+        nav3.forEach(nav3 => {
+            nav3.classList.remove('none');
+        });
+        mac.forEach(mac => {
+            mac.classList.add('window3');
+        });
+    }
+
+    else if(window.innerWidth < 767) {
+        right1.forEach(right1 => {
+            right1.classList.remove('nones');
+        });
+        right2.forEach(right2 => {
+            right2.classList.remove('nones');
+        });
+        right3.forEach(right3 => {
+            right3.classList.add('nones');
+        });
+    }
 }
 
 function changeText4() {
