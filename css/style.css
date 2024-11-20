@@ -881,6 +881,10 @@ video {
     backface-visibility: hidden;
 }
 
+.html{rotate: 3deg;}
+.css{rotate: -2deg;}
+.c{rotate: 4deg;}
+.py{rotate: -7deg;}
 
 #section4 {
     height: 100vh;
