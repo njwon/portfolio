@@ -31,7 +31,29 @@
     }
 
     .wrap {
-        left: calc(70% - 650px)
+        left: calc(70% - 650px);
+    }
+
+    @keyframes scrollAnimation6 {
+        0% {
+            left: -50vw;
+        }
+    
+        100% {
+            
+            left: calc(70% - 650px);
+        }
+    }
+
+    @-webkit-keyframes scrollAnimation6 {
+        0% {
+            left: -50vw;
+        }
+    
+        100% {
+            
+            left: calc(70% - 650px);
+        }
     }
 
     .spread .card_box {
