@@ -48,6 +48,28 @@
         height: 70vh;
     }
 
+    @keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
+    }
+    
+    @-webkit-keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
+    }
+
     .fa-hard-drive {
         font-size: 20px;
     }
@@ -130,6 +152,17 @@
         }
     }
 
+    @-webkit-keyframes scrollAnimation6 {
+        0% {
+            left: -50vw;
+        }
+    
+        100% {
+            
+            left: calc(40vw - 240px);
+        }
+    }
+
     .card_box {
         width: 60px;
     }
@@ -151,6 +184,28 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
+    }
+
+    @keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
+    }
+    
+    @-webkit-keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
     }
 
     .fa-hard-drive {
@@ -236,6 +291,18 @@
         }
     }
 
+    @-webkit-keyframes scrollAnimation6 {
+        0% {
+            left: -50vw;
+        }
+    
+        100% {
+            
+            left: calc(50vw - 170px);
+        }
+    }
+    
+
     .card_box {
         width: 110px;
         height: 160px;
@@ -285,6 +352,28 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
+    }
+
+    @keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
+    }
+    
+    @-webkit-keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
     }
 
     .fa-hard-drive {
@@ -378,6 +467,17 @@
         }
     }
 
+    @-webkit-keyframes scrollAnimation6 {
+        0% {
+            left: -50vw;
+        }
+    
+        100% {
+            
+            left: calc(35vw - 120px);
+        }
+    }
+
     .card_box {
         width: 100px;
         height: 150px;
@@ -423,6 +523,28 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
+    }
+
+    @keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
+    }
+    
+    @-webkit-keyframes scrollAnimation8 {
+        0% {
+            margin-bottom: 100vh;
+        }
+    
+        100% {
+            
+            margin-bottom: 10vh;
+        }
     }
 
     .fa-hard-drive {
