@@ -28,7 +28,7 @@
 
         <div class="menuwrap">
             <menu>
-                <ul>
+                <ul class="ul">
                     <li><a href="#Home" onclick="setSection(0)" aria-label=" "><img class="menuhome menuimg"
                                 src="img/menu/Home.png" alt=""></a></li>
                     <li><a href="#About" onclick="setSection(1)" aria-label=" "><img class="menuabout menuimg"
@@ -45,32 +45,33 @@
         <div class="container">
             <section class="section" id="section1">
 
-                <div class="color tape tape2 pointerkill scroll-spy">
+                <div class="color tape tape2 pointerkill scroll-spy" id="tape">
                     <p>CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK
                         THIS CLICK THIS CLICK THIS
                         CLICK THIS CLICK THIS CLICK THIS</p>
                 </div>
-                <div class="color tape tape3 pointerkill scroll-spy">
+                <div class="color tape tape3 pointerkill scroll-spy" id="tape">
                     <p>CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK THIS CLICK
                         THIS CLICK THIS CLICK THIS
                         CLICK THIS CLICK THIS CLICK THIS</p>
                 </div>
-                <div class="tv-container scroll-spy" onclick="changeVideo()">
-                    <img class="gray" src="img/home/tv.png" alt="TV 이미지"
-                        style="width: 90%; height: auto; position: absolute; z-index: 1;" />
-                    <div class="screen">
-
-                        <video id="tvVideo" autoplay muted loop>
-                            <source src="img/home/first.webm" type="video/webm" />
-                            브라우저가 비디오 태그를 지원하지 않습니다.
-                        </video>
+                <div class="tv">
+                    <div class="tv-container scroll-spy" onclick="changeVideo()">
+                        <img class="gray" src="img/home/tv.png" alt="TV 이미지"
+                            style="width: 90%; height: auto; position: absolute; z-index: 1;" />
+                        <div class="screen">
+    
+                            <video id="tvVideo" autoplay muted loop>
+                                <source src="img/home/first.webm" type="video/webm" />
+                                브라우저가 비디오 태그를 지원하지 않습니다.
+                            </video>
+                        </div>
                     </div>
                 </div>
-
             </section>
             <section class="section" id="section2">
                 <div class="in-section2">
-                    <div class="about">
+                    <div class="about amain">
                         <div class="aboutmain">
                             <h1 class="about-gray"><a class="h1" href="#About" onclick="setSection(1)"></a>노정원</a></h1>
                             <p class="about-gray">최근 수정 시각: <span id="datetime"></span></p>
@@ -256,36 +257,36 @@
             </section>
             <section class="section" id="section3">
                 <div class="skill"><img src="img/skills/skills.png" alt=""></div>
-                <div class="wrap">
+                <div class="wrap cards">
                     <div class="webcard nones">
                         <div class="card_box">
-                            <div class="front"><img style="rotate: 3deg;" src="img/skills/html.png" alt=""></div>
+                            <img class="html" src="img/skills/html.png" alt="">
                         </div>
                         <div class="card_box">
-                            <div class="front"><img style="rotate: -2deg;" src="img/skills/css.png" alt=""></div>
+                            <img class="css" src="img/skills/css.png" alt="">
                         </div>
                     </div>
                     <div class="card_box non">
-                        <div class="front"><img style="rotate: 3deg;" src="img/skills/html.png" alt=""></div>
+                        <img class="html" src="img/skills/html.png" alt="">
                     </div>
                     <div class="card_box non">
-                        <div class="front"><img style="rotate: -2deg;" src="img/skills/css.png" alt=""></div>
+                        <img class="css" src="img/skills/css.png" alt="">
                     </div>
                     <div class="codingcard nones">
                         <div class="card_box">
-                            <div class="front"><img style="rotate: 4deg;" src="img/skills/c.png" alt=""></div>
+                            <img class="clang" src="img/skills/c.png" alt="">
                         </div>
 
                         <div class="card_box">
-                            <div class="front"><img style="rotate: -7deg;" src="img/skills/python.png" alt=""></div>
+                            <img class="py" src="img/skills/python.png" alt="">
                         </div>
 
                     </div>
                     <div class="card_box non">
-                        <div class="front"><img style="rotate: 4deg;" src="img/skills/c.png" alt=""></div>
+                        <img class="clang" src="img/skills/c.png" alt="">
                     </div>
                     <div class="card_box non">
-                        <div class="front"><img style="rotate: -7deg;" src="img/skills/python.png" alt=""></div>
+                        <img class="py" src="img/skills/python.png" alt="">
                     </div>
                 </div>
             </section>
@@ -379,15 +380,15 @@
             </section>
             <section class="section" id="section5">
                 <div>
-                    <div class="in-contact">
+                    <div class="in-contact con">
                         <a class="fa-solid fa-phone" href="tel:010-5318-5001"></a>
                         <div>010-5318-5001&#8203;</div>
                     </div>
-                    <div class="in-contact">
+                    <div class="in-contact con">
                         <a href="mailto:njwon19@gmail.com" class="fa-solid fa-envelope"></a>
                         <div>njwon19@gmail.com</div>
                     </div>
-                    <div class="brands">
+                    <div class="brands con">
                         <div class="instar">
                             <a href="https://www.instagram.com/0ringle" target="_blank"
                                 class="fa-brands fa-instagram"></a>
