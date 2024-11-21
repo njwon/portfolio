@@ -193,29 +193,6 @@ a {
     /* 투명도 변화에 대한 애니메이션 */
 }
 
-/* .show {
-    animation-duration: 3s;
-    animation-name: showin;
-  
-}
-
-@keyframes showin {
-    0% {
-        opacity: 0;
-        transform: translateY(30);
-    }
-
-    50% {
-        opacity: 0.5;
-        transform: translateY(15);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-} */
-
 .menuwrap {
     width: 5vw;
     height: 100vh;
@@ -256,7 +233,6 @@ menu ul {
     /* 패딩 제거 */
     z-index: 9999;
 }
-
 
 menu ul li {
     width: 50px;
@@ -337,6 +313,10 @@ menu ul li a {
     rotate: 15deg;
 }
 
+.tv{
+    width: 100vw;
+}
+
 .tv-container {
     position: relative;
     width: 60%;
@@ -349,6 +329,21 @@ menu ul li a {
     align-items: center;
     justify-content: center;
     z-index: 1;
+}
+
+.scrollAnimation3{
+    animation: scrollAnimation3 5s;
+}
+
+@keyframes scrollAnimation3 {
+    0% {
+        margin-bottom: 200px;
+    }
+
+    100% {
+        
+        margin-bottom: 0px;
+    }
 }
 
 .tv-image {
@@ -457,6 +452,34 @@ menu ul li a {
     }
 }
 
+.scrollAnimation1{
+    animation: scrollAnimation1 4s;
+}
+.scrollAnimation2{
+    animation: scrollAnimation2 2s;
+}
+
+@keyframes scrollAnimation1 {
+    0% {
+        top: 10%;
+    }
+
+    100% {
+        
+        top: 20%;
+    }
+}
+
+@keyframes scrollAnimation2 {
+    0% {
+        top: 60%;
+    }
+
+    100% {
+        
+        top: 70%;
+    }
+}
 .screen {
     width: 100%;
     height: 100%;
@@ -468,8 +491,6 @@ menu ul li a {
     margin-right: 10%;
     margin-bottom: 17%;
 }
-
-
 
 video {
     width: 70%;
@@ -580,6 +601,21 @@ video {
 
 .aboutmain {
     padding: 12px;
+}
+
+.scrollAnimation4{
+    animation: scrollAnimation4 2s;
+}
+
+@keyframes scrollAnimation4 {
+    0% {
+        margin-left: 100vw;
+    }
+
+    100% {
+        
+        margin-left: 0px;
+    }
 }
 
 .aboutmain h1 {
@@ -834,6 +870,21 @@ video {
     top: 5%;
 }
 
+.scrollAnimation5{
+    animation: scrollAnimation5 2s;
+}
+
+@keyframes scrollAnimation5 {
+    0% {
+        margin-right: 100vw;
+    }
+
+    100% {
+        
+        margin-right: 0px;
+    }
+}
+
 .skill img {
     width: 400px;
 }
@@ -852,6 +903,21 @@ video {
 
 .spread .card_box {
     margin-left: 150px;
+}
+
+.scrollAnimation6{
+    animation: scrollAnimation6 3s;
+}
+
+@keyframes scrollAnimation6 {
+    0% {
+        left: -50vw;
+    }
+
+    100% {
+        
+        left: calc(50% - 650px);
+    }
 }
 
 .card_box {
@@ -883,7 +949,7 @@ video {
 
 .html{rotate: 3deg;}
 .css{rotate: -2deg;}
-.c{rotate: 4deg;}
+.clang{rotate: 4deg;}
 .py{rotate: -7deg;}
 
 #section4 {
@@ -902,6 +968,21 @@ video {
     background-color: #f5f5f5;
     border: 1px solid #ccc;
     box-shadow: 5px 5px 50px 5px #555555
+}
+
+.scrollAnimation7{
+    animation: scrollAnimation7 2s;
+}
+
+@keyframes scrollAnimation7 {
+    0% {
+        margin-left: 100vw;
+    }
+
+    100% {
+        
+        margin-left: 0;
+    }
 }
 
 .window {
@@ -1030,6 +1111,21 @@ video {
     box-shadow: 5px 5px 50px 5px #555555
 }
 
+.scrollAnimation8{
+    animation: scrollAnimation8 3s;
+}
+
+@keyframes scrollAnimation8 {
+    0% {
+        margin-bottom: 100vh;
+    }
+
+    100% {
+        
+        margin-bottom: 0;
+    }
+}
+
 .black {
     background-color: #2c2b29;
 }
@@ -1103,6 +1199,22 @@ video {
     height: 100vh;
     width: 100vw;
     /* 중간 바다색 */
+}
+
+.scrollAnimation9{
+    animation: scrollAnimation9 2s;
+}
+
+@keyframes scrollAnimation9 {
+    0% {
+        opacity: 0;
+        margin-bottom: 100px;
+    }
+
+    100% {
+        opacity: 1;
+        margin-bottom: 0;
+    }
 }
 
 .sec5-full {
