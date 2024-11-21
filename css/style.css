@@ -314,8 +314,7 @@ menu ul li a {
 }
 
 .tv{
-    width: 100%;
-    height: 100%;
+    width: 100vw;
 }
 
 .tv-container {
@@ -333,7 +332,19 @@ menu ul li a {
 }
 
 .scrollAnimation3{
+    -webkit-animation: scrollAnimation3 5s;
     animation: scrollAnimation3 5s;
+}
+
+@-webkit-keyframes scrollAnimation3 {
+    0% {
+        margin-bottom: 200px;
+    }
+
+    100% {
+        
+        margin-bottom: 0px;
+    }
 }
 
 @keyframes scrollAnimation3 {
@@ -346,6 +357,7 @@ menu ul li a {
         margin-bottom: 0px;
     }
 }
+
 
 .tv-image {
     width: 90%;
@@ -455,9 +467,11 @@ menu ul li a {
 
 .scrollAnimation1{
     animation: scrollAnimation1 4s;
+    -webkit-animation: scrollAnimation1 4s;
 }
 .scrollAnimation2{
     animation: scrollAnimation2 2s;
+    -webkit-animation: scrollAnimation2 2s;
 }
 
 @keyframes scrollAnimation1 {
@@ -481,6 +495,29 @@ menu ul li a {
         top: 70%;
     }
 }
+
+@-webkit-keyframes scrollAnimation1 {
+    0% {
+        top: 10%;
+    }
+
+    100% {
+        
+        top: 20%;
+    }
+}
+
+@-webkit-keyframes scrollAnimation2 {
+    0% {
+        top: 60%;
+    }
+
+    100% {
+        
+        top: 70%;
+    }
+}
+
 .screen {
     width: 100%;
     height: 100%;
@@ -606,9 +643,21 @@ video {
 
 .scrollAnimation4{
     animation: scrollAnimation4 2s;
+    -webkit-animation: scrollAnimation4 2s;
 }
 
 @keyframes scrollAnimation4 {
+    0% {
+        margin-left: 100vw;
+    }
+
+    100% {
+        
+        margin-left: 0px;
+    }
+}
+
+@-webkit-keyframes scrollAnimation4 {
     0% {
         margin-left: 100vw;
     }
@@ -873,9 +922,21 @@ video {
 
 .scrollAnimation5{
     animation: scrollAnimation5 2s;
+    -webkit-animation: scrollAnimation5 2s;
 }
 
 @keyframes scrollAnimation5 {
+    0% {
+        margin-right: 100vw;
+    }
+
+    100% {
+        
+        margin-right: 0px;
+    }
+}
+
+@-webkit-keyframes scrollAnimation5 {
     0% {
         margin-right: 100vw;
     }
@@ -908,9 +969,21 @@ video {
 
 .scrollAnimation6{
     animation: scrollAnimation6 3s;
+    -webkit-animation: scrollAnimation6 3s;
 }
 
 @keyframes scrollAnimation6 {
+    0% {
+        left: -50vw;
+    }
+
+    100% {
+        
+        left: calc(50% - 650px);
+    }
+}
+
+@-webkit-keyframes scrollAnimation6 {
     0% {
         left: -50vw;
     }
@@ -973,9 +1046,21 @@ video {
 
 .scrollAnimation7{
     animation: scrollAnimation7 2s;
+    -webkit-animation: scrollAnimation7 2s;
 }
 
 @keyframes scrollAnimation7 {
+    0% {
+        margin-left: 100vw;
+    }
+
+    100% {
+        
+        margin-left: 0;
+    }
+}
+
+@-webkit-keyframes scrollAnimation7 {
     0% {
         margin-left: 100vw;
     }
@@ -1114,9 +1199,21 @@ video {
 
 .scrollAnimation8{
     animation: scrollAnimation8 3s;
+    -webkit-animation: scrollAnimation8 3s;
 }
 
 @keyframes scrollAnimation8 {
+    0% {
+        margin-bottom: 100vh;
+    }
+
+    100% {
+        
+        margin-bottom: 0;
+    }
+}
+
+@-webkit-keyframes scrollAnimation8 {
     0% {
         margin-bottom: 100vh;
     }
@@ -1200,22 +1297,6 @@ video {
     height: 100vh;
     width: 100vw;
     /* 중간 바다색 */
-}
-
-.scrollAnimation9{
-    animation: scrollAnimation9 2s;
-}
-
-@keyframes scrollAnimation9 {
-    0% {
-        opacity: 0;
-        margin-bottom: 100px;
-    }
-
-    100% {
-        opacity: 1;
-        margin-bottom: 0;
-    }
 }
 
 .sec5-full {
