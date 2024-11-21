@@ -5,6 +5,15 @@ let scrolling = false; // 스크롤 제어 플래그
 let currentVideoIndex = 0;
 let aaa = 0;
 
+const tape2 = document.querySelectorAll('.tape3');
+const tape3 = document.querySelectorAll('.tape2');
+const tv = document.querySelectorAll('.tv');
+const amain = document.querySelectorAll('.amain')
+const skill = document.querySelectorAll('.skill')
+const cards = document.querySelectorAll('.cards')
+const pright = document.querySelectorAll('.project-right')
+const pleft = document.querySelectorAll('.project-left')
+const con = document.querySelectorAll('.con')
 const sections = document.querySelectorAll('.section');
 const totalSections = sections.length;
 const computedStyle = window.getComputedStyle(sections[currentSection]);
@@ -165,15 +174,54 @@ function setSection(index) {
     scrollToSection(currentSection); // 해당 섹션으로 스크롤
 }
 
-function scrollToSection(index) {
+function scrollToSection(sectionIndex) {
     sections.forEach((section, i) => {
-        // if (currentSection === 2 || currentSection === 4) {
-        //     section.style.transform = `translateY(-${index * 100}vh - 30px)`;
-        // }
-        // else {
-        section.style.transform = `translateY(-${index * 100}vh)`;
-        // }
+        section.style.transform = `translateY(-${sectionIndex * 100}vh)`; // 섹션 이동
+
+        // 각 섹션에 대해 애니메이션을 추가하거나 제거
+        if (i === sectionIndex) {
+            // 섹션이 활성화되었을 때 애니메이션 클래스 추가
+            section.classList.add('active'); // 예시로 'active' 클래스를 추가
+        } else {
+            // 섹션이 비활성화되었을 때 애니메이션 클래스 제거
+            section.classList.remove('active');
+        }
     });
+
+    // 섹션별 애니메이션 추가
+    applySectionAnimations(sectionIndex);
+}
+
+function applySectionAnimations(sectionIndex) {
+    switch (sectionIndex) {
+        case 0:
+            // 첫 번째 섹션 애니메이션
+            tape2.forEach(tape2 => tape2.classList.add("scrollAnimation1"));
+            tape3.forEach(tape3 => tape3.classList.add("scrollAnimation2"));
+            tv.forEach(tv => tv.classList.add("scrollAnimation3"));
+            break;
+        case 1:
+            // 두 번째 섹션 애니메이션
+            amain.forEach(amain => amain.classList.add("scrollAnimation4"));
+            break;
+        case 2:
+            // 세 번째 섹션 애니메이션
+            skill.forEach(skill => skill.classList.add("scrollAnimation5"));
+            cards.forEach(cards => cards.classList.add("scrollAnimation6"));
+            break;
+        case 3:
+            // 세 번째 섹션 애니메이션
+            pright.forEach(pright => pright.classList.add("scrollAnimation7"));
+            pleft.forEach(pleft => pleft.classList.add("scrollAnimation8"));
+            break;
+        case 3:
+            // 세 번째 섹션 애니메이션
+            con.forEach(con => con.classList.add("scrollAnimation9"));
+            break;
+
+        default:
+            break;
+    }
 }
 
 const videos = [
@@ -476,30 +524,26 @@ function changeText4() {
     });
 }
 
-function checkBottomBar() {
-    // 화면의 전체 높이 (뷰포트 크기)
-    const windowHeight = window.innerHeight;
-    // 문서의 높이 (스크롤 포함된 전체 내용 높이)
-    const docHeight = document.documentElement.scrollHeight;
-    // 현재 보이는 화면 영역 높이 (스크롤 제외된 부분)
-    const viewportHeight = document.documentElement.clientHeight;
-
-    // 하단바가 보이는지 여부 판단
-    // 1. 화면 높이가 문서의 총 높이보다 작고, 
-    // 2. window.innerHeight와 document.documentElement.clientHeight가 다르면 하단바가 보이는 것으로 판단
-    if (windowHeight < docHeight && windowHeight !== viewportHeight) {
-        console.log('하단바가 보이고 있습니다.');
-        aaa = 1;
-        document.body.classList.add('bottom-bar-visible');  // 하단바가 있을 때 스타일 적용 (예시)
-    } else {
-        console.log('하단바가 숨겨져 있습니다.');
-        aaa = 3;
-        document.body.classList.remove('bottom-bar-visible');  // 하단바가 없을 때 스타일 적용
-    }
-}
-
-// 화면 크기 변경 시마다 하단바 상태 확인
-window.addEventListener('resize', checkBottomBar);
-
-// 초기 상태 확인
-checkBottomBar();
+// if(currentSection === 0) {
+//     tape2.forEach(tape2 => {
+//         tape2.classList.add("scrollAnimation1");
+//     });
+//     tape3.forEach(tape3 => {
+//         tape3.classList.add("scrollAnimation2");
+//     });
+//     tv.forEach(tv => {
+//         tv.classList.add("scrollAnimation3");
+//     });
+// }
+// else if(currentSection === 1) {
+//     console.log('Section 1 reached');
+//     amain.forEach(amain => {
+//         console.log('Adding animation class to amain');
+//         amain.classList.add("scrollAnimation4");
+//     });
+// }
+// else if(currentSection === 2) {
+//     skill.forEach(skill => {
+//         skill.classList.add("scrollAnimation4");
+//     });
+// }
