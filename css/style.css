@@ -50,7 +50,7 @@ a {
     transition: opacity 0.6s ease-out;
     -webkit-animation: noiseAnimation 1s steps(4) infinite;
     animation: noiseAnimation 1s steps(4) infinite;
-    background-image: url('../img/noise/noise2.png');
+    background-image: url('../img/noise/noise2.webp');
 }
 
 .gray {
