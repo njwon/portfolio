@@ -863,6 +863,7 @@ video {
     width: 100%;
     text-align: center;
     overflow: clip;
+    height: auto;
 }
 
 .table-div {
