@@ -1003,8 +1003,8 @@ video {
 }
 
 .card_box img {
-
     width: 230px;
+    height: auto;
 }
 
 /* .diffrent {
