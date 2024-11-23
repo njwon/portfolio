@@ -1307,20 +1307,74 @@ video {
 
 .in-contact a {
     position: relative;
-    left: calc(50% - 16px);
     color: #161617;
 }
 
 #section5 a {
     font-size: 2rem;
+}
+
+.icon {
+    width: 3rem;
+    height: 3rem;
+    position: relative;
+    left: calc(50% - 1.5rem);
+    box-shadow: -3px -3px 7px #f0f0f0, 3px 3px 5px rgba(52, 59, 70, 0.401);
+    border-radius: 5px;
+    transition: 1s;
+    perspective: 400px;
+}
+
+.icon2 {
+    width: 3rem;
+    height: 3rem;
+    position: relative;
+    box-shadow: -3px -3px 7px #f0f0f0, 3px 3px 5px rgba(52, 59, 70, 0.401);
+    border-radius: 5px;
+    transition: 1s;
+    perspective: 400px;
+}
+
+.icon:hover {
+    box-shadow: none;
     transition: 1s;
 }
 
+.icon2:hover {
+    box-shadow: none;
+    transition: 1s;
+}
 
-#section5 a:hover {
+.fa-solid {
+    margin-top: 0.5rem;
+}
+
+.fa-phone::before {
+    color: #007108;
+}
+
+.fa-envelope::before {
+    color: #c1ba9d;
+}
+
+.gradient-icon {
+    background: linear-gradient(to right,#833ab4,#fd1d1d,#fcb045);
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+
+}
+
+.fa-github::before {
+    color: #373737;
+}
+
+/* #section5 a:hover {
     font-size: 2.5rem;
     transition: 1s;
-}
+} */
 
 .in-contact div {
     text-align: center;
@@ -1335,6 +1389,7 @@ video {
 
 .fa-brands {
     color: #161617;
+    margin-left: calc(50% - 0.9rem);
 }
 
 footer {
