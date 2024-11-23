@@ -1318,6 +1318,7 @@ video {
     border-radius: 5px;
     transition: 1s;
     perspective: 400px;
+    margin: 10px 0;
 }
 
 .icon2 {
@@ -1328,6 +1329,7 @@ video {
     border-radius: 5px;
     transition: 1s;
     perspective: 400px;
+    margin: 10px 0;
 }
 
 .icon:hover {
