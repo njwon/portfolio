@@ -9,6 +9,7 @@ const tape2 = document.querySelectorAll('.tape3');
 const tape3 = document.querySelectorAll('.tape2');
 const tv = document.querySelectorAll('.tv');
 const amain = document.querySelectorAll('.amain')
+const abanner = document.querySelectorAll('.about-banner')
 const skill = document.querySelectorAll('.skill')
 const cards = document.querySelectorAll('.cards')
 const pright = document.querySelectorAll('.project-right')
@@ -203,6 +204,7 @@ function applySectionAnimations(sectionIndex) {
         case 1:
             // 두 번째 섹션 애니메이션
             amain.forEach(amain => amain.classList.add("scrollAnimation4"));
+            abanner.forEach(abanner => abanner.classList.add("scrollAnimation10"));
             break;
         case 2:
             // 세 번째 섹션 애니메이션
@@ -523,27 +525,3 @@ function changeText4() {
         mac.classList.remove('window3');
     });
 }
-
-// if(currentSection === 0) {
-//     tape2.forEach(tape2 => {
-//         tape2.classList.add("scrollAnimation1");
-//     });
-//     tape3.forEach(tape3 => {
-//         tape3.classList.add("scrollAnimation2");
-//     });
-//     tv.forEach(tv => {
-//         tv.classList.add("scrollAnimation3");
-//     });
-// }
-// else if(currentSection === 1) {
-//     console.log('Section 1 reached');
-//     amain.forEach(amain => {
-//         console.log('Adding animation class to amain');
-//         amain.classList.add("scrollAnimation4");
-//     });
-// }
-// else if(currentSection === 2) {
-//     skill.forEach(skill => {
-//         skill.classList.add("scrollAnimation4");
-//     });
-// }
