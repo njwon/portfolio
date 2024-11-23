@@ -1313,7 +1313,7 @@ video {
     display: flex;
     
 }
-
+/*
 .icon:hover {
     box-shadow: none;
     transition: 1s;
@@ -1322,7 +1322,7 @@ video {
 .icon2:hover {
     box-shadow: none;
     transition: 1s;
-}
+} */
 
 .fa-solid1 {
     margin-top: 0.5rem;
