@@ -371,6 +371,9 @@ function changeText1() {
         right3.forEach(right3 => {
             right3.classList.remove('nones');
         });
+        mac.forEach(mac => {
+            mac.classList.add('nones');
+        });
     }
 
 }
@@ -428,6 +431,9 @@ function changeText2() {
         right3.forEach(right3 => {
             right3.classList.remove('nones');
         });
+        mac.forEach(mac => {
+            mac.classList.add('nones');
+        });
     }
 }
 
@@ -483,6 +489,9 @@ function changeText3() {
         });
         right3.forEach(right3 => {
             right3.classList.add('nones');
+        });
+        mac.forEach(mac => {
+            mac.classList.add('nones');
         });
     }
 }
