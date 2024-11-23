@@ -1305,7 +1305,7 @@ video {
     color: #161617;
 }
 
-#section5 a {
+.font-size {
     font-size: 2rem;
 }
 
@@ -1352,14 +1352,17 @@ video {
 
 .brands {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: center;
 }
 
 .fa-brands {
     color: #161617;
-    position: relative;
-    left: calc(50% - 14px);
-    top: calc(50% - 16.665px);
+    margin-left: calc(50% - 14px);
+    margin-top: calc(50% - 16.665px);
+}
+
+.git {
+    margin-left: 30px;
 }
 
 footer {
