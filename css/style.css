@@ -1358,8 +1358,8 @@ video {
 .fa-brands {
     color: #161617;
     position: relative;
-    left: calc(50% - 0.9rem);
-    top: calc(50% - 0.9rem);
+    left: calc(50% - 14px);
+    top: calc(50% - 16.665px);
 }
 
 footer {
