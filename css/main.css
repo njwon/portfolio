@@ -34,28 +34,6 @@
         left: calc(70% - 650px);
     }
 
-    @keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(70% - 650px);
-        }
-    }
-
-    @-webkit-keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(70% - 650px);
-        }
-    }
-
     .spread .card_box {
         margin-left: 70px;
     }
@@ -68,28 +46,6 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
-    }
-
-    @keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
-    }
-    
-    @-webkit-keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
     }
 
     .fa-hard-drive {
@@ -163,28 +119,6 @@
         left: calc(40vw - 240px)
     }
 
-    @keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(40vw - 240px);
-        }
-    }
-
-    @-webkit-keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(40vw - 240px);
-        }
-    }
-
     .card_box {
         width: 60px;
     }
@@ -206,28 +140,6 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
-    }
-
-    @keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
-    }
-    
-    @-webkit-keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
     }
 
     .fa-hard-drive {
@@ -300,30 +212,7 @@
     .wrap {
         left: calc(50vw - 170px);
         top: 8%;
-    }
-
-    @keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(50vw - 170px);
-        }
-    }
-
-    @-webkit-keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(50vw - 170px);
-        }
-    }
-    
+    }   
 
     .card_box {
         width: 110px;
@@ -342,10 +231,12 @@
 
     .nones {
         display: block;
+        background-image: none;
     }
 
     .non {
         display: none;
+        background-image: none;
     }
 
     .project-right {
@@ -356,7 +247,6 @@
 
     .window {
         background-color: #f5f5f5;
-        background-image: none;
     }
     .window1 {
         background-color: #f5f5f5;
@@ -374,28 +264,6 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
-    }
-
-    @keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
-    }
-    
-    @-webkit-keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
     }
 
     .fa-hard-drive {
@@ -478,28 +346,6 @@
         top: 8%;
     }
 
-    @keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(35vw - 120px);
-        }
-    }
-
-    @-webkit-keyframes scrollAnimation6 {
-        0% {
-            left: -50vw;
-        }
-    
-        100% {
-            
-            left: calc(35vw - 120px);
-        }
-    }
-
     .card_box {
         width: 100px;
         height: 150px;
@@ -527,7 +373,6 @@
 
     .window {
         background-color: #f5f5f5;
-        background-image: none;
     }
     .window1 {
         background-color: #f5f5f5;
@@ -545,28 +390,6 @@
     .project-left {
         margin-bottom: 10vh;
         height: 70vh;
-    }
-
-    @keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
-    }
-    
-    @-webkit-keyframes scrollAnimation8 {
-        0% {
-            margin-bottom: 100vh;
-        }
-    
-        100% {
-            
-            margin-bottom: 10vh;
-        }
     }
 
     .fa-hard-drive {
