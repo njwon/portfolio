@@ -930,21 +930,21 @@ video {
 
 @keyframes scrollAnimation5 {
     0% {
-        transform: translateX(-100vw);
+        margin-left: -100vw
     }
 
     100% {
-        transform: translateX(0vw);
+        margin-left: 0vw
     }
 }
 
 @-webkit-keyframes scrollAnimation5 {
     0% {
-        transform: translateX(-100vw);
+        margin-left: -100vw
     }
 
     100% {
-        transform: translateX(0vw);
+        margin-left: 0vw
     }
 }
 
