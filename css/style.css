@@ -1302,30 +1302,19 @@ video {
 
 .in-contact a {
     position: relative;
+    left: calc(50% - 16px);
     color: #161617;
 }
 
-.font-size {
+#section5 a {
     font-size: 2rem;
-}
-
-.icon2 {
-    display: flex;
-    
-}
-/*
-.icon:hover {
-    box-shadow: none;
     transition: 1s;
 }
 
-.icon2:hover {
-    box-shadow: none;
-    transition: 1s;
-} */
 
-.fa-solid1 {
-    margin-top: 0.5rem;
+#section5 a:hover {
+    font-size: 2.5rem;
+    transition: 1s;
 }
 
 .in-contact div {
@@ -1336,17 +1325,11 @@ video {
 
 .brands {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
 }
 
 .fa-brands {
     color: #161617;
-    margin-left: calc(50% - 14px);
-    margin-top: calc(50% - 16.665px);
-}
-
-.git {
-    margin-left: 30px;
 }
 
 footer {
