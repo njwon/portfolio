@@ -359,6 +359,7 @@
 
     .nones {
         display: block;
+        background-image: none;
     }
 
     .non {
