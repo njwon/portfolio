@@ -1317,7 +1317,7 @@ video {
     transition: 1s;
 }
 
-.in-contact div {
+.in-contact div, .icon-click{
     text-align: center;
     font-size: 20px;
     font-family: 'S-CoreDream-3Light', serif;
@@ -1330,6 +1330,10 @@ video {
 
 .fa-brands {
     color: #161617;
+}
+
+.icon-click{
+    font-size: 17px;
 }
 
 footer {
