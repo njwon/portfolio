@@ -33,7 +33,7 @@ a {
     position: absolute;
     left: 0;
     top: 0;
-    z-index: 10002;
+    z-index: 10001;
 }
 
 .noise {
@@ -830,6 +830,23 @@ video {
     word-break: break-all;
     --container-width: 100%;
     line-height: 1.5;
+}
+
+.aboutangel1 {
+    width: 25%;
+    position: absolute;
+    top: 22%;
+    left: -12%;
+    rotate: -30deg;
+}
+
+.aboutangel2 {
+    width: 25%;
+    position: absolute;
+    top: 50%;
+    right: -13%;
+    rotate: 16deg;
+    transform: scaleX(-1);
 }
 
 .tr-div-inner strong {
