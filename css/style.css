@@ -178,7 +178,7 @@ a {
 
 .load {
     font-family: 'PartialSansKR-Regular', serif;
-    pointer-events: auto;
+    pointer-events: none;
     width: 100vw;
     height: 100vh;
     display: flex;
