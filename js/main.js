@@ -63,11 +63,16 @@ window.addEventListener('load', () => {
     // 로딩 완료 후 로더 사라지기
     load.style.opacity = '0'; // 투명도 변경
     load.style.zIndex = '10003';
+    load.style.backgroundColor = '#dbe3e311';
 
     setTimeout(() => {
         load.style.zIndex = '-1'; // z-index 변경
         load.style.display = 'none'; // 로더 숨기기
     }, 10000); // 애니메이션 시간과 동일하게 설정
+});
+
+document.addEventListener("load", () => {
+    load.style.backgroundColor = '#dbe3e3';
 });
 
 // 방향키를 통해 currentSection 조절
