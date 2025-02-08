@@ -68,6 +68,7 @@ window.addEventListener('load', () => {
     setTimeout(() => {
         load.style.zIndex = '-1'; // z-index 변경
         load.style.display = 'none'; // 로더 숨기기
+        load.style.pointerEvents: 'none';
     }, 10000); // 애니메이션 시간과 동일하게 설정
 });
 
