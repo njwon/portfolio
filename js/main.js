@@ -63,6 +63,7 @@ window.addEventListener('load', () => {
     // 로딩 완료 후 로더 사라지기
     load.style.opacity = '0'; // 투명도 변경
     load.style.zIndex = '10003';
+    load.style.pointerEvents: 'auto';
 
     setTimeout(() => {
         load.style.zIndex = '-1'; // z-index 변경
