@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>포식자-피식자 시뮬레이션</title>
+  <title>자연선택 시뮬레이션</title>
   <link rel="icon" href="img/project/select.png" />
   <style>
     h1 {
@@ -30,6 +30,9 @@
 
 <body>
   <h1>자연선택 시뮬레이터</h1>
+    <div class="predector-set">
+    <a href="natural_selection_explanation.html">자연선택 프로젝트에 대해..</a>
+  </div>
   <div class="outside">
     <canvas id="canvas" width="1000" height="800"></canvas>
   </div>
@@ -40,9 +43,6 @@
   <div class="predector-set">
     <button onclick="changePredatorSpeed(true);" class="predator-plus">포식자 속도 +</button>
     <button onclick="changePredatorSpeed(false);" class="predator-minus">포식자 속도 -</button>
-  </div>
-  <div class="predector-set">
-    <a href="natural_selection_explanation.html">자연선택 프로젝트에 대해..</a>
   </div>
   <script>
     // ===================================================================================
