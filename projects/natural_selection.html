@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>포식자-피식자 시뮬레이션</title>
+  <style>
+    h1 {
+      text-align: center;
+    }
+
+    .outside {
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      border: 1px solid black;
+    }
+
+    .predector-set {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      padding-top: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>자연선택 시뮬레이터</h1>
+  <div class="outside">
+    <canvas id="canvas" width="1000" height="800"></canvas>
+  </div>
+  <div class="predector-set">
+    <button onclick="changePredatorSize(true);" class="predator-plus">포식자 사이즈 +</button>
+    <button onclick="changePredatorSize(false);" class="predator-minus">포식자 사이즈 -</button>
+  </div>
+  <div class="predector-set">
+    <button onclick="changePredatorSpeed(true);" class="predator-plus">포식자 속도 +</button>
+    <button onclick="changePredatorSpeed(false);" class="predator-minus">포식자 속도 -</button>
+  </div>
+  <script>
+    // ===================================================================================
+    // 초기 설정: 캔버스, 객체 배열, 돌연변이 확률 등 기본 변수를 설정합니다.
+    // ===================================================================================
+    const canvas = document.querySelector("canvas");
+    const context = canvas.getContext("2d");
+    const preyList = []; // 피식자(파란색) 객체를 담을 배열
+    const predatorList = []; // 포식자(빨간색) 객체를 담을 배열
+    let mutationRate = 0.1; // 돌연변이 확률, 10%로 시작
+
+    // 10초마다 돌연변이 확률을 10배씩 감소시킵니다. (최소 0.001)
+    setInterval(() => {
+      mutationRate = Math.max(0.001, mutationRate / 10);
+    }, 10000);
+
+
+    // ===================================================================================
+    // 피식자(Prey) 클래스 정의
+    // ===================================================================================
+    class Prey {
+      constructor(x, y, radius) {
+        this.x = x; // x 좌표
+        this.y = y; // y 좌표
+        this.radius = radius; // 반지름 (크기)
+        this.angle = Math.random() * 2 * Math.PI; // 이동 방향 (랜덤)
+        this.speed = 10; // 이동 속도
+      }
+
+      // 피식자를 그리고, 움직이고, 번식시키는 함수
+      draw() {
+        // 1. 이동 로직
+        this.angle = Math.random() * 2 * Math.PI; // 매 프레임마다 새로운 방향으로
+        const direction = Math.random() > 0.5 ? 1 : -1; // 방향 전환
+        this.x += direction * Math.cos(this.angle) * this.speed;
+        this.y += direction * Math.sin(this.angle) * this.speed;
+
+        // 캔버스 경계를 벗어나지 않도록 위치를 조정
+        this.x = Math.min(canvas.width - this.radius, Math.max(this.radius, this.x));
+        this.y = Math.min(canvas.height - this.radius, Math.max(this.radius, this.y));
+
+        // 2. 그리기 로직
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        context.fillStyle = "blue";
+        context.fill();
+
+        // 3. 번식 로직
+        // 피식자 개체 수가 10,000마리 미만이고, 90% 확률로 번식
+        if (preyList.length < 10000 && Math.random() > 0.1) {
+          // 자신과 똑같은 자손을 복제
+          preyList.push(new Prey(this.x, this.y, this.radius));
+
+          // 낮은 확률(mutationRate)로 돌연변이 발생
+          if (Math.random() < mutationRate) {
+            const mutatedRadius = 1 + Math.random() * 100; // 1~101 사이의 랜덤 크기
+            preyList.push(new Prey(this.x, this.y, mutatedRadius));
+          }
+        }
+      }
+    }
+
+    // ===================================================================================
+    // 포식자(Predator) 클래스 정의
+    // ===================================================================================
+    class Predator {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 20; // 포식자 크기는 20으로 고정
+        this.speedX = (Math.random() - 0.5) * 20; // x축 이동속도
+        this.speedY = (Math.random() - 0.5) * 20; // y축 이동속도
+      }
+
+      // 포식자를 그리고 움직이는 함수
+      draw() {
+        // 1. 이동 로직
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        // 2. 벽에 부딪히면 튕겨나오도록 처리 (벽 끼임 방지)
+        if (this.x < this.radius) {
+          this.speedX *= -1;
+          this.x = this.radius; // 왼쪽 벽 안으로 밀어넣기
+        } else if (this.x > canvas.width - this.radius) {
+          this.speedX *= -1;
+          this.x = canvas.width - this.radius; // 오른쪽 벽 안으로 밀어넣기
+        }
+
+        if (this.y < this.radius) {
+          this.speedY *= -1;
+          this.y = this.radius; // 위쪽 벽 안으로 밀어넣기
+        } else if (this.y > canvas.height - this.radius) {
+          this.speedY *= -1;
+          this.y = canvas.height - this.radius; // 아래쪽 벽 안으로 밀어넣기
+        }
+
+        // 3. 그리기 로직
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        context.fillStyle = "red";
+        context.fill();
+      }
+
+      // 피식자와의 충돌을 감지하는 함수
+      collidesWith(prey) {
+        const distance = Math.hypot(this.x - prey.x, this.y - prey.y);
+        return distance < this.radius + prey.radius;
+      }
+    }
+
+    // ===================================================================================
+    // 안전지대 관련 함수
+    // ===================================================================================
+    const safeZone = { x: 500, y: 400, radius: 100 };
+
+    // 안전지대를 그리는 함수
+    function drawSafeZone() {
+      context.beginPath();
+      context.arc(safeZone.x, safeZone.y, safeZone.radius, 0, 2 * Math.PI);
+      context.fillStyle = "rgba(0, 255, 0, 0.5)"; // 반투명 초록색
+      context.fill();
+    }
+
+    // 특정 피식자가 안전지대 안에 있는지 확인하는 함수
+    function isInSafeZone(prey) {
+      const distance = Math.hypot(prey.x - safeZone.x, prey.y - safeZone.y);
+      return distance < safeZone.radius;
+    }
+
+
+    // ===================================================================================
+    // 메인 애니메이션 루프
+    // ===================================================================================
+    function gameLoop() {
+      // 1. 매 프레임마다 캔버스를 깨끗하게 지웁니다.
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 2. 모든 피식자를 그리고 움직입니다.
+      preyList.forEach(prey => prey.draw());
+
+      // 3. 모든 포식자를 그리고, 피식자와의 충돌을 확인합니다.
+      predatorList.forEach(predator => {
+        predator.draw();
+
+        // 배열을 역순으로 순회해야 삭제 시 문제가 발생하지 않습니다.
+        for (let i = preyList.length - 1; i >= 0; i--) {
+          const prey = preyList[i];
+          // 포식자와 피식자가 부딪혔고, 피식자가 안전지대 밖에 있다면
+          if (predator.collidesWith(prey) && !isInSafeZone(prey)) {
+            preyList.splice(i, 1); // 피식자 배열에서 제거
+          }
+        }
+      });
+
+      // 4. 안전지대를 그립니다.
+      drawSafeZone();
+
+      // 5. 다음 프레임을 요청하여 애니메이션을 계속합니다.
+      requestAnimationFrame(gameLoop);
+    }
+
+    function changePredatorSize(bool) {
+      if (bool) {
+        for (let i = 0; i < 6; i++) {
+          predatorList[i].radius += 5;
+        }
+      }else if (!bool) {
+          for (let i = 0; i < 6; i++) {
+            if(predatorList[i].radius!=5){
+              predatorList[i].radius -= 5;
+            }
+          }
+        }
+      }
+
+    function changePredatorSpeed(bool) {
+      if (bool) {
+        for (let i = 0; i < 6; i++) {
+          predatorList[i].speedX *= 1.2;
+          predatorList[i].speedY *= 1.2;
+        }
+      }else if (!bool) {
+          for (let i = 0; i < 6; i++) {
+            predatorList[i].speedX *= 0.8;
+            predatorList[i].speedY *= 0.8;
+          }
+        }
+      }
+
+      // ===================================================================================
+      // 시뮬레이션 시작
+      // ===================================================================================
+      function initialize() {
+        // 시작할 때 피식자 1마리를 무작위 위치에 생성
+        preyList.push(new Prey(Math.random() * canvas.width, Math.random() * canvas.height, 10));
+
+        // 포식자 6마리를 무작위 위치에 생성
+        for (let i = 0; i < 6; i++) {
+          predatorList.push(new Predator(Math.random() * canvas.width, Math.random() * canvas.height));
+        }
+      }
+
+      initialize(); // 시뮬레이션 초기화
+      gameLoop(); // 게임 루프 시작
+  </script>
+</body>
+
+</html>
