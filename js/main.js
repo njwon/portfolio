@@ -32,8 +32,32 @@ const nav3 = document.querySelectorAll('.nav3')
 const mac = document.querySelectorAll('.mac')
 const project_left = document.querySelectorAll('.project-left')
 
+
+const cursorPointed = document.querySelector('.cursor');
+
 const width = window.innerWidth;
 
+if (cursorPointed) {
+    const moveCursor = (e) => {
+        const mouseY = e.clientY;
+        const mouseX = e.clientX;
+        cursorPointed.style.left = `${mouseX}px`;
+        cursorPointed.style.top = `${mouseY}px`;
+    };
+
+    const updateCursorVisibility = () => {
+        if (window.innerWidth > 1279) {
+            cursorPointed.style.display = 'block';
+            window.addEventListener('mousemove', moveCursor);
+        } else {
+            cursorPointed.style.display = 'none';
+            window.removeEventListener('mousemove', moveCursor); // 크기 조정 시 이벤트 제거
+        }
+    };
+
+    updateCursorVisibility(); // 처음 로드 시 한 번 호출
+    window.addEventListener('resize', updateCursorVisibility); // 윈도우 크기 변경 시 호출
+}
 
 window.addEventListener('load', () => {
     // 로딩 완료 후 로더 사라지기
