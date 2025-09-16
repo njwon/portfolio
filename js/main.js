@@ -29,7 +29,7 @@ const right3 = document.querySelectorAll('.right3')
 const nav1 = document.querySelectorAll('.nav1')
 const nav2 = document.querySelectorAll('.nav2')
 const nav3 = document.querySelectorAll('.nav3')
-const mac = document.querySelectorAll('.mac')
+const mac = document.querySelector('.mac')
 const project_left = document.querySelectorAll('.project-left')
 
 
@@ -366,19 +366,26 @@ function changeText1() {
             nav3.classList.add('none');
         });
     }
-    else if(window.innerWidth < 767) {
-        right1.forEach(right1 => {
-            right1.classList.add('nones');
+    else if(window.innerWidth <= 767) {
+        // right1.forEach(right1 => {
+        //     right1.classList.add('nones');
+        // });
+        // right2.forEach(right2 => {
+        //     right2.classList.remove('nones');
+        // });
+        // right3.forEach(right3 => {
+        //     right3.classList.remove('nones');
+        // });
+        potato.forEach(potato => {
+            potato.classList.remove('none');
         });
-        right2.forEach(right2 => {
-            right2.classList.remove('nones');
+        c.forEach(c => {
+            c.classList.add('none');
         });
-        right3.forEach(right3 => {
-            right3.classList.remove('nones');
+        py.forEach(py => {
+            py.classList.add('none');
         });
-        mac.forEach(mac => {
-            mac.classList.add('nones');
-        });
+        mac.style.backgroundImage = 'none';
     }
 
 }
@@ -425,20 +432,26 @@ function changeText2() {
             mac.classList.remove('window3');
         });
     }
-
-    else if(window.innerWidth < 767) {
-        right1.forEach(right1 => {
-            right1.classList.remove('nones');
+    else if(window.innerWidth <= 767) {
+        // right1.forEach(right1 => {
+        //     right1.classList.remove('nones');
+        // });
+        // right2.forEach(right2 => {
+        //     right2.classList.add('nones');
+        // });
+        // right3.forEach(right3 => {
+        //     right3.classList.remove('nones');
+        // });
+        potato.forEach(potato => {
+            potato.classList.add('none');
         });
-        right2.forEach(right2 => {
-            right2.classList.add('nones');
+        c.forEach(c => {
+            c.classList.remove('none');
         });
-        right3.forEach(right3 => {
-            right3.classList.remove('nones');
+        py.forEach(py => {
+            py.classList.add('none');
         });
-        mac.forEach(mac => {
-            mac.classList.add('nones');
-        });
+        mac.style.backgroundImage = 'none';
     }
 }
 
@@ -485,19 +498,26 @@ function changeText3() {
         });
     }
 
-    else if(window.innerWidth < 767) {
-        right1.forEach(right1 => {
-            right1.classList.remove('nones');
+    else if(window.innerWidth <= 767) {
+        // right1.forEach(right1 => {
+        //     right1.classList.remove('nones');
+        // });
+        // right2.forEach(right2 => {
+        //     right2.classList.remove('nones');
+        // });
+        // right3.forEach(right3 => {
+        //     right3.classList.add('nones');
+        // });
+        potato.forEach(potato => {
+            potato.classList.add('none');
         });
-        right2.forEach(right2 => {
-            right2.classList.remove('nones');
+        c.forEach(c => {
+            c.classList.add('none');
         });
-        right3.forEach(right3 => {
-            right3.classList.add('nones');
+        py.forEach(py => {
+            py.classList.remove('none');
         });
-        mac.forEach(mac => {
-            mac.classList.add('nones');
-        });
+        mac.style.backgroundImage = 'none';
     }
 }
 
