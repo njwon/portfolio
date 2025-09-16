@@ -23,6 +23,9 @@ const Click = 0
 const potato = document.querySelectorAll('.potato')
 const c = document.querySelectorAll('.c')
 const py = document.querySelectorAll('.python')
+const potato1 = document.querySelectorAll('.potato1')
+const c1 = document.querySelectorAll('.c1')
+const py1 = document.querySelectorAll('.python1')
 const right1 = document.querySelectorAll('.right1')
 const right2 = document.querySelectorAll('.right2')
 const right3 = document.querySelectorAll('.right3')
@@ -326,18 +329,10 @@ const onTouchMove = (event) => {
 
 function changeText1() {
     if (window.innerWidth > 767) {
-        mac.forEach(mac => {
             mac.classList.remove('window');
-        });
-        mac.forEach(mac => {
             mac.classList.add('window1');
-        });
-        mac.forEach(mac => {
             mac.classList.remove('window2');
-        });
-        mac.forEach(mac => {
             mac.classList.remove('window3');
-        });
         project_left.forEach(project_left => {
             project_left.classList.remove('black');
         });
@@ -376,14 +371,14 @@ function changeText1() {
         // right3.forEach(right3 => {
         //     right3.classList.remove('nones');
         // });
-        potato.forEach(potato => {
-            potato.classList.remove('none');
+        potato1.forEach(potato => {
+            potato1.classList.remove('none');
         });
-        c.forEach(c => {
-            c.classList.add('none');
+        c1.forEach(c => {
+            c1.classList.add('none');
         });
-        py.forEach(py => {
-            py.classList.add('none');
+        py1.forEach(py => {
+            py1.classList.add('none');
         });
         mac.style.backgroundImage = 'none';
     }
@@ -392,9 +387,7 @@ function changeText1() {
 
 function changeText2() {
     if (window.innerWidth > 767) {
-        mac.forEach(mac => {
-            mac.classList.remove('window');
-        });
+        mac.classList.remove('window');
         project_left.forEach(project_left => {
             project_left.classList.remove('black');
         });
@@ -408,9 +401,7 @@ function changeText2() {
         nav1.forEach(nav1 => {
             nav1.classList.add('none');
         });
-        mac.forEach(mac => {
             mac.classList.remove('window1');
-        });
         c.forEach(c => {
             c.classList.remove('none');
             c.classList.remove('nones');
@@ -418,9 +409,7 @@ function changeText2() {
         nav2.forEach(nav2 => {
             nav2.classList.remove('none');
         });
-        mac.forEach(mac => {
             mac.classList.add('window2');
-        });
         py.forEach(py => {
             py.classList.add('none');
             py.classList.add('nones');
@@ -428,9 +417,7 @@ function changeText2() {
         nav3.forEach(nav3 => {
             nav3.classList.add('none');
         });
-        mac.forEach(mac => {
             mac.classList.remove('window3');
-        });
     }
     else if(window.innerWidth <= 767) {
         // right1.forEach(right1 => {
@@ -442,14 +429,14 @@ function changeText2() {
         // right3.forEach(right3 => {
         //     right3.classList.remove('nones');
         // });
-        potato.forEach(potato => {
-            potato.classList.add('none');
+        potato1.forEach(potato => {
+            potato1.classList.add('none');
         });
-        c.forEach(c => {
-            c.classList.remove('none');
+        c1.forEach(c => {
+            c1.classList.remove('none');
         });
-        py.forEach(py => {
-            py.classList.add('none');
+        py1.forEach(py => {
+            py1.classList.add('none');
         });
         mac.style.backgroundImage = 'none';
     }
@@ -457,9 +444,7 @@ function changeText2() {
 
 function changeText3() {
     if (window.innerWidth > 767) {
-        mac.forEach(mac => {
             mac.classList.remove('window');
-        });
         project_left.forEach(project_left => {
             project_left.classList.remove('black');
         });
@@ -473,9 +458,7 @@ function changeText3() {
         nav1.forEach(nav1 => {
             nav1.classList.add('none');
         });
-        mac.forEach(mac => {
             mac.classList.remove('window1');
-        });
         c.forEach(c => {
             c.classList.add('none');
             c.classList.add('nones');
@@ -483,9 +466,7 @@ function changeText3() {
         nav2.forEach(nav2 => {
             nav2.classList.add('none');
         });
-        mac.forEach(mac => {
             mac.classList.remove('window2');
-        });
         py.forEach(py => {
             py.classList.remove('none');
             py.classList.remove('nones');
@@ -493,9 +474,7 @@ function changeText3() {
         nav3.forEach(nav3 => {
             nav3.classList.remove('none');
         });
-        mac.forEach(mac => {
             mac.classList.add('window3');
-        });
     }
 
     else if(window.innerWidth <= 767) {
@@ -508,13 +487,13 @@ function changeText3() {
         // right3.forEach(right3 => {
         //     right3.classList.add('nones');
         // });
-        potato.forEach(potato => {
+        potato1.forEach(potato => {
             potato.classList.add('none');
         });
-        c.forEach(c => {
+        c1.forEach(c => {
             c.classList.add('none');
         });
-        py.forEach(py => {
+        py1.forEach(py => {
             py.classList.remove('none');
         });
         mac.style.backgroundImage = 'none';
@@ -522,9 +501,7 @@ function changeText3() {
 }
 
 function changeText4() {
-    mac.forEach(mac => {
         mac.classList.add('window');
-    });
     project_left.forEach(project_left => {
         project_left.classList.add('black');
     });
@@ -537,25 +514,19 @@ function changeText4() {
     nav1.forEach(nav1 => {
         nav1.classList.add('none');
     });
-    mac.forEach(mac => {
         mac.classList.remove('window1');
-    });
     c.forEach(c => {
         c.classList.add('none');
     });
     nav2.forEach(nav2 => {
         nav2.classList.add('none');
     });
-    mac.forEach(mac => {
         mac.classList.remove('window2');
-    });
     py.forEach(py => {
         py.classList.add('none');
     });
     nav3.forEach(nav3 => {
         nav3.classList.add('none');
     });
-    mac.forEach(mac => {
         mac.classList.remove('window3');
-    });
 }
