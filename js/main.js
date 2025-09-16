@@ -372,13 +372,13 @@ function changeText1() {
         //     right3.classList.remove('nones');
         // });
         potato1.forEach(potato => {
-            potato1.classList.remove('none');
+            potato.classList.remove('none');
         });
         c1.forEach(c => {
-            c1.classList.add('none');
+            c.classList.add('none');
         });
         py1.forEach(py => {
-            py1.classList.add('none');
+            py.classList.add('none');
         });
         mac.style.backgroundImage = 'none';
     }
@@ -430,13 +430,13 @@ function changeText2() {
         //     right3.classList.remove('nones');
         // });
         potato1.forEach(potato => {
-            potato1.classList.add('none');
+            potato.classList.add('none');
         });
         c1.forEach(c => {
-            c1.classList.remove('none');
+            c.classList.remove('none');
         });
         py1.forEach(py => {
-            py1.classList.add('none');
+            py.classList.add('none');
         });
         mac.style.backgroundImage = 'none';
     }
