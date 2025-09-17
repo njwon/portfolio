@@ -1,90 +1,308 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 텍스트 RPG</title>
     <style>
+        @font-face {
+            font-family: 'rock';
+            src: url('./death_mohawk/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
+        }
+
+        * {
+            animation-duration: 0.01s;
+            animation-iteration-count: infinite;
+            animation-name: textflicker;
+            text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
+            animation-direction: alternate;
+            filter: blur(0.4px);
+        }
+
+        @keyframes textflicker {
+            from {
+                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+            }
+
+            to {
+                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+            }
+        }
+
+        .noise {
+            content: '';
+            position: absolute;
+            z-index: 10004;
+            height: 180%;
+            left: -40%;
+            top: -40%;
+            width: 180%;
+            pointer-events: none;
+            will-change: transform;
+            -webkit-transition: opacity 0.6s ease-out;
+            transition: opacity 0.6s ease-out;
+            -webkit-animation: noiseAnimation 1s steps(4) infinite;
+            animation: noiseAnimation 1s steps(4) infinite;
+            background-image: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/img/noise/noise2.webp');
+            filter: blur(2px);
+            opacity: 0.3;
+        }
+
+        @-webkit-keyframes noiseAnimation {
+            0% {
+                -webkit-transform: translate(0, 0);
+                transform: translate(0, 0);
+            }
+
+            10% {
+                -webkit-transform: translate(-5%, -5%);
+                transform: translate(-5%, -5%);
+            }
+
+            20% {
+                -webkit-transform: translate(-10%, 5%);
+                transform: translate(-10%, 5%);
+            }
+
+            30% {
+                -webkit-transform: translate(5%, -10%);
+                transform: translate(5%, -10%);
+            }
+
+            40% {
+                -webkit-transform: translate(-5%, 15%);
+                transform: translate(-5%, 15%);
+            }
+
+            50% {
+                -webkit-transform: translate(-10%, 5%);
+                transform: translate(-10%, 5%);
+            }
+
+            60% {
+                -webkit-transform: translate(15%, 0);
+                transform: translate(15%, 0);
+            }
+
+            70% {
+                -webkit-transform: translate(0, 10%);
+                transform: translate(0, 10%);
+            }
+
+            80% {
+                -webkit-transform: translate(-15%, 0);
+                transform: translate(-15%, 0);
+            }
+
+            90% {
+                -webkit-transform: translate(10%, 5%);
+                transform: translate(10%, 5%);
+            }
+
+            100% {
+                -webkit-transform: translate(5%, 0);
+                transform: translate(5%, 0);
+            }
+        }
+
+        @keyframes noiseAnimation {
+            0% {
+                -webkit-transform: translate(0, 0);
+                transform: translate(0, 0);
+            }
+
+            10% {
+                -webkit-transform: translate(-5%, -5%);
+                transform: translate(-5%, -5%);
+            }
+
+            20% {
+                -webkit-transform: translate(-10%, 5%);
+                transform: translate(-10%, 5%);
+            }
+
+            30% {
+                -webkit-transform: translate(5%, -10%);
+                transform: translate(5%, -10%);
+            }
+
+            40% {
+                -webkit-transform: translate(-5%, 15%);
+                transform: translate(-5%, 15%);
+            }
+
+            50% {
+                -webkit-transform: translate(-10%, 5%);
+                transform: translate(-10%, 5%);
+            }
+
+            60% {
+                -webkit-transform: translate(15%, 0);
+                transform: translate(15%, 0);
+            }
+
+            70% {
+                -webkit-transform: translate(0, 10%);
+                transform: translate(0, 10%);
+            }
+
+            80% {
+                -webkit-transform: translate(-15%, 0);
+                transform: translate(-15%, 0);
+            }
+
+            90% {
+                -webkit-transform: translate(10%, 5%);
+                transform: translate(10%, 5%);
+            }
+
+            100% {
+                -webkit-transform: translate(5%, 0);
+                transform: translate(5%, 0);
+            }
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            background: #111;
+            color: #eee;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            overflow: hidden;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
         }
-        #app-container {
-            width: 90%;
-            max-width: 700px;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            padding: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+
+        #start-container, #game-container {
+            width: 90vw;
+            height: 100vh
         }
-        h1 {
+
+        .title {
             text-align: center;
-            color: #4CAF50;
+            /* color: #4CAF50; */
+            letter-spacing: 4px;
+            font-family: 'rock', sans-serif;
+            font-size: 100px;
         }
+
         .input-group {
             margin-bottom: 1.5rem;
         }
+
         label {
             display: block;
             margin-bottom: 0.5rem;
-            color: #b0b0b0;
+            color: #eee;
         }
-        input[type="text"], input[type="password"], textarea {
+
+        input[type="text"],
+        input[type="password"],
+        textarea {
             width: 100%;
             padding: 0.8rem;
-            border: 1px solid #444;
-            background-color: #333;
-            color: #e0e0e0;
+            border: 0.5px dashed #eee;
+            background-color: #11111100;
+            color: #eee;
             border-radius: 4px;
             box-sizing: border-box;
+            animation-duration: 0.01s;
+            animation-iteration-count: infinite;
+            animation-name: boxflicker;
+            text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
+            animation-direction: alternate;
         }
+
+        @keyframes boxflicker {
+            0% {
+                box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+            }
+
+            25% {
+                box-shadow: inset 1px 0 0 #ea36af, inset -2px 0 0 #75fa69;
+                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+            }
+
+
+            50% {
+                box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+            }
+
+            100% {
+                box-shadow: inset 2px 0.5px 2px #ea36af, inset -1px -0.5px 2px #75fa69;
+                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+            }
+        }
+
         textarea {
             resize: vertical;
             min-height: 100px;
         }
+
         button {
             width: 100%;
             padding: 1rem;
-            background-color: #4CAF50;
-            color: white;
+            color: #111;;
             border: none;
             border-radius: 4px;
             font-size: 1.1rem;
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
         button:hover {
-            background-color: #45a049;
+            content: 'fight';
         }
+
         button:disabled {
-            background-color: #555;
             cursor: not-allowed;
         }
+
         #result-container {
             margin-top: 2rem;
-            background-color: #333;
             padding: 1.5rem;
             border-radius: 4px;
-            white-space: pre-wrap; /* To preserve formatting from the AI */
+            white-space: pre-wrap;
+            /* To preserve formatting from the AI */
             line-height: 1.6;
         }
+
         .loading {
             text-align: center;
             font-style: italic;
-            color: #888;
         }
     </style>
 </head>
+
 <body>
 
-    <div id="app-container">
-        <h1>AI 텍스트 RPG</h1>
+    <div class="noise"></div>
+    <div id="start-container">
+        <div class="title">TEXTRPG</div>
+
+        <div class="input-group">
+            <label for="char-name">캐릭터 이름</label>
+            <input type="text" id="char-name" placeholder="예: 용맹한 전사">
+        </div>
+
+        <div class="input-group">
+            <label for="char-setting">캐릭터 설정</label>
+            <textarea id="char-setting" placeholder="예: 불의 검을 사용하며, 고대 용을 물리친 경험이 있다."></textarea>
+        </div>
+
+        <button id="start-battle">전투 시작!</button>
+
+        <div id="result-container" style="display: none;"></div>
+    </div>
+    <div id="game-container">
+        <div class="title">TEXTRPG</div>
 
         <div class="input-group">
             <label for="char-name">캐릭터 이름</label>
@@ -131,13 +349,15 @@
         const resultContainer = document.getElementById('result-container');
         const charNameInput = document.getElementById('char-name');
         const charSettingInput = document.getElementById('char-setting');
-        
+
         let charName;
         let charSetting;
-        
+        let prompt = [];
+
         class Player {
-            constructor(name, hp, atk, plausible) { // 생성자
+            constructor(name, fiction, hp, atk, plausible) { // 생성자
                 this.name = name;
+                this.fiction = fiction;
                 this.hp = hp;
                 this.atk = atk;
                 this.plausible = plausible;
@@ -150,153 +370,40 @@
 
         const user = new Player("홍길동", 25);
         user.greet(); // 안녕하세요, 저는 홍길동입니다.
-        
-        const prompt = [`
-        당신은 텍스트 RPG의 게임 마스터입니다. 사용자가 만든 캐릭터로 능력치를 설정해주세요.
-        
-        # 캐릭터 정보
-        - 이름: ${charName}
-        - 설정: ${charSetting}
-        
-        # 능력치 종류
-        - 공격: 적을 공격할 때 적의 피가 주는 수치
-        - 체력: 모두 소진되면 사망하게 되는 수치
-        - 개연성: 플레이어의 설정을 정할때 적과의 싸움에서 이길 승리확률의 수치. 최대 100까지 있습니다.
-        
-        # 임무
-        1. 위 캐릭터 정보와 설정을 바탕으로, 공격과 체력을 정해주세요.
-        2. 위 캐릭터 정보와 설정에 따라 개연성을 최대한 무결성을 지키도록 객관적으로 정해주세요.
-        
-        # 출력 형식 (이 형식을 반드시 지켜주세요)
-        ((소괄호 안에 체력 수치를 숫자만 서술))
-        {(중괄호 안에 공격력 수치를 숫자만 서술)}
-        [(대괄호 안에 개연성 수치를 숫자만 서술)]
-        `,`
-        
-        `];
-        
-        startButton.addEventListener('click', async () => {
-            charName = charNameInput.value.trim();
-            charSetting = charSettingInput.value.trim();
-            if (!charName || !charSetting) {
-                alert('캐릭터 이름과 설정을 모두 입력해주세요.');
-                return;
-            }
 
-            // Disable button and show loading message
-            startButton.disabled = true;
-            startButton.textContent = 'AI가 이야기를 생성하는 중...';
-            resultContainer.style.display = 'block';
-            resultContainer.innerHTML = '<div class="loading">결과를 기다려주세요...</div>';
-
-            try {
-                const genAI = new GoogleGenerativeAI(apikey);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const result = await model.generateContent(prompt[0]);
-                const response = await result.response;
-                const text = response.text();
-                resultContainer.textContent = text;
-            } catch (error) {
-                console.error("Error:", error);
-                resultContainer.textContent = '오류가 발생했습니다. API 키가 유효한지, 인터넷 연결이 정상인지 확인해주세요. 자세한 내용은 콘솔(F12)을 확인하세요.';
-            } finally {
-                // Re-enable button
-                startButton.disabled = false;
-                startButton.textContent = '전투 시작!';
-            }
-        });
-    </script>
-
-</body>
-</html> 
-        <div class="input-group">
-            <label for="char-setting">캐릭터 설정</label>
-            <textarea id="char-setting" placeholder="예: 불의 검을 사용하며, 고대 용을 물리친 경험이 있다."></textarea>
-        </div>
-
-        <button id="start-battle">전투 시작!</button>
-
-        <div id="result-container" style="display: none;"></div>
-    </div>
-
-    <!-- Google AI SDK -->
-    <!-- const prompt = {`
-당신은 텍스트 RPG의 게임 마스터입니다. 사용자가 만든 캐릭터로 마왕과의 전투를 진행해주세요.
-
-# 캐릭터 정보
-- 이름: ${charName}
-- 설정: ${charSetting}
-
-# 상대
-- 이름: 마왕
-- 능력치: ATK 100, HP 100, MP 100
-
-# 임무
-1. 위 캐릭터 정보와 설정을 바탕으로, 마왕과의 전투 과정을 흥미진진한 단편 소설처럼 묘사해주세요.
-2. 전투의 결과(승리 또는 패배)를 결정해야 합니다. 캐릭터의 설정이 강력하다면 승리할 확률이 높고, 설정이 평범하다면 패배할 확률이 높습니다. 창의적이고 설득력 있는 결말을 만들어주세요.
-3. 전투 묘사 후, 결과를 명확하게 표시하고, 왜 그런 결과가 나왔는지 캐릭터의 설정과 연관지어 이유를 설명해주세요.
-
-# 출력 형식 (이 형식을 반드시 지켜주세요)
-((소괄호 안에 전투 과정을 소설처럼 서술))
-{[승리/패배]}
-[(대괄호 안에 결과에 대한 이유를 서술)]
-                `} -->
-    <script type="module">
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-
-        const apikey = 'AIzaSyAaDuZjDxxH0KKv1m3jBWSbp6N2MLZOy3c';
-        const startButton = document.getElementById('start-battle');
-        const resultContainer = document.getElementById('result-container');
-        const charNameInput = document.getElementById('char-name');
-        const charSettingInput = document.getElementById('char-setting');
-
-        const charName = charNameInput.value.trim();
-        const charSetting = charSettingInput.value.trim();
-        class Player {
-            constructor(name, hp, atk, plausible) { // 생성자
-                this.name = name;
-                this.hp = hp;
-                this.atk = atk;
-                this.plausible = plausible;
-            }
-
-            greet() { // 메서드
-                console.log(`안녕하세요, 저는 ${this.name}입니다.`);
-            }
+        function setPlayer(name, setting) {
+            charName = name.value.trim();
+            charSetting = setting.value.trim();
+            prompt = [`
+            당신은 텍스트 RPG의 게임 마스터입니다. 사용자가 만든 캐릭터로 능력치를 설정해주세요.
+            
+            # 캐릭터 정보
+            - 이름: ${charName}
+            - 설정: ${charSetting}
+            
+            # 능력치 종류
+            - 공격: 적을 공격할 때 적의 피가 주는 수치. 제한 없음.
+            - 체력: 모두 소진되면 사망하게 되는 수치. 제한 없음.
+            - 개연성: 플레이어의 설정을 정할때 적과의 싸움에서 이길 승리확률의 수치. 최대 100까지 있습니다.
+            
+            # 임무
+            1. 위 캐릭터 정보와 설정을 바탕으로, 공격과 체력을 정해주세요.
+            2. 위 캐릭터 정보와 설정에 따라 개연성을 최대한 무결성을 지키도록 객관적으로 정해주세요.
+            
+            # 출력 형식 (이 형식을 반드시 지켜주세요)
+            (소괄호 안에 체력 수치를 숫자만 서술)
+            {중괄호 안에 공격력 수치를 숫자만 서술}
+            [대괄호 안에 개연성 수치를 숫자만 서술]
+            `, `
+            
+            `];
         }
 
-        const user = new Person("홍길동", 25);
-        user.greet(); // 안녕하세요, 저는 홍길동입니다.
-        
         startButton.addEventListener('click', async () => {
-            if (!charName || !charSetting) {
-                alert('캐릭터 이름과 설정을 모두 입력해주세요.');
-                return;
-            }
-
-            // Disable button and show loading message
-            startButton.disabled = true;
-            startButton.textContent = 'AI가 이야기를 생성하는 중...';
-            resultContainer.style.display = 'block';
-            resultContainer.innerHTML = '<div class="loading">결과를 기다려주세요...</div>';
-
-            try {
-                const genAI = new GoogleGenerativeAI(apikey);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const text = response.text();
-                resultContainer.textContent = text;
-            } catch (error) {
-                console.error("Error:", error);
-                resultContainer.textContent = '오류가 발생했습니다. API 키가 유효한지, 인터넷 연결이 정상인지 확인해주세요. 자세한 내용은 콘솔(F12)을 확인하세요.';
-            } finally {
-                // Re-enable button
-                startButton.disabled = false;
-                startButton.textContent = '전투 시작!';
-            }
+            setPlayer(charNameInput, charSettingInput);
         });
     </script>
 
 </body>
-</html> 
+
+</html>
