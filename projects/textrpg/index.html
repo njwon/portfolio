@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 텍스트 RPG</title>
+    <title>DREAM RPG</title>
     <style>
         @font-face {
             font-family: 'rock';
-            src: url('font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
+            src: url('./death_mohawk/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
         }
 
         * {
-            animation-duration: 0.01s;
+            animation-duration: 0.1s;
             animation-iteration-count: infinite;
             animation-name: textflicker;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
@@ -33,7 +33,7 @@
         .noise {
             content: '';
             position: absolute;
-            z-index: 10004;
+            z-index: 1;
             height: 180%;
             left: -40%;
             top: -40%;
@@ -45,7 +45,7 @@
             -webkit-animation: noiseAnimation 1s steps(4) infinite;
             animation: noiseAnimation 1s steps(4) infinite;
             background-image: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/img/noise/noise2.webp');
-            filter: blur(2px);
+            filter: blur(1px);
             opacity: 0.3;
         }
 
@@ -178,7 +178,8 @@
             height: 100vh;
         }
 
-        #start-container, #game-container {
+        #start-container,
+        #game-container {
             width: 90vw;
             height: 100vh
         }
@@ -211,7 +212,7 @@
             color: #eee;
             border-radius: 4px;
             box-sizing: border-box;
-            animation-duration: 0.01s;
+            animation-duration: 0.1s;
             animation-iteration-count: infinite;
             animation-name: boxflicker;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
@@ -249,19 +250,25 @@
         button {
             width: 100%;
             padding: 1rem;
-            color: #111;;
+            color: #111;
             border: none;
             border-radius: 4px;
             font-size: 1.1rem;
             cursor: pointer;
             transition: background-color 0.3s;
+            animation-duration: 0.1s;
+            animation-iteration-count: infinite;
+            animation-name: boxflicker;
+            text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
+            animation-direction: alternate;
         }
 
         button:hover {
-            content: 'fight';
+            background-color: #9b9b9b;
         }
 
         button:disabled {
+            background-color: #9b9b9b;
             cursor: not-allowed;
         }
 
@@ -285,28 +292,29 @@
 
     <div class="noise"></div>
     <div id="start-container">
-        <div class="title">TEXTRPG</div>
+        <div class="title">DREAMRPG</div>
 
         <div class="input-group">
             <label for="char-name">캐릭터 이름</label>
-            <input type="text" id="char-name" placeholder="예: 용맹한 전사">
+            <input type="text" id="char-name">
         </div>
 
         <div class="input-group">
             <label for="char-setting">캐릭터 설정</label>
-            <textarea id="char-setting" placeholder="예: 불의 검을 사용하며, 고대 용을 물리친 경험이 있다."></textarea>
+            <textarea id="char-setting"></textarea>
         </div>
 
-        <button id="start-battle">전투 시작!</button>
-
-        <div id="result-container" style="display: none;"></div>
+        <button id="start-battle">몽상 시작!</button>
     </div>
-    <div id="game-container">
+    <div id="game-container" style="display: none;">
         <div class="title">TEXTRPG</div>
 
         <div class="input-group">
-            <label for="char-name">캐릭터 이름</label>
-            <input type="text" id="char-name" placeholder="예: 용맹한 전사">
+            <div>이름</div>
+            <div>개연성</div>
+            <div>체력</div>
+            <div>공격력</div>
+            <div>능력</div>
         </div>
 
         <div class="input-group">
@@ -346,21 +354,22 @@
 
         const apikey = 'AIzaSyAaDuZjDxxH0KKv1m3jBWSbp6N2MLZOy3c';
         const startButton = document.getElementById('start-battle');
-        const resultContainer = document.getElementById('result-container');
         const charNameInput = document.getElementById('char-name');
         const charSettingInput = document.getElementById('char-setting');
 
-        let charName;
-        let charSetting;
-        let prompt = [];
+        let player;
+        let playerState = [];
 
         class Player {
-            constructor(name, fiction, hp, atk, plausible) { // 생성자
+            constructor(name, fiction, hp, atk, plausible, ability, abilityAtk, abilityEffect) { // 생성자
                 this.name = name;
                 this.fiction = fiction;
                 this.hp = hp;
                 this.atk = atk;
                 this.plausible = plausible;
+                this.ability = ability;
+                this.abilityAtk = abilityAtk;
+                this.abilityEffect = abilityEffect;
             }
 
             greet() { // 메서드
@@ -368,42 +377,109 @@
             }
         }
 
-        const user = new Player("홍길동", 25);
-        user.greet(); // 안녕하세요, 저는 홍길동입니다.
+        // const user = new Player("홍길동", 25);
+        // user.greet();
 
-        function setPlayer(name, setting) {
-            charName = name.value.trim();
-            charSetting = setting.value.trim();
-            prompt = [`
-            당신은 텍스트 RPG의 게임 마스터입니다. 사용자가 만든 캐릭터로 능력치를 설정해주세요.
-            
-            # 캐릭터 정보
-            - 이름: ${charName}
-            - 설정: ${charSetting}
-            
-            # 능력치 종류
-            - 공격: 적을 공격할 때 적의 피가 주는 수치. 제한 없음.
-            - 체력: 모두 소진되면 사망하게 되는 수치. 제한 없음.
-            - 개연성: 플레이어의 설정을 정할때 적과의 싸움에서 이길 승리확률의 수치. 최대 100까지 있습니다.
-            
-            # 임무
-            1. 위 캐릭터 정보와 설정을 바탕으로, 공격과 체력을 정해주세요.
-            2. 위 캐릭터 정보와 설정에 따라 개연성을 최대한 무결성을 지키도록 객관적으로 정해주세요.
-            
-            # 출력 형식 (이 형식을 반드시 지켜주세요)
-            (소괄호 안에 체력 수치를 숫자만 서술)
-            {중괄호 안에 공격력 수치를 숫자만 서술}
-            [대괄호 안에 개연성 수치를 숫자만 서술]
-            `, `
-            
-            `];
+        class Game {
+            constructor(name, setting) {
+                this.charName = name.value.trim();
+                this.charSetting = setting.value.trim();
+                this.isRunning = false;
+                this.prompt;
+                this.genAI;
+                this.model;
+                this.result;
+                this.response;
+                this.text;
+                this.playerState = [];
+            }
+
+            prompt() {
+                this.prompt = [`
+                당신은 텍스트 RPG의 게임 마스터이자, 캐릭터 생성 심사관입니다. 입니다. 사용자가 만든 캐릭터로 능력치를 설정해주세요.
+                
+                # 캐릭터 정보
+                - 이름: ${this.charName}
+                - 설정: ${this.charSetting}
+                
+                # 능력치 종류
+                - 공격: 적을 공격할 때 적의 피가 주는 수치. 제한 없음.
+                - 체력: 모두 소진되면 사망하게 되는 수치. 제한 없음.
+                - 개연성: 플레이어의 설정을 정할때 적과의 싸움에서 이길 승리확률의 수치. 최대 100까지 있습니다. 단, 체력과 공격력 수치가 무한대일 경우 개연성 또한 무한대이다.
+                - 능력: 캐릭터의 회심의 일격, 이른바 필살기. 단 하나의 능력만 가질 수 있다.
+                
+                # 임무
+                1. 위 캐릭터 정보와 설정을 바탕으로, 공격과 체력을 정해주세요.
+                2. 위 캐릭터 정보와 설정에 따라 옆 예시의 형식을 참고해 설정을 한 문장으로 요약해주세요. (예) 한국의 고등학생, 창조신, 바다의 신, 지옥의 악마, 귀여운 강아지)
+                3. 플레이어가 만든 캐릭터 이름과 설정을 보고, 다음 조건에 따라 캐릭터의 "개연성 점수"를 0~100 사이에서 평가하세요.( 현실적이고 설득력 있는 설정일수록 낮은 점수를 줍니다., 너무 과장되거나 전지전능한 설정일수록 높은 점수를 줍니다., "강력하지만 합리적인 약점"이 있으면 감산점을 줍니다.)
+                4. 위 캐릭터 정보와 설정에 따라 능력을 객관적으로 정해주세요. 능력은 능력명, 공격력, 효과를 한번에 같이 서술해야합니다. (단, 효과를 서술할 때 문장에는 문자열과 공백만 존재해야 함.)
+                
+                # 출력 형식 (이 형식을 반드시 지켜주세요)
+                (소괄호 안에 체력 수치를 숫자만 서술)
+                {중괄호 안에 공격력 수치를 숫자만 서술}
+                [대괄호 안에 개연성 수치를 숫자만 서술]
+                -하이픈 기호 안에 설정을 텍스트로 서술-
+                *아스테리스크 기호 안에 능력명, 공격력, 효과를 각각 문자열, 숫자, 문자열로 서술*
+                
+                만약, 임무를 수행할 수 없을 정도로 주어진 정보가 훼손되거나 이상하다면, "캐릭터 정보를 다시 입력해주세요."라는 텍스트만 출력할 것.
+                `, `
+                
+                `];
+            }
+
+            async sendToAi() {
+                if (this.isRunning) return 0;
+                if (!this.charName || !this.charSetting) {
+                    alert('캐릭터 이름과 설정을 모두 입력해주세요.');
+                    return;
+                }
+
+                this.isRunning = true;
+                startButton.disabled = true;
+
+                try {
+                    this.genAI = new GoogleGenerativeAI(apikey);
+                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+                    this.result = await this.model.generateContent(this.prompt[0]);
+                    this.response = await this.result.response;
+                    this.text = this.response.text();
+
+                    try{
+                        this.playerState[0] = this.text.match(/-(.*?)-/s)[1].trim(); // 설정
+                        this.playerState[1] = this.text.match(/\((.*?)\)/)[1]; // 체력
+                        this.playerState[2] = this.text.match(/\{(.*?)\}/)[1]; // 공격력
+                        this.playerState[3] = this.text.match(/\[(.*?)\]/)[1]; // 개연성
+                        this.playerState[4] = (this.text.match(/\*(.*?)\*/s)[1].trim()).split(','); // 능력
+                    } catch(error) {
+                        if(text="캐릭터 정보를 다시 입력해주세요."){
+                            
+                        }
+                    }
+
+                    console.log(this.playerState);
+                    return [this.playerState[0], this.playerState[1], this.playerState[2], this.playerState[3], this.playerState[4]];
+                } catch (error) {
+                    if(error)
+                    console.error("Error:", error);
+                    resultContainer.textContent = '오류가 발생했습니다. API 키가 유효한지, 인터넷 연결이 정상인지 확인해주세요. 자세한 내용은 콘솔(F12)을 확인하세요.';
+                } finally {
+                    this.isRunning = false;
+                    startButton.disabled = false;
+                    startButton.textContent = '전투 시작!';
+                }
+            }
+
         }
 
         startButton.addEventListener('click', async () => {
-            setPlayer(charNameInput, charSettingInput);
+            const game = new Game(charNameInput, charSettingInput);
+            game.prompt();
+            playerState = await game.sendToAi();
+            player = new Player(charNameInput.value, playerState[0], playerState[1], playerState[2], playerState[3], playerState[4][0], playerState[4][1], playerState[4][2]);
+            console.log(playerState)
+            console.log(player)
         });
     </script>
-
 </body>
 
 </html>
