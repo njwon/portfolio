@@ -12,6 +12,7 @@
         }
 
         body {
+
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #111;
             color: #eee;
@@ -240,12 +241,16 @@
         }
 
         textarea {
-            resize: vertical;
+            resize: none;
             min-height: 100px;
         }
 
-        button {
-            width: 100%;
+        input[type="radio"] {
+            display: none;
+        }
+
+        button,
+        .radio-label {
             padding: 1rem;
             background-color: #eee;
             color: #111;
@@ -259,6 +264,28 @@
             animation-name: boxflicker;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
             animation-direction: alternate;
+        }
+
+        .ai-name {
+            display: flex;
+            justify-content: space-evenly;
+            flex-wrap: wrap;
+            flex-direction: row;
+        }
+
+        .radio-label {
+            font-size: 15px;
+            text-align: center;
+            width: 190px;
+        }
+
+        .radio-label:has(input[type="radio"]:checked) {
+            background-color: #ffffff00;
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
         }
 
         button:hover {
@@ -299,12 +326,13 @@
 
         <div class="input-group">
             <label for="char-setting">캐릭터 설정</label>
-            <textarea id="char-setting"></textarea>
+            <textarea maxlength="200" rows="4" cols="50" id="char-setting"></textarea>
         </div>
 
 
         <div class="input-group">
             <label for="ai-name">사고 방식 선택</label>
+            <!-- <input type="checkbox">
             <select name="models" id="models">
                 <option value="auto" selected>자동(기본)</option>
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash(추천)</option>
@@ -312,7 +340,33 @@
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                 <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite(추천안함)</option>
                 <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite(추천안함)</option>
-            </select>
+            </select> -->
+            <div class="ai-name">
+                <label for="auto" class="radio-label">
+                    <input type="radio" id="auto" name="models" value="auto" checked />
+                    자동(기본)</label>
+                <label for="2.5-flash" class="radio-label">
+                    <input type="radio" id="2.5-flash" name="models" value="gemini-2.5-flash" />
+                    Gemini 2.5 Flash(추천)
+                </label>
+
+                <label for="2.0-flash" class="radio-label">
+                    <input type="radio" id="2.0-flash" name="models" value="gemini-2.0-flash" />
+                    Gemini 2.0 Flash
+                </label>
+                <label for="2.5-pro" class="radio-label">
+                    <input type="radio" id="2.5-pro" name="models" value="gemini-2.5-pro" />
+                    Gemini 2.5 Pro
+                </label>
+                <label for="2.5-flash-lite" class="radio-label">
+                    <input type="radio" id="2.5-flash-lite" name="models" value="gemini-2.5-flash-lite" />
+                    Gemini 2.5 Flash-Lite
+                </label>
+                <label for="2.0-flash-lite" class="radio-label">
+                    <input type="radio" id="2.0-flash-lite" name="models" value="gemini-2.0-flash-lite" />
+                    Gemini 2.0 Flash-Lite
+                </label>
+            </div>
         </div>
 
         <button id="start-battle">몽상 시작!</button>
@@ -359,9 +413,11 @@
         const startButton = document.getElementById('start-battle');
         const charNameInput = document.getElementById('char-name');
         const charSettingInput = document.getElementById('char-setting');
-        const selectModelInput = document.getElementById('models');
+        const checkedModelInput = document.querySelector('input[name="models"]:checked');
+        // const selectModelInput = document.getElementById('models');
 
         let selectValue;
+        let game;
         let player;
         let playerState = [];
 
@@ -438,46 +494,26 @@
             }
 
             selectAi() {
-                switch (selectValue) {
-                    case 'gemini-2.5-flash':  // if (x === 'value1')
+                if (selectValue == 'auto') {
+                    try {
                         this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                        break;
-
-                    case 'gemini-2.0-flash':  // if (x === 'value1')
-                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-                        break;
-
-                    case 'gemini-2.5-pro':  // if (x === 'value1')
-                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-                        break;
-
-                    case 'gemini-2.5-flash-lite':  // if (x === 'value1')
-                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-                        break;
-
-                    case 'gemini-2.0-flash-lite':  // if (x === 'value1')
-                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-                        break;
-
-                    default:
+                    } catch {
                         try {
-                            this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });   
+                            this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                         } catch {
-                            try{
-                                this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                            try {
+                                this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
                             } catch {
-                                try{
-                                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+                                try {
+                                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
                                 } catch {
-                                    try{
-                                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-                                    } catch {
-                                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-                                    }
+                                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
                                 }
                             }
                         }
-                        break;
+                    }
+                } else if (selectValue) {
+                    this.model = this.genAI.getGenerativeModel({ model: selectValue });
                 }
             }
 
@@ -494,6 +530,7 @@
 
                 try {
                     this.genAI = new GoogleGenerativeAI(apikey);
+                    await this.selectAi();
                     this.result = await this.model.generateContent(this.prompt[0]);
                     this.response = await this.result.response;
                     this.text = this.response.text();
@@ -505,37 +542,13 @@
                         this.playerState[3] = this.text.match(/\[(.*?)\]/)[1]; // 개연성
                         this.playerState[4] = (this.text.match(/\*(.*?)\*/s)[1].trim()).split(','); // 능력
                     } catch (error) {
-                        if (text == "001") {
-                            function runFor3Seconds() {
-                                startButton.textContent = '캐릭터 정보를 다시 입력해주세요.';
-                                startButton.style.backgroundColor = 'red';
-                                return new Promise((resolve) => {
-                                    setTimeout(() => {
-                                        restoreBtn();
-                                    }, 3000);
-                                });
-                            }
-                        } else if(selectValue == 'auto') {
-                            function runFor3Seconds() {
-                                startButton.textContent = '모든 모델이 작동하지 않아 기본을 사용할 수 없습니다.';
-                                startButton.style.backgroundColor = 'red';
-                                return new Promise((resolve) => {
-                                    setTimeout(() => {
-                                        restoreBtn();
-                                    }, 3000);
-                                });
-                            }
+                        if (this.text == "001") {
+                            alert('주어진 정보가 충분치 않거나 이해할 수 없습니다. 캐릭터 정보를 다시 입력해주세요.');
+                        } else if (selectValue == 'auto') {
+                            alert('모든 모델이 작동하지 않아 기본을 사용할 수 없습니다. 잠시 후에 다시 이용하여 주세요.');
                         } else {
-                            function runFor3Seconds() {
-                                startButton.textContent = '다른 모델로 다시 시도해주세요.';
-                                startButton.style.backgroundColor = 'red';
-                                return new Promise((resolve) => {
-                                    setTimeout(() => {
-                                        restoreBtn();
-                                    }, 3000);
-                            });
+                            alert('다른 모델로 다시 시도해주세요. 만약 모든 모델을 시도하였다면 잠시 후에 다시 이용하여 주세요.');
                         }
-                    }
                     }
                     console.log(this.playerState);
                     return [this.playerState[0], this.playerState[1], this.playerState[2], this.playerState[3], this.playerState[4]];
@@ -552,8 +565,8 @@
         }
 
         startButton.addEventListener('click', async () => {
-            selectValue = selectModelInput.value;
-            const game = new Game(charNameInput, charSettingInput);
+            selectValue = checkedModelInput?.value;
+            game = new Game(charNameInput, charSettingInput);
             game.prompt();
             playerState = await game.sendToAi();
             player = new Player(charNameInput.value, playerState[0], playerState[1], playerState[2], playerState[3], playerState[4][0], playerState[4][1], playerState[4][2]);
