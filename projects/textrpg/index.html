@@ -8,7 +8,7 @@
     <style>
         @font-face {
             font-family: 'rock';
-            src: url('./font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
+            src: url('https://github.com/njwon/portfolio/raw/refs/heads/main/projects/textrpg/font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
         }
 
         body {
@@ -406,6 +406,39 @@
 {[승리/패배]}
 [(대괄호 안에 결과에 대한 이유를 서술)]
                 `} -->
+                <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/build/crypto-js.js"></script>
+    <script type="module">
+
+    // 암호화 함수 정의
+    function encrypt(data, key) {
+        const dataWA = enc.Utf8.parse(data); // 데이터를 Utf8로 인코딩
+        const keyWA = enc.Utf8.parse(key); // 키를 Utf8로 인코딩
+        const ivWA = AES.lib.WordArray.random(16); // 무작위 IV 생성
+
+        const cipher = AES.encrypt(dataWA, keyWA, { iv: ivWA }); // AES 암호화
+        return cipher.ciphertext.toString(enc.Base64url); // Base64url로 반환
+    }
+
+    // 복호화 함수 정의
+    function decrypt(encData, key) {
+        const keyWA = enc.Utf8.parse(key); // 키를 Utf8로 인코딩
+        const ivWA = AES.lib.WordArray.random(16); // 임시 IV 설정 (해당 예시에서는 필요 없음)
+
+        // Base64url로 암호문을 복호화
+        const cipher = AES.decrypt(encData, keyWA, { iv: ivWA });
+        return cipher.toString(enc.Utf8); // 복호화된 데이터를 Utf8로 반환
+    }
+
+    // 예시 데이터 암호화
+    const key = '노정원짱짱';
+    const data = 'AIzaSyAaDuZjDxxH0KKv1m3jBWSbp6N2MLZOy3c';
+    const encryptedData = encrypt(data, key);
+    console.log('Encrypted:', encryptedData);
+
+    // 암호문 복호화
+    const decryptedData = decrypt(encryptedData, key);
+    console.log('Decrypted:', decryptedData);
+</script>
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
