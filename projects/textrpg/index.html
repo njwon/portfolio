@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #111;
+            background: #1d1d1d;
             color: #eee;
             display: flex;
             justify-content: center;
@@ -49,14 +49,14 @@
 
         .noise {
             content: '';
-            position: absolute;
             z-index: 1;
             height: 180%;
             left: -40%;
             top: -40%;
             width: 180%;
             overflow: hidden;
-            /* max-height: 100vh; */
+            position: fixed;
+            max-height: 150vh;
             pointer-events: none;
             will-change: transform;
             -webkit-transition: opacity 0.6s ease-out;
@@ -64,7 +64,7 @@
             -webkit-animation: noiseAnimation 1s steps(4) infinite;
             animation: noiseAnimation 1s steps(4) infinite;
             background-image: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/img/noise/noise2.webp');
-            filter: blur(1px);
+            filter: blur(3px);
             /* opacity: 0.3; */
         }
 
@@ -75,28 +75,28 @@
             }
 
             10% {
-                -webkit-transform: translate(-5%, -5%);
-                transform: translate(-5%, -5%);
+                -webkit-transform: translate(-5%, -0);
+                transform: translate(-5%, 0);
             }
 
             20% {
-                -webkit-transform: translate(-10%, 5%);
-                transform: translate(-10%, 5%);
+                -webkit-transform: translate(-10%, 0);
+                transform: translate(-10%, 0);
             }
 
             30% {
-                -webkit-transform: translate(5%, -10%);
-                transform: translate(5%, -10%);
+                -webkit-transform: translate(5%, 0);
+                transform: translate(5%, 0);
             }
 
             40% {
-                -webkit-transform: translate(-5%, 15%);
-                transform: translate(-5%, 15%);
+                -webkit-transform: translate(-5%, 0);
+                transform: translate(-5%, 0);
             }
 
             50% {
-                -webkit-transform: translate(-10%, 5%);
-                transform: translate(-10%, 5%);
+                -webkit-transform: translate(-10%, 0);
+                transform: translate(-10%, 0);
             }
 
             60% {
@@ -105,8 +105,8 @@
             }
 
             70% {
-                -webkit-transform: translate(0, 10%);
-                transform: translate(0, 10%);
+                -webkit-transform: translate(0, 0);
+                transform: translate(0, 0);
             }
 
             80% {
@@ -115,8 +115,8 @@
             }
 
             90% {
-                -webkit-transform: translate(10%, 5%);
-                transform: translate(10%, 5%);
+                -webkit-transform: translate(10%, 0);
+                transform: translate(10%, 0);
             }
 
             100% {
@@ -132,28 +132,28 @@
             }
 
             10% {
-                -webkit-transform: translate(-5%, -5%);
-                transform: translate(-5%, -5%);
+                -webkit-transform: translate(-5%, -0);
+                transform: translate(-5%, 0);
             }
 
             20% {
-                -webkit-transform: translate(-10%, 5%);
-                transform: translate(-10%, 5%);
+                -webkit-transform: translate(-10%, 0);
+                transform: translate(-10%, 0);
             }
 
             30% {
-                -webkit-transform: translate(5%, -10%);
-                transform: translate(5%, -10%);
+                -webkit-transform: translate(5%, 0);
+                transform: translate(5%, 0);
             }
 
             40% {
-                -webkit-transform: translate(-5%, 15%);
-                transform: translate(-5%, 15%);
+                -webkit-transform: translate(-5%, 0);
+                transform: translate(-5%, 0);
             }
 
             50% {
-                -webkit-transform: translate(-10%, 5%);
-                transform: translate(-10%, 5%);
+                -webkit-transform: translate(-10%, 0);
+                transform: translate(-10%, 0);
             }
 
             60% {
@@ -162,8 +162,8 @@
             }
 
             70% {
-                -webkit-transform: translate(0, 10%);
-                transform: translate(0, 10%);
+                -webkit-transform: translate(0, 0);
+                transform: translate(0, 0);
             }
 
             80% {
@@ -172,8 +172,8 @@
             }
 
             90% {
-                -webkit-transform: translate(10%, 5%);
-                transform: translate(10%, 5%);
+                -webkit-transform: translate(10%, 0);
+                transform: translate(10%, 0);
             }
 
             100% {
@@ -325,7 +325,7 @@
 
 <body>
 
-
+    <div class="noise"></div>
     <div id="start-container">
         <div class="title">&lt;DREAMRPG&gt;</div>
 
@@ -365,7 +365,7 @@
                 </label>
                 <label for="2.0-flash-lite" class="radio-label">
                     <input type="radio" id="2.0-flash-lite" name="models" value="gemini-2.0-flash-lite" />
-                        우둔한 빠른 금수 대뇌
+                    우둔한 빠른 금수 대뇌
                 </label>
             </div>
         </div>
