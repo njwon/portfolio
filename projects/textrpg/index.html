@@ -8,10 +8,22 @@
     <style>
         @font-face {
             font-family: 'rock';
-            src: url('./death_mohawk/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
+            src: url('./font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
         }
 
-        * {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #111;
+            color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
             animation-duration: 0.1s;
             animation-iteration-count: infinite;
             animation-name: textflicker;
@@ -163,21 +175,6 @@
             }
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #111;
-            color: #eee;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-        }
-
         #start-container,
         #game-container {
             width: 90vw;
@@ -250,6 +247,7 @@
         button {
             width: 100%;
             padding: 1rem;
+            background-color: #eee;
             color: #111;
             border: none;
             border-radius: 4px;
@@ -304,6 +302,19 @@
             <textarea id="char-setting"></textarea>
         </div>
 
+
+        <div class="input-group">
+            <label for="ai-name">사고 방식 선택</label>
+            <select name="models" id="models">
+                <option value="auto" selected>자동(기본)</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash(추천)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash(추천)</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite(추천안함)</option>
+                <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite(추천안함)</option>
+            </select>
+        </div>
+
         <button id="start-battle">몽상 시작!</button>
     </div>
     <div id="game-container" style="display: none;">
@@ -356,7 +367,9 @@
         const startButton = document.getElementById('start-battle');
         const charNameInput = document.getElementById('char-name');
         const charSettingInput = document.getElementById('char-setting');
+        const selectModelInput = document.getElementById('models');
 
+        let selectValue;
         let player;
         let playerState = [];
 
@@ -421,10 +434,44 @@
                 -하이픈 기호 안에 설정을 텍스트로 서술-
                 *아스테리스크 기호 안에 능력명, 공격력, 효과를 각각 문자열, 숫자, 문자열로 서술*
                 
-                만약, 임무를 수행할 수 없을 정도로 주어진 정보가 훼손되거나 이상하다면, "캐릭터 정보를 다시 입력해주세요."라는 텍스트만 출력할 것.
+                만약, 임무를 수행할 수 없을 정도로 주어진 정보가 훼손되거나 이상하다면, "001"라는 텍스트만 출력할 것.
                 `, `
                 
                 `];
+            }
+
+            restoreBtn() {
+                startButton.textContent = '몽상 시작!';
+                startButton.style.backgroundColor = '#eee';
+            }
+
+            selectAi() {
+                switch (selectValue) {
+                    case 'gemini-2.5-flash':  // if (x === 'value1')
+                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                        break;
+
+                    case 'gemini-2.0-flash':  // if (x === 'value1')
+                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                        break;
+
+                    case 'gemini-2.5-pro':  // if (x === 'value1')
+                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+                        break;
+
+                    case 'gemini-2.5-flash-lite':  // if (x === 'value1')
+                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+                        break;
+
+                    case 'gemini-2.0-flash-lite':  // if (x === 'value1')
+                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+                        break;
+
+                    default:
+                        try {
+                            
+                        }
+                }
             }
 
             async sendToAi() {
@@ -435,32 +482,49 @@
                 }
 
                 this.isRunning = true;
+                startButton.textContent = '대뇌 피질 열일 중..';
                 startButton.disabled = true;
 
                 try {
                     this.genAI = new GoogleGenerativeAI(apikey);
-                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
                     this.result = await this.model.generateContent(this.prompt[0]);
                     this.response = await this.result.response;
                     this.text = this.response.text();
 
-                    try{
+                    try {
                         this.playerState[0] = this.text.match(/-(.*?)-/s)[1].trim(); // 설정
                         this.playerState[1] = this.text.match(/\((.*?)\)/)[1]; // 체력
                         this.playerState[2] = this.text.match(/\{(.*?)\}/)[1]; // 공격력
                         this.playerState[3] = this.text.match(/\[(.*?)\]/)[1]; // 개연성
                         this.playerState[4] = (this.text.match(/\*(.*?)\*/s)[1].trim()).split(','); // 능력
-                    } catch(error) {
-                        if(text="캐릭터 정보를 다시 입력해주세요."){
-                            
+                    } catch (error) {
+                        if (text = "001") {
+                            function runFor3Seconds() {
+                                startButton.textContent = '캐릭터 정보를 다시 입력해주세요.';
+                                startButton.style.backgroundColor = 'red';
+                                return new Promise((resolve) => {
+                                    setTimeout(() => {
+                                        restoreBtn();
+                                    }, 3000);
+                                });
+                            }
+                        } else {
+                            function runFor3Seconds() {
+                                startButton.textContent = '다른 모델로 다시 시도해주세요.';
+                                startButton.style.backgroundColor = 'red';
+                                return new Promise((resolve) => {
+                                    setTimeout(() => {
+                                        restoreBtn();
+                                    }, 3000);
+                                });
+                            }
                         }
                     }
-
                     console.log(this.playerState);
                     return [this.playerState[0], this.playerState[1], this.playerState[2], this.playerState[3], this.playerState[4]];
                 } catch (error) {
-                    if(error)
-                    console.error("Error:", error);
+                    if (error)
+                        console.error("Error:", error);
                     resultContainer.textContent = '오류가 발생했습니다. API 키가 유효한지, 인터넷 연결이 정상인지 확인해주세요. 자세한 내용은 콘솔(F12)을 확인하세요.';
                 } finally {
                     this.isRunning = false;
@@ -472,6 +536,7 @@
         }
 
         startButton.addEventListener('click', async () => {
+            selectValue = selectModelInput.value;
             const game = new Game(charNameInput, charSettingInput);
             game.prompt();
             playerState = await game.sendToAi();
