@@ -11,26 +11,33 @@
             src: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/projects/textrpg/font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
         }
 
-
+        /* body는 기본 레이아웃만 담당 */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1d1d1d;
-            color: #eee;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            max-height: 1250px;
             margin: 0;
-            overflow-x: hidden;
-            -ms-overflow-style: none;
             width: 100vw;
-            height: 100vh;
+            height: auto;
+            min-height: 100vh;
+            -ms-overflow-style: none;
+            background: #1d1d1d;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #eee;
+        }
+
+        .main-container *:not(input[type="text"]):not(input[type="password"]):not(textarea):not(label):not(Button) {
             animation-duration: 0.1s;
             animation-iteration-count: infinite;
             animation-name: textflicker;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
-            animation-direction: alternate;
-            filter: blur(0.4px);
+            animation-direction: alternate; 
+        }
+
+        .main-container{
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            filter: blur(0.6px);
         }
 
         ::-webkit-scrollbar {
@@ -47,7 +54,7 @@
             }
         }
 
-        .noise {
+        /* .noise {
             content: '';
             z-index: 1;
             height: 180%;
@@ -65,122 +72,21 @@
             animation: noiseAnimation 1s steps(4) infinite;
             background-image: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/img/noise/noise2.webp');
             filter: blur(3px);
-            /* opacity: 0.3; */
-        }
+            /* opacity: 0.3; 
+        } */
 
-        @-webkit-keyframes noiseAnimation {
-            0% {
-                -webkit-transform: translate(0, 0);
-                transform: translate(0, 0);
-            }
-
-            10% {
-                -webkit-transform: translate(-5%, -0);
-                transform: translate(-5%, 0);
-            }
-
-            20% {
-                -webkit-transform: translate(-10%, 0);
-                transform: translate(-10%, 0);
-            }
-
-            30% {
-                -webkit-transform: translate(5%, 0);
-                transform: translate(5%, 0);
-            }
-
-            40% {
-                -webkit-transform: translate(-5%, 0);
-                transform: translate(-5%, 0);
-            }
-
-            50% {
-                -webkit-transform: translate(-10%, 0);
-                transform: translate(-10%, 0);
-            }
-
-            60% {
-                -webkit-transform: translate(15%, 0);
-                transform: translate(15%, 0);
-            }
-
-            70% {
-                -webkit-transform: translate(0, 0);
-                transform: translate(0, 0);
-            }
-
-            80% {
-                -webkit-transform: translate(-15%, 0);
-                transform: translate(-15%, 0);
-            }
-
-            90% {
-                -webkit-transform: translate(10%, 0);
-                transform: translate(10%, 0);
-            }
-
-            100% {
-                -webkit-transform: translate(5%, 0);
-                transform: translate(5%, 0);
-            }
-        }
-
-        @keyframes noiseAnimation {
-            0% {
-                -webkit-transform: translate(0, 0);
-                transform: translate(0, 0);
-            }
-
-            10% {
-                -webkit-transform: translate(-5%, -0);
-                transform: translate(-5%, 0);
-            }
-
-            20% {
-                -webkit-transform: translate(-10%, 0);
-                transform: translate(-10%, 0);
-            }
-
-            30% {
-                -webkit-transform: translate(5%, 0);
-                transform: translate(5%, 0);
-            }
-
-            40% {
-                -webkit-transform: translate(-5%, 0);
-                transform: translate(-5%, 0);
-            }
-
-            50% {
-                -webkit-transform: translate(-10%, 0);
-                transform: translate(-10%, 0);
-            }
-
-            60% {
-                -webkit-transform: translate(15%, 0);
-                transform: translate(15%, 0);
-            }
-
-            70% {
-                -webkit-transform: translate(0, 0);
-                transform: translate(0, 0);
-            }
-
-            80% {
-                -webkit-transform: translate(-15%, 0);
-                transform: translate(-15%, 0);
-            }
-
-            90% {
-                -webkit-transform: translate(10%, 0);
-                transform: translate(10%, 0);
-            }
-
-            100% {
-                -webkit-transform: translate(5%, 0);
-                transform: translate(5%, 0);
-            }
-        }
+        .noise {
+            top: 0;
+            pointer-events: none;
+            z-index: 1;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('https://media.tenor.com/xH_b0pwUaekAAAAM/white-noise-colourful.gif');
+            background-size: cover;
+            filter: blur(2px);
+            opacity: 0.01;
+       }
 
         #start-container,
         #game-container {
@@ -190,7 +96,6 @@
 
         .title {
             text-align: center;
-            /* color: #4CAF50; */
             letter-spacing: 4px;
             font-family: 'rock', sans-serif;
             font-size: 100px;
@@ -326,59 +231,60 @@
 <body>
 
     <div class="noise"></div>
-    <div id="start-container">
-        <div class="title">&lt;DREAMRPG&gt;</div>
-
-        <div class="input-group">
-            <label for="char-name">캐릭터 이름</label>
-            <input type="text" id="char-name">
+    <div class="main-container">
+        <div id="start-container">
+            <div class="title">&lt;DREAMRPG&gt;</div>
+    
+            <div class="input-group">
+                <label for="char-name">캐릭터 이름</label>
+                <input type="text" id="char-name">
+            </div>
+    
+            <div class="input-group">
+                <label for="char-setting">캐릭터 설정</label>
+                <textarea maxlength="200" rows="4" cols="50" id="char-setting"></textarea>
+            </div>
+    
+    
+            <div class="input-group">
+                <label for="ai-name">사고 방식 선택</label>
+                <div class="ai-name">
+                    <label for="auto" class="radio-label">
+                        <input type="radio" id="auto" name="models" value="auto" checked />
+                        자동(기본)</label>
+                    <label for="2.5-flash" class="radio-label">
+                        <input type="radio" id="2.5-flash" name="models" value="gemini-2.5-flash" />
+                        기본 대뇌
+                    </label>
+    
+                    <label for="2.0-flash" class="radio-label">
+                        <input type="radio" id="2.0-flash" name="models" value="gemini-2.0-flash" />
+                        진화가 덜 된 기본 대뇌
+                    </label>
+                    <label for="2.5-pro" class="radio-label">
+                        <input type="radio" id="2.5-pro" name="models" value="gemini-2.5-pro" />
+                        똑똑하지만 느린 대뇌
+                    </label>
+                    <label for="2.5-flash-lite" class="radio-label">
+                        <input type="radio" id="2.5-flash-lite" name="models" value="gemini-2.5-flash-lite" />
+                        빠른 금수 대뇌
+                    </label>
+                    <label for="2.0-flash-lite" class="radio-label">
+                        <input type="radio" id="2.0-flash-lite" name="models" value="gemini-2.0-flash-lite" />
+                        우둔한 빠른 금수 대뇌
+                    </label>
+                </div>
+            </div>
+            <button id="start-battle">몽상 시작!</button>
+            <br><br><br>
         </div>
-
-        <div class="input-group">
-            <label for="char-setting">캐릭터 설정</label>
-            <textarea maxlength="200" rows="4" cols="50" id="char-setting"></textarea>
-        </div>
-
-
-        <div class="input-group">
-            <label for="ai-name">사고 방식 선택</label>
-            <div class="ai-name">
-                <label for="auto" class="radio-label">
-                    <input type="radio" id="auto" name="models" value="auto" checked />
-                    자동(기본)</label>
-                <label for="2.5-flash" class="radio-label">
-                    <input type="radio" id="2.5-flash" name="models" value="gemini-2.5-flash" />
-                    기본 대뇌
-                </label>
-
-                <label for="2.0-flash" class="radio-label">
-                    <input type="radio" id="2.0-flash" name="models" value="gemini-2.0-flash" />
-                    진화가 덜 된 기본 대뇌
-                </label>
-                <label for="2.5-pro" class="radio-label">
-                    <input type="radio" id="2.5-pro" name="models" value="gemini-2.5-pro" />
-                    똑똑하지만 느린 대뇌
-                </label>
-                <label for="2.5-flash-lite" class="radio-label">
-                    <input type="radio" id="2.5-flash-lite" name="models" value="gemini-2.5-flash-lite" />
-                    빠른 금수 대뇌
-                </label>
-                <label for="2.0-flash-lite" class="radio-label">
-                    <input type="radio" id="2.0-flash-lite" name="models" value="gemini-2.0-flash-lite" />
-                    우둔한 빠른 금수 대뇌
-                </label>
+        <div id="game-container" style="display: none;">
+            <div class="title">&lt;DREAMRPG&gt;</div>
+    
+            <div class="input-group">
+                <div id="playerState"></div>
             </div>
         </div>
-        <button id="start-battle">몽상 시작!</button>
-        <br><br><br>
-    </div>
-    <div id="game-container" style="display: none;">
-        <div class="title">TEXTRPG</div>
-
-        <div class="input-group">
-            <div id="playerState"></div>
-        </div>
-
     </div>
 
     <!-- Google AI SDK -->
@@ -611,5 +517,4 @@
         });
     </script>
 </body>
-
 </html>
