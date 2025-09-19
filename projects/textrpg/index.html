@@ -328,14 +328,6 @@
             <div>능력</div>
         </div>
 
-        <div class="input-group">
-            <label for="char-setting">캐릭터 설정</label>
-            <textarea id="char-setting" placeholder="예: 불의 검을 사용하며, 고대 용을 물리친 경험이 있다."></textarea>
-        </div>
-
-        <button id="start-battle">전투 시작!</button>
-
-        <div id="result-container" style="display: none;"></div>
     </div>
 
     <!-- Google AI SDK -->
@@ -469,8 +461,23 @@
 
                     default:
                         try {
-                            
+                            this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });   
+                        } catch {
+                            try{
+                                this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                            } catch {
+                                try{
+                                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+                                } catch {
+                                    try{
+                                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+                                    } catch {
+                                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+                                    }
+                                }
+                            }
                         }
+                        break;
                 }
             }
 
@@ -498,9 +505,19 @@
                         this.playerState[3] = this.text.match(/\[(.*?)\]/)[1]; // 개연성
                         this.playerState[4] = (this.text.match(/\*(.*?)\*/s)[1].trim()).split(','); // 능력
                     } catch (error) {
-                        if (text = "001") {
+                        if (text == "001") {
                             function runFor3Seconds() {
                                 startButton.textContent = '캐릭터 정보를 다시 입력해주세요.';
+                                startButton.style.backgroundColor = 'red';
+                                return new Promise((resolve) => {
+                                    setTimeout(() => {
+                                        restoreBtn();
+                                    }, 3000);
+                                });
+                            }
+                        } else if(selectValue == 'auto') {
+                            function runFor3Seconds() {
+                                startButton.textContent = '모든 모델이 작동하지 않아 기본을 사용할 수 없습니다.';
                                 startButton.style.backgroundColor = 'red';
                                 return new Promise((resolve) => {
                                     setTimeout(() => {
@@ -516,16 +533,15 @@
                                     setTimeout(() => {
                                         restoreBtn();
                                     }, 3000);
-                                });
-                            }
+                            });
                         }
+                    }
                     }
                     console.log(this.playerState);
                     return [this.playerState[0], this.playerState[1], this.playerState[2], this.playerState[3], this.playerState[4]];
                 } catch (error) {
                     if (error)
-                        console.error("Error:", error);
-                    resultContainer.textContent = '오류가 발생했습니다. API 키가 유효한지, 인터넷 연결이 정상인지 확인해주세요. 자세한 내용은 콘솔(F12)을 확인하세요.';
+                        console.log("Error:", error);
                 } finally {
                     this.isRunning = false;
                     startButton.disabled = false;
