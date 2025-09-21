@@ -11,7 +11,6 @@
             src: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/projects/textrpg/font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
         }
 
-        /* body는 기본 레이아웃만 담당 */
         body {
             margin: 0;
             width: 100vw;
@@ -23,25 +22,16 @@
             color: #eee;
         }
 
-        .main-container *:not(input[type="text"]):not(input[type="password"]):not(textarea):not(label):not(Button) {
+        .main-container * {
             animation-duration: 0.1s;
             animation-iteration-count: infinite;
             animation-name: textflicker;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
-            animation-direction: alternate; 
+            animation-direction: alternate;
         }
 
-        .main-container{
-            width: 100%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            filter: blur(0.6px);
-        }
-
-        ::-webkit-scrollbar {
-            display: none;
+        .boxflicker {
+            animation-name: boxflicker !important;
         }
 
         @keyframes textflicker {
@@ -54,26 +44,41 @@
             }
         }
 
-        /* .noise {
-            content: '';
-            z-index: 1;
-            height: 180%;
-            left: -40%;
-            top: -40%;
-            width: 180%;
-            overflow: hidden;
-            position: fixed;
-            max-height: 150vh;
-            pointer-events: none;
-            will-change: transform;
-            -webkit-transition: opacity 0.6s ease-out;
-            transition: opacity 0.6s ease-out;
-            -webkit-animation: noiseAnimation 1s steps(4) infinite;
-            animation: noiseAnimation 1s steps(4) infinite;
-            background-image: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/img/noise/noise2.webp');
-            filter: blur(3px);
-            /* opacity: 0.3; 
-        } */
+        @keyframes boxflicker {
+            0% {
+                box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+            }
+
+            25% {
+                box-shadow: inset 1px 0 0 #ea36af, inset -2px 0 0 #75fa69;
+                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+            }
+
+
+            50% {
+                box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+            }
+
+            100% {
+                box-shadow: inset 2px 0.5px 2px #ea36af, inset -1px -0.5px 2px #75fa69;
+                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+            }
+        }
+
+        .main-container {
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            filter: blur(0.6px);
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
 
         .noise {
             top: 0;
@@ -86,7 +91,7 @@
             background-size: cover;
             filter: blur(2px);
             opacity: 0.03;
-       }
+        }
 
         #start-container,
         #game-container {
@@ -98,10 +103,10 @@
             text-align: center;
             letter-spacing: 4px;
             font-family: 'rock', sans-serif;
-            font-size: 100px;
+            font-size: min(20vw, 100px);
         }
 
-        .input-group {
+        .div-group {
             margin-bottom: 1.5rem;
         }
 
@@ -126,29 +131,6 @@
             animation-name: boxflicker;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
             animation-direction: alternate;
-        }
-
-        @keyframes boxflicker {
-            0% {
-                box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
-                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
-            }
-
-            25% {
-                box-shadow: inset 1px 0 0 #ea36af, inset -2px 0 0 #75fa69;
-                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
-            }
-
-
-            50% {
-                box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
-                text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
-            }
-
-            100% {
-                box-shadow: inset 2px 0.5px 2px #ea36af, inset -1px -0.5px 2px #75fa69;
-                text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
-            }
         }
 
         textarea {
@@ -192,11 +174,7 @@
 
         .radio-label:has(input[type="radio"]:checked) {
             background-color: #ffffff00;
-            color: #fff;
-        }
-
-        button {
-            width: 100%;
+            color: #eee;
         }
 
         button:hover {
@@ -222,8 +200,45 @@
             font-style: italic;
         }
 
-        .start-battle {
-            padding-bottom: 100px;
+        #start-game,
+        #start-play {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        fieldset {
+            margin: 0 auto;
+            width: 60vw;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+        }
+
+        .charStateVerticalLine {
+            width: 1px;
+            background: #eee;
+            margin: 0 10px;
+        }
+
+        .battleBtn {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-evenly;
+        }
+
+        #grow,
+        #battle,
+        .c-button {
+            width: 30vw;
+        }
+
+        #fight-group Button {
+            width: 15%;
+        }
+
+        #inGame-battle-group-check Button {
+            margin: 0 auto;
         }
     </style>
 </head>
@@ -232,21 +247,21 @@
 
     <div class="noise"></div>
     <div class="main-container">
-        <div id="start-container">
+        <div id="start-container" style="display: none;">
             <div class="title">&lt;DREAMRPG&gt;</div>
-    
-            <div class="input-group">
+
+            <div class="div-group">
                 <label for="char-name">캐릭터 이름</label>
                 <input type="text" id="char-name">
             </div>
-    
-            <div class="input-group">
+
+            <div class="div-group">
                 <label for="char-setting">캐릭터 설정</label>
-                <textarea maxlength="200" rows="4" cols="50" id="char-setting"></textarea>
+                <textarea class="boxflicker" maxlength="200" rows="4" cols="50" id="char-setting"></textarea>
             </div>
-    
-    
-            <div class="input-group">
+
+
+            <div class="div-group">
                 <label for="ai-name">사고 방식 선택</label>
                 <div class="ai-name">
                     <label for="auto" class="radio-label">
@@ -256,7 +271,7 @@
                         <input type="radio" id="2.5-flash" name="models" value="gemini-2.5-flash" />
                         기본 대뇌
                     </label>
-    
+
                     <label for="2.0-flash" class="radio-label">
                         <input type="radio" id="2.0-flash" name="models" value="gemini-2.0-flash" />
                         진화가 덜 된 기본 대뇌
@@ -275,14 +290,42 @@
                     </label>
                 </div>
             </div>
-            <button id="start-battle">몽상 시작!</button>
+            <button id="start-game" class="boxflicker">몽상 시작!</button>
+            <button id="start-play" class="boxflicker" style="display:none;">전투 시작!</button>
             <br><br><br>
         </div>
         <div id="game-container" style="display: none;">
             <div class="title">&lt;DREAMRPG&gt;</div>
-    
-            <div class="input-group">
-                <div id="playerState"></div>
+            <div class="div-group" id="home-group">
+                <fieldset id="current-char" class="boxflicker">
+                    <legend>캐릭터</legend>
+                    <span id="playerState"></span>
+                    <div class="charStateVerticalLine boxflicker"></div>
+                    <span id="playerAbility"></span>
+                </fieldset>
+                <div class="game-battle-group battleBtn">
+                    <!-- <button class="boxflicker" id="grow">성장</button> -->
+                    <button class="boxflicker" id="battle">전투</button>
+                </div>
+            </div>
+            <div class="div-group" id="fight-group" style="display: none;">
+                <div id="fightDiv" class="fight">
+                    <fieldset id="enemy-char" class="boxflicker">
+                        <legend>적</legend>
+                        <span id="enemyState"></span>
+                        <div class="charStateVerticalLine boxflicker"></div>
+                        <span id="enemyAbility"></span>
+                </div>
+                <div class="inGame-battle-group battleBtn">
+                    <button class="boxflicker" id="check">내 상태</button>
+                    <button class="boxflicker" id="attack">공격</button>
+                    <button class="boxflicker" id="heal">회복</button>
+                    <button class="boxflicker" id="run">도망</button>
+                </div>
+
+                <div id="inGame-battle-group-check" style="display: none;">
+                    <button class="boxflicker c-button">돌아가기</button>
+                </div>
             </div>
         </div>
     </div>
@@ -313,19 +356,123 @@
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
         const apikey = 'AIzaSyAaDuZjDxxH0KKv1m3jBWSbp6N2MLZOy3c';
-        const startButton = document.getElementById('start-battle');
+        const startBtn = document.getElementById('start-game');
         const charNameInput = document.getElementById('char-name');
         const charSettingInput = document.getElementById('char-setting');
         const checkedModelInput = document.querySelector('input[name="models"]:checked');
         const startContainer = document.getElementById('start-container');
         const gameContainer = document.getElementById('game-container');
         const playerStateDiv = document.getElementById('playerState');
+        const enemyStateDiv = document.getElementById('enemyState');
+        const playerAbilityDiv = document.getElementById('playerAbility');
+        const enemyAbilityDiv = document.getElementById('enemyAbility');
+        // const growBtn = document.getElementById('grow');
+        const battleBtn = document.getElementById('battle');
+        const battleCheckBtn = document.getElementById('check');
+        const battleAttackBtn = document.getElementById('attack');
+        const battleHealBtn = document.getElementById('heal');
+        const battleRunBtn = document.getElementById('run');
+        const gameBattleGroup = document.querySelector('.game-battle-group');
+        const battleDiv = document.getElementById('fight-group');
+        const homeDiv = document.getElementById('home-group');
+        const currnetChar = document.getElementById('current-char');
+        const fightDiv = document.getElementById('fightDiv');
+        const inGameBattleGroup = document.querySelector('.inGame-battle-group');
+        const inGameBattleGroupC = document.getElementById('inGame-battle-group-check');
+        const enemies = [
+            ['고죠 사토루', '천상천하 유아독존', 9999, 9999, ['무량공처', 0, '적을 행동 불능으로 만든다.'], '고죠 사토루는 『주술회전』의 핵심 인물로, 압도적인 실력과 카리스마를 갖춘 최강의 주술사입니다. 그의 능력은 크게 공격, 방어, 그리고 영역 전개로 나눌 수 있습니다. 고죠의 공격 능력은 ‘무한’과 ‘육안’이라는 특수한 재능을 바탕으로 합니다. 그는 고유의 주술 ‘무한(무한술식)’을 활용하여 공간 자체를 조작합니다. 그중에서도 대표적인 기술이 청(靑), 붉(赫), 그리고 이를 융합한 자홍(紫)입니다. 청(靑)은 대상에게 강한 인력을 발생시켜 빨아들이는 힘을 가지며, 붉(赫)은 반대로 강한 반발력을 일으켜 대상을 밀쳐내는 기술입니다. 이 두 힘을 융합한 자홍(紫)은 그야말로 모든 것을 지워버리는 파괴력의 기술로, 공간 자체를 삭제하는 수준의 범위를 자랑합니다. 방어 능력 역시 고죠의 강력함을 상징합니다. 그는 ‘무한’을 통해 자신과 상대 사이에 무한한 거리를 생성하여, 물리적 접촉 자체를 불가능하게 만듭니다. 이로 인해 대부분의 공격은 고죠에게 도달하지 못하고 중간에서 멈춥니다. 이는 그의 ‘무한’이 수학적 원리를 기반으로 작동하기 때문이며, 일반적인 힘으로는 뚫을 수 없습니다. 또한, 그는 역전술식을 활용해 상처를 즉각 회복할 수 있는 재생 능력도 지니고 있습니다. 고죠의 영역 전개 – 무량공처(無量空処)는 그의 진정한 위력을 보여주는 기술입니다. 이 영역에 갇힌 자는 무한한 정보를 강제로 인식하게 되며, 신체와 정신이 완전히 마비됩니다. 정보가 지나치게 과잉되어 ‘아무것도 할 수 없는’ 상태가 되는 것인데, 이는 사실상 전투불능 상태에 빠지는 것과 같습니다. 단순한 공간 장악이 아닌, 상대의 의식을 붕괴시키는 형태의 영역 전개로, 주술사들 사이에서도 차원이 다른 위력을 자랑합니다.'],
+            ['노정원', '평범한 고등학생', 100, 10, ['업어치기', 30, '적을 최선을 다해 메친다.'], '대한민국에 사는 평범한 고등학생으로, 컴퓨터를 배우고 있다. 유도를 배워 기술을 쓸 수 있다.'],
+            ['아자토스', '아둔한 아버지', undefined, undefined, ['???', Infinity, '그저 존재한다.'], '아자토스는 크툴루 신화에 등장하는 존재로, 코스믹 호러의 정점에 위치한 외부신 중 하나이다. 이 존재는 우주의 중심에서 혼돈의 음악에 맞춰 무의식적으로 꿈을 꾸는 상태에 있으며, 그 꿈이 곧 우리가 인식하는 우주 전체라는 설정이다. 인간의 개념으로는 도저히 이해할 수 없는 완전한 무(無)와 혼돈의 상징으로, 지성과 의지를 갖지 않은 채 무작위로 존재하며, 다른 외부신들과는 비교할 수 없을 만큼 거대한 위상을 지닌다. 아자토스는 어떤 종교적 숭배나 교류의 대상이 아니며, 단순히 존재한다는 것만으로도 공포를 불러일으키는 실체로, 러브크래프트가 창조한 세계관 속에서 근본적인 우주적 공포를 상징하는 핵심 존재다.'],
+            ['나루토 우즈마키', '호카게의 영웅', 4500, 1200, ['나선환', 1800, '강력한 회전을 통해 적 하나에게 큰 피해를 준다.'], '나뭇잎 마을의 닌자로, 친구와 마을을 지키기 위해 끊임없이 강해진다.'],
+            ['사스케 우치하', '복수의 그림자', 4400, 1150, ['치도리', 1900, '전기를 응축해 단일 적을 관통 공격한다.'], '우치하 일족의 생존자로 복수를 위해 힘을 추구한 닌자.'],
+            ['손오공', '사이어인의 전사', 5000, 1400, ['카메하메하', 2300, '에너지 파동을 쏘아 전방 적들에게 큰 피해를 준다.'], '지구를 수호하는 싸움꾼으로, 끝없이 수련을 계속한다.'],
+            ['베지터', '왕자 사이어인', 4800, 1380, ['파이널 플래시', 2400, '모은 기를 폭발시켜 직선 범위 적들을 공격한다.'], '자존심 강한 전사지만 점차 지구를 지키는 편에 선다.'],
+            ['루피', '고무고무 해적', 4700, 1300, ['기어 세컨드', 2100, '순간적으로 신체 능력을 증폭해 강한 연속공격을 한다.'], '해적왕이 되기 위해 바다를 항해하는 고무 인간.'],
+            ['조로', '삼도류 검사', 4400, 1250, ['오의: 삼천세계', 2000, '세 자루의 검으로 강력한 연속 베기를 한다.'], '해적왕을 보좌하기 위해 세계 최강의 검사로 성장 중이다.'],
+            ['탄지로 가마도', '물의 호흡 귀살대', 3900, 900, ['히노카미 카구라', 1600, '불꽃의 춤으로 적 하나에게 타격과 화상 효과를 준다.'], '가족을 잃고, 여동생을 되돌리기 위해 귀살대가 된 소년.'],
+            ['렌고쿠 쿄쥬로', '불꽃의 기둥', 4100, 1000, ['염호 염무', 1800, '불꽃 검격으로 적에게 큰 피해를 입힌다.'], '귀살대의 불기둥으로, 열정과 정의감을 지닌 검사.'],
+            ['엘런 예거', '자유의 투사', 4200, 1250, ['진격의 포효', 1900, '타이탄으로 변신하여 광범위 피해를 준다.'], '거인의 힘을 얻고 인류의 자유를 위해 투쟁하는 소년.'],
+            ['미카사 아커만', '무쌍의 병사', 4000, 1100, ['입체기동 참격', 1600, '순간적으로 적 후방을 타격한다.'], '엘런을 지키기 위해 무엇이든 할 수 있는 강력한 병사.'],
+            ['키리토', '검의 플레이어', 3800, 950, ['스타버스트 스트림', 1700, '쌍검으로 적 하나에게 다단히 피해를 준다.'], '게임 속 세계를 헤쳐나가는 VRMMO 최강자.'],
+            ['아스나', '閃光(섬광)의 검사', 3700, 940, ['리니어', 1500, '고속의 찌르기로 적을 관통한다.'], '강한 의지와 따뜻함으로 모두를 이끄는 히로인.'],
+            ['이즈쿠 미도리야', '계승된 힘', 4100, 1000, ['디트로이트 스매시', 2000, '한 방에 적의 방어를 부수고 큰 피해를 입힌다.'], '무개성이었지만 히어로의 힘을 이어받아 노력하는 소년.'],
+            ['카츠키 바쿠고', '폭발의 괴물', 4200, 1080, ['하우저 임팩트', 1900, '폭발을 응축해 한 지점을 중심으로 큰 피해를 입힌다.'], '거칠지만 강력한 히어로 지망생.'],
+            ['레비 아커만', '인류 최강의 병사', 4500, 1200, ['회오리 참격', 2000, '회전하며 다수의 적을 순식간에 베어낸다.'], '냉철한 판단과 검술로 거인을 베는 최고의 병사.'],
+            ['토도로키 쇼토', '얼음과 불의 계승자', 4000, 1050, ['빙염 충돌', 1800, '얼음과 불을 동시에 발산하여 넓은 범위 피해를 준다.'], '양쪽 능력을 모두 깨달아 진정한 히어로로 거듭난다.'],
+            ['유우타 오코츠', '특급 주술사', 4600, 1150, ['리카 소환', 2000, '리카의 힘으로 적 하나에게 큰 피해와 제압 효과를 준다.'], '사랑과 저주를 모두 안고 싸우는 소년 주술사.'],
+            ['메구미 후시구로', '십종영법 사용자', 3900, 980, ['누에의 습격', 1600, '누에를 소환해 하늘에서 적을 타격한다.'], '주술로 식신을 다루며 전투를 지원하고 관찰하는 전사.'],
+            ['이누마키 토게', '말의 저주사', 3700, 900, ['폭발해', 2000, '적 하나를 말 한 마디로 폭파시키나, 자신도 체력을 소모한다.'], '말 대신 주술어를 사용해 적을 조종하거나 제압한다.'],
+        ];
 
+        let cBtn;
+        let battleCheckBackBtn;
+        let randomEnemy;
         let startPlay;
         let selectValue;
+        let ai;
         let game;
+        let enemy;
         let player;
         let playerState = [];
+
+        class Game {
+            constructor() { };
+
+            changeDisplay(divs, show) {
+                for (let i = 0; i <= divs.length - 1; i++) {
+                    if (show != 'flex') divs[i].style.display = show ? 'block' : 'none';
+                    else divs[i].style.display = 'flex';
+                }
+            }
+
+            startGame() {
+                //growBtn.addEventListener('click', () => {
+
+                // });
+
+                battleBtn.addEventListener('click', () => {
+                    game.changeDisplay([battleDiv], true);
+                    game.changeDisplay([gameBattleGroup], false);
+                    game.changeDisplay([currnetChar], false);
+                    randomEnemy = enemies[Math.floor(Math.random() * 22)];
+                    enemy = new Enemy(randomEnemy[0], randomEnemy[1], randomEnemy[2], randomEnemy[3], randomEnemy[4], randomEnemy[5], randomEnemy[6])
+                    enemy.changeState();
+                });
+
+                battleCheckBtn.addEventListener('click', () => {
+                    game.changeDisplay([currnetChar], 'flex');
+                    game.changeDisplay([fightDiv], false);
+                    game.changeDisplay([inGameBattleGroupC], 'flex');
+                    game.changeDisplay([inGameBattleGroup], false);
+                    cBtn = document.querySelector('.c-button');
+                    cBtn.addEventListener('click', () => {
+                        game.changeDisplay([fightDiv], true);
+                        game.changeDisplay([inGameBattleGroup], 'flex');
+                        game.changeDisplay([currnetChar], false);
+                        game.changeDisplay([inGameBattleGroupC], false);
+                    });
+                });
+
+                battleAttackBtn.addEventListener('click', () => {
+                    // 공격
+                });
+
+                battleHealBtn.addEventListener('click', () => {
+                    // 힐
+                });
+
+                battleRunBtn.addEventListener('click', () => {
+                    game.changeDisplay([gameBattleGroup], 'flex');
+                    game.changeDisplay([currnetChar], 'flex');
+                    game.changeDisplay([battleDiv], false);
+                    game.changeDisplay([homeDiv], true);
+                    console.log(randomEnemy)
+                });
+            }
+
+        }
+
+        game = new Game();
 
         class Player {
             constructor(name, fiction, hp, atk, plausible, ability) {
@@ -341,26 +488,72 @@
 
             changeState() {
                 playerStateDiv.innerHTML = `
-                    이름: ${this.name} <br>
-                    수식어: ${this.fiction} <br>
-                    개연성: ${this.plausible} <br>
-                    HP: ${this.hp} <br>
-                    ATK: ${this.atk} <br>
-                    능력: ${this.ability} <br>
-                    능력 공격력: ${this.abilityAtk} <br>
-                    능력 효과: ${this.abilityEffect}
+                    이름: ${this.name}<br>
+                    (${this.fiction})<br>
+                    개연성: ${this.plausible}<br>
+                    HP: ${this.hp}<br>
+                    ATK: ${this.atk}<br>
                 `;
+                playerAbilityDiv.innerHTML = `
+                    능력명: ${this.ability}<br>
+                    능력 ATK: ${this.abilityAtk}<br>
+                    능력 효과: ${this.abilityEffect} 
+                `;
+                // 이름: ${this.name} <br>
+                // 수식어: ${this.fiction} <br>
+                // 개연성: ${this.plausible} <br>
+                // HP: ${this.hp} <br>
+                // ATK: ${this.atk} <br>
+                // 능력: ${this.ability} <br>
+                // 능력 공격력: ${this.abilityAtk} <br>
+                // 능력 효과: ${this.abilityEffect}
             }
         }
 
-        class Game {
+        class Enemy {
+            constructor(name, fiction, hp, atk, ability, info) {
+                this.name = name;
+                this.fiction = fiction;
+                this.hp = hp;
+                this.atk = atk;
+                this.ability = ability[0];
+                this.abilityAtk = ability[1];
+                this.abilityEffect = ability[2];
+                this.info = info;
+            }
+
+            changeState() {
+                enemyStateDiv.innerHTML = `
+                    이름: ${this.name}<br>
+                    (${this.fiction})<br>
+                    HP: ${this.hp}<br>
+                    ATK: ${this.atk}<br>
+                `;
+                enemyAbilityDiv.innerHTML = `
+                    능력명: ${this.ability}<br>
+                    능력 ATK: ${this.abilityAtk}<br>
+                    능력 효과: ${this.abilityEffect} 
+                `;
+                // 이름: ${this.name} <br>
+                // 수식어: ${this.fiction} <br>
+                // 개연성: ${this.plausible} <br>
+                // HP: ${this.hp} <br>
+                // ATK: ${this.atk} <br>
+                // 능력: ${this.ability} <br>
+                // 능력 공격력: ${this.abilityAtk} <br>
+                // 능력 효과: ${this.abilityEffect}
+            }
+        }
+
+
+        class Ai {
             constructor(name, setting) {
                 this.charName = name.value.trim();
                 this.charSetting = setting.value.trim();
                 this.isRunning = false;
                 this.prompt;
                 this.genAI;
-                this.model;
+                this.models;
                 this.result;
                 this.response;
                 this.jsonText;
@@ -370,7 +563,7 @@
 
             prompt() {
                 this.prompt = [`
-                당신은 텍스트 RPG의 게임 마스터이자, 캐릭터 생성 심사관입니다. 입니다. 사용자가 만든 캐릭터로 능력치를 설정해주세요.
+                당신은 RPG의 게임 마스터이자, 캐릭터 생성 심사관입니다. 사용자가 만든 캐릭터로 능력치를 설정해주세요.
                 
                 # 캐릭터 정보
                 - 이름: ${this.charName}
@@ -386,9 +579,10 @@
                 # 임무
                 1. 위 캐릭터 정보와 설정을 바탕으로, 공격과 체력을 정해주세요.
                 2. 위 캐릭터 정보와 설정에 따라 옆 예시의 형식을 참고해 설정을 한 문장으로 요약해 수식어를 만들어 주세요. (예) 한국의 고등학생, 창조신, 바다의 신, 지옥의 악마, 귀여운 강아지)
-                3. 플레이어가 만든 캐릭터 이름과 설정을 보고, 다음 조건에 따라 캐릭터의 "개연성 점수"를 0~100 사이에서 평가하세요.( 현실적이고 설득력 있는 설정일수록 낮은 점수를 줍니다., 너무 과장되거나 전지전능한 설정일수록 높은 점수를 줍니다., "강력하지만 합리적인 약점"이 있으면 감산점을 줍니다.)
+                3. 플레이어가 만든 캐릭터 이름과 설정을 보고, 다음 조건에 따라 캐릭터의 "개연성 점수"를 0~100 사이에서 평가하세요.( 현실적이고 설득력 있는 설정일수록 낮은 점수를 줍니다., 너무 과장되거나 전지전능한 설정일수록 높은 점수를 줍니다., "강력하지만 합리적인 약점"이 있으면 감산점을 줍니다., 스탯이 낮으면 무조건 개연성도 낮습니다.)
                 4. 위 캐릭터 정보와 설정에 따라 능력을 객관적으로 정해주세요. 능력은 능력명, 공격력, 효과를 한번에 같이 서술해야합니다. (단, 효과를 서술할 때 문장에는 문자열과 공백만 존재해야 함.)
-                
+                5. 설정에서 약점을 찾거나 사고할 때 약점이 있으면 그를 이용해 캐릭터가 약하게 나올 수 있으면 약하게 나오도록 설정해주세요.
+
                 # 출력 형식 (출력은 JSON 형태로 하여야 합니다. 이 형식을 반드시 지켜주세요. 밑 형식과 아래 예시의 형식 참고 단, 아래 형식을 벗어난 모든 숫자, 문자는 출력하지 말아야합니다.)
                     -형식-
                     {
@@ -423,98 +617,132 @@
             }
 
             restoreBtn() {
-                startButton.textContent = '몽상 시작!';
-                startButton.style.backgroundColor = '#eee';
-            }
-
-            selectAi() {
-                if (selectValue == 'auto') {
-                    try {
-                        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-                    } catch {
-                        try {
-                            this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-                        } catch {
-                            try {
-                                this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-                            } catch {
-                                try {
-                                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-                                } catch {
-                                    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-                                }
-                            }
-                        }
-                    }
-                } else if (selectValue) {
-                    this.model = this.genAI.getGenerativeModel({ model: selectValue });
-                }
+                startBtn.textContent = '몽상 시작!';
+                startBtn.style.backgroundColor = '#eee';
             }
 
             async sendToAi() {
-                if (this.isRunning) return 0;
+                if (this.isRunning) return;
                 if (!this.charName || !this.charSetting) {
                     alert('캐릭터 이름과 설정을 모두 입력해주세요.');
                     return;
                 }
 
                 this.isRunning = true;
-                startButton.textContent = '대뇌 피질 열일 중..';
-                startButton.disabled = true;
+                startBtn.textContent = '대뇌 피질 열일 중..';
+                startBtn.disabled = true;
+
+                this.models = selectValue === 'auto'
+                    ? [
+                        "gemini-2.5-flash",
+                        "gemini-2.0-flash",
+                        "gemini-2.5-pro",
+                        "gemini-2.5-flash-lite",
+                        "gemini-2.0-flash-lite"
+                    ]
+                    : [selectValue];
 
                 try {
                     this.genAI = new GoogleGenerativeAI(apikey);
-                    await this.selectAi();
-                    this.result = await this.model.generateContent(this.prompt[0]);
-                    this.response = await this.result.response.text();
-                    if (this.response != "001") {
-                        this.jsonText = this.response.match(/\{[\s\S]*\}/);
-                        this.json = JSON.parse(this.jsonText);
-                    }
-                    try {
-                        console.log(JSON.stringify(this.json, null, 2));
-                        this.playerState[0] = this.json.fiction; // 설정
-                        this.playerState[1] = this.json.hp; // 체력
-                        this.playerState[2] = this.json.atk; // 공격력
-                        this.playerState[3] = this.json.plausible; // 개연성
-                        this.playerState[4] = this.json.abilityStats; // 능력
-                    } catch (error) {
-                        if (this.response == "001") {
-                            alert('주어진 정보가 충분치 않거나 이해할 수 없습니다. 캐릭터 정보를 다시 입력해주세요.');
-                        } else if (selectValue == 'auto') {
-                            alert('모든 모델이 작동하지 않아 자동을 사용할 수 없습니다. 잠시 후에 다시 이용하여 주세요.');
-                        } else {
-                            alert('다른 모델로 다시 시도해주세요. 만약 모든 모델을 시도하였다면 잠시 후에 다시 이용하여 주세요.');
+                    let success = false;
+
+                    for (const modelName of this.models) {
+                        try {
+                            this.model = await this.genAI.getGenerativeModel({ model: modelName });
+                            console.log(`모델 선택 성공: ${modelName}`);
+
+                            this.result = await this.model.generateContent(this.prompt[0]);
+                            this.response = await this.result.response.text();
+
+                            if (this.response != "001") {
+                                this.jsonText = this.response.match(/\{[\s\S]*\}/);
+                                this.json = JSON.parse(this.jsonText);
+                            }
+                            try {
+                                console.log(JSON.stringify(this.json, null, 2));
+                                this.playerState[0] = this.json.fiction; // 설정
+                                this.playerState[1] = this.json.hp; // 체력
+                                this.playerState[2] = this.json.atk; // 공격력
+                                this.playerState[3] = this.json.plausible; // 개연성
+                                this.playerState[4] = this.json.abilityStats; // 능력
+                            } catch (error) {
+                                if (this.response == "001") {
+                                    alert('주어진 정보가 충분치 않거나 이해할 수 없습니다. 캐릭터 정보를 다시 입력해주세요.');
+                                } else if (selectValue == 'auto') {
+                                    alert('모든 모델이 작동하지 않아 자동을 사용할 수 없습니다. 잠시 후에 다시 이용하여 주세요.');
+                                } else {
+                                    alert('다른 모델로 다시 시도해주세요. 만약 모든 모델을 시도하였다면 잠시 후에 다시 이용하여 주세요.');
+                                }
+                            }
+
+                            console.log(this.playerState);
+                            success = true;
+                            return [this.playerState[0], this.playerState[1], this.playerState[2], this.playerState[3], this.playerState[4]];
+                            break; // 성공했으니 종료
+                        } catch (err) {
+                            console.warn(`모델 실패 (${modelName}):`, err);
+                            if (err.message.includes("429")) {
+                                console.warn("쿼터 초과. 다음 모델 시도...");
+                                await new Promise(r => setTimeout(r, 1000)); // 짧은 대기
+                            }
                         }
                     }
-                    console.log(this.playerState);
-                    return [this.playerState[0], this.playerState[1], this.playerState[2], this.playerState[3], this.playerState[4]];
-                } catch (error) {
-                    if (error)
-                        console.log("Error:", error);
+
+                    if (!success) {
+                        alert("모든 모델 실패. 나중에 다시 시도하세요.");
+                    }
+                } catch (e) {
+                    console.error("전체 오류:", e);
                 } finally {
                     this.isRunning = false;
-                    startButton.disabled = false;
-                    startButton.textContent = '전투 시작!';
+                    startBtn.disabled = false;
+                    startBtn.textContent = "전투 시작!";
                 }
             }
-
         }
 
-        startButton.addEventListener('click', async () => {
-            selectValue = checkedModelInput?.value;
-            game = new Game(charNameInput, charSettingInput);
-            game.prompt();
-            playerState = await game.sendToAi();
-            player = new Player(charNameInput.value, playerState[0], playerState[1], playerState[2], playerState[3], playerState[4]);
-            startButton.id = 'start-play';
-            startPlay = document.getElementById('start-play');
-            startPlay.addEventListener('click', () => {
-                startContainer.style.display = 'none';
-                gameContainer.style.display = 'block';
-                player.changeState();
+        try {
+            playerState[0] = localStorage.getItem('loginId');
+            playerState[1] = localStorage.getItem('0');
+            playerState[2] = localStorage.getItem('1');
+            playerState[3] = localStorage.getItem('2');
+            playerState[4] = localStorage.getItem('3');
+            playerState[5] = JSON.parse(localStorage.getItem('4'));
+            player = new Player(playerState[0], playerState[1], playerState[2], playerState[3], playerState[4], playerState[5]);
+            game.changeDisplay([startContainer], false);
+            game.changeDisplay([gameContainer], true);
+            player.changeState();
+            game.startGame();
+        } catch (error) {
+            console.log(error);
+            game.changeDisplay([startContainer], true);
+            game.changeDisplay([gameContainer], false);
+            startBtn.addEventListener('click', async () => {
+                selectValue = checkedModelInput?.value;
+                ai = new Ai(charNameInput, charSettingInput);
+                ai.prompt();
+                playerState = await ai.sendToAi();
+                playerState.forEach((value, index) => {
+                    if (typeof value === "object") {
+                        localStorage.setItem(index, JSON.stringify(value));
+                    } else {
+                        localStorage.setItem(index, value);
+                    }
+                });
+                localStorage.setItem("loginId", charNameInput.value);
+                player = new Player(charNameInput.value, playerState[0], playerState[1], playerState[2], playerState[3], playerState[4]);
+                startPlay = document.getElementById('start-play');
+                startBtn.style.display = "none";
+                startPlay.style.display = "block";
+                startPlay.addEventListener('click', () => {
+                    game.changeDisplay([startContainer], false);
+                    game.changeDisplay([gameContainer], true);
+                    player.changeState();
+                    game.startGame();
+                });
             });
-        });
+        }
     </script>
 </body>
+
 </html>
