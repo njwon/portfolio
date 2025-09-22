@@ -331,27 +331,6 @@
     </div>
 
     <!-- Google AI SDK -->
-    <!-- const prompt = {`
-당신은 텍스트 RPG의 게임 마스터입니다. 사용자가 만든 캐릭터로 마왕과의 전투를 진행해주세요.
-
-# 캐릭터 정보
-- 이름: ${charName}
-- 설정: ${charSetting}
-
-# 상대
-- 이름: 마왕
-- 능력치: ATK 100, HP 100, MP 100
-
-# 임무
-1. 위 캐릭터 정보와 설정을 바탕으로, 마왕과의 전투 과정을 흥미진진한 단편 소설처럼 묘사해주세요.
-2. 전투의 결과(승리 또는 패배)를 결정해야 합니다. 캐릭터의 설정이 강력하다면 승리할 확률이 높고, 설정이 평범하다면 패배할 확률이 높습니다. 창의적이고 설득력 있는 결말을 만들어주세요.
-3. 전투 묘사 후, 결과를 명확하게 표시하고, 왜 그런 결과가 나왔는지 캐릭터의 설정과 연관지어 이유를 설명해주세요.
-
-# 출력 형식 (이 형식을 반드시 지켜주세요)
-((소괄호 안에 전투 과정을 소설처럼 서술))
-{[승리/패배]}
-[(대괄호 안에 결과에 대한 이유를 서술)]
-                `} -->
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
@@ -435,8 +414,8 @@
                     game.changeDisplay([gameBattleGroup], false);
                     game.changeDisplay([currnetChar], false);
                     randomEnemy = enemies[Math.floor(Math.random() * 22)];
-                    enemy = new Enemy(randomEnemy[0], randomEnemy[1], randomEnemy[2], randomEnemy[3], randomEnemy[4], randomEnemy[5], randomEnemy[6])
-                    enemy.changeState();
+                    enemy = new Player(randomEnemy[0], randomEnemy[1], randomEnemy[2], randomEnemy[3], randomEnemy[4], randomEnemy[5], randomEnemy[6])
+                    enemy.changeState(enemyStateDiv, enemyAbilityDiv);
                 });
 
                 battleCheckBtn.addEventListener('click', () => {
@@ -454,7 +433,7 @@
                 });
 
                 battleAttackBtn.addEventListener('click', () => {
-                    // 공격
+                    ai.sendToAi(0, );
                 });
 
                 battleHealBtn.addEventListener('click', () => {
@@ -475,61 +454,27 @@
         game = new Game();
 
         class Player {
-            constructor(name, fiction, hp, atk, plausible, ability) {
+            constructor(name, fiction, hp, atk, plausible, ability, info) {
                 this.name = name;
                 this.fiction = fiction;
                 this.hp = hp;
                 this.atk = atk;
-                this.plausible = plausible;
+                this.plausible = 100-plausible;
                 this.ability = ability.ability;
                 this.abilityAtk = ability.abilityAtk;
                 this.abilityEffect = ability.abilityEffect;
+                this.info = info;
             }
 
-            changeState() {
-                playerStateDiv.innerHTML = `
+            changeState(stats, ability) {
+                stats.innerHTML = `
                     이름: ${this.name}<br>
                     (${this.fiction})<br>
                     개연성: ${this.plausible}<br>
                     HP: ${this.hp}<br>
                     ATK: ${this.atk}<br>
                 `;
-                playerAbilityDiv.innerHTML = `
-                    능력명: ${this.ability}<br>
-                    능력 ATK: ${this.abilityAtk}<br>
-                    능력 효과: ${this.abilityEffect} 
-                `;
-                // 이름: ${this.name} <br>
-                // 수식어: ${this.fiction} <br>
-                // 개연성: ${this.plausible} <br>
-                // HP: ${this.hp} <br>
-                // ATK: ${this.atk} <br>
-                // 능력: ${this.ability} <br>
-                // 능력 공격력: ${this.abilityAtk} <br>
-                // 능력 효과: ${this.abilityEffect}
-            }
-        }
-
-        class Enemy {
-            constructor(name, fiction, hp, atk, ability, info) {
-                this.name = name;
-                this.fiction = fiction;
-                this.hp = hp;
-                this.atk = atk;
-                this.ability = ability[0];
-                this.abilityAtk = ability[1];
-                this.abilityEffect = ability[2];
-                this.info = info;
-            }
-
-            changeState() {
-                enemyStateDiv.innerHTML = `
-                    이름: ${this.name}<br>
-                    (${this.fiction})<br>
-                    HP: ${this.hp}<br>
-                    ATK: ${this.atk}<br>
-                `;
-                enemyAbilityDiv.innerHTML = `
+                ability.innerHTML = `
                     능력명: ${this.ability}<br>
                     능력 ATK: ${this.abilityAtk}<br>
                     능력 효과: ${this.abilityEffect} 
@@ -572,14 +517,13 @@
                 # 능력치 종류
                 - 공격: 적을 공격할 때 적의 피가 주는 수치. 제한 없음.
                 - 체력: 모두 소진되면 사망하게 되는 수치. 제한 없음.
-                - 개연성: 캐릭터의 개연성 수치. 100까지 있습니다.
+                - 개연성: 캐릭터의 개연성 수치. 100 미만으로만 서술할 수 있습니다. 예) 99, 94, 30, 99.9
                 - 수식어: 캐릭터의 설정을 짧게 요약한 수식어.
                 - 능력: 캐릭터의 회심의 일격, 이른바 필살기. 단 하나의 능력만 가질 수 있다.
                 
                 # 임무
                 1. 위 캐릭터 정보와 설정을 바탕으로, 공격과 체력을 정해주세요.
                 2. 위 캐릭터 정보와 설정에 따라 옆 예시의 형식을 참고해 설정을 한 문장으로 요약해 수식어를 만들어 주세요. (예) 한국의 고등학생, 창조신, 바다의 신, 지옥의 악마, 귀여운 강아지)
-                3. 플레이어가 만든 캐릭터 이름과 설정을 보고, 다음 조건에 따라 캐릭터의 "개연성 점수"를 0~100 사이에서 평가하세요.( 현실적이고 설득력 있는 설정일수록 낮은 점수를 줍니다., 너무 과장되거나 전지전능한 설정일수록 높은 점수를 줍니다., "강력하지만 합리적인 약점"이 있으면 감산점을 줍니다., 스탯이 낮으면 무조건 개연성도 낮습니다.)
                 4. 위 캐릭터 정보와 설정에 따라 능력을 객관적으로 정해주세요. 능력은 능력명, 공격력, 효과를 한번에 같이 서술해야합니다. (단, 효과를 서술할 때 문장에는 문자열과 공백만 존재해야 함.)
                 5. 설정에서 약점을 찾거나 사고할 때 약점이 있으면 그를 이용해 캐릭터가 약하게 나올 수 있으면 약하게 나오도록 설정해주세요.
 
@@ -612,7 +556,55 @@
 
                 만약, 임무를 수행할 수 없을 정도로 주어진 정보가 훼손되거나 이상하다면, "001"라는 텍스트만 출력할 것.
                 `, `
-                
+                    당신은 텍스트 RPG의 게임 마스터입니다. 사용자가 만든 캐릭터로 마왕과의 전투를 진행해주세요.
+
+                    # 플레이어
+                    - 이름: ${player.name}
+                    - 수식어: ${player.fiction}
+                    - 확률: ${player.plausible}
+                    - HP: ${player.hp}
+                    - ATK: ${player.atk}
+                    - 능력: ${player.ability}
+                    - 능력 공격력: ${player.abilityAtk}
+                    - 능력 효과: ${player.abilityEffect}
+                    - 설정: ${player.info}
+                    
+                    # 상대
+                    - 이름: ${enemy.name}
+                    - 수식어: ${enemy.fiction}
+                    - 확률: ${enemy.plausible}
+                    - HP: ${enemy.hp}
+                    - ATK: ${enemy.atk}
+                    - 능력: ${enemy.ability}
+                    - 능력 공격력: ${enemy.abilityAtk}
+                    - 능력 효과: ${enemy.abilityEffect}
+                    - 설정: ${enemy.info}
+                    
+                    # 임무
+                    1. 플레이어가 상대 적을 공격했습니다. 위 캐릭터 정보와 설정을 바탕으로, ${enemy.name}과의 전투 과정을 아래 JSON 형식에 맞춰 출력해야 합니다. 전투 과정은 플레이어와 적 모두 공격을 한번씩 주고 받게 됩니다.
+                    2. 공격의 결과(성공 또는 실패)를 다양한 조건에 따라 결정해야 합니다. 가장 우선순위가 높은 조건은 캐릭터의 확률입니다. 이 확률 수치에 따라 적 캐릭터에게 공격이 적중할지와, 자기 자신의 캐릭터가 공격을 회피할지가 갈라지게 됩니다. 예) 5%의 확률을 뚫고 공격이 적중했다, 5%의 공격을 뚫지 못하고 공격이 빗나갔다, 5%의 확률을 뚫고 상대의 공격을 회피했다, 5%의 확률을 뚫지 못하고 상대의 공격을 회피하지 못했다.
+                    3. 전투 묘사 후, 결과를 명확하게 표시하고, 왜 그런 결과가 나왔는지 캐릭터의 설정과 연관지어 이유를 설명해주세요.
+                    
+                # 출력 형식 (출력은 JSON 형태로 하여야 합니다. 이 형식을 반드시 지켜주세요. 밑 형식과 아래 예시의 형식 참고 단, 아래 형식을 벗어난 모든 숫자, 문자는 출력하지 말아야합니다.)
+                    -형식-
+                    {
+                    "playerResult": 플레이어의 공격이 적중했는지를 true, false로 서술,
+                    "enemyResult": 적의 공격이 적중했는지를 true, false로 서술,
+                    "playerDamage": 플레이어가 입은 데미지 수치를 숫자만 서술,
+                    "enemyDamage": 적이 입은 데미지 수치를 숫자만 서술,
+                    "situation": 싸우는 상황의 이야기를 서술
+                    }
+                    
+                    -예시-
+                    {
+                    "playerResult": true,
+                    "enemyResult": false,
+                    "playerDamage": 55,
+                    "enemyDamage": ,
+                    "situation": 싸우는 상황의 이야기를 서술
+                    }
+
+                만약, 임무를 수행할 수 없다면 이유와 함께 "001"라는 텍스트를 출력할 것.
                 `];
             }
 
@@ -620,8 +612,87 @@
                 startBtn.textContent = '몽상 시작!';
                 startBtn.style.backgroundColor = '#eee';
             }
-
-            async sendToAi() {
+            
+            async sendToAi(selecmodel, prompt, rework=false) {
+                this.genAI = new GoogleGenerativeAI(apikey);
+                let success = false;
+                this.models = [
+                        "gemini-2.5-flash",
+                        "gemini-2.0-flash",
+                        "gemini-2.5-pro",
+                        "gemini-2.5-flash-lite",
+                        "gemini-2.0-flash-lite"
+                    ];
+                if(rework===false){
+                    try{
+                        try {
+                                    this.model = await this.genAI.getGenerativeModel({ model: this.models[selecmodel] });
+                                    console.log(`모델 선택 성공: ${this.models[selecmodel]}`);
+        
+                                    this.result = await this.model.generateContent(this.prompt[prompt]);
+                                    this.response = await this.result.response.text();
+        
+                                    if (this.response != "001") {
+                                        this.jsonText = this.response.match(/\{[\s\S]*\}/);
+                                        this.json = JSON.parse(this.jsonText);
+                                    }
+                                    // try {
+                                    // } catch (error) {
+                                       else if (this.response == "001") {
+                                            alert('주어진 정보가 충분치 않거나 이해할 수 없습니다. 캐릭터 정보를 다시 입력해주세요.');
+                                        }
+                                    } else {
+                                        alert('다시 시도해주세요.');
+                                    }
+                                    success = true;
+                                    console.log(success);
+                                    return this.json;
+                        } catch (err) {
+                                    console.warn(`모델 실패 (${modelName}):`, err);
+                                    if (err.message.includes("429")) {
+                                        console.warn("쿼터 초과. 다음 모델 시도...");
+                                        await new Promise(r => setTimeout(r, 1000)); // 짧은 대기
+                                    }
+                                    this.sendToAi(selecmodel, prompt, true);
+                                }
+                    if (!success) {
+                        alert("모든 모델 실패. 나중에 다시 시도하세요.");
+                    }
+                } else {
+                    for (const modelName of this.models) {
+                            try {
+                                this.model = await this.genAI.getGenerativeModel({ model: modelName });
+                                console.log(`모델 선택 성공: ${modelName}`);
+                                
+                                this.result = await this.model.generateContent(this.prompt[0]);
+                                this.response = await this.result.response.text();
+                                
+                                if (this.response != "001") {
+                                    this.jsonText = this.response.match(/\{[\s\S]*\}/);
+                                    this.json = JSON.parse(this.jsonText);
+                                } else if (this.response == "001") {
+                                        alert('주어진 정보가 충분치 않거나 이해할 수 없습니다. 캐릭터 정보를 다시 입력해주세요.');
+                                    } else {
+                                        alert('다시 시도해주세요.');
+                                    }
+                                }
+                                
+                                console.log(this.playerState);
+                                success = true;
+                                console.log(success);
+                                return this.json;
+                                break; // 성공했으니 종료
+                            } catch (err) {
+                                console.warn(`모델 실패 (${modelName}):`, err);
+                                if (err.message.includes("429")) {
+                                    console.warn("쿼터 초과. 다음 모델 시도...");
+                                    await new Promise(r => setTimeout(r, 1000)); // 짧은 대기
+                                }
+                            }
+                        } 
+                }
+            
+            async createChar() {
                 if (this.isRunning) return;
                 if (!this.charName || !this.charSetting) {
                     alert('캐릭터 이름과 설정을 모두 입력해주세요.');
@@ -700,6 +771,7 @@
                 }
             }
         }
+        }
 
         try {
             playerState[0] = localStorage.getItem('loginId');
@@ -708,10 +780,12 @@
             playerState[3] = localStorage.getItem('2');
             playerState[4] = localStorage.getItem('3');
             playerState[5] = JSON.parse(localStorage.getItem('4'));
-            player = new Player(playerState[0], playerState[1], playerState[2], playerState[3], playerState[4], playerState[5]);
+            playerState[6] = localStorage.getItem('charFiction');
+            player = new Player(playerState[0], playerState[1], playerState[2], playerState[3], playerState[4], playerState[5], playerState[6]);
+            ai = new Ai(playerState[0], playerState[6]);
             game.changeDisplay([startContainer], false);
             game.changeDisplay([gameContainer], true);
-            player.changeState();
+            player.changeState(playerStateDiv, playerAbilityDiv);
             game.startGame();
         } catch (error) {
             console.log(error);
@@ -721,7 +795,7 @@
                 selectValue = checkedModelInput?.value;
                 ai = new Ai(charNameInput, charSettingInput);
                 ai.prompt();
-                playerState = await ai.sendToAi();
+                playerState = await ai.createChar();
                 playerState.forEach((value, index) => {
                     if (typeof value === "object") {
                         localStorage.setItem(index, JSON.stringify(value));
@@ -730,14 +804,15 @@
                     }
                 });
                 localStorage.setItem("loginId", charNameInput.value);
-                player = new Player(charNameInput.value, playerState[0], playerState[1], playerState[2], playerState[3], playerState[4]);
+                localStorage.setItem("charFiction", charSettingInput.value);
+                player = new Player(charNameInput.value, playerState[0], playerState[1], playerState[2], playerState[3], playerState[4], charSettingInput.value);
                 startPlay = document.getElementById('start-play');
                 startBtn.style.display = "none";
                 startPlay.style.display = "block";
                 startPlay.addEventListener('click', () => {
                     game.changeDisplay([startContainer], false);
                     game.changeDisplay([gameContainer], true);
-                    player.changeState();
+                    player.changeState(playerStateDiv, playerAbilityDiv);
                     game.startGame();
                 });
             });
