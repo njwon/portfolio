@@ -602,10 +602,8 @@
                     game.changeDisplay([inGameBattleGroup],false);
                     setTimeout(() => {
                         fightDiv.innerHTML = '<fieldset id="enemy-char" class="boxflicker"><legend>적</legend><span id="enemyState"></span><div class="charStateVerticalLine boxflicker"></div><span id="enemyAbility"></span></fieldset>';
-                        game.changeDisplay([fightDiv],false);
-                        game.changeDisplay([gameBattleGroup], 'flex');
-                        game.changeDisplay([currnetChar], 'flex');
-                        game.changeDisplay([battleDiv], false);
+                        game.changeDisplay([fightDiv,battleDiv],false);
+                        game.changeDisplay([gameBattleGroup,currnetChar], 'flex');
                         game.changeDisplay([homeDiv], true);
                         fightDiv.classList.remove('result');
                         return 0;
@@ -619,13 +617,9 @@
                 // });
 
                 battleBtn.addEventListener('click', () => {
-                    game.changeDisplay([homeDiv], false);
+                    game.changeDisplay([homeDiv,attackDiv,gameBattleGroup,currnetChar], false);
                     game.changeDisplay([inGameBattleGroup],'flex');
-                    game.changeDisplay([attackDiv], false);
-                    game.changeDisplay([battleDiv], true);
-                    game.changeDisplay([fightDiv], true);
-                    game.changeDisplay([gameBattleGroup], false);
-                    game.changeDisplay([currnetChar], false);
+                    game.changeDisplay([battleDiv,fightDiv], true);
                     randomEnemy = enemies[Math.floor(Math.random() * 22)];
                     enemy = new Enemy(randomEnemy[0], randomEnemy[1], randomEnemy[2], randomEnemy[3], randomEnemy[4], randomEnemy[5], randomEnemy[6]);
                     enemy.changeState();
@@ -638,17 +632,14 @@
                 });
 
                 battleCheckBtn.addEventListener('click', () => {
-                    game.changeDisplay([currnetChar], 'flex');
-                    game.changeDisplay([fightDiv], false);
+                    game.changeDisplay([currnetChar,inGameBattleGroupC], 'flex');
+                    game.changeDisplay([fightDiv,inGameBattleGroup], false);
                     game.changeDisplay([homeDiv], true);
-                    game.changeDisplay([inGameBattleGroupC], 'flex');
-                    game.changeDisplay([inGameBattleGroup], false);
                     cBtn = document.querySelector('.c-button');
                     cBtn.addEventListener('click', () => {
                         game.changeDisplay([fightDiv], true);
                         game.changeDisplay([inGameBattleGroup], 'flex');
-                        game.changeDisplay([currnetChar], false);
-                        game.changeDisplay([inGameBattleGroupC], false);
+                        game.changeDisplay([inGameBattleGroupC,currnetChar], false);
                         this.whoisDead();
                     });
                 });
@@ -696,17 +687,13 @@
                     player.changeState();
                     enemy.changeState();
                     game.changeDisplay([attackDiv], true);
-                    game.changeDisplay([fightDiv], false);
+                    game.changeDisplay([fightDiv,inGameBattleGroup], false);
                     attackDiv.innerHTML = this.inner;
                     game.changeDisplay([inGameBattleGroupF], 'flex');
-                    game.changeDisplay([inGameBattleGroup], false);
                     fBtn.addEventListener('click', () => {
-                        game.changeDisplay([fightDiv], true);
+                        game.changeDisplay([fightDiv,battleAttackBtn,battleAttackBtn], true);
                         game.changeDisplay([inGameBattleGroup], 'flex');
-                        game.changeDisplay([attackDiv], false);
-                        game.changeDisplay([inGameBattleGroupF], false);
-                        game.changeDisplay([watchAttackBtn], false);
-                        game.changeDisplay([battleAttackBtn], true);
+                        game.changeDisplay([attackDiv,inGameBattleGroupF,watchAttackBtn], false);
                         this.whoisDead();
                     });
                 });
@@ -716,8 +703,7 @@
                 // });
 
                 battleRunBtn.addEventListener('click', () => {
-                    game.changeDisplay([gameBattleGroup], 'flex');
-                    game.changeDisplay([currnetChar], 'flex');
+                    game.changeDisplay([gameBattleGroup,currnetChar], 'flex');
                     game.changeDisplay([battleDiv], false);
                     game.changeDisplay([homeDiv], true);
                 });
