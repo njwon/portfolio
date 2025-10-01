@@ -412,6 +412,8 @@
             ['이누마키 토게', '말의 저주사', 3700, 900, 40, ['폭발해', 2000, '적 하나를 말 한 마디로 폭파시키나, 자신도 체력을 소모한다.'], '말 대신 주술어를 사용해 적을 조종하거나 제압한다.']
         ];
 
+        let isPlayer;
+        let isEnemy;
         let cBtn;
         let fBtn;
         let battleCheckBackBtn;
@@ -446,7 +448,8 @@
                     --플레이어1--
                     이름: ${player.name}
                     수식어: ${player.fiction}
-                    승률/성공률(%): ${player.plausible}
+                    성공여부: ${isPlayer}
+                    개연성: ${player.plausible}
                     HP: ${player.hp}
                     기본 공격력(ATK): ${player.atk}
                     능력 이름: ${player.ability}
@@ -457,7 +460,8 @@
                     --플레이어2--
                     이름: ${enemy.name}
                     수식어: ${enemy.fiction}
-                    승률/성공률(%): ${enemy.plausible}
+                    성공여부: ${isEnemy}
+                    성공률: ${enemy.plausible}
                     HP: ${enemy.hp}
                     기본 공격력(ATK): ${enemy.atk}
                     능력 이름: ${enemy.ability}
@@ -474,9 +478,14 @@
                     전투 시뮬레이션: 플레이어1과 플레이어2가 각각 한 번씩 공격을 주고받는 1턴의 전투를 진행합니다.
 
                     명확한 확률 기반 결과 결정:
-                    '승률/성공률(%)'은 행동의 성공 확률 그 자체입니다. 예를 들어, 성공률이 70%이면 1부터 100까지의 가상 주사위를 굴려 70 이하의 숫자가 나오면 성공하는 방식입니다.
-                    공격 성공 여부는 오직 공격하는 캐릭터의 성공률에 따라서만 결정됩니다. (별도의 회피 판정은 없습니다.)
-                    결과를 묘사할 때, "(캐릭터 이름)의 공격은 성공률 (N)에 따라 판정되어, 명중했습니다!" 와 같이 명확한 근거를 제시해야 합니다.
+                    '성공여부'는 행동의 성공 여부 그 자체입니다. true라면 행동이 성공한 것이고, false라면 행동이 실패한 것입니다.
+                    --'성공여부'가 true일 경우--
+                    '성공여부'가 true이어서 공격이 성공했다면 개연성의 확률을 이용해 캐릭터의 행동 성공를 서술해야합니다.
+                    개연성이 70%이라면 1부터 100까지의 가상 주사위를 굴려 70 이상의 숫자가 나와 성공하였다고 서술해야합니다.
+                    --'성공여부'가 false일 경우--
+                    '성공여부'가 false이어서 공격이 실패했다면 개연성의 확률을 이용해 캐릭터의 행동 실패를 서술해야합니다.
+                    개연성이 70%이면 1부터 100까지의 가상 주사위를 굴려 70 미만의 숫자가 나와 실패하였다고 서술해야합니다.
+                    결과를 묘사할 때 예시와 같은 명확한 근거를 제시해야 합니다. 예시, "캐릭터 이름의 공격은 성공률 (N)에 따라 판정되어, 명중했습니다!"
 
                     피해량 계산:
                     공격이 성공하면, 기본 공격력(ATK) 수치만큼 상대방의 HP가 감소합니다.
@@ -486,16 +495,12 @@
 
                     # JSON 출력 형식
                     {
-                    "playerResult": 플레이어1의 공격이 적중했는지를 true, false로 서술,
-                    "enemyResult": 플레이어2의 공격이 적중했는지를 true, false로 서술,
-                    "playerDamage": 플레이어1이 입은 데미지 수치를 숫자만 서술 (enemyResult가 false이어서 입은 데미지가 없다면 0으로 서술),
-                    "enemyDamage": 플레이어2가 입은 데미지 수치를 숫자만 서술 (playerResult가가 false이어서 입은 데미지가 없다면 0으로 서술),
+                    "playerDamage": 플레이어1이 입은 데미지 수치를 숫자만 서술 (성공여부가 false이어서 입은 데미지가 없다면 0으로 서술),
+                    "enemyDamage": 플레이어2가 입은 데미지 수치를 숫자만 서술 (성공여부가 false이어서 입은 데미지가 없다면 0으로 서술),
                     "situation": 싸우는 상황의 이야기를 서술
                     }
 
                     {
-                    "playerResult": true,
-                    "enemyResult": false,
                     "playerDamage": 0,
                     "enemyDamage": 1200,
                     "situation": "전투 상황에 대한 구체적이고 생생한 묘사...<br>캐릭터의 설정을 바탕으로 결과에 대한 이유를 서술..."
@@ -646,32 +651,34 @@
 
                 battleAttackBtn.addEventListener('click', async () => {
                     fBtn = document.querySelector('.f-button');
-                    this.result = await this.sendToAi(battleAttackBtn, 'gemini-2.5-flash', this.attackPrompt(), ['playerResult', 'enemyResult', 'playerDamage', 'enemyDamage', 'situation']);
-                    if (this.result.playerResult && this.result.enemyResult == false) {
+                    isPlayer = (Math.floor(Math.random() * 101) >= player.plausible) ? true : false;
+                    isEnemy = (Math.floor(Math.random() * 101) >= player.plausible) ? true : false;
+                    this.result = await this.sendToAi(battleAttackBtn, 'gemini-2.5-pro', this.attackPrompt(), ['playerDamage', 'enemyDamage', 'situation']);
+                    if (isPlayer && isEnemy == false) {
                         this.inner = `
-                        공격이 적중하여 적의 피가 ${this.result.enemyDamage} 깎였습니다!<br>
+                        공격이 적중하여 적의 피가 ${((enemy.hp - this.result.enemyDamage) >= 0) ? this.result.enemyDamage : enemy.hp} 깎였습니다!<br>
                         적은 공격을 맞추지도 못했군요!<br>
                         당신.. 신인가요?<br><br>
                         ${this.result.situation}
                         `;
-                    } else if (this.result.playerResult == false && this.result.enemyResult) {
+                    } else if (isPlayer == false && isEnemy) {
                         this.inner = `
                         공격이 적중하지 못하였습니다..<br>
-                        심지어 적의 공격을 허용하셨군요.. 플레이어의 hp ${this.result.playerDamage}가 깎였습니다<br>
+                        심지어 적의 공격을 허용하셨군요.. 플레이어의 hp ${((player.hp - this.result.playerDamage) >= 0) ? this.result.playerDamage : player.hp}가 깎였습니다<br>
                         전장의 책면이 넘어가고 있습니다..<br><br>
                         ${this.result.situation}
                         `;
-                    } else if (this.result.playerResult == false && this.result.enemyResult == false) {
+                    } else if (isPlayer == false && isEnemy == false) {
                         this.inner = `
                         공격이 적중하지 못하였습니다..<br>
                         하지만 적도 당신을 해하지 못하였군요!<br>
                         하하하! 애들 싸움인가요?<br><br>
                         ${this.result.situation}
                         `;
-                    } else if (this.result.playerResult && this.result.enemyResult) {
+                    } else if (isPlayer && isEnemy) {
                         this.inner = `
-                        공격이 적중하여 적의 피가 ${this.result.enemyDamage} 깎였습니다!<br>
-                        하지만 적의 공격을 허용하셨군요.. 플레이어의 hp ${this.result.playerDamage}가 깎였습니다<br>
+                        공격이 적중하여 적의 피가 ${((enemy.hp - this.result.enemyDamage) >= 0) ? this.result.enemyDamage : enemy.hp} 깎였습니다!<br>
+                        하지만 적의 공격을 허용하셨군요.. 플레이어의 hp ${((player.hp - this.result.playerDamage) >= 0) ? this.result.playerDamage : player.hp}가 깎였습니다<br>
                         정말 막상막하군요! 분발하세요!<br><br>
                         ${this.result.situation}
                         `;
