@@ -14,7 +14,7 @@
 
   <script>
     // SDK가 완전히 로드된 뒤에 실행하도록 보장
-    kakao.maps.load(function() {
+    if(kakao.maps.load) {
       // 위치 정보 가져오기
       navigator.geolocation.getCurrentPosition(
         function(position) {
@@ -49,7 +49,7 @@
           });
         }
       );
-    });
+    }
   </script>
 </body>
 </html>
