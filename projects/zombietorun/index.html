@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kakao Map with Geolocation</title>
+  <script
+    type="text/javascript"
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=51353403c7940cc7bbb6809d790daa27&autoload=false">
+  </script>
+</head>
+
+<body>
+  <div id="map" style="width:500px; height:400px;"></div>
+
+  <script>
+    // 카카오맵 SDK 로드 후 실행
+    kakao.maps.load(function() {
+      // 사용자의 현재 위치 가져오기
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          const container = document.getElementById('map');
+          const options = {
+            center: new kakao.maps.LatLng(latitude, longitude),
+            level: 3
+          };
+
+          // 지도 생성
+          const map = new kakao.maps.Map(container, options);
+
+          // 마커 표시
+          const marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(latitude, longitude),
+            map: map
+          });
+        },
+        function(error) {
+          alert("위치 정보를 가져올 수 없습니다. 기본 위치를 표시합니다.");
+
+          const container = document.getElementById('map');
+          const defaultPosition = new kakao.maps.LatLng(37.5665, 126.9780); // 서울 좌표
+
+          const map = new kakao.maps.Map(container, {
+            center: defaultPosition,
+            level: 3
+          });
+
+          new kakao.maps.Marker({
+            position: defaultPosition,
+            map: map
+          });
+        }
+      );
+    });
+  </script>
+</body>
+
+</html>
