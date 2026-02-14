@@ -20,11 +20,11 @@ if (isPostPage) {
 } else {
   initList();
 
-  // 검색바 스크롤 그림자 효과
-  const searchSticky = document.querySelector('.search-sticky');
-  if (searchSticky) {
+  // 스크롤 시 헤더 축소
+  const header = document.getElementById('header');
+  if (header) {
     window.addEventListener('scroll', () => {
-      searchSticky.classList.toggle('scrolled', window.scrollY > 80);
+      header.classList.toggle('scrolled', window.scrollY > 80);
     });
   }
 }

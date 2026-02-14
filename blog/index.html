@@ -18,20 +18,21 @@
 <body>
     <div class="noise"></div>
 
-    <header class="header">
-        <div class="header-inner">
-            <a href="../" class="back-link">&#8592; Portfolio</a>
-            <h1 class="blog-title">HURT_ALBOCHILL.log</h1>
-            <p class="blog-desc">알보칠은 아파!</p>
+    <header class="header" id="header">
+        <div class="header-top">
+            <div class="header-inner">
+                <a href="../" class="back-link">&#8592; Portfolio</a>
+                <h1 class="blog-title">HURT_ALBOCHILL.log</h1>
+                <p class="blog-desc">알보칠은 아파!</p>
+            </div>
+        </div>
+        <div class="header-search">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="글 제목 또는 내용 검색..." />
+                <button class="search-btn" onclick="document.getElementById('searchInput').dispatchEvent(new Event('input'))">검색</button>
+            </div>
         </div>
     </header>
-
-    <div class="search-sticky">
-        <div class="search-bar">
-            <input type="text" class="search-input" id="searchInput" placeholder="글 제목 또는 내용 검색..." />
-            <button class="search-btn" onclick="document.getElementById('searchInput').dispatchEvent(new Event('input'))">검색</button>
-        </div>
-    </div>
 
     <div class="filter-wrap">
         <nav class="filter-section">
