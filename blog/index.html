@@ -30,11 +30,21 @@
         <input type="text" class="search-input" id="searchInput" placeholder="글 제목 또는 내용 검색..." />
     </div>
 
-    <nav class="tag-nav">
-        <div class="tag-list" id="tagList">
-            <button class="tag-btn active" data-tag="">All</button>
-        </div>
-    </nav>
+    <div class="filter-wrap">
+        <nav class="filter-section">
+            <span class="filter-label">시리즈</span>
+            <div class="filter-list" id="seriesList">
+                <button class="filter-btn active" onclick="filterBySeries('')">All</button>
+            </div>
+        </nav>
+
+        <nav class="filter-section">
+            <span class="filter-label">태그</span>
+            <div class="filter-list" id="tagList">
+                <button class="filter-btn active" onclick="filterByTag('')">All</button>
+            </div>
+        </nav>
+    </div>
 
     <main class="posts-container" id="postsContainer">
         <div class="loading" id="loading">Loading...</div>

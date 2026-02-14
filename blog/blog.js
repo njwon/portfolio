@@ -7,6 +7,7 @@ const POSTS_PER_PAGE = 5;
 // ─── 상태 ───────────────────────────────────────────────────
 let allPosts = [];
 let currentTag = '';
+let currentSeries = '';
 let currentSearch = '';
 let currentPage = 1;
 
@@ -34,10 +35,15 @@ async function initList() {
       return;
     }
 
-    // 태그 목록 수집 및 렌더링
+    // 태그 & 시리즈 수집 및 렌더링
     const allTags = new Set();
-    allPosts.forEach(p => (p.tags || []).forEach(t => allTags.add(t)));
+    const allSeries = new Set();
+    allPosts.forEach(p => {
+      (p.tags || []).forEach(t => allTags.add(t));
+      if (p.series_name) allSeries.add(p.series_name);
+    });
     renderTags(allTags);
+    renderSeries(allSeries);
 
     // 검색 이벤트
     const searchInput = document.getElementById('searchInput');
@@ -64,6 +70,11 @@ async function initList() {
 function renderFiltered() {
   let filtered = allPosts;
 
+  // 시리즈 필터
+  if (currentSeries) {
+    filtered = filtered.filter(p => p.series_name === currentSeries);
+  }
+
   // 태그 필터
   if (currentTag) {
     filtered = filtered.filter(p => (p.tags || []).includes(currentTag));
@@ -83,12 +94,12 @@ function renderFiltered() {
   const start = (currentPage - 1) * POSTS_PER_PAGE;
   const paginated = filtered.slice(start, start + POSTS_PER_PAGE);
 
-  renderPostCards(paginated, filtered.length);
+  renderPostCards(paginated);
   renderPagination(totalPages);
 }
 
 // ─── 글 카드 렌더링 ─────────────────────────────────────────
-function renderPostCards(posts, totalCount) {
+function renderPostCards(posts) {
   const container = document.getElementById('postsContainer');
 
   if (posts.length === 0) {
@@ -102,11 +113,15 @@ function renderPostCards(posts, totalCount) {
     const thumb = post.thumbnail
       ? `<img class="post-card-thumb" src="${escapeHtml(post.thumbnail)}" alt="" loading="lazy">`
       : '';
+    const series = post.series_name
+      ? `<span class="post-card-series">${escapeHtml(post.series_name)}</span>`
+      : '';
 
     return `
       <div class="post-card" onclick="goToPost('${escapeHtml(post.slug)}')">
         ${thumb}
         <div class="post-card-content">
+          ${series}
           <div class="post-card-title">${escapeHtml(post.title)}</div>
           <div class="post-card-desc">${escapeHtml(post.short_description || '')}</div>
           <div class="post-card-footer">
@@ -119,15 +134,37 @@ function renderPostCards(posts, totalCount) {
   }).join('');
 }
 
+// ─── 시리즈 버튼 렌더링 ─────────────────────────────────────
+function renderSeries(seriesSet) {
+  const seriesList = document.getElementById('seriesList');
+  if (!seriesList) return;
+
+  let html = `<button class="filter-btn ${!currentSeries ? 'active' : ''}" onclick="filterBySeries('')">All</button>`;
+  seriesSet.forEach(s => {
+    const isActive = s === currentSeries ? 'active' : '';
+    html += `<button class="filter-btn ${isActive}" onclick="filterBySeries('${escapeHtml(s)}')">${escapeHtml(s)}</button>`;
+  });
+  seriesList.innerHTML = html;
+}
+
+function filterBySeries(series) {
+  currentSeries = series;
+  currentPage = 1;
+  document.querySelectorAll('#seriesList .filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === (series || 'All'));
+  });
+  renderFiltered();
+}
+
 // ─── 태그 버튼 렌더링 ───────────────────────────────────────
 function renderTags(tagSet) {
   const tagList = document.getElementById('tagList');
   if (!tagList) return;
 
-  let html = `<button class="tag-btn ${!currentTag ? 'active' : ''}" onclick="filterByTag('')">All</button>`;
+  let html = `<button class="filter-btn ${!currentTag ? 'active' : ''}" onclick="filterByTag('')">All</button>`;
   tagSet.forEach(tag => {
     const isActive = tag === currentTag ? 'active' : '';
-    html += `<button class="tag-btn ${isActive}" onclick="filterByTag('${escapeHtml(tag)}')">${escapeHtml(tag)}</button>`;
+    html += `<button class="filter-btn ${isActive}" onclick="filterByTag('${escapeHtml(tag)}')">${escapeHtml(tag)}</button>`;
   });
   tagList.innerHTML = html;
 }
@@ -135,12 +172,9 @@ function renderTags(tagSet) {
 function filterByTag(tag) {
   currentTag = tag;
   currentPage = 1;
-
-  // 태그 버튼 active 갱신
-  document.querySelectorAll('.tag-btn').forEach(btn => {
+  document.querySelectorAll('#tagList .filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.textContent === (tag || 'All'));
   });
-
   renderFiltered();
 }
 
@@ -153,17 +187,13 @@ function renderPagination(totalPages) {
   }
 
   let html = '';
-
-  // 이전 버튼
   html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}"
     onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&laquo;</button>`;
 
-  // 페이지 번호
   for (let i = 1; i <= totalPages; i++) {
     html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
   }
 
-  // 다음 버튼
   html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}"
     onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&raquo;</button>`;
 
