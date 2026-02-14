@@ -55,9 +55,6 @@ a {
     background-color: #2c2b29;
     border-bottom: 1px solid #444;
     padding: 20px 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
 }
 
 .header-inner {
@@ -118,12 +115,13 @@ a {
 }
 
 .search-btn {
-    background: #2c2b29;
-    border: 1px solid #444;
+    background: #f5f5f5;
+    border: none;
     border-radius: 8px;
-    color: #aaa;
-    padding: 12px 20px;
+    color: #1a1a1a;
+    padding: 12px 24px;
     font-size: 14px;
+    font-weight: 600;
     font-family: 'S-CoreDream-3Light', serif;
     cursor: pointer;
     white-space: nowrap;
@@ -131,9 +129,13 @@ a {
 }
 
 .search-btn:hover {
-    background: #f5f5f5;
-    color: #1a1a1a;
-    border-color: #f5f5f5;
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+}
+
+.search-btn:active {
+    transform: translateY(0);
 }
 
 .sort-wrap {
