@@ -23,8 +23,13 @@ if (isPostPage) {
   // 스크롤 시 헤더 축소
   const header = document.getElementById('header');
   if (header) {
+    let lastScrolled = false;
     window.addEventListener('scroll', () => {
-      header.classList.toggle('scrolled', window.scrollY > 80);
+      const scrolled = window.scrollY > 120;
+      if (scrolled !== lastScrolled) {
+        lastScrolled = scrolled;
+        header.classList.toggle('scrolled', scrolled);
+      }
     });
   }
 }
