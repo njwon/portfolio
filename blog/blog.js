@@ -20,15 +20,17 @@ if (isPostPage) {
 } else {
   initList();
 
-  // 스크롤 시 헤더 축소
+  // 스크롤 시 헤더 축소 (히스테리시스로 깜빡임 방지)
   const header = document.getElementById('header');
   if (header) {
-    let lastScrolled = false;
+    let isScrolled = false;
     window.addEventListener('scroll', () => {
-      const scrolled = window.scrollY > 120;
-      if (scrolled !== lastScrolled) {
-        lastScrolled = scrolled;
-        header.classList.toggle('scrolled', scrolled);
+      if (!isScrolled && window.scrollY > 120) {
+        isScrolled = true;
+        header.classList.add('scrolled');
+      } else if (isScrolled && window.scrollY < 30) {
+        isScrolled = false;
+        header.classList.remove('scrolled');
       }
     });
   }
