@@ -19,6 +19,14 @@ if (isPostPage) {
   loadPost();
 } else {
   initList();
+
+  // 검색바 스크롤 그림자 효과
+  const searchSticky = document.querySelector('.search-sticky');
+  if (searchSticky) {
+    window.addEventListener('scroll', () => {
+      searchSticky.classList.toggle('scrolled', window.scrollY > 80);
+    });
+  }
 }
 
 // ─── 목록 페이지 초기화 ─────────────────────────────────────
