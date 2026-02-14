@@ -27,14 +27,9 @@
     </header>
 
     <div class="search-wrap">
-        <input type="text" class="search-input" id="searchInput" placeholder="글 제목 또는 내용 검색..." />
-        <div class="sort-wrap">
-            <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)">
-                <option value="date-desc">최신순</option>
-                <option value="date-asc">오래된순</option>
-                <option value="title-asc">제목 ㄱ-ㅎ</option>
-                <option value="title-desc">제목 ㅎ-ㄱ</option>
-            </select>
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="글 제목 또는 내용 검색..." />
+            <button class="search-btn" onclick="document.getElementById('searchInput').dispatchEvent(new Event('input'))">검색</button>
         </div>
     </div>
 
@@ -52,6 +47,15 @@
                 <button class="filter-btn active" onclick="filterByTag('')">All</button>
             </div>
         </nav>
+
+        <div class="sort-wrap">
+            <select class="sort-select" id="sortSelect" onchange="changeSort(this.value)">
+                <option value="date-desc">최신순</option>
+                <option value="date-asc">오래된순</option>
+                <option value="title-asc">제목 ㄱ-ㅎ</option>
+                <option value="title-desc">제목 ㅎ-ㄱ</option>
+            </select>
+        </div>
     </div>
 
     <main class="posts-container" id="postsContainer">
