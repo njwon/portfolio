@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="노정원의 개발 블로그 - HURT_ALBOCHILL.log">
+    <meta name="author" content="노정원">
+    <meta property="og:title" content="HURT_ALBOCHILL.log">
+    <meta property="og:description" content="노정원의 개발 블로그">
+    <meta property="og:url" content="https://njw.kro.kr/blog/">
+    <title>HURT_ALBOCHILL.log</title>
+    <link rel="stylesheet" href="../css/font.css" />
+    <link rel="stylesheet" href="blog.css" />
+    <link rel="icon" href="../img/noise/Sarah.webp" />
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="../" class="back-link">&#8592; Portfolio</a>
+            <h1 class="blog-title">HURT_ALBOCHILL.log</h1>
+            <p class="blog-desc">알보칠은 아파!</p>
+        </div>
+    </header>
+
+    <div class="search-wrap">
+        <input type="text" class="search-input" id="searchInput" placeholder="글 제목 또는 내용 검색..." />
+    </div>
+
+    <nav class="tag-nav">
+        <div class="tag-list" id="tagList">
+            <button class="tag-btn active" data-tag="">All</button>
+        </div>
+    </nav>
+
+    <main class="posts-container" id="postsContainer">
+        <div class="loading" id="loading">Loading...</div>
+    </main>
+
+    <div class="pagination" id="pagination"></div>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script src="blog.js"></script>
+</body>
+
+</html>

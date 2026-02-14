@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="노정원">
+    <title>Loading... - HURT_ALBOCHILL.log</title>
+    <link rel="stylesheet" href="../css/font.css" />
+    <link rel="stylesheet" href="blog.css" />
+    <link rel="icon" href="../img/noise/Sarah.webp" />
+    <!-- 마크다운 렌더링 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <!-- 코드 하이라이팅 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+    <!-- 마크다운 파서 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="./" class="back-link">&#8592; Blog</a>
+            <h1 class="blog-title">HURT_ALBOCHILL.log</h1>
+        </div>
+    </header>
+
+    <main class="post-container" id="postContainer">
+        <div class="loading" id="loading">Loading...</div>
+
+        <article class="post-article" id="postArticle" style="display:none;">
+            <div class="post-header">
+                <h1 class="post-title" id="postTitle"></h1>
+                <div class="post-meta">
+                    <span class="post-date" id="postDate"></span>
+                    <span class="post-series" id="postSeries"></span>
+                </div>
+                <div class="post-tags" id="postTags"></div>
+            </div>
+            <div class="post-thumbnail-wrap" id="thumbnailWrap" style="display:none;">
+                <img class="post-thumbnail" id="postThumbnail" alt="">
+            </div>
+            <div class="post-body markdown-body" id="postBody"></div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script src="blog.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[보안] CORS 파헤쳐보기 - HURT_ALBOCHILL.log</title>
+    <link rel="stylesheet" href="../css/font.css" />
+    <link rel="stylesheet" href="blog.css" />
+    <link rel="icon" href="../img/noise/Sarah.webp" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="preview.html" class="back-link">&#8592; Blog</a>
+            <h1 class="blog-title">HURT_ALBOCHILL.log</h1>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[보안] 프론트엔드 개발자를 괴롭히는 "CORS" 파헤쳐보기</h1>
+                <div class="post-meta">
+                    <span class="post-date">2025. 12. 28.</span>
+                </div>
+                <div class="post-tags">
+                    <span class="post-tag">보안</span>
+                    <span class="post-tag">JavaScript</span>
+                    <span class="post-tag">CORS</span>
+                </div>
+            </div>
+
+            <div class="post-body markdown-body">
+                <h2>CORS란?</h2>
+                <p><strong>CORS</strong>(Cross-Origin Resource Sharing)는 웹 브라우저가 다른 출처(origin)의 리소스에 접근할 수 있도록 허용하는 보안 메커니즘입니다.</p>
+
+                <blockquote>
+                    <p>출처(Origin)란 프로토콜, 호스트, 포트번호를 합친 것을 의미합니다.</p>
+                </blockquote>
+
+                <h2>왜 CORS가 필요할까?</h2>
+                <p>웹 브라우저는 기본적으로 <strong>동일 출처 정책(Same-Origin Policy)</strong>을 따릅니다. 이는 보안상의 이유로, 악의적인 사이트가 다른 사이트의 데이터를 무단으로 읽는 것을 방지합니다.</p>
+
+                <h3>동일 출처의 조건</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>결과</th>
+                            <th>이유</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>https://example.com/page</code></td>
+                            <td>동일 출처</td>
+                            <td>경로만 다름</td>
+                        </tr>
+                        <tr>
+                            <td><code>http://example.com</code></td>
+                            <td>다른 출처</td>
+                            <td>프로토콜 다름</td>
+                        </tr>
+                        <tr>
+                            <td><code>https://api.example.com</code></td>
+                            <td>다른 출처</td>
+                            <td>호스트 다름</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>CORS 에러 해결 방법</h2>
+                <p>서버 측에서 적절한 CORS 헤더를 설정하면 해결할 수 있습니다:</p>
+
+                <pre><code class="language-javascript">// Express.js 예시
+const cors = require('cors');
+
+app.use(cors({
+  origin: 'https://example.com',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));</code></pre>
+
+                <h3>주요 CORS 헤더</h3>
+                <ul>
+                    <li><code>Access-Control-Allow-Origin</code> - 허용할 출처</li>
+                    <li><code>Access-Control-Allow-Methods</code> - 허용할 HTTP 메서드</li>
+                    <li><code>Access-Control-Allow-Headers</code> - 허용할 헤더</li>
+                    <li><code>Access-Control-Allow-Credentials</code> - 쿠키 허용 여부</li>
+                </ul>
+
+                <h2>마무리</h2>
+                <p>CORS는 웹 보안의 핵심적인 부분입니다. 프론트엔드 개발자로서 CORS의 원리를 이해하고 있으면 에러를 만났을 때 당황하지 않고 빠르게 해결할 수 있습니다. 💪</p>
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+</body>
+
+</html>

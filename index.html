@@ -412,6 +412,98 @@
             </section>
         </div>
     </div>
+    <!-- Clippy 블로그 링크 -->
+    <a href="blog/" class="clippy-link" aria-label="Blog">
+        <div class="clippy-bubble">Blog 보러가기!</div>
+        <img class="clippy-img" src="img/clippy.png" alt="Clippy">
+    </a>
+
+    <style>
+        .clippy-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9998;
+            text-decoration: none;
+            cursor: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .clippy-bubble {
+            background: #ffffe1;
+            border: 2px solid #000;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-family: 'MS Sans Serif', 'Tahoma', sans-serif;
+            font-size: 12px;
+            color: #000;
+            white-space: nowrap;
+            margin-bottom: 6px;
+            position: relative;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .clippy-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #000;
+        }
+
+        .clippy-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #ffffe1;
+            z-index: 1;
+        }
+
+        .clippy-link:hover .clippy-bubble {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .clippy-img {
+            width: 80px;
+            height: auto;
+            image-rendering: pixelated;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+            transition: transform 0.3s;
+        }
+
+        .clippy-link:hover .clippy-img {
+            transform: scale(1.1) rotate(-5deg);
+            animation: clippyBounce 0.5s ease infinite alternate;
+        }
+
+        @keyframes clippyBounce {
+            from { transform: scale(1.1) rotate(-5deg) translateY(0); }
+            to   { transform: scale(1.1) rotate(-5deg) translateY(-6px); }
+        }
+
+        @media (max-width: 479px) {
+            .clippy-img { width: 60px; }
+            .clippy-link { bottom: 70px; right: 10px; }
+        }
+    </style>
+
     <script src="js/main.js"></script>
 </body>
 
