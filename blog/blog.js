@@ -9,6 +9,7 @@ let allPosts = [];
 let currentTag = '';
 let currentSeries = '';
 let currentSearch = '';
+let currentSort = 'date-desc';
 let currentPage = 1;
 
 // ─── 현재 페이지 판별 ───────────────────────────────────────
@@ -87,6 +88,20 @@ function renderFiltered() {
       (p.short_description || '').toLowerCase().includes(currentSearch)
     );
   }
+
+  // 정렬
+  filtered = [...filtered].sort((a, b) => {
+    switch (currentSort) {
+      case 'date-asc':
+        return new Date(a.display_date) - new Date(b.display_date);
+      case 'title-asc':
+        return (a.title || '').localeCompare(b.title || '', 'ko');
+      case 'title-desc':
+        return (b.title || '').localeCompare(a.title || '', 'ko');
+      default: // date-desc
+        return new Date(b.display_date) - new Date(a.display_date);
+    }
+  });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / POSTS_PER_PAGE));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -204,6 +219,12 @@ function goToPage(page) {
   currentPage = page;
   renderFiltered();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function changeSort(value) {
+  currentSort = value;
+  currentPage = 1;
+  renderFiltered();
 }
 
 // ─── 글 상세 로드 ───────────────────────────────────────────

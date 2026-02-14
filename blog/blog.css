@@ -112,6 +112,34 @@ a {
     transition: border-color 0.3s;
 }
 
+.sort-wrap {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sort-select {
+    background: #2c2b29;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #aaa;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: 'S-CoreDream-3Light', serif;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.sort-select:focus {
+    border-color: #888;
+}
+
+.sort-select option {
+    background: #2c2b29;
+    color: #e0e0e0;
+}
+
 .search-input::placeholder {
     color: #666;
 }
