@@ -1,532 +1,457 @@
-let currentSection = 0;
-let about = document.querySelector('.about')
-let touchStartY = 0; // 터치 시작 Y 좌표
-let scrolling = false; // 스크롤 제어 플래그
-let currentVideoIndex = 0;
-let aaa = 0;
+let currentSection = 0, touchStartY = 0, touchStartX = 0, scrolling = false, currentVideoIndex = 0;
 
-const tape2 = document.querySelectorAll('.tape3');
-const tape3 = document.querySelectorAll('.tape2');
-const tv = document.querySelectorAll('.tv');
-const amain = document.querySelectorAll('.amain')
-const abanner = document.querySelectorAll('.about-banner')
-const skill = document.querySelectorAll('.skill')
-const cards = document.querySelectorAll('.cards')
-const pright = document.querySelectorAll('.project-right')
-const pleft = document.querySelectorAll('.project-left')
-const con = document.querySelectorAll('.con')
-const sections = document.querySelectorAll('.section');
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const load         = document.getElementById('load');
+const about        = $('.about');
+const tapeTop      = $('.tape3');
+const tapeBottom   = $('.tape2');
+const tv           = $('.tv');
+const aboutContent = $('.amain');
+const aboutBanner  = $('.about-banner');
+const cards        = $('.charts-wrap');
+const cursor       = $('.cursor');
+const sections     = $$('.section');
+const contactItems = $$('.con');
 const totalSections = sections.length;
-const computedStyle = window.getComputedStyle(sections[currentSection]);
-const height = computedStyle.height; // CSS에서 지정한 높이 가져오기
-const Click = 0
-const potato = document.querySelectorAll('.potato')
-const c = document.querySelectorAll('.c')
-const py = document.querySelectorAll('.python')
-const potato1 = document.querySelectorAll('.potato1')
-const c1 = document.querySelectorAll('.c1')
-const py1 = document.querySelectorAll('.python1')
-const right1 = document.querySelectorAll('.right1')
-const right2 = document.querySelectorAll('.right2')
-const right3 = document.querySelectorAll('.right3')
-const nav1 = document.querySelectorAll('.nav1')
-const nav2 = document.querySelectorAll('.nav2')
-const nav3 = document.querySelectorAll('.nav3')
-const mac = document.querySelector('.mac')
-const project_left = document.querySelectorAll('.project-left')
 
+const sectionAnimations = [
+    () => { tapeTop.classList.add('scrollAnimation1'); tapeBottom.classList.add('scrollAnimation2'); tv.classList.add('scrollAnimation3'); },
+    () => { aboutContent.classList.add('scrollAnimation4'); aboutBanner?.classList.add('scrollAnimation10'); },
+    () => { cards.classList.add('scrollAnimation6'); drawRadarChart(); drawLangChart(); },
+    () => { initProjSlider(); },
+    () => contactItems.forEach(el => el.classList.add('scrollAnimation9')),
+];
 
-const cursorPointed = document.querySelector('.cursor');
-
-const width = window.innerWidth;
-
-if (cursorPointed) {
-    const moveCursor = (e) => {
-        const mouseY = e.clientY;
-        const mouseX = e.clientX;
-        cursorPointed.style.left = `${mouseX}px`;
-        cursorPointed.style.top = `${mouseY}px`;
+if (cursor) {
+    const move = e => { cursor.style.left = `${e.clientX}px`; cursor.style.top = `${e.clientY}px`; };
+    const sync = () => {
+        const wide = window.innerWidth > 1279;
+        cursor.style.display = wide ? 'block' : 'none';
+        window[wide ? 'addEventListener' : 'removeEventListener']('mousemove', move);
     };
-
-    const updateCursorVisibility = () => {
-        if (window.innerWidth > 1279) {
-            cursorPointed.style.display = 'block';
-            window.addEventListener('mousemove', moveCursor);
-        } else {
-            cursorPointed.style.display = 'none';
-            window.removeEventListener('mousemove', moveCursor); // 크기 조정 시 이벤트 제거
-        }
-    };
-
-    updateCursorVisibility(); // 처음 로드 시 한 번 호출
-    window.addEventListener('resize', updateCursorVisibility); // 윈도우 크기 변경 시 호출
+    sync();
+    window.addEventListener('resize', sync);
 }
 
 window.addEventListener('load', () => {
-    // 로딩 완료 후 로더 사라지기
-    load.style.opacity = '0'; // 투명도 변경
-    load.style.zIndex = '10003';
-    load.style.backgroundColor = '#dbe3e311';
-
-    setTimeout(() => {
-        load.style.zIndex = '-1'; // z-index 변경
-        load.style.display = 'none'; // 로더 숨기기
-    }, 10000); // 애니메이션 시간과 동일하게 설정
-});
-
-document.addEventListener("load", () => {
-    load.style.backgroundColor = '#dbe3e3';
-});
-
-// 방향키를 통해 currentSection 조절
-document.addEventListener('keydown', function (event) {
-    if (event.key === 'ArrowDown') {
-        // 아래 방향키를 통해 currentSection -1
-        if (currentSection < totalSections - 1) {
-            currentSection++;
-            scrollToSection(currentSection);
-        }
-    }
-    else if (event.key === 'ArrowUp') {
-        // 아래 방향키를 통해 currentSection +1
-        if (currentSection > 0) {
-            currentSection--;
-            scrollToSection(currentSection);
-        }
-    }
-});
-
-document.addEventListener('wheel', (event) => {
-    if (scrolling) return; // 이미 스크롤 중이라면 무시
-    scrolling = true; // 스크롤 시작
-
-    if (event.deltaY > 0) {
-        // 아래로 스크롤
-        handleScrollDown();
-    } else {
-        // 위로 스크롤
-        handleScrollUp();
-    }
-});
-
-// 터치 이벤트
-document.addEventListener('touchstart', (event) => {
-    // 터치 시작 Y 좌표 저장
-    touchStartY = event.touches[0].clientY;
-});
-
-document.addEventListener('touchend', (event) => {
-    const touchEndY = event.changedTouches[0].clientY;
-    const touchDifference = touchStartY - touchEndY;
-
-    if (Math.abs(touchDifference) > 30) { // 터치 이동이 충분히 컸을 경우
-        if (touchDifference > 0) {
-            // 아래로 스크롤
-            handleScrollDown();
-        } else {
-            // 위로 스크롤
-            handleScrollUp();
-        }
-    }
-});
-
-function handleScrollDown() {
-    if (currentSection === 1) {
-        if (about.scrollHeight - about.clientHeight <= about.scrollTop + 5) {
-            currentSection++;
-            scrollToSection(currentSection);
-        }
-    } else if (currentSection < totalSections - 1) {
-        currentSection++;
-        scrollToSection(currentSection);
-    }
-    scrolling = false; // 스크롤 종료
-}
-
-function handleScrollUp() {
-    if (currentSection === 1) {
-        if (about.scrollTop <= 5) {
-            currentSection--;
-            scrollToSection(currentSection);
-        }
-    } else if (currentSection > 0) {
-        currentSection--;
-        scrollToSection(currentSection);
-    }
-    scrolling = false; // 스크롤 종료
-}
-
-// scrollToSection은 섹션으로 부드럽게 이동하는 함수입니다.
-function scrollToSection(sectionIndex) {
-    const targetSection = sections[sectionIndex];
-    targetSection.scrollIntoView({ behavior: 'smooth' });
-}
-
-
-window.onload = function () {
-    // 새로고침시 제일 위로 스크롤
+    Object.assign(load.style, { opacity: '0', zIndex: '10003', backgroundColor: '#dbe3e311' });
+    setTimeout(() => Object.assign(load.style, { zIndex: '-1', display: 'none' }), 10000);
     window.scrollTo(0, 0);
-    currentSection = 0;
-    scrollToSection(currentSection);
-};
+    scrollToSection(0);
+});
 
-// 마지막 섹션에서 스크롤 방지
-document.addEventListener('touchmove', (event) => {
-    if (currentSection === totalSections - 1) {
-        event.preventDefault();
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' && currentSection < totalSections - 1) scrollToSection(++currentSection);
+    if (e.key === 'ArrowUp'   && currentSection > 0)                 scrollToSection(--currentSection);
+    if (e.key === 'ArrowRight' && currentSection === 3) navigateProj(1);
+    if (e.key === 'ArrowLeft'  && currentSection === 3) navigateProj(-1);
+});
+
+document.addEventListener('wheel', e => {
+    if (scrolling) return;
+    if (Math.abs(e.deltaY) < 40) return;
+    scrolling = true;
+    handleScroll(e.deltaY > 0);
+    setTimeout(() => { scrolling = false; }, 900);
+});
+
+document.addEventListener('touchstart', e => {
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+});
+document.addEventListener('touchend', e => {
+    const diffY = touchStartY - e.changedTouches[0].clientY;
+    const diffX = touchStartX - e.changedTouches[0].clientX;
+    if (currentSection === 3 && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 30) {
+        navigateProj(diffX > 0 ? 1 : -1);
+    } else if (Math.abs(diffY) > 30) {
+        handleScroll(diffY > 0);
     }
+});
+document.addEventListener('touchmove', e => {
+    if (currentSection === totalSections - 1) e.preventDefault();
 }, { passive: false });
 
-
-function setSection(index) {
-    currentSection = index; // 클릭된 인덱스를 currentSection에 설정
-    scrollToSection(currentSection); // 해당 섹션으로 스크롤
+function handleScroll(down) {
+    const atAbout = currentSection === 1;
+    const atProj  = currentSection === 3;
+    if (atProj && navigateProj(down ? 1 : -1)) return;
+    const canMove = down
+        ? (atAbout ? about.scrollHeight - about.clientHeight <= about.scrollTop + 5 : currentSection < totalSections - 1)
+        : (atAbout ? about.scrollTop <= 5 : currentSection > 0);
+    if (canMove) scrollToSection(currentSection += down ? 1 : -1);
 }
 
-function scrollToSection(sectionIndex) {
-    sections.forEach((section, i) => {
-        section.style.transform = `translateY(-${sectionIndex * 100}vh)`; // 섹션 이동
-
-        // 각 섹션에 대해 애니메이션을 추가하거나 제거
-        if (i === sectionIndex) {
-            // 섹션이 활성화되었을 때 애니메이션 클래스 추가
-            section.classList.add('active'); // 예시로 'active' 클래스를 추가
-        } else {
-            // 섹션이 비활성화되었을 때 애니메이션 클래스 제거
-            section.classList.remove('active');
-        }
+function scrollToSection(idx) {
+    sections.forEach((s, i) => {
+        s.style.transform = `translateY(-${idx * 100}vh)`;
+        s.classList.toggle('active', i === idx);
     });
-
-    // 섹션별 애니메이션 추가
-    applySectionAnimations(sectionIndex);
+    sectionAnimations[idx]?.();
 }
 
-function applySectionAnimations(sectionIndex) {
-    switch (sectionIndex) {
-        case 0:
-            // 첫 번째 섹션 애니메이션
-            tape2.forEach(tape2 => tape2.classList.add("scrollAnimation1"));
-            tape3.forEach(tape3 => tape3.classList.add("scrollAnimation2"));
-            tv.forEach(tv => tv.classList.add("scrollAnimation3"));
-            break;
-        case 1:
-            // 두 번째 섹션 애니메이션
-            amain.forEach(amain => amain.classList.add("scrollAnimation4"));
-            abanner.forEach(abanner => abanner.classList.add("scrollAnimation10"));
-            break;
-        case 2:
-            // 세 번째 섹션 애니메이션
-            skill.forEach(skill => skill.classList.add("scrollAnimation5"));
-            cards.forEach(cards => cards.classList.add("scrollAnimation6"));
-            break;
-        case 3:
-            // 세 번째 섹션 애니메이션
-            pright.forEach(pright => pright.classList.add("scrollAnimation7"));
-            pleft.forEach(pleft => pleft.classList.add("scrollAnimation8"));
-            break;
-        case 3:
-            // 세 번째 섹션 애니메이션
-            con.forEach(con => con.classList.add("scrollAnimation9"));
-            break;
+function setSection(idx) { scrollToSection(currentSection = idx); }
 
-        default:
-            break;
-    }
-}
-
-const videos = [
-    'img/home/core1.webm',
-    'img/home/core2.webm',
-    'img/home/core3.webm'
-];
+const videos = ['img/home/core1.webm', 'img/home/core2.webm', 'img/home/core3.webm', 'img/home/core4.webm', 'img/home/core5.webm', 'img/home/core6.webm', 'img/home/core7.webm'];
 
 function changeVideo() {
-    const videoElement = document.getElementById('tvVideo');
-    videoElement.pause(); // 현재 영상 멈추기
-
-    // 다음 영상 불러오기
-    currentVideoIndex = (currentVideoIndex + 1) % videos.length;
-    videoElement.src = videos[currentVideoIndex];
-    videoElement.load(); // currentVideoIndex 불러오기
-
-    // 영상 로딩되면 재생
-    videoElement.onloadeddata = () => {
-        videoElement.play(); // 영상 재생
-    };
+    const v = document.getElementById('tvVideo');
+    v.pause();
+    v.src = videos[currentVideoIndex = (currentVideoIndex + 1) % videos.length];
+    v.load();
+    v.onloadeddata = () => v.play();
 }
 
 function updateDateTime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    document.getElementById('datetime').innerText = formattedDateTime;
-
-    const formattedDateTime2 = `${year}년 ${month}월 ${day}일`;
-    document.getElementById('datetime2').innerText = formattedDateTime2;
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    const [Y, M, D, h, m, s] = [d.getFullYear(), p(d.getMonth()+1), p(d.getDate()), p(d.getHours()), p(d.getMinutes()), p(d.getSeconds())];
+    document.getElementById('datetime').innerText = `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }
-
 setInterval(updateDateTime, 1000);
-updateDateTime(); // 초기 호출
+updateDateTime();
 
-const onScroll = (event) => {
-    event.preventDefault();
+// ── Project Slider ────────────────────────────────────────────────
+let projCurrent = 0, projX = 0, projTarget = 0, projRaf = null, projReady = false;
+let projTrack, projFillEl, projCounterEl, projSlideEls, projNumEls;
 
-    if (!isDone) {
-        if (event.deltaY > 0) {
-            if (currentIndex === texts.length - 1) {
-                isDone = true;
-                document.body.style.overflow = 'unset';
-            } else {
-                changeText(1);
-            }
-        } else {
-            if (currentIndex > 0) {
-                changeText(-1);
+const PROJ_N = 7;
+
+function initProjSlider() {
+    if (projReady) return;
+    projReady     = true;
+    projTrack     = document.getElementById('projTrack');
+    projFillEl    = document.getElementById('projFill');
+    projCounterEl = document.getElementById('projCounter');
+    projSlideEls  = document.querySelectorAll('.proj-slide');
+    projNumEls    = document.querySelectorAll('.proj-num');
+    document.querySelectorAll('.proj-canvas').forEach((c, i) => drawProjPattern(c, i));
+    projSlideEls.forEach((s, i) => s.classList.toggle('active', i === 0));
+    updateProjUI();
+}
+
+function navigateProj(dir) {
+    const next = projCurrent + dir;
+    if (next < 0 || next >= PROJ_N) return false;
+    projSlideEls[projCurrent]?.classList.remove('active');
+    projCurrent = projTarget = next;
+    animProjTrack();
+    updateProjUI();
+    setTimeout(() => projSlideEls[projCurrent]?.classList.add('active'), 350);
+    return true;
+}
+
+function animProjTrack() {
+    if (projRaf) cancelAnimationFrame(projRaf);
+    const step = () => {
+        projX += (projTarget - projX) * 0.12;
+        if (Math.abs(projTarget - projX) < 0.0005) projX = projTarget;
+        if (projTrack) projTrack.style.transform = `translateX(${-projX * 100}vw)`;
+        projNumEls?.forEach((el, i) => { el.style.transform = `translateX(${(projX - i) * 15}vw)`; });
+        if (projX !== projTarget) projRaf = requestAnimationFrame(step);
+    };
+    projRaf = requestAnimationFrame(step);
+}
+
+function updateProjUI() {
+    if (projFillEl)    projFillEl.style.width = `${((projCurrent + 1) / PROJ_N) * 100}%`;
+    if (projCounterEl) projCounterEl.textContent = `${String(projCurrent + 1).padStart(2, '0')} — ${String(PROJ_N).padStart(2, '0')}`;
+}
+
+function drawProjPattern(canvas, idx) {
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#161617';
+    ctx.fillStyle   = '#161617';
+
+    if (idx === 0) {
+        // scanlines
+        ctx.lineWidth = 0.8;
+        for (let y = 0; y < h; y += 4) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+    } else if (idx === 1) {
+        // diagonal crosshatch
+        ctx.lineWidth = 0.6;
+        for (let x = -h; x < w + h; x += 28) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + h, h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - h, h); ctx.stroke();
+        }
+    } else if (idx === 2) {
+        // dot grid
+        for (let x = 24; x < w; x += 24) {
+            for (let y = 24; y < h; y += 24) {
+                ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2); ctx.fill();
             }
         }
-    }
-};
-
-const wrap = document.querySelector('.wrap');
-const down = document.querySelector('.down');
-const card_box = document.querySelector('.card_box');
-
-wrap.addEventListener('click', () => {
-    if (window.innerWidth > 767) {
-        wrap.classList.toggle('spread');
-    }
-});
-
-const onTouchStart = (event) => {
-    startY = event.touches[0].clientY;
-};
-
-const onTouchMove = (event) => {
-    const deltaY = startY - event.touches[0].clientY;
-
-    if (!isDone && Math.abs(deltaY) > 50) {
-        if (deltaY > 0) {
-            if (currentIndex === texts.length - 1) {
-                isDone = true;
-                document.body.style.overflow = 'unset';
-            } else {
-                changeText(1);
-            }
-        } else {
-            if (currentIndex > 0) {
-                changeText(-1);
+    } else if (idx === 3) {
+        // circuit board
+        ctx.lineWidth = 1;
+        const g = 32;
+        for (let x = g; x < w - g; x += g) {
+            for (let y = g; y < h - g; y += g) {
+                if (Math.random() > 0.55) {
+                    const dir = Math.floor(Math.random() * 4);
+                    ctx.beginPath(); ctx.moveTo(x, y);
+                    if      (dir === 0) { ctx.lineTo(x + g, y); ctx.lineTo(x + g, y - g * 0.5); }
+                    else if (dir === 1) { ctx.lineTo(x, y + g); ctx.lineTo(x + g * 0.5, y + g); }
+                    else if (dir === 2) { ctx.lineTo(x - g, y); ctx.lineTo(x - g, y + g * 0.5); }
+                    else               { ctx.lineTo(x, y - g); ctx.lineTo(x + g * 0.5, y - g); }
+                    ctx.stroke();
+                    ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+                }
             }
         }
-        event.preventDefault();
-    }
-};
-
-function changeText1() {
-    if (window.innerWidth > 767) {
-            mac.classList.remove('window');
-            mac.classList.add('window1');
-            mac.classList.remove('window2');
-            mac.classList.remove('window3');
-        project_left.forEach(project_left => {
-            project_left.classList.remove('black');
-        });
-        project_left.forEach(project_left => {
-            project_left.classList.add('white');
-        });
-        potato.forEach(potato => {
-            potato.classList.remove('none');
-            potato.classList.remove('nones');
-        });
-        nav1.forEach(nav1 => {
-            nav1.classList.remove('none');
-        });
-        c.forEach(c => {
-            c.classList.add('none');
-            c.classList.add('nones');
-        });
-        nav2.forEach(nav2 => {
-            nav2.classList.add('none');
-        });
-        py.forEach(py => {
-            py.classList.add('none');
-            py.classList.add('nones');
-        });
-        nav3.forEach(nav3 => {
-            nav3.classList.add('none');
-        });
-    }
-    else if(window.innerWidth <= 767) {
-        // right1.forEach(right1 => {
-        //     right1.classList.add('nones');
-        // });
-        // right2.forEach(right2 => {
-        //     right2.classList.remove('nones');
-        // });
-        // right3.forEach(right3 => {
-        //     right3.classList.remove('nones');
-        // });
-        potato1.forEach(potato => {
-            potato.classList.remove('none');
-        });
-        c1.forEach(c => {
-            c.classList.add('none');
-        });
-        py1.forEach(py => {
-            py.classList.add('none');
-        });
-        mac.style.backgroundImage = 'none';
-    }
-
-}
-
-function changeText2() {
-    if (window.innerWidth > 767) {
-        mac.classList.remove('window');
-        project_left.forEach(project_left => {
-            project_left.classList.remove('black');
-        });
-        project_left.forEach(project_left => {
-            project_left.classList.add('white');
-        });
-        potato.forEach(potato => {
-            potato.classList.add('none');
-            potato.classList.add('nones');
-        });
-        nav1.forEach(nav1 => {
-            nav1.classList.add('none');
-        });
-            mac.classList.remove('window1');
-        c.forEach(c => {
-            c.classList.remove('none');
-            c.classList.remove('nones');
-        });
-        nav2.forEach(nav2 => {
-            nav2.classList.remove('none');
-        });
-            mac.classList.add('window2');
-        py.forEach(py => {
-            py.classList.add('none');
-            py.classList.add('nones');
-        });
-        nav3.forEach(nav3 => {
-            nav3.classList.add('none');
-        });
-            mac.classList.remove('window3');
-    }
-    else if(window.innerWidth <= 767) {
-        // right1.forEach(right1 => {
-        //     right1.classList.remove('nones');
-        // });
-        // right2.forEach(right2 => {
-        //     right2.classList.add('nones');
-        // });
-        // right3.forEach(right3 => {
-        //     right3.classList.remove('nones');
-        // });
-        potato1.forEach(potato => {
-            potato.classList.add('none');
-        });
-        c1.forEach(c => {
-            c.classList.remove('none');
-        });
-        py1.forEach(py => {
-            py.classList.add('none');
-        });
-        mac.style.backgroundImage = 'none';
+    } else if (idx === 4) {
+        // hexagonal grid
+        ctx.lineWidth = 0.8;
+        const r = 30, wr = r * Math.sqrt(3), hr = r * 1.5;
+        for (let row = -1; row < h / hr + 2; row++) {
+            for (let col = -1; col < w / wr + 2; col++) {
+                const cx = col * wr + (row % 2 === 0 ? 0 : wr / 2);
+                const cy = row * hr;
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const a = Math.PI / 3 * i - Math.PI / 6;
+                    i === 0 ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
+                            : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+                }
+                ctx.closePath(); ctx.stroke();
+            }
+        }
+    } else if (idx === 5) {
+        // graph paper (DB schema feel)
+        ctx.lineWidth = 0.4;
+        const minor = 16, major = 80;
+        for (let x = 0; x < w; x += minor) {
+            ctx.strokeStyle = x % major === 0 ? 'rgba(22,22,23,0.18)' : 'rgba(22,22,23,0.06)';
+            ctx.lineWidth   = x % major === 0 ? 0.8 : 0.4;
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += minor) {
+            ctx.strokeStyle = y % major === 0 ? 'rgba(22,22,23,0.18)' : 'rgba(22,22,23,0.06)';
+            ctx.lineWidth   = y % major === 0 ? 0.8 : 0.4;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+    } else if (idx === 6) {
+        // glitch scanlines (cyberpunk / text RPG feel)
+        ctx.lineWidth = 1;
+        for (let y = 0; y < h; y += 3) {
+            const alpha = Math.random() > 0.85 ? 0.12 : 0.04;
+            ctx.strokeStyle = `rgba(22,22,23,${alpha})`;
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+        for (let i = 0; i < 18; i++) {
+            const gy = Math.random() * h;
+            const gh = Math.random() * 6 + 1;
+            const gx = Math.random() * w * 0.4;
+            ctx.fillStyle = 'rgba(22,22,23,0.07)';
+            ctx.fillRect(gx, gy, w * (0.3 + Math.random() * 0.5), gh);
+        }
     }
 }
 
-function changeText3() {
-    if (window.innerWidth > 767) {
-            mac.classList.remove('window');
-        project_left.forEach(project_left => {
-            project_left.classList.remove('black');
-        });
-        project_left.forEach(project_left => {
-            project_left.classList.add('white');
-        });
-        potato.forEach(potato => {
-            potato.classList.add('none');
-            potato.classList.add('nones');
-        });
-        nav1.forEach(nav1 => {
-            nav1.classList.add('none');
-        });
-            mac.classList.remove('window1');
-        c.forEach(c => {
-            c.classList.add('none');
-            c.classList.add('nones');
-        });
-        nav2.forEach(nav2 => {
-            nav2.classList.add('none');
-        });
-            mac.classList.remove('window2');
-        py.forEach(py => {
-            py.classList.remove('none');
-            py.classList.remove('nones');
-        });
-        nav3.forEach(nav3 => {
-            nav3.classList.remove('none');
-        });
-            mac.classList.add('window3');
-    }
+// ── Radar Chart ───────────────────────────────────────────────────
+function drawRadarChart() {
+    const canvas = document.getElementById('radarChart');
+    if (!canvas) return;
 
-    else if(window.innerWidth <= 767) {
-        // right1.forEach(right1 => {
-        //     right1.classList.remove('nones');
-        // });
-        // right2.forEach(right2 => {
-        //     right2.classList.remove('nones');
-        // });
-        // right3.forEach(right3 => {
-        //     right3.classList.add('nones');
-        // });
-        potato1.forEach(potato => {
-            potato.classList.add('none');
-        });
-        c1.forEach(c => {
-            c.classList.add('none');
-        });
-        py1.forEach(py => {
-            py.classList.remove('none');
-        });
-        mac.style.backgroundImage = 'none';
-    }
+    const mobile = window.innerWidth <= 700;
+    const tablet = !mobile && window.innerWidth <= 1023;
+    const size = mobile
+        ? Math.min(210, window.innerWidth * 0.65)
+        : tablet
+        ? Math.min(250, window.innerWidth * 0.33)
+        : Math.min(340, window.innerWidth * 0.36);
+    canvas.width  = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext('2d');
+    const cx  = size / 2;
+    const cy  = size / 2;
+    const maxR   = size * (mobile ? 0.28 : tablet ? 0.31 : 0.34);
+    const labelR = maxR + size * (mobile ? 0.13 : tablet ? 0.115 : 0.10);
+
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+    const skills = [
+        { label: '네트워크',      value: 95, speed: 0.008 + Math.random() * 0.010 },
+        { label: '정보보안',      value: 83, speed: 0.008 + Math.random() * 0.010 },
+        { label: '백엔드',        value: 90, speed: 0.008 + Math.random() * 0.010 },
+        { label: '언어, 알고리즘',value: 79, speed: 0.008 + Math.random() * 0.010 },
+        { label: '암호학',        value: 76, speed: 0.008 + Math.random() * 0.010 },
+        { label: '웹 프론트엔드', value: 85, speed: 0.008 + Math.random() * 0.010 },
+    ];
+    const n        = skills.length;
+    const levels   = 5;
+    const fontSize = Math.max(mobile ? 13 : tablet ? 12 : 11, size * (mobile ? 0.042 : tablet ? 0.034 : 0.026));
+    const progs    = skills.map(() => 0);
+
+    const angle = i => (Math.PI * 2 * i / n) - Math.PI / 2;
+    const pt    = (r, i) => ({ x: cx + r * Math.cos(angle(i)), y: cy + r * Math.sin(angle(i)) });
+
+    const draw = () => {
+        let allDone = true;
+        for (let i = 0; i < n; i++) {
+            progs[i] = Math.min(1, progs[i] + skills[i].speed);
+            if (progs[i] < 1) allDone = false;
+        }
+
+        ctx.clearRect(0, 0, size, size);
+
+        for (let l = 1; l <= levels; l++) {
+            const r = maxR * l / levels;
+            ctx.beginPath();
+            for (let i = 0; i < n; i++) {
+                const { x, y } = pt(r, i);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = l === levels ? 'rgba(22,22,23,0.25)' : 'rgba(22,22,23,0.1)';
+            ctx.lineWidth   = l === levels ? 1.5 : 1;
+            ctx.stroke();
+        }
+
+        for (let i = 0; i < n; i++) {
+            const { x, y } = pt(maxR, i);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = 'rgba(22,22,23,0.15)';
+            ctx.setLineDash([3, 4]);
+            ctx.lineWidth   = 1;
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const { x, y } = pt(maxR * (skills[i].value / 100) * easeOut(progs[i]), i);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle   = 'rgba(22,22,23,0.12)';
+        ctx.fill();
+        ctx.strokeStyle = '#161617';
+        ctx.lineWidth   = 2;
+        ctx.stroke();
+
+        for (let i = 0; i < n; i++) {
+            const { x, y } = pt(maxR * (skills[i].value / 100) * easeOut(progs[i]), i);
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle   = '#161617';
+            ctx.fill();
+        }
+
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i < n; i++) {
+            const { x, y } = pt(labelR, i);
+            ctx.font      = `${fontSize}px PartialSansKR-Regular, serif`;
+            ctx.fillStyle = '#161617';
+            ctx.fillText(skills[i].label, x, y - fontSize * 0.6);
+            ctx.font      = `bold ${fontSize * 0.82}px PartialSansKR-Regular, serif`;
+            ctx.fillStyle = 'rgba(22,22,23,0.55)';
+            ctx.fillText(skills[i].value + '%', x, y + fontSize * 0.75);
+        }
+
+        if (!allDone) requestAnimationFrame(draw);
+    };
+
+    draw();
 }
 
-function changeText4() {
-        mac.classList.add('window');
-    project_left.forEach(project_left => {
-        project_left.classList.add('black');
-    });
-    project_left.forEach(project_left => {
-        project_left.classList.remove('white');
-    });
-    potato.forEach(potato => {
-        potato.classList.add('none');
-    });
-    nav1.forEach(nav1 => {
-        nav1.classList.add('none');
-    });
-        mac.classList.remove('window1');
-    c.forEach(c => {
-        c.classList.add('none');
-    });
-    nav2.forEach(nav2 => {
-        nav2.classList.add('none');
-    });
-        mac.classList.remove('window2');
-    py.forEach(py => {
-        py.classList.add('none');
-    });
-    nav3.forEach(nav3 => {
-        nav3.classList.add('none');
-    });
-        mac.classList.remove('window3');
+// ── Language Bar Chart ────────────────────────────────────────────
+function drawLangChart() {
+    const canvas = document.getElementById('langChart');
+    if (!canvas) return;
+
+    const mobile = window.innerWidth <= 700;
+    const tablet = !mobile && window.innerWidth <= 1023;
+    const w = mobile
+        ? Math.min(260, window.innerWidth * 0.75)
+        : tablet
+        ? Math.min(280, window.innerWidth * 0.38)
+        : Math.min(380, window.innerWidth * 0.42);
+    const langs = [
+        { label: 'JavaScript',  value: 90, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'SQL',         value: 89, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'JPA',         value: 89, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Spring',      value: 88, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'JSP',         value: 88, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'HTML / CSS',  value: 87, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Java',        value: 86, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Git',         value: 83, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'C',           value: 82, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Python',      value: 81, speed: 0.008 + Math.random() * 0.010 },
+    ];
+
+    const rowH = Math.min(52, (w * 0.95) / langs.length);
+    const h    = rowH * langs.length + 20;
+    canvas.width  = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext('2d');
+    const barX     = w * (mobile ? 0.42 : 0.30);
+    const barW     = w * (mobile ? 0.44 : 0.56);
+    const fontSize = Math.max(mobile ? 9 : 10, w * (mobile ? 0.030 : 0.032));
+    const easeOut  = t => 1 - Math.pow(1 - t, 3);
+    const progs    = langs.map(() => 0);
+
+    const draw = () => {
+        let allDone = true;
+        for (let i = 0; i < langs.length; i++) {
+            progs[i] = Math.min(1, progs[i] + langs[i].speed);
+            if (progs[i] < 1) allDone = false;
+        }
+
+        ctx.clearRect(0, 0, w, h);
+
+        for (let i = 0; i < langs.length; i++) {
+            const y      = i * rowH + rowH * 0.5;
+            const filled = barW * (langs[i].value / 100) * easeOut(progs[i]);
+
+            ctx.beginPath();
+            ctx.roundRect(barX, y - rowH * 0.18, barW, rowH * 0.36, 3);
+            ctx.fillStyle = 'rgba(22,22,23,0.08)';
+            ctx.fill();
+
+            if (filled > 0) {
+                ctx.beginPath();
+                ctx.roundRect(barX, y - rowH * 0.18, filled, rowH * 0.36, 3);
+                ctx.fillStyle = 'rgba(22,22,23,0.75)';
+                ctx.fill();
+            }
+
+            ctx.textAlign    = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.font         = `${fontSize}px PartialSansKR-Regular, serif`;
+            ctx.fillStyle    = '#161617';
+            ctx.fillText(langs[i].label, barX - 10, y);
+
+            ctx.textAlign = 'left';
+            ctx.font      = `${fontSize * 0.82}px PartialSansKR-Regular, serif`;
+            ctx.fillStyle = 'rgba(22,22,23,0.45)';
+            ctx.fillText(langs[i].value + '%', barX + barW + 8, y);
+        }
+
+        if (!allDone) requestAnimationFrame(draw);
+    };
+
+    draw();
 }
+
+// ── Clippy ────────────────────────────────────────────────────────
+(function () {
+    const link = document.getElementById('clippyLink');
+    if (!link) return;
+    const today = new Date().toDateString();
+    if (localStorage.getItem('clippyClickedDate') !== today) link.classList.add('clippy-active');
+    link.addEventListener('click', () => {
+        localStorage.setItem('clippyClickedDate', today);
+        link.classList.remove('clippy-active');
+    });
+})();

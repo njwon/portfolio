@@ -14,6 +14,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 }
 
 a {
@@ -356,6 +357,7 @@ a {
 /* ─── 글 상세 ────────────────────────────────────────── */
 .post-container {
     max-width: 800px;
+    width: 100%;
     margin: 32px auto;
     padding: 0 20px;
     flex: 1;
@@ -436,6 +438,13 @@ a {
     border-bottom-color: #444;
 }
 
+.post-body.markdown-body b,
+.post-body.markdown-body strong {
+    font-family: 'Pretendard-Bold', sans-serif;
+    font-weight: 700;
+    color: #f0f0f0;
+}
+
 .post-body.markdown-body a {
     color: #0275d8;
 }
@@ -467,7 +476,25 @@ a {
 
 .post-body.markdown-body img {
     max-width: 100%;
+    height: auto;
     border-radius: 6px;
+    display: block;
+}
+
+.post-body.markdown-body table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.post-body.markdown-body p,
+.post-body.markdown-body li,
+.post-body.markdown-body h1,
+.post-body.markdown-body h2,
+.post-body.markdown-body h3,
+.post-body.markdown-body h4 {
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .post-body.markdown-body table {

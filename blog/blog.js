@@ -15,25 +15,28 @@ let currentPage = 1;
 // ─── 현재 페이지 판별 ───────────────────────────────────────
 const isPostPage = window.location.pathname.includes('post.html');
 
+// 스크롤 시 헤더 축소 (히스테리시스로 깜빡임 방지)
+function initScrollHeader() {
+  const header = document.getElementById('header');
+  if (!header) return;
+  let isScrolled = false;
+  window.addEventListener('scroll', () => {
+    if (!isScrolled && window.scrollY > 120) {
+      isScrolled = true;
+      header.classList.add('scrolled');
+    } else if (isScrolled && window.scrollY < 30) {
+      isScrolled = false;
+      header.classList.remove('scrolled');
+    }
+  });
+}
+
 if (isPostPage) {
   loadPost();
+  initScrollHeader();
 } else {
   initList();
-
-  // 스크롤 시 헤더 축소 (히스테리시스로 깜빡임 방지)
-  const header = document.getElementById('header');
-  if (header) {
-    let isScrolled = false;
-    window.addEventListener('scroll', () => {
-      if (!isScrolled && window.scrollY > 120) {
-        isScrolled = true;
-        header.classList.add('scrolled');
-      } else if (isScrolled && window.scrollY < 30) {
-        isScrolled = false;
-        header.classList.remove('scrolled');
-      }
-    });
-  }
+  initScrollHeader();
 }
 
 // ─── 목록 페이지 초기화 ─────────────────────────────────────
@@ -153,7 +156,7 @@ function renderPostCards(posts) {
         <div class="post-card-content">
           ${series}
           <div class="post-card-title">${escapeHtml(post.title)}</div>
-          <div class="post-card-desc">${escapeHtml(post.short_description || '')}</div>
+          <div class="post-card-desc">${parseBold(escapeHtml(post.short_description || ''))}</div>
           <div class="post-card-footer">
             <span class="post-card-date">${date}</span>
             <div class="post-card-tags">${tags}</div>
@@ -287,10 +290,12 @@ async function loadPost() {
 
     const bodyEl = document.getElementById('postBody');
     if (typeof marked !== 'undefined') {
-      marked.setOptions({ breaks: true, gfm: true });
-      bodyEl.innerHTML = marked.parse(post.body || '');
+      marked.use({ breaks: true, gfm: true });
+      bodyEl.innerHTML = marked.parse(post.body || '')
+        .replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>')
+        .replace(/\*\*(.+?)\*\*/gs, '<b>$1</b>');
     } else {
-      bodyEl.textContent = post.body || '';
+      bodyEl.innerHTML = parseBold(escapeHtml(post.body || '').replace(/\n/g, '<br>'));
     }
 
     if (typeof hljs !== 'undefined') {
@@ -325,4 +330,8 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function parseBold(str) {
+  return str.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 }

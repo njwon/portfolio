@@ -264,6 +264,18 @@
         <div id="start-container" style="display: none;">
             <div class="title">&lt;DREAMRPG&gt;</div>
 
+            <div class="div-group" id="api-key-group">
+                <label for="api-key">Gemini API 키 <small style="opacity:0.55; font-size:0.8em;">(aistudio.google.com에서 발급)</small></label>
+                <input type="password" id="api-key" placeholder="AIza...">
+            </div>
+            <div class="div-group" id="api-key-saved" style="display:none;">
+                <label>Gemini API 키</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span style="opacity:0.7; font-size:0.9em;">✓ 저장된 키 사용 중</span>
+                    <button type="button" id="api-key-clear" class="boxflicker" style="width:auto; padding:0.4rem 0.8rem; font-size:0.85rem;">키 삭제</button>
+                </div>
+            </div>
+
             <div class="div-group">
                 <label for="char-name">캐릭터 이름</label>
                 <input type="text" id="char-name">
@@ -360,7 +372,49 @@
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        const apikey = 'AIzaSyAaDuZjDxxH0KKv1m3jBWSbp6N2MLZOy3c';
+        const apiKeyInput   = document.getElementById('api-key');
+        const apiKeyGroup   = document.getElementById('api-key-group');
+        const apiKeySaved   = document.getElementById('api-key-saved');
+        const apiKeyClearBtn = document.getElementById('api-key-clear');
+
+        const isValidApiKey = k => k && /^[\x20-\x7E]+$/.test(k);
+
+        const showApiKeyUI = () => {
+            const saved = localStorage.getItem('geminiApiKey');
+            const has = isValidApiKey(saved);
+            if (!has && saved) localStorage.removeItem('geminiApiKey');
+            apiKeyGroup.style.display = has ? 'none'  : 'block';
+            apiKeySaved.style.display = has ? 'block' : 'none';
+        };
+
+        const saved = localStorage.getItem('geminiApiKey');
+        apiKeyInput.value = isValidApiKey(saved) ? saved : '';
+        showApiKeyUI();
+
+        apiKeyClearBtn.addEventListener('click', () => {
+            localStorage.removeItem('geminiApiKey');
+            apiKeyInput.value = '';
+            showApiKeyUI();
+        });
+
+        const getApiKey = () => {
+            const k = apiKeyInput.value.trim() || localStorage.getItem('geminiApiKey') || '';
+            if (!isValidApiKey(k)) {
+                localStorage.removeItem('geminiApiKey');
+                apiKeyInput.value = '';
+                showApiKeyUI();
+                alert('API 키가 올바르지 않습니다. 다시 입력해주세요.');
+                return '';
+            }
+            localStorage.setItem('geminiApiKey', k);
+            return k;
+        };
+
+        const clearGameData = () => {
+            const key = localStorage.getItem('geminiApiKey');
+            localStorage.clear();
+            if (key) localStorage.setItem('geminiApiKey', key);
+        };
         const startBtn = document.getElementById('start-game');
         const charNameInput = document.getElementById('char-name');
         const charSettingInput = document.getElementById('char-setting');
@@ -535,6 +589,15 @@
 
                 this.prompt = [promptText];
 
+                const apikey = getApiKey();
+                if (!apikey) {
+                    Btn.disabled = false;
+                    Btn.textContent = '공격';
+                    this.isRunning = false;
+                    alert('API 키를 입력해주세요.');
+                    return null;
+                }
+
                 try {
                     for (const modelName of modelList) {
                         try {
@@ -596,7 +659,7 @@
                     setTimeout(() => {
                         fightDiv.innerHTML = '<fieldset id="enemy-char" class="boxflicker"><legend>적</legend><span id="enemyState"></span><div class="charStateVerticalLine boxflicker"></div><span id="enemyAbility"></span></fieldset>';
                         game.changeDisplay([fightDiv],false);
-                        localStorage.clear();
+                        clearGameData();
                         location.reload(true);
                         fightDiv.classList.remove('result');
                         return 0;
@@ -632,7 +695,7 @@
                 });
 
                 wakeUpBtn.addEventListener('click', () => {
-                    localStorage.clear();
+                    clearGameData();
                     location.reload(true);
                 });
 
@@ -726,6 +789,7 @@
                 this.hp = hp;
                 this.atk = atk;
                 this.plausible = 100 - plausible;
+                if (!ability) throw new Error('저장된 캐릭터 데이터가 없습니다.');
                 this.ability = ability.ability;
                 this.abilityAtk = ability.abilityAtk;
                 this.abilityEffect = ability.abilityEffect;
@@ -889,6 +953,15 @@
                         "gemini-2.0-flash-lite"
                     ]
                     : [selectValue];
+
+                const apikey = getApiKey();
+                if (!apikey) {
+                    this.isRunning = false;
+                    startBtn.disabled = false;
+                    startBtn.textContent = '몽상 시작!';
+                    alert('API 키를 입력해주세요.');
+                    return;
+                }
 
                 try {
                     this.genAI = new GoogleGenerativeAI(apikey);

@@ -5,7 +5,9 @@ compatibility_date = "2024-01-01"
 [vars]
 VELOG_USERNAME = "njw"
 
-# 아래 값들은 Cloudflare Dashboard > Workers > Settings > Variables 에서 설정하세요
-# SUPABASE_URL = "https://xxxx.supabase.co"
-# SUPABASE_KEY = "your-service-role-key"
-# SYNC_SECRET  = "your-secret-key"
+# SYNC_SECRET 은 Cloudflare Dashboard > Workers > Settings > Variables 에서 설정하세요
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"
+database_id = "1f3222d0-0343-429c-af67-f771a39b5f2d"
