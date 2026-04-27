@@ -13,7 +13,7 @@ let currentSort = 'date-desc';
 let currentPage = 1;
 
 // ─── 현재 페이지 판별 ───────────────────────────────────────
-const isPostPage = window.location.pathname.includes('post.html');
+const isPostPage = window.location.pathname.includes('/view');
 
 // 스크롤 시 헤더 축소 (히스테리시스로 깜빡임 방지)
 function initScrollHeader() {
@@ -314,7 +314,7 @@ async function loadPost() {
 
 // ─── 유틸 ───────────────────────────────────────────────────
 function goToPost(slug) {
-  window.location.href = `post.html?slug=${encodeURIComponent(slug)}`;
+  window.location.href = `view/?slug=${encodeURIComponent(slug)}`;
 }
 
 function formatDate(dateStr) {
