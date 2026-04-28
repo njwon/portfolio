@@ -280,8 +280,8 @@ function drawRadarChart() {
         { label: '네트워크',      value: 95, speed: 0.008 + Math.random() * 0.010 },
         { label: '정보보안',      value: 83, speed: 0.008 + Math.random() * 0.010 },
         { label: '백엔드',        value: 90, speed: 0.008 + Math.random() * 0.010 },
-        { label: '언어, 알고리즘',value: 79, speed: 0.008 + Math.random() * 0.010 },
-        { label: '암호학',        value: 76, speed: 0.008 + Math.random() * 0.010 },
+        { label: '언어, 알고리즘',value: 76, speed: 0.008 + Math.random() * 0.010 },
+        { label: '암호학',        value: 79, speed: 0.008 + Math.random() * 0.010 },
         { label: '웹 프론트엔드', value: 85, speed: 0.008 + Math.random() * 0.010 },
     ];
     const n        = skills.length;
@@ -377,16 +377,16 @@ function drawLangChart() {
         ? Math.min(280, window.innerWidth * 0.38)
         : Math.min(380, window.innerWidth * 0.42);
     const langs = [
-        { label: 'JavaScript',  value: 90, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'SQL',         value: 89, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'JPA',         value: 89, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Spring',      value: 88, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'JSP',         value: 88, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'HTML / CSS',  value: 87, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Java',        value: 86, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Git',         value: 83, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'C',           value: 82, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Python',      value: 81, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'JavaScript',  value: 80, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'SQL',         value: 79, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'JPA',         value: 79, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Spring',      value: 78, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'JSP',         value: 78, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'HTML / CSS',  value: 77, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Java',        value: 76, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Git',         value: 73, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'C',           value: 72, speed: 0.008 + Math.random() * 0.010 },
+        { label: 'Python',      value: 71, speed: 0.008 + Math.random() * 0.010 },
     ];
 
     const rowH = Math.min(52, (w * 0.95) / langs.length);
