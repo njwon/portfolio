@@ -876,6 +876,7 @@ video {
 }
 
 .proj-link {
+    white-space: nowrap;
     font-family: 'PartialSansKR-Regular', serif;
     font-size: 13px;
     color: #0275d8;
