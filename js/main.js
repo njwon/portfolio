@@ -94,7 +94,7 @@ function scrollToSection(idx) {
 
 function setSection(idx) { scrollToSection(currentSection = idx); }
 
-const videos = ['img/home/core1.webm', 'img/home/core2.webm', 'img/home/core3.webm', 'img/home/core4.webm', 'img/home/core5.webm', 'img/home/core6.webm', 'img/home/core7.webm'];
+const videos = ['img/home/core1.webm', 'img/home/core2.webm', 'img/home/core3.webm', 'img/home/core4.webm', 'img/home/core5.webm', 'img/home/core6.webm', 'img/home/core7.webm', 'img/home/core8.webm', 'img/home/core9.webm'];
 
 function changeVideo() {
     const v = document.getElementById('tvVideo');
@@ -116,7 +116,7 @@ updateDateTime();
 let projCurrent = 0, projX = 0, projTarget = 0, projRaf = null, projReady = false;
 let projTrack, projFillEl, projCounterEl, projSlideEls, projNumEls;
 
-const PROJ_N = 7;
+const PROJ_N = 9;
 
 function initProjSlider() {
     if (projReady) return;
@@ -446,6 +446,10 @@ function drawLangChart() {
 
 // ── Clippy ────────────────────────────────────────────────────────
 (function () {
+    if (!localStorage.getItem('clippyAlertShown')) {
+        alert('왼쪽 하단에 클릭하면 블로그로 갈 수 있는 클리피 버튼이 있어요!');
+        localStorage.setItem('clippyAlertShown', '1');
+    }
     const link = document.getElementById('clippyLink');
     if (!link) return;
     const today = new Date().toDateString();
