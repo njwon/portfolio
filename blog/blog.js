@@ -54,6 +54,13 @@ async function initList() {
       return;
     }
 
+    // URL 쿼리 파라미터로 초기 필터 적용 (?series=X 또는 ?tag=X)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSeries = urlParams.get('series');
+    const urlTag = urlParams.get('tag');
+    if (urlSeries) currentSeries = urlSeries;
+    if (urlTag) currentTag = urlTag;
+
     // 태그 & 시리즈 수집 및 렌더링
     const allTags = new Set();
     const allSeries = new Set();
