@@ -335,9 +335,7 @@ a {
 }
 
 .post-card-date {
-    font-size: 13px;
-    color: #666;
-    font-family: 'S-CoreDream-3Light', serif;
+    display: none;
 }
 
 .post-card-tags {
@@ -383,9 +381,7 @@ a {
 }
 
 .post-date {
-    font-size: 14px;
-    color: #888;
-    font-family: 'S-CoreDream-3Light', serif;
+    display: none;
 }
 
 .post-series {

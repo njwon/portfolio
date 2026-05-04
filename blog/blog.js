@@ -165,7 +165,6 @@ function renderPostCards(posts) {
           <div class="post-card-title">${escapeHtml(post.title)}</div>
           <div class="post-card-desc">${parseBold(escapeHtml(post.short_description || ''))}</div>
           <div class="post-card-footer">
-            <span class="post-card-date">${date}</span>
             <div class="post-card-tags">${tags}</div>
           </div>
         </div>
@@ -276,7 +275,7 @@ async function loadPost() {
 
     document.title = `${post.title} - HURT_ALBOCHILL.log`;
     document.getElementById('postTitle').textContent = post.title;
-    document.getElementById('postDate').textContent = formatDate(post.display_date);
+    document.getElementById('postDate').style.display = 'none';
 
     const seriesEl = document.getElementById('postSeries');
     if (post.series_name) {
