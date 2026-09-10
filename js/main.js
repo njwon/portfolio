@@ -377,6 +377,7 @@ function drawLangChart() {
         ? Math.min(280, window.innerWidth * 0.38)
         : Math.min(380, window.innerWidth * 0.42);
     const langs = [
+        { label: 'Python',      value: 80, speed: 0.008 + Math.random() * 0.010 },
         { label: 'JavaScript',  value: 80, speed: 0.008 + Math.random() * 0.010 },
         { label: 'SQL',         value: 79, speed: 0.008 + Math.random() * 0.010 },
         { label: 'JPA',         value: 79, speed: 0.008 + Math.random() * 0.010 },
@@ -386,7 +387,6 @@ function drawLangChart() {
         { label: 'Java',        value: 76, speed: 0.008 + Math.random() * 0.010 },
         { label: 'Git',         value: 73, speed: 0.008 + Math.random() * 0.010 },
         { label: 'C',           value: 72, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Python',      value: 71, speed: 0.008 + Math.random() * 0.010 },
     ];
 
     const rowH = Math.min(52, (w * 0.95) / langs.length);
