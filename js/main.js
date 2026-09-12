@@ -278,11 +278,13 @@ function drawRadarChart() {
 
     const skills = [
         { label: '네트워크',      value: 95, speed: 0.008 + Math.random() * 0.010 },
-        { label: '정보보안',      value: 83, speed: 0.008 + Math.random() * 0.010 },
+        { label: '정보보안',      value: 94, speed: 0.008 + Math.random() * 0.010 },
         { label: '백엔드',        value: 90, speed: 0.008 + Math.random() * 0.010 },
-        { label: '언어, 알고리즘',value: 76, speed: 0.008 + Math.random() * 0.010 },
-        { label: '암호학',        value: 79, speed: 0.008 + Math.random() * 0.010 },
-        { label: '웹 프론트엔드', value: 85, speed: 0.008 + Math.random() * 0.010 },
+        { label: '프론트엔드',    value: 85, speed: 0.008 + Math.random() * 0.010 },
+        { label: '운영체제',     value: 79, speed: 0.008 + Math.random() * 0.010 },
+        { label: '코딩',        value: 89, speed: 0.008 + Math.random() * 0.010 },
+        { label: '알고리즘',     value: 70, speed: 0.008 + Math.random() * 0.010 },
+        { label: '데이터베이스', value: 90, speed: 0.008 + Math.random() * 0.010 },
     ];
     const n        = skills.length;
     const levels   = 5;
@@ -349,8 +351,10 @@ function drawRadarChart() {
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         for (let i = 0; i < n; i++) {
-            const { x, y } = pt(labelR, i);
+            let { x, y } = pt(labelR, i);
             ctx.font      = `${fontSize}px PartialSansKR-Regular, serif`;
+            const halfW   = ctx.measureText(skills[i].label).width / 2 + 2;
+            x = Math.min(size - halfW, Math.max(halfW, x));
             ctx.fillStyle = '#161617';
             ctx.fillText(skills[i].label, x, y - fontSize * 0.6);
             ctx.font      = `bold ${fontSize * 0.82}px PartialSansKR-Regular, serif`;
@@ -376,21 +380,34 @@ function drawLangChart() {
         : tablet
         ? Math.min(280, window.innerWidth * 0.38)
         : Math.min(380, window.innerWidth * 0.42);
-    const langs = [
-        { label: 'Python',      value: 80, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'JavaScript',  value: 80, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'SQL',         value: 79, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'JPA',         value: 79, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Spring',      value: 78, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'JSP',         value: 78, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'HTML / CSS',  value: 77, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Java',        value: 76, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'Git',         value: 73, speed: 0.008 + Math.random() * 0.010 },
-        { label: 'C',           value: 72, speed: 0.008 + Math.random() * 0.010 },
+    const groups = [
+        { title: '언어', items: [
+            { label: 'Java',        value: 85 },
+            { label: 'Python',      value: 82 },
+            { label: 'JavaScript',  value: 80 },
+            { label: 'HTML / CSS',  value: 77 },
+            { label: 'SQL',         value: 75 },
+            { label: 'C',           value: 60 },
+        ]},
+        { title: '프레임워크', items: [
+            { label: 'JPA',         value: 79 },
+            { label: 'Spring',      value: 78 },
+            { label: 'JSP',         value: 78 },
+            { label: 'FastAPI',     value: 65 },
+        ]},
+        { title: '인프라 · 도구', items: [
+            { label: 'Linux',       value: 85 },
+            { label: 'Burp Suite', value: 83 },
+            { label: 'Git',         value: 80 },
+            { label: 'Redis', value: 60 },
+        ]},
     ];
+    const langs = groups.flatMap(g => g.items);
+    langs.forEach(l => { l.speed = 0.008 + Math.random() * 0.010; });
 
-    const rowH = Math.min(52, (w * 0.95) / langs.length);
-    const h    = rowH * langs.length + 20;
+    const rowH   = Math.min(52, (w * 0.95) / langs.length);
+    const headH  = rowH * 0.85;
+    const h      = rowH * langs.length + headH * groups.length + 20;
     canvas.width  = w;
     canvas.height = h;
 
@@ -410,32 +427,56 @@ function drawLangChart() {
 
         ctx.clearRect(0, 0, w, h);
 
-        for (let i = 0; i < langs.length; i++) {
-            const y      = i * rowH + rowH * 0.5;
-            const filled = barW * (langs[i].value / 100) * easeOut(progs[i]);
-
-            ctx.beginPath();
-            ctx.roundRect(barX, y - rowH * 0.18, barW, rowH * 0.36, 3);
-            ctx.fillStyle = 'rgba(22,22,23,0.08)';
-            ctx.fill();
-
-            if (filled > 0) {
-                ctx.beginPath();
-                ctx.roundRect(barX, y - rowH * 0.18, filled, rowH * 0.36, 3);
-                ctx.fillStyle = 'rgba(22,22,23,0.75)';
-                ctx.fill();
-            }
-
-            ctx.textAlign    = 'right';
+        let cursor = 0;
+        let i      = 0;
+        for (const g of groups) {
+            const hy = cursor + headH * 0.6;
+            ctx.textAlign    = 'left';
             ctx.textBaseline = 'middle';
-            ctx.font         = `${fontSize}px PartialSansKR-Regular, serif`;
-            ctx.fillStyle    = '#161617';
-            ctx.fillText(langs[i].label, barX - 10, y);
+            ctx.font         = `bold ${fontSize * 0.8}px PartialSansKR-Regular, serif`;
+            ctx.fillStyle    = 'rgba(22,22,23,0.45)';
+            ctx.fillText(g.title, 0, hy);
+            ctx.beginPath();
+            ctx.moveTo(0, cursor + headH - 2);
+            ctx.lineTo(w, cursor + headH - 2);
+            ctx.strokeStyle = 'rgba(22,22,23,0.12)';
+            ctx.lineWidth   = 1;
+            ctx.stroke();
+            cursor += headH;
 
-            ctx.textAlign = 'left';
-            ctx.font      = `${fontSize * 0.82}px PartialSansKR-Regular, serif`;
-            ctx.fillStyle = 'rgba(22,22,23,0.45)';
-            ctx.fillText(langs[i].value + '%', barX + barW + 8, y);
+            for (const item of g.items) {
+                const y      = cursor + rowH * 0.5;
+                const filled = barW * (item.value / 100) * easeOut(progs[i]);
+
+                ctx.beginPath();
+                ctx.roundRect(barX, y - rowH * 0.18, barW, rowH * 0.36, 3);
+                ctx.fillStyle = 'rgba(22,22,23,0.08)';
+                ctx.fill();
+
+                if (filled > 0) {
+                    ctx.beginPath();
+                    ctx.roundRect(barX, y - rowH * 0.18, filled, rowH * 0.36, 3);
+                    ctx.fillStyle = 'rgba(22,22,23,0.75)';
+                    ctx.fill();
+                }
+
+                ctx.textAlign    = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.font         = `${fontSize}px PartialSansKR-Regular, serif`;
+                const maxLabelW  = barX - 14;
+                const labelW     = ctx.measureText(item.label).width;
+                if (labelW > maxLabelW) ctx.font = `${fontSize * maxLabelW / labelW}px PartialSansKR-Regular, serif`;
+                ctx.fillStyle    = '#161617';
+                ctx.fillText(item.label, barX - 10, y);
+
+                ctx.textAlign = 'left';
+                ctx.font      = `${fontSize * 0.82}px PartialSansKR-Regular, serif`;
+                ctx.fillStyle = 'rgba(22,22,23,0.45)';
+                ctx.fillText(item.value + '%', barX + barW + 8, y);
+
+                cursor += rowH;
+                i++;
+            }
         }
 
         if (!allDone) requestAnimationFrame(draw);
