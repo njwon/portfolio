@@ -485,6 +485,36 @@ function drawLangChart() {
     draw();
 }
 
+// ── 첫 방문 블로그 안내 대화상자 ───────────────────────────────────
+(function () {
+    const dialog = document.getElementById('blogDialog');
+    if (!dialog || localStorage.getItem('blogDialogShown')) return;
+
+    const close = () => {
+        localStorage.setItem('blogDialogShown', '1');
+        dialog.classList.remove('is-open');
+        setTimeout(() => { dialog.hidden = true; }, 300);
+    };
+    dialog.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dialog.hidden) close(); });
+
+    // RSS 첫 항목으로 최신 글 제목을 채운다 (실패해도 대화상자는 그대로 표시)
+    fetch('blog/rss.xml').then(r => r.text()).then(xml => {
+        const item = new DOMParser().parseFromString(xml, 'application/xml').querySelector('item');
+        const title = item?.querySelector('title')?.textContent?.trim();
+        if (!title) return;
+        const latest = document.getElementById('blogDialogLatest');
+        latest.textContent = '최신 글: ';
+        const b = document.createElement('b'); b.textContent = title; latest.appendChild(b);
+    }).catch(() => {});
+
+    // 로딩 타이틀이 어느 정도 걷힌 뒤에 띄운다
+    window.addEventListener('load', () => setTimeout(() => {
+        dialog.hidden = false;
+        requestAnimationFrame(() => requestAnimationFrame(() => dialog.classList.add('is-open')));
+    }, 4000));
+})();
+
 // ── Clippy ────────────────────────────────────────────────────────
 (function () {
     const link = document.getElementById('clippyLink');

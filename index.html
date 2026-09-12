@@ -671,6 +671,24 @@
             </section>
         </div>
     </div>
+    <!-- 첫 방문 블로그 안내 대화상자 (한 번만 표시, localStorage) -->
+    <div class="blog-dialog" id="blogDialog" role="dialog" aria-labelledby="blogDialogTitle" hidden>
+        <div class="blog-dialog-title">
+            <span id="blogDialogTitle">nogarden.log</span>
+            <button type="button" class="blog-dialog-x" data-close aria-label="닫기">×</button>
+        </div>
+        <div class="blog-dialog-body">
+            <img class="blog-dialog-clippy" src="img/clippy.webp" width="200" height="225" alt="">
+            <div>
+                <p class="blog-dialog-msg">안녕하세요! 노정원의 개발 블로그가 있어요.<br>네트워크 · 보안 · 백엔드 공부 기록을 올리고 있습니다.</p>
+                <p class="blog-dialog-latest" id="blogDialogLatest"></p>
+            </div>
+        </div>
+        <div class="blog-dialog-actions">
+            <a href="blog/" class="blog-dialog-btn blog-dialog-btn-primary" data-close>블로그 보기</a>
+            <button type="button" class="blog-dialog-btn" data-close>나중에</button>
+        </div>
+    </div>
     <!-- Clippy 블로그 링크 -->
     <a href="blog/" class="clippy-link" aria-label="노정원 개발 블로그 nogarden.log 보러가기" id="clippyLink">
         <div class="clippy-bubble">Blog 보러가기!<br>CLICK!!!</div>

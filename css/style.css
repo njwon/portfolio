@@ -31,7 +31,7 @@ a {
     position: absolute;
     left: 0;
     top: 0;
-    z-index: 10001;
+    z-index: 10005;                 /* 노이즈·대화상자보다 위 */
 }
 
 .noise {
@@ -1216,6 +1216,105 @@ footer div {
     color: #fefefe;
     font-size: 20px;
     font-family: 'S-CoreDream-3Light', serif;
+}
+
+/* ── 첫 방문 블로그 안내 대화상자 (Clippy 말풍선과 같은 Win9x 톤) ── */
+.blog-dialog {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10003;                 /* 로딩 타이틀(10003, pointer-events 없음)보다 위·노이즈(10004)·커서(10005)보다 아래 */
+    width: min(360px, calc(100vw - 32px));
+    background: #ffffe1;
+    border: 2px solid #000;
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+    font-family: 'MS Sans Serif', 'Tahoma', 'Pretendard', sans-serif;
+    font-size: 13px;
+    color: #000;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.blog-dialog[hidden] { display: none; }
+.blog-dialog.is-open { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.blog-dialog:not(.is-open) { transform: translate(-50%, -50%) scale(0.96); }
+
+.blog-dialog-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #000;
+    color: #ffffe1;
+    padding: 4px 6px 4px 10px;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+.blog-dialog-x {
+    width: 20px; height: 20px;
+    border: 1px solid #ffffe1;
+    background: transparent;
+    color: #ffffe1;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+}
+.blog-dialog-x:hover { background: #ffffe1; color: #000; }
+
+.blog-dialog-body {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 14px 6px;
+}
+.blog-dialog-clippy {
+    width: 56px;
+    height: auto;
+    flex: none;
+    image-rendering: pixelated;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+}
+.blog-dialog-msg { margin: 0 0 8px; line-height: 1.55; word-break: keep-all; }
+.blog-dialog-latest {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #333;
+    word-break: keep-all;
+    border-top: 1px dashed #999;
+    padding-top: 8px;
+}
+.blog-dialog-latest:empty { display: none; }
+.blog-dialog-latest b { font-weight: 700; color: #000; }
+
+.blog-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 14px 14px;
+}
+.blog-dialog-btn {
+    min-width: 88px;
+    padding: 6px 12px;
+    border: 2px solid #000;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+    font: inherit;
+    text-align: center;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    transition: transform .1s, box-shadow .1s;
+}
+.blog-dialog-btn:hover { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(0,0,0,0.3); }
+.blog-dialog-btn-primary { background: #000; color: #ffffe1; font-weight: 700; }
+
+@media (max-width: 479px) {
+    .blog-dialog-body { padding: 12px 12px 4px; }
+    .blog-dialog-clippy { width: 44px; }
+    .blog-dialog-actions { flex-direction: column; }
+    .blog-dialog-btn { width: 100%; }
 }
 
 /* ── Clippy ────────────────────────────────────────────────────── */
