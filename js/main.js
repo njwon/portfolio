@@ -487,10 +487,6 @@ function drawLangChart() {
 
 // ── Clippy ────────────────────────────────────────────────────────
 (function () {
-    if (!localStorage.getItem('clippyAlertShown')) {
-        alert('왼쪽 하단에 클릭하면 블로그로 갈 수 있는 클리피 버튼이 있어요!');
-        localStorage.setItem('clippyAlertShown', '1');
-    }
     const link = document.getElementById('clippyLink');
     if (!link) return;
     const today = new Date().toDateString();

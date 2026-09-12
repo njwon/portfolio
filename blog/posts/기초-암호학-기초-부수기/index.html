@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[기초] 암호학 기초 부수기! | nogarden.log</title>
+    <meta name="description" content="암호학 &gt; 암호학이란, 정보를 안전하게 보호하기 위해 수학적, 언어학적 방법을 연구하여 평문을 암호문으로 변환(암호화)하거나 암호문을 평문으로 변환(복호화)하는 학문이다. 암호학은 수천 년 전부터 시작되었다. 최근 수십 년 전까지는 고전 암호학이라고 명칭되어지는 펜과 ">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 기초, 보안, 암호학, 웹">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[기초] 암호학 기초 부수기!">
+    <meta property="og:description" content="암호학 &gt; 암호학이란, 정보를 안전하게 보호하기 위해 수학적, 언어학적 방법을 연구하여 평문을 암호문으로 변환(암호화)하거나 암호문을 평문으로 변환(복호화)하는 학문이다. 암호학은 수천 년 전부터 시작되었다. 최근 수십 년 전까지는 고전 암호학이라고 명칭되어지는 펜과 ">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0/">
+    <meta property="article:published_time" content="2026-04-24T04:54:34.024Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="기초">
+    <meta property="article:tag" content="보안">
+    <meta property="article:tag" content="암호학">
+    <meta property="article:tag" content="웹">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[기초] 암호학 기초 부수기!">
+    <meta name="twitter:description" content="암호학 &gt; 암호학이란, 정보를 안전하게 보호하기 위해 수학적, 언어학적 방법을 연구하여 평문을 암호문으로 변환(암호화)하거나 암호문을 평문으로 변환(복호화)하는 학문이다. 암호학은 수천 년 전부터 시작되었다. 최근 수십 년 전까지는 고전 암호학이라고 명칭되어지는 펜과 ">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0/","headline":"[기초] 암호학 기초 부수기!","description":"암호학 > 암호학이란, 정보를 안전하게 보호하기 위해 수학적, 언어학적 방법을 연구하여 평문을 암호문으로 변환(암호화)하거나 암호문을 평문으로 변환(복호화)하는 학문이다. 암호학은 수천 년 전부터 시작되었다. 최근 수십 년 전까지는 고전 암호학이라고 명칭되어지는 펜과 ","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2026-04-24T04:54:34.024Z","dateModified":"2026-04-24T04:54:34.024Z","keywords":"기초, 보안, 암호학, 웹","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[기초] 암호학 기초 부수기!</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-24T04:54:34.024Z">2026.04.24</time>
+                    <span class="post-series">보안</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">기초</span><span class="post-tag">보안</span><span class="post-tag">암호학</span><span class="post-tag">웹</span></div>
+            </div>
+            
+            <div class="post-body markdown-body">
+<h1>암호학</h1>
+<blockquote>
+<p>암호학이란, 정보를 안전하게 보호하기 위해 수학적, 언어학적 방법을 연구하여 평문을 암호문으로 변환(암호화)하거나 암호문을 평문으로 변환(복호화)하는 학문이다.</p>
+</blockquote>
+<p> <b>암호학은 수천 년 전부터 시작</b>되었다.<br>최근 수십 년 전까지는 <b>고전 암호학이라고 명칭되어지는 펜과 종이 또는 간단한 기계적 보조 장치를 사용하는 암호화를 사용</b>하였다.<br> 20세기 초부터 복잡한 기계가 발명되어 고전 암호학에서 사용하는 펜과 종이는 전혀 맞지 않게 되었다.</p>
+<p><b>현대 암호학은 크게 대칭키, 비대칭키 암호화</b>로 나뉘어진다.</p>
+<h2>대칭키</h2>
+<blockquote>
+<p>대칭키 암호화란, 암호화와 복호화에 동일한 공유 비밀 키를 사용하는 암호 방식. 속도가 빨라 대량의 데이터를 암호화하는 데 효율적이다.</p>
+</blockquote>
+<p>고전부터 사용되어지는 대부분의 암호 알고리즘이 대칭키 암호화에 속한다.<br>대표적으로 고대에 사용되던 스퀴탈레 암호와 카이사르 암호가 이에 속한다.</p>
+<p> 가장 기본적인 원리인 스트림 방식은 XOR 연산을 이용한다.<br>XOR, <b>배타적 논리합은 두 번 이어서 연산하면 원문으로 돌아온다는 특징</b>이 있다.<br>이를 이용하면 대칭키 암호화를 구현할 수 있다.</p>
+<pre><code>원문 A, 암호키 B.
+
+평문: 01000001 (&#39;A&#39; ASCII)
+XOR 연산
+키: 01000010 (&#39;B&#39; ASCII)
+= 암호문: 00000011
+
+-------------------------------------------------------------------------------
+
+암호문: 00000011
+XOR 연산
+키: 01000010 (&#39;B&#39; ASCII)
+= 복호문: 01000001 (&#39;A&#39; ASCII)
+</code></pre>
+<h3>스트림 방식</h3>
+<p> 이러한 <b>기본적인 암호화 방식을 스트림 방식</b>이라고 명칭한다.<br>스트림 방식은 두가지로 나뉘어지는데 동기식과 비동기식으로 나뉘어진다.</p>
+<h4>동기식 스트림 방식</h4>
+<p> <b>동기식 스트림 방식은 평문과 완전히 관계없는 키 스트림을 사용하는 알고리즘</b>이다.<br>평문과 완전히 분리된 키 스트림을 사용해 보안적으로 안전하고,<br><b>비트가 오염되더라도 다음 비트에 영향을 주지 않는다는 특징</b>이 있다.<br> 다만, <b>각각의 위치와 정확히 같은 키 스트림 비트를 사용하기 때문에 조금이라도 이탈하면 뒤 모든 부분의 복호화가 불가능하다는 단점</b>이 존재한다.<br> 그러한 이유로 동기식 암호화는 송수신 측이 서로 동기화하는 과정이 필연적으로, 지속적으로 있어야 한다.</p>
+<p>대표적으로 <b>OTP</b>를 생각하면 편하다.</p>
+<h4>비동기식(자가 동기식) 스트림 방식</h4>
+<p> <b>동기식 암호화 방식은 비트가 이탈하면 뒤 모든 비트의 복호화가 불가능하다는 특징</b>이 있다.<br>비동기식 스트림 방식은 직전의 암호문이 다음 키의 재료로 들어간다는 특징이 있어 비트가 이탈하더라도 제한적으로 오류가 파급된다.<br> 그러하여, 동기식과 다르게 <b>비동기식 암호화는 이전의 암호화 값을 가지고 있기에 의도적인 변조를 탐지</b>할 수 있다.<br> 또한 이전 암호문을 키를 생성하는데에 쓴다는 특징 덕분에 <b>지속적인 동기화가 필요하지 않다</b>는 특징이 있다.</p>
+<p>대표적으로 <b>CFB 알고리즘</b>이 존재한다.</p>
+<h3>블록 방식</h3>
+<p> 평문 비트의 진행 순서에 따라 순차적으로 XOR 연산을 하는 스트림 방식과 달리 <b>블록 방식은 일정한 단위로 평문을 나눠 일정한 길이의 키를 이용해 암호화</b>를 진행한다.<br> 이때 <b>전치 방식</b>과 <b>치환 방식</b>을 혼합하여 암호화를 진행하는데, <b>전치 방식은 문자의 순서를 임의로 바꾸는 방식</b>이고 (I am bab ↔ aIa b mb) <b>치환 방식은 각 문자를 그에 상응하는 문자로 변환하는 방식</b>이다.(I am bab ↔ h]wa]ewe) 이러한 과정후에 키와 함께 XOR 연산을 진행하여 암호화를 실시하는데 그 각 과정을 라운드라고 한다.<br> 실제 암호화 과정에서는 난독화를 위해 <b>키 길이를 128비트로 하거나, 암호화 라운드를 최소 3회 이상 진행</b>한다.<br> <img src="https://velog.velcdn.com/images/njw/post/8fa1e3fd-ff01-426b-844a-3ee062180911/image.png" alt=""></p>
+<h2>비대칭키</h2>
+<p>대칭키를 보안적으로 아무리 개선을 하더라도 본질적인 문제가 있다.<br><b>키를 가지고 통신할 시 중간에 키를 탈취당하는 것에 매우 취약</b>(중간자 공격)하다는 것이다. 이를 보완하기 위해 <b>암호화와 복호화에 서로 다른 키를 사용하는 암호화 알고리즘이 비대칭키 암호화</b>다.</p>
+<blockquote>
+<p>비대칭키 암호화란, 암호화와 복호화에 서로 다른 키(공개키-개인키 쌍)를 사용하는 양방향 암호화 방식. 데이터를 공개키로 암호화하면, 대응하는 개인키로만 복호화할 수 있어 보안성이 높다. 대칭키에 비해 속도가 매우 느리다.</p>
+</blockquote>
+<p>비대칭키 암호화는 크게 키가 두가지로 나뉘는데 <b>공개키</b>와 <b>개인키</b>다.<br><b>공개키는 모두에게 공개되는 키로써 보편적으로 암호화에 사용</b>되고,<br><b>개인키는 키 쌍을 생성한 당사자가 보관하는 키로써 보편적으로 복호화에 이용</b>된다.</p>
+<p><b>비대칭키</b>는 앞서 서술한대로 <b>암호화와 복호화 속도가 매우 느리다.</b><br>그렇기에, 통신에 사용할 때 그 자체를 통신에 사용하는 것이 아닌 종단간끼리 대칭되는 암호키를 얻기 위해 사용된다.</p>
+<p>비대칭키는 다양한 분야에서 이용되지만 대표적인 두가지 정도를 서술하겠다.</p>
+<pre><code>데이터 암호화 (기밀성): 
+A가 B의 공개키로 암호화해서 보냄 → B가 자신의 개인키로 복호화. 
+(B만 읽을 수 있음)
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+전자 서명 (무결성 및 인증): 
+A가 자신의 개인키로 암호화(서명)해서 보냄 → 누구나 A의 공개키로 풀어봄. 
+(A가 보냈음이 증명됨)
+</code></pre>
+<h1>마무리</h1>
+<p>암호학 기초를 공부하였다! 더욱이 열심히 공부해보자!</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

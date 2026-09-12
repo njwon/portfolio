@@ -53,6 +53,19 @@ a {
     filter: grayscale(100%);
 }
 
+/* 화면에는 숨기고 검색엔진·스크린리더에만 노출 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .pointerkill {
     pointer-events: none;
 }
@@ -990,6 +1003,7 @@ video {
 }
 .proj-polaroid img {
     width: 100%;
+    height: auto;
     display: block;
     filter: grayscale(15%) contrast(1.05);
 }

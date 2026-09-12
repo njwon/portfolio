@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>nogarden.log</title>
+    <link>https://njw.kro.kr/blog/</link>
+    <description>노정원의 개발 블로그 - 네트워크·정보보안·백엔드</description>
+    <language>ko</language>
+    <lastBuildDate>Sat, 12 Sep 2026 00:31:50 GMT</lastBuildDate>
+    <atom:link href="https://njw.kro.kr/blog/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>[해킹] 타겟 정보 수집</title>
+      <link>https://njw.kro.kr/blog/posts/%ED%95%B4%ED%82%B9-%ED%83%80%EA%B2%9F-%EC%A0%95%EB%B3%B4-%EC%88%98%EC%A7%91/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%ED%95%B4%ED%82%B9-%ED%83%80%EA%B2%9F-%EC%A0%95%EB%B3%B4-%EC%88%98%EC%A7%91/</guid>
+      <pubDate>Sat, 22 Aug 2026 20:53:56 GMT</pubDate>
+      <description>해킹을 진행하는 과정 중 정보 수집이라는 단계가 존재한다. 오늘은 다양한 정보 수집 기법에 대해 알아보자. 정보 수집이란 해킹에서의 정보 수집은 말 그대로 타겟에 대한 다양한 정보를 수집하는 것이다. 내가 아는 것, 내가 할 수 있는 것과 더불어서 타겟에 대한 정보를</description>
+      <category>정보수집</category><category>중요성</category><category>해킹</category>
+    </item>
+    <item>
+      <title>[자격증] SQLD 60회 1주 벼락치기 후기!!</title>
+      <link>https://njw.kro.kr/blog/posts/%EC%9E%90%EA%B2%A9%EC%A6%9D-SQLD-60%ED%9A%8C-%ED%9B%84%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EC%9E%90%EA%B2%A9%EC%A6%9D-SQLD-60%ED%9A%8C-%ED%9B%84%EA%B8%B0/</guid>
+      <pubDate>Sat, 04 Jul 2026 13:59:48 GMT</pubDate>
+      <description>SQLD 합격 2025년에 우연히 SQLD라는 자격증에 대해 알게 되었다. SQLD란? SQLD란 한국데이터산업진흥원에서 주관하는 자격증 시험이다. 1년에 4번 시험을 치고 응시료는 5만원이다. 나오는 문제 유형은 위와 같다. 1시간 반 동안 시험이 진행되며, 60점</description>
+      <category>SQLD</category><category>데이터베이스</category><category>자격증</category>
+    </item>
+    <item>
+      <title>[네트워크] OSI 7 계층과 네트워크</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-OSI-7-%EA%B3%84%EC%B8%B5%EA%B3%BC-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-OSI-7-%EA%B3%84%EC%B8%B5%EA%B3%BC-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC/</guid>
+      <pubDate>Mon, 27 Apr 2026 12:37:54 GMT</pubDate>
+      <description>OSI 7계층과 네트워크 네트워크란 무엇인가 우리가 매일 사용하는 인터넷, 카카오톡 메시지, 유튜브 스트리밍. 이 모든 것은 데이터가 한 컴퓨터에서 다른 컴퓨터로 이동하는 과정에서 이루어진다. 이처럼 여러 장치들이 서로 데이터를 주고받을 수 있도록 연결된 구조를 네트</description>
+      <category>네트워크</category><category>통신</category>
+    </item>
+    <item>
+      <title>[데이터베이스] 데이터베이스와 암호화</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94/</guid>
+      <pubDate>Mon, 27 Apr 2026 10:38:17 GMT</pubDate>
+      <description>한 번쯤 다이어리에 일정과 메모를 적고, 학교에서 들은 강의를 노트에 기록해 본 경험이 있을 것이다. 새로운 일정이 생기면 다이어리를 펼쳐 날짜에 맞게 기록하고, 일정이 변경되거나 취소된다면 기록한 내용을 수정하거나 삭제할 수 있다. 일상 생활에서 생기는 다양한 정보를</description>
+      <category>데이터베이스</category><category>보안</category><category>인프라</category>
+    </item>
+    <item>
+      <title>[보안] SSRF 부셔보기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</guid>
+      <pubDate>Mon, 27 Apr 2026 09:48:30 GMT</pubDate>
+      <description>웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib, requests 등이 있다. 이러한 라이브러리는 단순히 HTTP 요청을 보낼 클라이언트 뿐만 아니</description>
+      <category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[보안] File Vulnerability 부셔보기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</guid>
+      <pubDate>Mon, 27 Apr 2026 04:50:31 GMT</pubDate>
+      <description>File Vulnerability 웹 사이트에서 파일을 업로드할 때 파일 자체를 데이터베이스에 저장하는 것 보다는 파일은 OS의 파일 시스템에 저장하는 것이 개발하기도 쉽고 관리 효율도 좋다. 하지만 이러한 파일과 관련 해서 임의 파일이 다운로드 되는 취약점이나 악성</description>
+      <category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[보안] Command Injection 부셔보기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-Command-Injection-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-Command-Injection-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</guid>
+      <pubDate>Mon, 27 Apr 2026 03:00:33 GMT</pubDate>
+      <description>다양한 웹 애플리케이션 제작용 언어는 시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원한다. 각 언어별 시스템 함수로는 PHP의 system, Node JS의 child_process, 파이썬의 os.system이 있다. 이러한 함수는 전달된 인자를 셸 프</description>
+      <category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[보안] SQL Injection 부셔보기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/</guid>
+      <pubDate>Mon, 27 Apr 2026 01:13:25 GMT</pubDate>
+      <description>인젝션 (Injection)은 주입이라는 뜻을 지닌 영단어로써 이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점을 의미한다. SQL Injection &gt; SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에</description>
+      <category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[보안] CSRF 부셔보고 CORS 알아보기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/</guid>
+      <pubDate>Sat, 25 Apr 2026 07:11:48 GMT</pubDate>
+      <description>CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할을 한다.CSRF(Cross Site</description>
+      <category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[보안] XSS 부셔보고 SOP 알아보기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/</guid>
+      <pubDate>Sat, 25 Apr 2026 04:00:30 GMT</pubDate>
+      <description>XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수 있는 클라이언트 사이드 취약점이다. 하나 예시를 들어보자</description>
+      <category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[보안] DNS와 DNS 터널링</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-DNS-%ED%84%B0%EB%84%90%EB%A7%81/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-DNS-%ED%84%B0%EB%84%90%EB%A7%81/</guid>
+      <pubDate>Fri, 24 Apr 2026 18:55:12 GMT</pubDate>
+      <description>DNS 통신을 진행할 때, 우리는 IP라는 고유 주소를 통해 정보를 교환한다. IP는 32비트로 이루어진 수 모음으로써 DNS(Domain Name System)</description>
+      <category>기초</category><category>보안</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[암호학] PKI와 TLS 그리고 HTTPS </title>
+      <link>https://njw.kro.kr/blog/posts/%EC%95%94%ED%98%B8%ED%95%99-PKI%EC%99%80-TLS-%EA%B7%B8%EB%A6%AC%EA%B3%A0-HTTPS/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EC%95%94%ED%98%B8%ED%95%99-PKI%EC%99%80-TLS-%EA%B7%B8%EB%A6%AC%EA%B3%A0-HTTPS/</guid>
+      <pubDate>Fri, 24 Apr 2026 10:42:12 GMT</pubDate>
+      <description>PKI 인터넷이 보급되던 초기, 데이터 통신에서 가장 큰 고민은 &quot;어떻게 하면 서로를 믿고 안전하게 정보를 주고받을 수 있는가&quot;였다. 당시에는 통신 주체들이 서로 같은 암호 키를 공유하는 대칭키 암호화 방식을 주로 고려했다. 하지만 이 방식은 치명적인 한계가 있었다.</description>
+      <category>보안</category><category>암호학</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[기초] 암호학 기초 부수기!</title>
+      <link>https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0/</guid>
+      <pubDate>Fri, 24 Apr 2026 04:54:34 GMT</pubDate>
+      <description>암호학 &gt; 암호학이란, 정보를 안전하게 보호하기 위해 수학적, 언어학적 방법을 연구하여 평문을 암호문으로 변환(암호화)하거나 암호문을 평문으로 변환(복호화)하는 학문이다. 암호학은 수천 년 전부터 시작되었다. 최근 수십 년 전까지는 고전 암호학이라고 명칭되어지는 펜과 종이 또는 간단한 기계적 보조 장치를 사용하는 암호화를 사용하였다. 20세기 초부터 ...</description>
+      <category>기초</category><category>보안</category><category>암호학</category><category>웹</category>
+    </item>
+    <item>
+      <title>[보안] 웹의 인증 방식</title>
+      <link>https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/</guid>
+      <pubDate>Wed, 22 Apr 2026 03:33:53 GMT</pubDate>
+      <description>인증은 왜 할까? 전에 서술한대로 HTTP는 Stateless하다. 로그인을 해도 기억하지 못하기 때문에 이를 보완하는 다양한 인증 방식이 등장했다. 순서대로 알아보자. 웹의 인증 기본 인증 기본 인증은 HTTP header를 사용하는 인증 방법 중에 하나이다. 단순하</description>
+      <category>보안</category><category>웹</category><category>인증</category><category>통신</category>
+    </item>
+    <item>
+      <title>[프로젝트] 팀 합류와 프로젝트 설계.</title>
+      <link>https://njw.kro.kr/blog/posts/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%8C%80-%ED%95%A9%EB%A5%98%EC%99%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EA%B3%84/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%8C%80-%ED%95%A9%EB%A5%98%EC%99%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EA%B3%84/</guid>
+      <pubDate>Sat, 04 Apr 2026 11:01:46 GMT</pubDate>
+      <description>Get API 프로젝트의 주제와 상세한 기술적 스택과 계획을 구상하였고 프론트엔드를 완성하였다.</description>
+      <category>미래유망</category><category>스프링</category><category>일지</category><category>프로젝트</category>
+    </item>
+    <item>
+      <title>[인프라] 1,100원짜리 서버로 550명 버티기.</title>
+      <link>https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/</guid>
+      <pubDate>Fri, 09 Jan 2026 04:18:59 GMT</pubDate>
+      <description>학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도</description>
+      <category>백엔드</category><category>인프라</category>
+    </item>
+    <item>
+      <title>[js] Express.js 미들웨어</title>
+      <link>https://njw.kro.kr/blog/posts/JS-Express.js-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/JS-Express.js-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4/</guid>
+      <pubDate>Tue, 30 Dec 2025 06:58:36 GMT</pubDate>
+      <description>전 라우팅 글에서 라우팅 방식에 대해 서술한 바 있다. 이번엔 미들웨어에 대해 서술해보려 한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으로 함. Express 5.x 버전에서는 많은 것이 달라졌음. 미들웨어 &gt; app는 express의 인스턴스이다</description>
+      <category>express.js</category><category>js</category><category>node.js</category><category>백엔드</category>
+    </item>
+    <item>
+      <title>[js] Express.js 라우팅</title>
+      <link>https://njw.kro.kr/blog/posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/</guid>
+      <pubDate>Mon, 29 Dec 2025 17:22:59 GMT</pubDate>
+      <description>급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으로 함. Express 5.x 버전에서는 많은 것이 달라졌음. Express 라우팅 ...</description>
+      <category>express.js</category><category>js</category><category>node.js</category><category>백엔드</category>
+    </item>
+    <item>
+      <title>[js] Node.js / Express.js 소개 및 설치</title>
+      <link>https://njw.kro.kr/blog/posts/Node.js-Express.js/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/Node.js-Express.js/</guid>
+      <pubDate>Mon, 29 Dec 2025 03:18:35 GMT</pubDate>
+      <description>Node.js의 역사 JS는 본래 웹 페이지를 조작하는 동적인 페이지의 핵심 중추인 언어로써 웹 브라우저를 제외한 환경에서는 쓰지 않는 언어였습니다. 하지만 2008년 9월 JS의 초창기와 달리 빨라지고 강력한 C++를 기반으로 동작하는 V8 엔진이 등장하며, 웹 브라</description>
+      <category>express.js</category><category>js</category><category>node.js</category><category>백엔드</category>
+    </item>
+    <item>
+      <title>[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색.</title>
+      <link>https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89/</guid>
+      <pubDate>Sun, 28 Dec 2025 05:34:23 GMT</pubDate>
+      <description>HTTP / HTTPS는 웹을 이해할때 알아야하는 필수불가결한 요소이다. HTTP 기초 다지기. 통신 프로토콜 각자의 언어만 쓸 수 있다고 가정할 때, 한 평생을 한국에서만 살았던 원어민이 외국의 원어민과 바로 소통할 수 있을까? 컴퓨터들의 통신도 위와 비슷하다. 오히</description>
+      <category>기초</category><category>웹</category><category>통신</category>
+    </item>
+    <item>
+      <title>[기초] 웹 기초 부수기 및 웹 보안의 필요성!</title>
+      <link>https://njw.kro.kr/blog/posts/%EC%9B%B9-%EA%B8%B0%EC%B4%88-%EC%A0%95%EB%A6%AC-%EB%B0%8F-%EC%9B%B9%EB%B3%B4%EC%95%88%EC%9D%98-%ED%95%84%EC%9A%94%EC%84%B1/</link>
+      <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EC%9B%B9-%EA%B8%B0%EC%B4%88-%EC%A0%95%EB%A6%AC-%EB%B0%8F-%EC%9B%B9%EB%B3%B4%EC%95%88%EC%9D%98-%ED%95%84%EC%9A%94%EC%84%B1/</guid>
+      <pubDate>Sun, 28 Dec 2025 03:34:05 GMT</pubDate>
+      <description>우리가 흔히 웹사이트 혹은 웹이라 부르는 것의 정체는 무엇일까?흔히 쉽게 지나쳐가는 웹통신 기초 다지기.HTTP 통신을 이용하여 정보를 공유하는 서비스.우리가 웹사이트에 접속하면 HTML, CSS, JS와 같은 static한 리소스들을 불러온다.이때, 정보를 제공하는</description>
+      <category>기초</category><category>웹</category><category>통신</category>
+    </item>
+  </channel>
+</rss>

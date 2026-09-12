@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[인프라] 1,100원짜리 서버로 550명 버티기. | nogarden.log</title>
+    <meta name="description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 백엔드, 인프라">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[인프라] 1,100원짜리 서버로 550명 버티기.">
+    <meta property="og:description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/">
+    <meta property="article:published_time" content="2026-01-09T04:18:59.872Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="백엔드">
+    <meta property="article:tag" content="인프라">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[인프라] 1,100원짜리 서버로 550명 버티기.">
+    <meta name="twitter:description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/","headline":"[인프라] 1,100원짜리 서버로 550명 버티기.","description":"학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2026-01-09T04:18:59.872Z","dateModified":"2026-01-09T04:18:59.872Z","keywords":"백엔드, 인프라","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[인프라] 1,100원짜리 서버로 550명 버티기.</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-01-09T04:18:59.872Z">2026.01.09</time>
+                    <span class="post-series">인프라</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">백엔드</span><span class="post-tag">인프라</span></div>
+            </div>
+            
+            <div class="post-body markdown-body">
+<h2>인프라</h2>
+<p>학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다.<br>바로 <b>인프라</b> 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도 많은 난관이 있을것이다. 그를 제외하고도 부모님의 돈을 쓰기 때문에 가장 최소한으로 지출을 관리해야한다는 부담도 있다.</p>
+<p>나는 Node.js를 지원하는 한국 호스팅 서버들을 알아보기 시작했다.</p>
+<p>결과적으로 Cafe24의 Node.js 서버가 가장 알맞다고 생각했다.<br>하지만, AWS, 오라클등과 비교했을때 성능이 정말 끔찍했다.</p>
+<p>여러가지 부담과 여러 요인을 때문에 결국 셀렉한건..<br><b>1,100원</b>짜리 Cafe24 Node.js 서버였다.</p>
+<p>그럼 여기서 서버의 사양은?</p>
+<p>800MB 웹용량<br>800MB 트래픽 용량<br>400MB 메모리<br>무제한 데이터베이스</p>
+<p>트래픽 800MB에 메모리 400MB?</p>
+<p>이 사양으로 커뮤니티를 만들기엔 불가능하다고 생각할수있다.</p>
+<p>그럼 1,100원으로 550명의 수많은 트래픽과 사진과 같은 파일등을 저 사양으로 계속 감당할수있다고?</p>
+<p>난 캐싱기능과 외부 무료제공 트래픽을 극한으로 사용하기로 했다.</p>
+<p>내가 생각한 방법은 다음과 같다.<br>서버 Cafe24 1100원.<br>이미지 서버 Cloudinary로 이미지 html 단에서 불러오기 무료.<br>Cloudflare로 캐싱된 정적파일 로드 무료.<br>google drive로 그 외 첨부파일 관리 무료.</p>
+<p>내 서버는 기본적으로 뷰를 사용하지 않고 json을 반환한다.</p>
+<p>Cloudflare에서 정적파일을 제공해주면 난 그냥 json을 반환하기만 하면되는 것이다. 어차피 프론트엔드단에서 js가 알아서 처리해준다.</p>
+<p>그렇게되면 서버는 순수 통신(텍스트)만 감당하게 된다.</p>
+<p>이론적으로는 구상됐지만 실제로는? 처음 시도하는거라 직접 해봐야 알 것 같다.</p>
+<p>테스트해보니 확실히 클라우드플레어의 캐싱 기능과 이미지 호스팅 덕분에 트래픽의 부담이 준다.</p>
+<p>+2026년 1월 7일<br>하지만.. <b>Cafe24 Node.js 스페셜서버는 SSL을 지원하지 않는다고 한다.</b></p>
+<p>기본적으로 클라우드 플레어는 다음과 같은 과정으로 동작한다.</p>
+<p>클라이언트 &lt;-&gt; 클라우드 플레어 &lt;-&gt; 내 서버</p>
+<p>클라우드 플레어와 클라이언트 사이에서는 SSL이 적용되었지만 클라우드 플레어와 내 서버 사이에는 적용되지 않은 것이다.</p>
+<p>&quot;어? 그럼 어쨌든 모든 통신은 클라우드 플레어를 통하는거니까 안전하지 않나?&quot;</p>
+<p>그렇지 않다, 모든 통신은 다양한 중계서버를 거쳐 진행된다.<br>그 중계서버중 하나라도 털리게되면 바로 통신을 볼수있게된다.<br>비교적 안전하지만 완벽하지 않다는 뜻이다.</p>
+<p>결론적으로 최적화와는 별개로 다른 호스팅 서버를 알아봐야 할 것 같다.</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

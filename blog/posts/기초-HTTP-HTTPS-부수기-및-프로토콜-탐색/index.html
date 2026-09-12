@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색. | nogarden.log</title>
+    <meta name="description" content="HTTP / HTTPS는 웹을 이해할때 알아야하는 필수불가결한 요소이다. HTTP 기초 다지기. 통신 프로토콜 각자의 언어만 쓸 수 있다고 가정할 때, 한 평생을 한국에서만 살았던 원어민이 외국의 원어민과 바로 소통할 수 있을까? 컴퓨터들의 통신도 위와 비슷하다. 오히">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 기초, 웹, 통신">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색.">
+    <meta property="og:description" content="HTTP / HTTPS는 웹을 이해할때 알아야하는 필수불가결한 요소이다. HTTP 기초 다지기. 통신 프로토콜 각자의 언어만 쓸 수 있다고 가정할 때, 한 평생을 한국에서만 살았던 원어민이 외국의 원어민과 바로 소통할 수 있을까? 컴퓨터들의 통신도 위와 비슷하다. 오히">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89/">
+    <meta property="article:published_time" content="2025-12-28T05:34:23.193Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="기초">
+    <meta property="article:tag" content="웹">
+    <meta property="article:tag" content="통신">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색.">
+    <meta name="twitter:description" content="HTTP / HTTPS는 웹을 이해할때 알아야하는 필수불가결한 요소이다. HTTP 기초 다지기. 통신 프로토콜 각자의 언어만 쓸 수 있다고 가정할 때, 한 평생을 한국에서만 살았던 원어민이 외국의 원어민과 바로 소통할 수 있을까? 컴퓨터들의 통신도 위와 비슷하다. 오히">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89/","headline":"[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색.","description":"HTTP / HTTPS는 웹을 이해할때 알아야하는 필수불가결한 요소이다. HTTP 기초 다지기. 통신 프로토콜 각자의 언어만 쓸 수 있다고 가정할 때, 한 평생을 한국에서만 살았던 원어민이 외국의 원어민과 바로 소통할 수 있을까? 컴퓨터들의 통신도 위와 비슷하다. 오히","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2025-12-28T05:34:23.193Z","dateModified":"2025-12-28T05:34:23.193Z","keywords":"기초, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색.</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2025-12-28T05:34:23.193Z">2025.12.28</time>
+                    <span class="post-series">기초</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">기초</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
+            </div>
+            
+            <div class="post-body markdown-body">
+<p>HTTP / HTTPS는 웹을 이해할때 알아야하는 필수불가결한 요소이다.<br>HTTP 기초 다지기.</p>
+<h1>통신 프로토콜</h1>
+<p>각자의 언어만 쓸 수 있다고 가정할 때, 한 평생을 한국에서만 살았던 원어민이 외국의 원어민과 바로 소통할 수 있을까?<br>컴퓨터들의 통신도 위와 비슷하다. 오히려 위 사례는 바디랭귀지를 통해서 조금의 의사전달은 가능할 수도 있지만, 컴퓨터는 더욱 엄격하다.</p>
+<blockquote>
+<p>**프로토콜(Protocol)**이란, 컴퓨터나 원거리 통신 장비 사이에서 메시지를 주고 받는 엄격하게 정해진 양식과 규칙의 체계이다.</p>
+</blockquote>
+<p><b>컴퓨터 노드들끼리 리소스를 요청하는 등의 데이터 통신을 하기위해선 반드시 프로토콜을 사용</b>해야 한다.<br>만약 프로토콜이 없다면 컴퓨터들은 서로 무슨 말을 하는지 전혀 알아듣지 못할것이다.<br>현재까지 제정된 표준 통신 프로토콜에는 네트워크 통신의 기초가 되는 TCP/IP, <b>웹 애플리케이션이 사용하는 HTTP</b>, 파일을 주고받을 때 사용하는 FTP 등 매우 많은 종류가 있다.</p>
+<h2>HTTP</h2>
+<p>웹 서버에 있는 리소스를 클라이언트가 받아 보려면, 클라이언트는 웹에게 특정 리소스를 지정하여 제공해달라고 요청해야 한다. 그러면 서버가 해당 요청을 이해하고, 대응되는 동작을 통해 클라이언트에게 리소스를 반환한다. 여기서 클라이언트의 행위를 <b>요청(Request)</b>, 서버의 행위를 **응답(Response)**이라고 한다. 이때 사용되는 프로토콜이 바로 HTTP이다.</p>
+<blockquote>
+<p>**HTTP(Hyper Text Transfer Protocol)**란 서버와 클라이언트의 데이터 교환을 **요청(Request)**과 <b>응답(Response)</b> 형식으로 정의한 프로토콜이다.</p>
+</blockquote>
+<p>HTTP의 기본 메커니즘은 <b>클라이언트가 서버에게 요청하면, 서버가 응답</b>하는 것이다. <b>웹 서버는 HTTP 서버를 HTTP 서비스 포트에 대기</b>시킨다. 이 포트는 일반적으로 <b>TCP/80</b> 또는 <b>TCP/8080</b>이다. 클라이언트가 서비스 포트에 HTTP 요청을 전송하면, 이를 해석하여 적절한 응답을 반환한다.</p>
+<h3>HTTP의 특징</h3>
+<p>웹사이트를 사용하는 사용자는 얼마나 될까?<br>100명? 1000명? 10000명? 어쩌면 더 많을수도 있다.<br>이때 서버가 모든 통신을 계속 유지하고 수많은 클라이언트의 모든 상태를 기억한다면 틀림없이 얼마 가지못하고 다운될것이다.<br>그리하여 HTTP의 <b>비연결성(Connectionless)</b>, **무상태(Stateless)**라는 특성이 대두되었다.</p>
+<p><b>- 비연결성, 무상태</b><br>HTTP는 비연결성 무상태 프로토콜이다. 서버가 클라이언트에게 받은 요청을 응답결과로 만들어서 응답을 하고 나면 바로 클라이언트와의 연결을 끊어버린다(Connectionless). 요청이 끝난 후에 서버는 클라이언트의 이전상황을 알 수 없다. 이러한 특징을 무상태(Stateless)라고 한다.<br>이러한 단점을 해결하기 위해 Cookie와 Session이 등장하였고, 또한 최근에는 토큰(JWT) 방식도 많이 사용한다.</p>
+<h3>HTTP 메시지</h3>
+<p>HTTP 메시지에는 클라이언트가 전송하는 HTTP 요청, 그리고 서버가 반환하는 HTTP 응답이 있다. 기능과 세부 구조에서는 차이가 있지만, 크게 보면 이들은 HTTP 헤더와 바디로 구성된다는 공통점이 있다.</p>
+<p><b>1. HTTP 헤더</b><br><b>HTTP 헤더(Headers)</b> 각 줄은 CRLF(줄 종결 문자)로 구분되며, **첫 줄은 시작 줄(Start line), 나머지 줄은 헤더(Header)**라고 부른다. 헤더의 끝은 빈 줄로 나타낸다.<br>시작 줄의 역할은 요청과 응답에서 큰 차이가 있다. 그에 대한 건 밑에서 서술하겠다.<br><b>헤더</b>는 필드와 값으로 구성되며 <b>HTTP 메시지 또는 바디의 속성</b>을 나타낸다. 하나의 HTTP 메시지에는 0개 이상의 헤더가 있을 수 있다.</p>
+<p><b>Connection 헤더</b><br>Connection 헤더에는 연결 유지와 관련된 내용이 들어간다.<br>웹에선 위에서 서술한 비연결적인 HTTP를 쓴다. 그런데 우리는 웹사이트 하나를 볼 때 파일 수십개를 받아야 한다. 이때 Connection 헤더를 통해 우리는 효율성을 개선할 수 있다.<br>예: </p>
+<ul>
+<li><b>keep-alive</b><br>기본값이다. 요청을 처리한 뒤에도 연결을 바로 끊지 않고 열어둔다.<br>(이때 말하는 연결은 물리적 연결이다. 비연결성은 논리적 연결이므로 관계가 없다.)<br>여러번의 통신이 필요할 때 속도가 무척 빠르다.</li>
+<li><b>close</b><br>응답을 다 보내면 가차 없이 연결을 끊는다. 서버 리소스를 아껴야 하거나, 더 이상 주고받을 게 없을 때 명시적으로 보낸다.</li>
+</ul>
+<p>아래는 Connection 헤더를 제외한 자주 쓰이는 헤더의 몇가지 예시이다.</p>
+<blockquote>
+</blockquote>
+<ul>
+<li><b>Content-Type</b>: 바디에 담긴 데이터가 무엇인지 알려준다.<br>예: application/json (요즘 제일 많이 씀, JSON 데이터), text/html (HTML 문서), multipart/form-data (파일 업로드)</li>
+<li><b>Content-length</b>: 바디에 담긴 데이터의 길이를 알려준다.</li>
+<li><b>Authorization</b>: 인증 토큰(로그인 정보)을 서버로 보낼 때 쓴다.</li>
+<li><b>User-Agent</b>: 클라이언트가 어떤 브라우저나 기기인지(PC인지 모바일인지) 알려준다.</li>
+</ul>
+<p><b>2. HTTP 바디</b><br>**HTTP 바디(Body)**는 헤드의 끝을 나타내는 CRLF 뒤 모든 줄을 말한다. <b>클라이언트나 서버에게 전송하려는 데이터</b>가 바디에 담긴다.</p>
+<h4>HTTP 요청과 시작줄</h4>
+<p>HTTP 요청은 서버에게 특정 동작을 요구하는 메시지이다. 서버는 해당 동작이 실현 가능한지, 클라이언트가 그러한 동작을 요청할 권한이 있는지 등을 검토하고, 적절할 때만 이를 처리한다.</p>
+<p><b>- 시작 줄</b><br>HTTP 요청의 시작 줄은 <b>메소드(Method), 요청 대상(Request target),</b> 그리고 <b>HTTP 버전</b>으로 구성된다. 각각은 띄어쓰기로 구분한다.</p>
+<p><b>메소드는 요청 대상에 대해 서버가 수행하길 바라는 동작</b>을 나타낸다. HTTP 표준에 정의된 메소드는 8개가 있으나, 여기서는 PATCH를 포함해 총 9개를 서술하겠다.</p>
+<blockquote>
+<ul>
+<li><b>GET은 리소스를 가져와달라 요청하는 메소드</b>이다. 이용자가 브라우저에 웹 서버의 주소를 입력하거나 하이퍼링크를 클릭하면, 새로운 페이지를 렌더링하기 위해 리소스가 필요하다. 이때 브라우저는 GET 요청을 서버에 전송하여 리소스를 받아온다.</li>
+</ul>
+</blockquote>
+<ul>
+<li><b>POST는 요청 대상에게 데이터를 보내는 메소드</b>이다. 전송할 데이터는 보통 HTTP 바디에 포함된다. 로그인할 때 입력하는 ID와 비밀번호, 게시판에 작성하는 글 등이 POST로 서버에 보내진다.</li>
+<li><b>PUT은 리소스를 전체 수정(대체)하는 메소드</b>이다. 클라이언트가 보낸 데이터로 서버의 기존 리소스를 완전히 덮어쓴다. 회원 정보를 수정할 때 이름, 나이, 주소 등 모든 필드를 포함한 데이터를 보내 기존 정보를 통째로 갈아끼울 때 사용된다.</li>
+<li><b>PATCH는 리소스를 일부만 수정하는 메소드</b>이다. PUT과 달리, 변경하고 싶은 부분만 골라서 보낼 때 사용한다. 회원의 전체 정보 중 &#39;별명&#39; 하나만 바꾸고 싶을 때, 변경할 별명 데이터만 전송하면 나머지 정보는 유지된 채 별명만 바뀐다.</li>
+<li><b>DELETE는 리소스를 삭제하는 메소드</b>이다. 서버에 존재하는 특정 데이터를 제거해달라고 요청할 때 쓰인다. 게시판에 작성한 글을 지우거나, 회원 탈퇴를 요청할 때 DELETE 메소드가 서버로 보내진다.</li>
+</ul>
+<p>위 POST, GET, PUT, DELETE 4가지를 묶어서 CRUD(Create, Read, Update, Delete)를 구현한다고 표현한다.<br><b>이러한 메서드를 이용해 &quot;무엇을 하는지&quot;를 표현하고 URL에는 명사(자원)만 쓰는 것을 RESTful하다고 한다.</b><br>나쁜 예와 좋은 예를 비교하면 차이가 명확하다.</p>
+<table>
+<thead>
+<tr>
+<th align="center">하는 일</th>
+<th align="center">나쁜 예 (옛날 방식)</th>
+<th align="center">좋은 예 (RESTful)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">회원 조회</td>
+<td align="center">GET /getMember?id=1</td>
+<td align="center">GET /members/1</td>
+</tr>
+<tr>
+<td align="center">회원 삭제</td>
+<td align="center">GET /deleteMember</td>
+<td align="center">DELETE /members/1</td>
+</tr>
+<tr>
+<td align="center">회원 등록</td>
+<td align="center">POST /create_new_member</td>
+<td align="center">POST /members</td>
+</tr>
+<tr>
+<td align="center">회원 수정</td>
+<td align="center">POST /updateMemberInfo</td>
+<td align="center">PUT /members/1</td>
+</tr>
+</tbody></table>
+<p>나쁜 예의 문제는 규칙이 없다는 것이다. 개발자 A는 deleteMember라고 짓고 개발자 B는 removeUser라고 짓는다. 문서를 안 보면 도무지 알 수가 없다. <b>RESTful하게 짜면 URL만 봐도 대상이 뭔지, 메서드만 봐도 행위가 뭔지 전 세계 개발자 누구나 예측할 수 있다.</b><br><b>REST는 REpresentational State Transfer의 약자로, &quot;자원의 상태를 주고받을 때 그 자원을 명확하게 표현하는 방식으로 짜라&quot;는 뜻</b>이다. 참고로 REST 창시자 로이 필딩이 논문에서 말한 조건을 100% 만족하는 건 실무에서도 매우 어렵다. <b>&quot;URL은 명사, 메서드는 동사&quot; 규칙 정도만 잘 지켜도 RESTful하다고 인정한다.</b></p>
+<p>그 외 메소드는 아래와 같다.</p>
+<blockquote>
+<ul>
+<li><b>HEAD는 GET과 동일하지만, 응답 본문(Body)을 제외하고 헤더만 받는 메소드</b>이다. 실제 데이터는 필요 없고, 리소스가 잘 존재하는지 혹은 파일 용량이 얼마나 되는지 등의 상태 정보만 빠르게 확인하고 싶을 때 사용한다.</li>
+</ul>
+</blockquote>
+<ul>
+<li><b>OPTIONS는 서버가 허용하는 통신 옵션을 확인하는 메소드</b>이다. 서버가 어떤 메소드(GET, POST 등)를 지원하는지, 혹은 CORS(교차 출처 리소스 공유) 상황에서 이 요청을 허락해 줄 것인지 미리 찔러볼 때(Pre-flight) 주로 사용된다.</li>
+<li><b>TRACE는 클라이언트의 요청이 서버에 도달하기까지의 경로를 테스트하는 메소드</b>이다. 서버는 받은 요청 메시지를 그대로 응답 본문에 담아 되돌려준다(Loop-back). 주로 네트워크 디버깅을 위해 사용되지만, 보안 위험(XST) 때문에 대부분의 서버에서는 비활성화해 둔다.</li>
+<li><b>CONNECT는 대상 자원으로 식별되는 서버에 대한 터널을 설정하는 메소드</b>이다. 주로 프록시 서버를 통해 HTTPS와 같은 암호화된 연결을 맺을 때 사용된다.</li>
+</ul>
+<p><b>HTTP 버전은 클라이언트가 사용하는 HTTP 프로토콜의 버전</b>을 나타낸다.<br>HTTP 버전은 아래와 같은 과정을 통해 변화해왔다.</p>
+<blockquote>
+<ul>
+<li><b>HTTP/1.1</b>:<br>가장 기본. 한 번 연결에 하나씩만 요청해서 느림. (Keep-Alive로 보완하긴 함)</li>
+</ul>
+</blockquote>
+<ul>
+<li><b>HTTP/2</b>:<br>성능 대폭 개선. 한 번 연결해서 여러 요청을 동시에 병렬로 처리함. (네이버, 구글 등 대부분이 사용 중)</li>
+<li><b>HTTP/3</b>:<br>최근 등장. TCP 대신 UDP를 기반으로 하여 더 빠름.<br>하지만, 일반 UDP와 다르게 기존 UDP 위에 퀵(QUIC)이라는 새로운 프로토콜을 얹어 TCP의 장점(신뢰성 등..)이 소프트웨어적으로 구현되어있다.</li>
+</ul>
+<p>이 외에 <b>요청 URI는 메소드의 대상</b>을 나타낸다.</p>
+<h4>HTTP 응답과 시작줄</h4>
+<p>HTTP 응답은 HTTP 요청에 대한 결과를 반환하는 메시지이다. 요청을 수행했는지, 혹은 하지 않았는지, 안 했다면 이유는 무엇인지와 같은 <b>상태 정보(Status)</b>, 그리고 <b>클라이언트에게 전송할 리소스</b>가 응답에 포함된다.</p>
+<p><b>- 시작 줄</b><br>HTTP 응답의 시작 줄은 <b>HTTP 버전</b>, <b>상태 코드(Status Code)</b>, 그리고 **처리 사유(Reason Phrase)**로 구성된다. 각각은 띄어쓰기로 구분된다.</p>
+<p>HTTP 버전은 서버에서 사용하는 HTTP 프로토콜의 버전을 나타낸다. 그리고 상태 코드는 요청에 대한 처리 결과를 세 자릿수로 나타낸다. HTTP 표준인 RFC 2616은 대략 40여개의 상태 코드를 정의하고 있는데, 각각은 첫 번째 자릿수에 따라 5개의 클래스로 분류된다. 처리 사유는 상태 코드가 발생한 이유를 짧게 기술한 것이다.</p>
+<p><b>상태 코드</b></p>
+<blockquote>
+<ul>
+<li><b>1xx</b><br>요청을 제대로 받았고, 처리가 진행 중임.</li>
+</ul>
+</blockquote>
+<ul>
+<li><b>2xx</b><br>요청이 제대로 처리됨.<br>200(OK): 성공</li>
+<li><b>3xx</b><br>요청을 처리하려면, 클라이언트의 추가 동작이 필요.<br>302(Found): 다른 URL로 갈 것</li>
+<li><b>4xx</b><br>클라이언트가 잘못된 요청을 보내어 처리에 실패.<br>400(Bad Request): 요청이 문법에 맞지 않음<br>401(Unauthorized): 클라이언트가 요청한 리소스에 대한 인증이 실패함<br>403(Forbidden): 클라이언트가 리소스에 요청할 권한이 없음<br>404(Not Found): 리소스가 없음</li>
+<li><b>5xx</b><br>클라이언트의 요청은 유효하지만, 서버에 에러가 발생하여 처리에 실패.<br>500(Internal Server Error): 서버가 요청을 처리하다가 에러가 발생함<br>503(Service Unavailable): 서버가 과부하로 인해 요청을 처리할 수 없음</li>
+</ul>
+<h2>HTTPS</h2>
+<p>HTTP의 응답과 요청은 평문으로 전달된다. 만약 누군가 이를 가로챈다면 중요한 정보가 유출될 수 있다. 예를 들어, 로그인할 때 전송한 POST 요청에는 대개 이용자의 ID와 비밀번호가 포함된다. 공격자가 중간에 이를 가로채면 이용자의 계정이 탈취당할 수 있다.</p>
+<p>**HTTPS(HTTP over Secure socket layer)**는 <b>TLS(Transport Layer Security) 프로토콜</b>을 도입하여 이런 문제점을 보완한다. 예전에는 <b>TLS는 암호키 하나를 서버와 클라이언트 사이에 공유해 오가는 모든 HTTP 메시지를 암호화</b>한다. 공격자가 중간에 메시지를 탈취하더라도 이를 해석하는 것은 불가능하며, 결과적으로 <b>HTTP 통신이 도청과 변조로부터 보호</b>된다.</p>
+<p>HTTPS가 제정된 초기에는 금융이나 정부 서비스와 같이 민감한 데이터를 취급하는 웹 서비스들 위주로 HTTPS가 사용되었다. 그러나 현재 개발되는 서비스들은 <b>규모에 상관없이 HTTPS를 사용하는 추세</b>이다.</p>
+<p>웹 서버의 URL이 **http://**로 시작되면 HTTP, **https://**로 시작되면 HTTPS 프로토콜을 사용한다.</p>
+<h1>마무리</h1>
+<p>웹 개발자라면 반드시 알아야 하는 HTTP / HTTPS를 정리해보았다.<br>이제 HTTP 기초는 끝!</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

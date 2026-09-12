@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[보안] Command Injection 부셔보기! | nogarden.log</title>
+    <meta name="description" content="다양한 웹 애플리케이션 제작용 언어는 시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원한다. 각 언어별 시스템 함수로는 PHP의 system, Node JS의 child_process, 파이썬의 os.system이 있다. 이러한 함수는 전달된 인자를 셸 프">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 보안, 웹, 통신">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-Command-Injection-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[보안] Command Injection 부셔보기!">
+    <meta property="og:description" content="다양한 웹 애플리케이션 제작용 언어는 시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원한다. 각 언어별 시스템 함수로는 PHP의 system, Node JS의 child_process, 파이썬의 os.system이 있다. 이러한 함수는 전달된 인자를 셸 프">
+    <meta property="og:image" content="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-Command-Injection-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
+    <meta property="article:published_time" content="2026-04-27T03:00:33.645Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="보안">
+    <meta property="article:tag" content="웹">
+    <meta property="article:tag" content="통신">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[보안] Command Injection 부셔보기!">
+    <meta name="twitter:description" content="다양한 웹 애플리케이션 제작용 언어는 시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원한다. 각 언어별 시스템 함수로는 PHP의 system, Node JS의 child_process, 파이썬의 os.system이 있다. 이러한 함수는 전달된 인자를 셸 프">
+    <meta name="twitter:image" content="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-Command-Injection-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/","headline":"[보안] Command Injection 부셔보기!","description":"다양한 웹 애플리케이션 제작용 언어는 시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원한다. 각 언어별 시스템 함수로는 PHP의 system, Node JS의 child_process, 파이썬의 os.system이 있다. 이러한 함수는 전달된 인자를 셸 프","image":"https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png","datePublished":"2026-04-27T03:00:33.645Z","dateModified":"2026-04-27T03:00:33.645Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[보안] Command Injection 부셔보기!</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-27T03:00:33.645Z">2026.04.27</time>
+                    <span class="post-series">보안</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
+            </div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기! 썸네일"></div>
+            <div class="post-body markdown-body">
+<p>다양한 웹 애플리케이션 제작용 언어는 <b>시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원</b>한다. 각 언어별 시스템 함수로는 <b>PHP의 system</b>, <b>Node JS의 child_process</b>, <b>파이썬의 os.system</b>이 있다. 이러한 함수는 전달된 인자를 <b>셸 프로그램에 전달해 명령어를 실행</b>한다. 예를 들어, <code>system(&quot;cat /etc/passwd&quot;)</code>를 호출하면, 셸 프로그램으로 <code>cat /etc/passwd</code>를 실행한 것과 같다.</p>
+<p>시스템 함수를 사용하면 이미 설치된 소프트웨어들을 쉽게 이용할 수 있다는 장점이 있다. 그러나 함수의 인자를 셸의 명령어로 전달한다는 점에서 치명적인 취약점으로 이어지기도 한다.</p>
+<h1>Command Injection</h1>
+<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">인젝션(Injection)</a>은 악의적인 데이터를 프로그램에 입력하여 이를 시스템 명령어, 코드, 데이터베이스 쿼리 등으로 실행되게 하는 기법을 말한다. 이 중, <b>이용자의 입력을 시스템 명령어로 실행하게 하는 취약점을 Command Injection</b>이라고 부른다.</p>
+<p><b>Command Injection은 명령어를 실행하는 함수에 이용자가 임의의 인자를 전달할 수 있을 때 발생</b>한다. 앞서 서술한 시스템 함수를 사용하면 이용자의 입력을 소프트웨어의 인자로 전달할 수 있다. 파이썬으로 개발된 웹 애플리케이션에서 입력한 **임의 IP에 ping을 전송하고 싶다면 os.system(“ping [user-input]”)**을, **임의 파일을 읽고 싶다면 os.system(“cat [user-input]”)**등의 형태로 시스템 함수를 사용할 수 있다.</p>
+<p>그러나 이러한 함수를 사용할 때, <b>이용자의 입력을 제대로 검사하지 않으면 임의 명령어가 실행될 수도 있다.</b> 이는 리눅스 <b>셸 프로그램이 지원하는 다양한 메타 문자 때문이다.</b> 시스템 함수는 셸 프로그램에 명령어를 전달하여 실행하는데, 셸 프로그램은 다양한 메타 문자를 지원한다.</p>
+<pre><code>`` - 명령어 치환
+``안에 들어있는 명령어를 실행한 결과로 치환.
+
+`` example
+$ echo `echo theori`
+theori
+
+
+$() - 명령어 치환
+$()안에 들어있는 명령어를 실행한 결과로 치환. 이 문자는 위와 다르게 중복 사용이 가능하다. (echo $(echo $(echo theori)))
+
+$() example
+$ echo $(echo theori)
+theori
+
+&amp;&amp; - 명령어 연속 실행
+한 줄에 여러 명령어를 사용하고 싶을 때 사용. 앞 명령어에서 에러가 발생하지 않아야 뒷 명령어를 실행. (Logical And)
+
+&amp;&amp; example
+$ echo hello &amp;&amp; echo theori
+hello
+theori
+
+|| - 명령어 연속 실행
+한 줄에 여러 명령어를 사용하고 싶을 때 사용. 앞 명령어에서 에러가 발생해야 뒷 명령어를 실행. (Logical Or)
+
+|| example
+$ cat / || echo theori
+cat: /: Is a directory
+theori
+
+; - 명령어 구분자
+한 줄에 여러 명령어를 사용하고 싶을 때 사용. ;은 단순히 명령어를 구분하기 위해 사용하며, 앞 명령어의 에러 유무와 관계 없이 뒷 명령어를 실행.
+
+; example
+$ echo hello ; echo theori
+hello
+theori
+
+| - 파이프
+앞 명령어의 결과가 뒷 명령어의 입력으로 들어간다.
+
+| example
+$ echo id | /bin/sh
+uid=1001(theori) gid=1001(theori) groups=1001(theori)
+</code></pre>
+<p><b>&amp;&amp;, ;, |</b> 등을 사용하면 <b>여러 개의 명령어를 연속으로 실행</b>시킬 수 있다. 따라서 <b>공격자는 메타 문자를 통해 임의 명령어를 실행하여 셸을 획득할 수 있다.</b></p>
+<h2>wargame 풀이</h2>
+<p><a href="https://dreamhack.io/wargame/challenges/44">command-injection-1</a> 문제를 풀이해 보았다.</p>
+<p><b>app.py</b></p>
+<pre><code>#!/usr/bin/env python3
+import subprocess
+
+from flask import Flask, request, render_template, redirect
+
+from flag import FLAG
+
+APP = Flask(__name__)
+
+
+@APP.route(&#39;/&#39;)
+def index():
+    return render_template(&#39;index.html&#39;)
+
+
+@APP.route(&#39;/ping&#39;, methods=[&#39;GET&#39;, &#39;POST&#39;])
+def ping():
+    if request.method == &#39;POST&#39;:
+        host = request.form.get(&#39;host&#39;)
+        cmd = f&#39;ping -c 3 &quot;{host}&quot;&#39;
+        try:
+            output = subprocess.check_output([&#39;/bin/sh&#39;, &#39;-c&#39;, cmd], timeout=5)
+            return render_template(&#39;ping_result.html&#39;, data=output.decode(&#39;utf-8&#39;))
+        except subprocess.TimeoutExpired:
+            return render_template(&#39;ping_result.html&#39;, data=&#39;Timeout !&#39;)
+        except subprocess.CalledProcessError:
+            return render_template(&#39;ping_result.html&#39;, data=f&#39;an error occurred while executing the command. -&gt; {cmd}&#39;)
+
+    return render_template(&#39;ping.html&#39;)
+
+
+if __name__ == &#39;__main__&#39;:
+    APP.run(host=&#39;0.0.0.0&#39;, port=8000)
+</code></pre>
+<p><b>flag.py</b></p>
+<pre><code>FLAG = &#39;DH{[REDACTED]}&#39;
+</code></pre>
+<p><b>플래그는 flag.py에, 웹 어플리케이션은 app.py에서 실행하는 것을 알 수 있다.</b></p>
+<p><b>[flag.py]</b> FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt=""></p>
+<p><b>[app.py]</b> /ping 엔드포인트에서 GET일 땐, html을 렌더하고, POST일 때 사용자의 입력값을 <code>host</code>에 담고 이를 그대로 담아 <b>동적으로 ping 명령어를 구성</b>한다. 또 이를 <b><code>subprocess.check_output</code> 함수를 사용하여 /bin/sh에서 cmd 명령어를 실행</b>하고, 결과 출력을 변수 <code>output</code>에 저장한다. 이때 실행시간이 5초를 넘긴다면 <code>&quot;Timeout !&quot;</code> 메세지와 함께 <code>ping_result.html</code>을 렌더한다. 명령어 실행 중 오류가 발생하면 <code>subprocess.CalledProcessError</code> 예외가 발생하며 해당 오류 메시지와 함께 <code>ping_result.html</code>을 렌더한다.<br>어떠한 예외도 발생하지 않으면 <b>변수 <code>output</code>을 UTF-8로 디코딩하여 <code>ping_result.html</code>과 함께 반환</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/fc586671-b35c-4ecd-a268-537a6ac4a322/image.png" alt=""></p>
+<p>ping.html의 폼에 <b>영어, 숫자, <code>&quot;.&quot;</code>, 글자 수 5~20자만을 허용하는 정규표현식이 포함</b>되어 있다.<br><img src="https://velog.velcdn.com/images/njw/post/1565b543-948d-4c3d-9f34-75972023b766/image.png" alt=""></p>
+<h3>취약점 분석</h3>
+<p>파일 구조를 확인하기 위해 <code>8.8.8.8&quot;; ls #</code> 명령어를 실행하려한다.</p>
+<p>직접 html 속성을 수정해 정규 표현식을 제거하는 방법도 있겠지만 조금 다르게 풀이하였다.<br><img src="https://velog.velcdn.com/images/njw/post/d340223d-9d0f-433f-ab86-425aea55bf0d/image.png" alt=""></p>
+<p>Burp Suite에서 직접 값을 변경하여 포워드하면<br><img src="https://velog.velcdn.com/images/njw/post/fd647686-1abf-47cc-812e-a3dd3af44326/image.png" alt=""></p>
+<p>이런식으로 명령어의 결과가 나온다.<br><img src="https://velog.velcdn.com/images/njw/post/49636b64-5cb0-4950-894c-85bda439d3ef/image.png" alt=""></p>
+<p>flag.py의 위치를 알았으니 명령어를 수정해서 보내보면<br><img src="https://velog.velcdn.com/images/njw/post/a5852319-b174-4c75-aeda-feb770d1618d/image.png" alt=""></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/db51d849-2908-4a86-8f68-c708700780af/image.png" alt=""></p>
+<h2>Command injection 방어</h2>
+<p>사실 Command 인젝션을 방어하기 위한 제일 좋은 방법은 <b>시스템 호출 함수 사용을 하지 않는 것</b>이다.<br>프로그래밍 언어에서 fs.unlink(path) (Node.js) 또는 os.remove(path) (Python) 와 같은 <b>셸을 직접 실행하지 않고 원격으로 실행할 수 있도록 지원하는 내장 라이브러리 API</b>가 정말 많다. 이를 사용하면 Command 인젝션은 유효하지 않다.<br>이 외에도 <b>입력값에 대한 검증</b>과 <b>메타 문자 필터링</b> 등의 추가 작업을 할 수 있다.</p>
+<h1>마무리</h1>
+<p>취약점은 알았으니 커맨드 공부좀 하러 가야지..</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

@@ -320,7 +320,7 @@ async function loadPost() {
 
 // ─── 유틸 ───────────────────────────────────────────────────
 function goToPost(slug) {
-  window.location.href = `view/?slug=${encodeURIComponent(slug)}`;
+  window.location.href = `posts/${encodeURIComponent(slug)}/`;
 }
 
 function formatDate(dateStr) {

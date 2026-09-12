@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[보안] 웹의 인증 방식 | nogarden.log</title>
+    <meta name="description" content="인증은 왜 할까? 전에 서술한대로 HTTP는 Stateless하다. 로그인을 해도 기억하지 못하기 때문에 이를 보완하는 다양한 인증 방식이 등장했다. 순서대로 알아보자. 웹의 인증 기본 인증 기본 인증은 HTTP header를 사용하는 인증 방법 중에 하나이다. 단순하">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 보안, 웹, 인증, 통신">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[보안] 웹의 인증 방식">
+    <meta property="og:description" content="인증은 왜 할까? 전에 서술한대로 HTTP는 Stateless하다. 로그인을 해도 기억하지 못하기 때문에 이를 보완하는 다양한 인증 방식이 등장했다. 순서대로 알아보자. 웹의 인증 기본 인증 기본 인증은 HTTP header를 사용하는 인증 방법 중에 하나이다. 단순하">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/">
+    <meta property="article:published_time" content="2026-04-22T03:33:53.052Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="보안">
+    <meta property="article:tag" content="웹">
+    <meta property="article:tag" content="인증">
+    <meta property="article:tag" content="통신">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[보안] 웹의 인증 방식">
+    <meta name="twitter:description" content="인증은 왜 할까? 전에 서술한대로 HTTP는 Stateless하다. 로그인을 해도 기억하지 못하기 때문에 이를 보완하는 다양한 인증 방식이 등장했다. 순서대로 알아보자. 웹의 인증 기본 인증 기본 인증은 HTTP header를 사용하는 인증 방법 중에 하나이다. 단순하">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/","headline":"[보안] 웹의 인증 방식","description":"인증은 왜 할까? 전에 서술한대로 HTTP는 Stateless하다. 로그인을 해도 기억하지 못하기 때문에 이를 보완하는 다양한 인증 방식이 등장했다. 순서대로 알아보자. 웹의 인증 기본 인증 기본 인증은 HTTP header를 사용하는 인증 방법 중에 하나이다. 단순하","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2026-04-22T03:33:53.052Z","dateModified":"2026-04-22T03:33:53.052Z","keywords":"보안, 웹, 인증, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[보안] 웹의 인증 방식</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-22T03:33:53.052Z">2026.04.22</time>
+                    <span class="post-series">보안</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">인증</span><span class="post-tag">통신</span></div>
+            </div>
+            
+            <div class="post-body markdown-body">
+<h1>인증은 왜 할까?</h1>
+<p><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#http%EC%9D%98-%ED%8A%B9%EC%A7%95">여기</a>에 서술한대로 <b>HTTP는 Stateless</b>하다.<br>로그인을 해도 기억하지 못하기 때문에 이를 보완하는 <b>다양한 인증 방식</b>이 등장했다.<br>순서대로 알아보자.</p>
+<h1>웹의 인증</h1>
+<h2>기본 인증</h2>
+<p><b>기본 인증은 HTTP header를 사용하는 인증 방법</b> 중에 하나이다.<br>단순하게 생각해보자.<br>우리가 로그인을 할 때 최소한으로 필요한 것은 ID와 이를 보조하는 Password이다.<br>기본 인증은 이러한 정보를 최소한으로 이용한다.</p>
+<h3>방식</h3>
+<p>처음에 클라이언트가 접속하면 서버는 요청에 헤더가 없는 것을 확인한다.<br>↓<br>확인한 서버는 응답에 <b>401 Unauthorized 상태코드와 WWW-Authenticate 헤더에 기본 인증을 뜻하는 Basic 값을 담아 전송</b>한다.<br>↓<br>이를 확인한 클라이언트는 ID와 Password를 입력하는 기본 입력창을 띄우고 입력받는다.<br>↓<br>클라이언트는 Authorization 헤더에 기본 인증을 뜻하는 Basic 값과 <b>ID:Password 값을 Base64로 인코딩한 형태인 credential</b>을 포함시킨다.<br>↓<br>이를 확인한 서버는 200 성공 상태 코드로 응답한다.<br><img src="https://velog.velcdn.com/images/njw/post/92f8c97e-ad1c-40dd-bc49-9c38146fab9d/image.png" alt=""></p>
+<h3>장점</h3>
+<p>아주 옛날부터 사용되어지는 인증 방식이기 때문에 매우 단순하고 모든 브라우저에서 지원한다.</p>
+<h3>단점</h3>
+<p>다만 이러한 방식은 Base64로 인코딩 방식을 변경하는 것 외에는 <b>아무런 보안적 처리가 들어가 있지 않아</b> 누구나 쉽게 ID와 Password를 알아낼 수 있어 현대 모던 <b>웹에서는 사용하지 않는다.</b></p>
+<h2>쿠키 기반 인증</h2>
+<p>기본 인증의 단점을 보완하고 <b>HTTP의 Stateless한 특징을 보완</b>하고자 나온 것이 쿠키 기반 인증이다.</p>
+<blockquote>
+<p>쿠키란, 웹사이트가 사용자의 브라우저에 저장하는 데이터 조각으로써 HTTP의 Stateless한 특징을 보완하여 편리한 웹 브라우징을 돕는 개념이다.<br>예시로, 로그인 상태 유지, 장바구니 정보, 개인화된 설정(테마 등)을 기억한다.</p>
+</blockquote>
+<p>쿠키 자체는 브라우저에 저장되기 때문에 악용이 매우 쉽다.<br>여기서 등장한 것이 세션 방식이다. 쿠키 방식은 사용자 정보(ID, 등급 등)가 브라우저에 직접 노출되어 위변조가 쉽지만, <b>세션은 서버에 정보를 저장하므로 클라이언트는 실제 내용을 알 수 없다.</b> 또한, 클라이언트가 자기 마음대로 &quot;나는 관리자다&quot;라고 <b>쿠키 값</b>을 <b>수정</b>하는 것을 <b>방지</b>한다.</p>
+<h3>방식</h3>
+<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증정보와 매핑되어있는 유추할 수 없는 <b>무작위 문자열인 키</b>를 발급하고 이를 저장한 뒤, 이를 응답한다.<br>↓<br>클라이언트는 <b>키를 쿠키</b>에 넣어 기억한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>키를 함께 요청</b>한다.<br>↓<br>서버는 키를 확인하고 이와 매핑되어있는 인증정보를 활용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/df3ff0eb-93d4-487c-b00e-b7a479f891bd/image.png" alt=""></p>
+<h3>장점</h3>
+<p>서버에 저장하기 때문에 관리가 매우 편하고 효율적이다.<br>구현이 명확하며 실제 서버에서 로그인 상태를 확인하기 유용하다.<br><b>정보를 서버가 가지고 있어</b> 서버의 보안이 두텁다면 보안적으로 <b>매우 안전</b>하다.</p>
+<h3>단점</h3>
+<p>서버에서 클라이언트의 상태를 모두 유지하고 있어야 하므로, <b>클라이언트 수가 많으면 메모리나 DB에 부하</b>가 심하다. (DB의 과부하)<br>멀티 디바이스 환경(모바일, 공동 사용 등)에서 로그인 시 중복 로그인 처리가 되지 않는 등의 신경 써야 할 부분들이 발생한다.<br>사용자가 많아지는 경우 로드 밸런싱을 사용한 <b>서버 확장</b>을 이용해야 하는데 이 때 <b>세션의 관리가 어려워진다.</b></p>
+<h2>토큰 인증</h2>
+<p>쿠키 기반 인증 방식(<b>세션 인증</b>)의 가장 큰 <b>단점은 모든 사용자의 정보를 서버가 기억해 부담이 매우 크다는 것이다.</b><br>토큰 인증은 <b>모든 정보를 클라이언트가 가지고 있어 서버의 부담이 사라진다.</b></p>
+<h3>방식</h3>
+<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증 정보를 이용해 필요한 정보들을 구성하고 <b>이를 자신의 비밀키와 함께 해싱하여 토큰</b>으로 만들고 응답한다.<br>↓<br>클라이언트는 <b>발급한 토큰을 쿠키에 넣어 기억</b>한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>토큰을 함께 요청</b>한다.<br>↓<br>서버는 토큰을 확인하고 <b>토큰의 서명과 토큰의 정보 + 자신의 비밀키로 서명하여 위변조를 확인</b>한다.<br>이후 문제가 없으면 토큰의 정보를 이용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/8139f8c4-2c51-43a8-99a8-2b360c323b1e/image.png" alt=""></p>
+<h4>JWT</h4>
+<p><b>JWT(Json Web Token)는 토큰 기반 인증의 대표적인 방식</b>이다.<br>세 파트로 나누어지며, 각 파트는 점으로 구분하여 표현된다.<br>헤더(Header), 페이로드(Payload), 서명(Sinature)으로 구성되며 최종적으로 base64를 통해 인코딩된다.<br> <br><b>header : 해시 암호화 알고리즘과 토큰의 타입으로 구성</b><br>첫 번째는 HMAC, SHA256 또는 RSA와 같은 서명 생성에 사용된 해시 알고리즘<br>두 번째는 토큰의 유형 (JWT)</p>
+<p><b>payload : 내용, 즉 토큰에 담을 클레임(claim) 정보를 포함</b><br>Payload 에 담는 <b>정보의 한 ‘조각’ 을 클레임</b>이라고 부르며, name / value 의 한 쌍으로 이뤄짐<br>토큰에는 여러개의 클레임 들을 넣을 수 있음<br>클레임의 정보는 <b>등록된(registered) 클레임</b>, <b>공개(public) 클레임</b>, <b>비공개(private) 클레임</b>으로 세 종류가 있음<br><b>등록된 클레임</b> : 토큰 정보를 표현하기 위해 이미 정해진 종류의 데이터들로, 모두 선택적으로 작성이 가능하며 사용할 것을 권장<br>iss: 토큰 발급자(issuer)<br>sub: 토큰 제목(subject)<br>aud: 토큰 대상자(audience)<br>exp: 토큰 만료 시간(expiration)<br>nbf: 토큰 활성 날짜(not before)<br>iat: 토큰 발급 시간(issued at)<br>jti: JWT 토큰 식별자(JWT ID)<br><b>공개 클레임</b> : 사용자 정의 클레임으로, 충돌 방지를 위해 사용된다. 고유 URI 포맷을 이용<br><b>비공개 클레임</b> : 사용자 정의 클레임으로, 서버와 클라이언트 사이에 임의로 지정한 정보를 저장</p>
+<p><b>signature : 서명</b><br><b>Header, Payload, Secret Key를 합쳐 암호화한 결과값</b><br>HS256( base64UrlEncode(header) + &quot;.&quot; + base64UrlEncode(payload), Secret key)<br><img src="https://velog.velcdn.com/images/njw/post/05bd89f8-e860-4fdc-b9fd-f5eeb679ce76/image.png" alt=""></p>
+<h4>SWT와 JWT</h4>
+<p>SWT(Simple Web Token)과 JWT(Json Web Token) 모두 토큰 기반 인증 방식이다.<br>하지만 현대 모던 웹은 JWT를 쓴다. 왜 일까?</p>
+<table>
+<thead>
+<tr>
+<th align="left">특징</th>
+<th>JWT (JSON Web Token)</th>
+<th align="center">SWT (Simple Web Token)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">형식</td>
+<td>JSON (JavaScript Object Notation)</td>
+<td align="center">Form-Encoded (Key-value 쌍)</td>
+</tr>
+<tr>
+<td align="left">표준</td>
+<td>RFC 7519 (오픈 표준)</td>
+<td align="center">독자적 (Microsoft/Google/Yahoo 등)</td>
+</tr>
+<tr>
+<td align="left">서명 방식</td>
+<td>HMAC(비밀키) 및 RSA/ECDSA(공개키/개인키) 지원</td>
+<td align="center">HMAC(공개된 비밀키)만 지원</td>
+</tr>
+<tr>
+<td align="left">복잡성</td>
+<td>규격화된 형식과 정보들</td>
+<td align="center">매우 단순하고 규격화되어있지 않음</td>
+</tr>
+<tr>
+<td align="left">채택률</td>
+<td>매우 높음 (현대 API, Auth0, Okta 등 표준)</td>
+<td align="center">낮음 (대부분 현대 시스템에서 퇴출)</td>
+</tr>
+<tr>
+<td align="left">표에 나와있듯이 다양한 부분에서 SWT는 매우 구식이라는 것을 알 수 있다.</td>
+<td></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">무엇보다 가장 큰 차이는 대칭키와 비대칭키의 지원이라고 볼 수 있는데, 비대칭키까지 지원해 보안적으로 매우 안전한 JWT와 달리 SWT는 대칭키만 지원해 안전하지 않다는 것을 알 수 있다.</td>
+<td></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">이러한 이유로 웹 토큰 기반 인증은 JWT만 사용한다.</td>
+<td></td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<h3>장점</h3>
+<p>토큰 자체가 인증된 정보이기 때문에 클라이언트 상태를 서버가 저장하지 않아도 돼 세션 저장소 같은 별도의 인증 저장소가 필수적으로 필요하지 않아 <b>서버의 부담이 없다.</b><br>signature를 비밀키를 이용한 암호화를 통해 막아두었기 때문에 데이터 보안성이 늘어난다.<br>필요한 내용을 payload에 담아 보내 놓고 다시 조회할 일이 없어 서버의 부담이 완화된다.</p>
+<h3>단점</h3>
+<p><b>토큰은 클라이언트에 저장되어 데이터베이스에서 사용자 정보를 조작하더라도 토큰에 직접 적용할 수 없다.</b><br>세션 보다 필연적으로 많은 용량을 차지하며 많은 필드가 추가되면 토큰이 커질 수 있고 비상태 어플리케이션에서 거의 모든 요청에 대해 전송되므로 이는 <b>많은 트래픽을 차지하고 부하 가능성이 있다.</b><br>JWT는 상태를 저장하지 않기 때문에 한번 만들어지면 제어가 불가능하다. 즉, 토큰을 임의로 삭제하는 것이 불가능하므로 토큰 만료 시간을 꼭 넣어주어야 한다.<br>Payload 자체는 암호화 된 것이 아니라, BASE64Url로 인코딩 된 것. 따라서 중간에 Payload를 탈취하여 디코딩하면 데이터를 보고 악용할 수 있으므로 <b>JWE로 암호화하거나 Payload에 중요 데이터를 넣지 않아야 하며 토큰 만료 시간을 짧게 지정해야 한다.</b></p>
+<h2>OAuth</h2>
+<p>동적 웹사이트를 구성할 때 인증 방식의 선택은 필수이다.<br>이때 인증 구성의 권한을 서비스 제공자 본인이 아닌 <b>제3자에게 위임하는 것을 OAuth</b>라고 지칭한다.</p>
+<blockquote>
+<p>OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 웹사이트 상의 자신들의 정보에 대해 웹사이트나 애플리케이션의 접근 권한을 부여할 수 있는 공통적인 수단으로서 사용되는, 접근 위임을 위한 개방형 표준이다.</p>
+</blockquote>
+<p><img src="https://velog.velcdn.com/images/njw/post/0a9886d0-353a-4cb4-8aed-1b8829416eea/image.png" alt=""><br>OAuth는 위 처럼 동작하는데 간단하게 설명하자면 제3자 서비스에게 권한을 위임하고 인증이 끝나면 액세스 토큰과 이를 재발급하는 토큰을 받아 이를 이용해 제3자 서비스 리소스 서버에게서 필요한 정보들을 받아올 수 있다.</p>
+<p>현재 OAuth는 <b>OAuth2.0</b>을 사용하는데 이는 OAuth1.0에서 세션 피싱이라는 보안적 결함이 발견되었기 때문이다.</p>
+<h1>마무리</h1>
+<p>웹 상에서의 인증 방식을 알아보았다!<br>자신의 서비스에 맞는 인증 방식을 알아보고 적용해보자.</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

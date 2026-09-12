@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[프로젝트] 팀 합류와 프로젝트 설계. | nogarden.log</title>
+    <meta name="description" content="Get API 프로젝트의 주제와 상세한 기술적 스택과 계획을 구상하였고 프론트엔드를 완성하였다.">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 미래유망, 스프링, 일지, 프로젝트">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%8C%80-%ED%95%A9%EB%A5%98%EC%99%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EA%B3%84/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[프로젝트] 팀 합류와 프로젝트 설계.">
+    <meta property="og:description" content="Get API 프로젝트의 주제와 상세한 기술적 스택과 계획을 구상하였고 프론트엔드를 완성하였다.">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%8C%80-%ED%95%A9%EB%A5%98%EC%99%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EA%B3%84/">
+    <meta property="article:published_time" content="2026-04-04T11:01:46.061Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="미래유망">
+    <meta property="article:tag" content="스프링">
+    <meta property="article:tag" content="일지">
+    <meta property="article:tag" content="프로젝트">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[프로젝트] 팀 합류와 프로젝트 설계.">
+    <meta name="twitter:description" content="Get API 프로젝트의 주제와 상세한 기술적 스택과 계획을 구상하였고 프론트엔드를 완성하였다.">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%8C%80-%ED%95%A9%EB%A5%98%EC%99%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EA%B3%84/","headline":"[프로젝트] 팀 합류와 프로젝트 설계.","description":"Get API 프로젝트의 주제와 상세한 기술적 스택과 계획을 구상하였고 프론트엔드를 완성하였다.","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2026-04-04T11:01:46.061Z","dateModified":"2026-04-04T11:01:46.061Z","keywords":"미래유망, 스프링, 일지, 프로젝트","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[프로젝트] 팀 합류와 프로젝트 설계.</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-04T11:01:46.061Z">2026.04.04</time>
+                    <span class="post-series">GetAPI 프로젝트</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">미래유망</span><span class="post-tag">스프링</span><span class="post-tag">일지</span><span class="post-tag">프로젝트</span></div>
+            </div>
+            
+            <div class="post-body markdown-body">
+<h1>개인팀 -&gt; DevLib 합류.</h1>
+<h2>합류 이전</h2>
+<p>나는 현 프로젝트 말고도 다른 프로젝트를 기획 중에 있었다.<br>하지만 두 프로젝트를 완전히 다른 주제로 병행하기엔 무리가 있다 생각이 들었고,</p>
+<p>팀에 합류하기 전 에브리타임을 모방한 커뮤니티를 구현하는 중에 만들었던 <b>AI 채팅검열 시스템</b>을 가지고 와 개발자에게 간단하게 무료로 제공해주는 API 서비스를 구현하고자 했다.</p>
+<p><b>하지만..</b></p>
+<h2>합류 이후</h2>
+<p>DevLib 팀 쪽에서 부족한 인원을 보완하기 위해 나를 데려오고자 했고 후에 내 기존 아이디어인 <b>AI 채팅검열 시스템</b>과 기존 DevLib팀의 아이디어인 <b>API를 판매할 수 있도록 지원하는 마켓플레이스</b>를 합쳐 <b>AI 채팅 검열 시스템을 이용한 커뮤니티 + API 판매 지원 마켓플레이스</b>를 만들기로 했다.</p>
+<p>내가 <b>팀장</b> 직분을 맡게 되어 간트차트와 계획을 구상했고, <b>모든 기술적 요소와 일정들을 계획</b>했다.</p>
+<h1>계획</h1>
+<p>초기엔 API 호스팅까지 모두 지원하는 플랫폼을 만들고자 했다.<br>정리하자면 <b>AI 채팅 검열 시스템을 이용한 커뮤니티 + API 판매 지원 마켓플레이스 + API 서버 호스팅 서비스</b>였다.</p>
+<p>많은 기술적 요소를 녹여내 계획을 구상했지만 여기선 호스팅 부분만 서술하도록 하겠다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/470e7368-bc47-4cfc-9ab8-3229738fd2cd/image.png" alt=""></p>
+<p><del>아직 내 소중한 서버 컴퓨터가 오지 않아서</del><br>마음 같아선 온프레미스 인프라를 구축하고 싶었지만,<br>비용 문제, 현실적인 문제와 맞닥뜨려 AWS의 <b>IaaS(Infrastructure as a Service)</b> 서버를 이용해 서브넷을 나누고 API 호스팅까지 제공하는 서비스를 만들고자 했다.</p>
+<blockquote>
+<p>Infrastructure as a Service란, 공동책임모델에서 PaaS, SaaS보다 많은 책임을 사용자가 부담하는 서비스이다. OSI 7계층 중 물리계층을 제외한 모든 부분에 사용자의 책임이 있다.</p>
+</blockquote>
+<p>우리는 AWS를 쓰기 때문에 제공된 VPC 안 Private 서브넷에 여러 인스턴스를 구성해 호스팅을 제공하고자 했다. 하지만 우리가 온프레미스 인프라를 직접 구축하는 것이 아닌 이상 이용자가 모든 것을 컨트롤하도록 자유도를 주기엔 많은 현실적인 제약이 있었다. 그렇기에 간단히 <b>가상화 도커 컨테이너를 사용하여 호스팅</b>할 수 있도록 지원하는 서비스를 구축하고자 했다.</p>
+<p><b>일반 도커 컨테이너</b>는 <b>호스트 OS의 커널을 공유</b>한다. 또한 모든 컨테이너가 <b>호스트의 네트워크 스택을 공유</b>한다. 그렇기에 인스턴스에 여러개의 컨테이너가 있을때 <b>보안적으로 매우 취약하고 호스트와 타 컨테이너에 연쇄적으로 이슈가 발생</b>해 컨테이너끼리 또한 호스트와 완전히 분리되었다고 보기 힘들다.</p>
+<p>2017년 말에 나온 **카타 컨테이너(Kata container)**가 이 문제를 해결할 수 있었다.<br>카타 컨테이너는 기존 VM의 무거운 사양과 컨테이너의 약한 보안성을 보완하고자 하는 목적에서 등장했다.</p>
+<p>카타 컨테이너의 특징은 독립된 가상 고유 커널을 사용한다는 것이다. 그렇기에 도커와 달리 개별적으로 완전히 분리되어있어 <b>하나의 컨테이너에서 이슈가 발생해도 호스트나 타 컨테이너에게 영향을 미치지 않는다.</b><br>이건 OS 단에서 뿐만이 아니라 네트워크 적으로도 각각 독립된 탭과 그와 연결된 브릿지를 통해<br>완전히 분리되어 있다.</p>
+<p>그렇기에 카타 컨테이너를 선택했고, 서브넷당 인스턴스 약 200<del>300개, 인스턴스당 10</del>12개의 컨테이너를 띄어놓고자 했다.</p>
+<h2>호스팅 워크플로우</h2>
+<p>클라이언트가 호스트 요청과 도커 이미지를 전달하면 Public 서브넷(웹 서버)를 통과해 Private 서브넷(웹 어플리케이션 서버) 측에서 도커 이미지를 전달해 Private 서브넷(호스팅 지원용)에서 받아 카타 컨테이너를 만들고 다시 Private 서브넷(웹 어플리케이션 서버) 측 에서 생성된 컨테이너 ID를 DB에 요청 사용자 식별 정보, API 서비스 식별 정보와 함께 저장한다.</p>
+<p>또한 각각에 컨테이너에 팔코(Falco) pdig가 붙어있어 모든 작업의 로그를 감시하고 수집한다. 이를 카타 에이전트에게 전달하면 카타 에이전트는 vsock를 통해 전달하면 엔드포인트 단에서 대기하고 있는 팔코 프로세스가 이를 해석해 WARNING 이상의 로그만 container.ID와 함께 AI 서버로 전송한다.</p>
+<p><a href="https://github.com/falcosecurity/pdig?tab=readme-ov-file">pdig 깃허브</a></p>
+<p>AI 서버는 컨테이너의 위험점수를 측정해 컨테이너를 즉시 차단하고 종료한 후 로깅하는 로직을 생각했다.</p>
+<p><del><b>+이 기능은 구현하기 매우 복잡해 현 프로젝트에선 제외되었고, 나중에 개인 프로젝트로 다뤄볼 생각이다.</b></del></p>
+<h2>프론트엔드</h2>
+<p>프론트엔드는 템플릿만으로 직접 수정하며 구성하기에는 많은 시간적 한계가 있다고 느껴 프론트엔드 생성형 AI를 사용해 만들었다.</p>
+<p>Vercel의 V0 에이전트는 프론트엔드 개발 어시스턴트로써 프론트엔드를 React 기반으로 생성한다.</p>
+<p>전에 K-Tech 아이디어 챌린지에 참여했을 당시에도 V0을 이용해 프론트엔드를 간편하게 생성하였었다.</p>
+<p>AI를 활용해 기본적인 템플릿을 생성하였고 이를 페이지에 따라 다르게 변형시키고 만들어 프론트엔드를 구성했다.</p>
+<h1>요약</h1>
+<p>Get API 프로젝트의 주제와 상세한 기술적 스택과 계획을 구상하였고 프론트엔드를 완성하였다.</p>
+<p>앞으로 프로젝트와 관련된 글들은 펑션별로 서술하겠다.</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

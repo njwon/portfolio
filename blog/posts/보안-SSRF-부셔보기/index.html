@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[보안] SSRF 부셔보기! | nogarden.log</title>
+    <meta name="description" content="웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib, requests 등이 있다. 이러한 라이브러리는 단순히 HTTP 요청을 보낼 클라이언트 뿐만 아니">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 보안, 웹, 통신">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[보안] SSRF 부셔보기!">
+    <meta property="og:description" content="웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib, requests 등이 있다. 이러한 라이브러리는 단순히 HTTP 요청을 보낼 클라이언트 뿐만 아니">
+    <meta property="og:image" content="https://velog.velcdn.com/images/njw/post/8023d1f5-23f5-4d1b-bdbe-c8a11fa305e1/image.png">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
+    <meta property="article:published_time" content="2026-04-27T09:48:30.587Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="보안">
+    <meta property="article:tag" content="웹">
+    <meta property="article:tag" content="통신">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[보안] SSRF 부셔보기!">
+    <meta name="twitter:description" content="웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib, requests 등이 있다. 이러한 라이브러리는 단순히 HTTP 요청을 보낼 클라이언트 뿐만 아니">
+    <meta name="twitter:image" content="https://velog.velcdn.com/images/njw/post/8023d1f5-23f5-4d1b-bdbe-c8a11fa305e1/image.png">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/","headline":"[보안] SSRF 부셔보기!","description":"웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib, requests 등이 있다. 이러한 라이브러리는 단순히 HTTP 요청을 보낼 클라이언트 뿐만 아니","image":"https://velog.velcdn.com/images/njw/post/8023d1f5-23f5-4d1b-bdbe-c8a11fa305e1/image.png","datePublished":"2026-04-27T09:48:30.587Z","dateModified":"2026-04-27T09:48:30.587Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[보안] SSRF 부셔보기!</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-27T09:48:30.587Z">2026.04.27</time>
+                    <span class="post-series">보안</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
+            </div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/8023d1f5-23f5-4d1b-bdbe-c8a11fa305e1/image.png" alt="[보안] SSRF 부셔보기! 썸네일"></div>
+            <div class="post-body markdown-body">
+<p>웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib, requests 등이 있다. 이러한 라이브러리는 단순히 HTTP 요청을 보낼 클라이언트 뿐만 아니라 <b>서버와 서버간 통신을 위해 사용되기도 한다.</b> 예를 들어, <b>마이크로서비스 간 통신,</b> 외부 API 호출, 외부 웹 리소스 다운로드 등이 있다. 기존의 웹 서비스는 단일 서비스로 구현할 수 있었지만 최근의 웹 서비스는 지원하는 기능이 증가함에 따라 구성요소가 증가했다. 이에 따라 관리 및 코드의 복잡도를 낮추기 위해 <b>마이크로서비스들로 웹 서비스를 구현하는 추세이다.</b></p>
+<blockquote>
+<p>마이크로서비스란, 소프트웨어가 잘 정의된 API를 통해 통신하는 <b>소규모의 독립적인 서비스로 구성되어 있는 경우의 소프트웨어 개발을 위한 아키텍처.</b></p>
+</blockquote>
+<h1>SSRF</h1>
+<p>이처럼 서비스 간 HTTP 통신이 이뤄질 때 요청 내에 이용자의 입력값이 포함될 수 있다. 이용자의 입력값으로 포함되면 개발자가 의도하지 않은 요청이 전송될 수 있다. **Server-side Request Forgery(SSRF)**는 웹 서비스의 요청을 변조하는 취약점으로, 브라우저가 변조된 요청을 보내는 <b><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">CSRF</a>와는 다르게 웹 서비스의 권한으로 변조된 요청을 보낼 수 있다.</b></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/700d4e3d-3bdb-4d1a-a484-c78b6574378f/image.png" alt=""></p>
+<p>최근의 대다수 서비스들은 마이크로서비스로 구조를 많이 바꾸고, 새롭게 개발하는 추세이기 때문에 <b>SSRF 취약점의 파급력이 더욱 높아지고 있다.</b></p>
+<p>백오피스와 같은 기능을 사용하는 웹 서비스들은 관리자만 기능을 사용할 수 있어야 하기 때문에 <b>내부망만 접속가능하도록 구성한다.</b></p>
+<p>이러한 내부망 서비스들을 외부에서는 접속 불가능하지만 <b>웹 서비스 자체는 접속할 수 있어야 하기 때문에 외부에서 직접 접근할 수 없는 내부망 서비스와 접속이 허용되어 있다.</b></p>
+<p>만약 공격자가 SSRF 취약점을 통해 웹 서비스의 권한으로 요청을 보낼 수 있다면 <b>공격자는 외부에서 간접적으로 내부망 서비스를 이용할 수 있고, 이는 곧 기업에 막대한 피해를 입힐 수 있다.</b></p>
+<p>웹 서비스가 보내는 요청을 변조하기 위해서는 요청 내에 이용자의 입력값이 포함돼야 한다. <b>입력값이 포함되는 예시로는 웹 서비스가 이용자가 입력한 URL에 요청을 보내거나 요청을 보낼 URL에 이용자 번호와 같은 내용이 사용되는 경우, 그리고 이용자가 입력한 값이 HTTP Body에 포함되는 경우로 나눠볼 수 있다.</b></p>
+<h2>이용자가 입력한 URL에 요청을 보내는 경우</h2>
+<p><b>이용자가 입력한 URL에 요청을 보내는 예시 코드</b></p>
+<pre><code># pip3 install flask requests # 파이썬 flask, requests 라이브러리를 설치하는 명령입니다.
+# python3 main.py # 파이썬 코드를 실행하는 명령입니다.
+
+from flask import Flask, request
+import requests
+
+app = Flask(__name__)
+
+
+@app.route(&quot;/image_downloader&quot;)
+def image_downloader():
+    # 이용자가 입력한 URL에 HTTP 요청을 보내고 응답을 반환하는 페이지 입니다.
+    image_url = request.args.get(&quot;image_url&quot;, &quot;&quot;) # URL 파라미터에서 image_url 값을 가져옵니다.
+    response = requests.get(image_url) # requests 라이브러리를 사용해서 image_url URL에 HTTP GET 메소드 요청을 보내고 결과를 response에 저장합니다.
+    return ( # 아래의 3가지 정보를 반환합니다.
+        response.content, # HTTP 응답으로 온 데이터
+        200, # HTTP 응답 코드
+        {&quot;Content-Type&quot;: response.headers.get(&quot;Content-Type&quot;, &quot;&quot;)}, # HTTP 응답으로 온 헤더 중 Content-Type(응답 내용의 타입)
+    )
+
+
+@app.route(&quot;/request_info&quot;)
+def request_info():
+    # 접속한 브라우저(User-Agent)의 정보를 출력하는 페이지 입니다.
+    return request.user_agent.string
+    
+    
+app.run(host=&quot;127.0.0.1&quot;, port=8000)
+</code></pre>
+<p>위 경로에 접속하면 image_downloader에서는 <a href="http://127.0.0.1:8000/request_info">http://127.0.0.1:8000/request_info</a> URL에 HTTP 요청을 보내고 응답을 반환한다. 반환한 값을 확인해보면 브라우저로 request_info 엔드포인트에 접속했을 때와 다르게 <b>브라우저 정보가 python-requests/<LIBRARY_VERSION>인 것을 확인할 수 있다.</b></p>
+<p><code>http://127.0.0.1:8000/image_downloader?image_url=http://127.0.0.1:8000/request_info</code></p>
+<p>접속한 브라우저 정보로 <b>python-requests가 출력된 이유는 웹 서비스에서 HTTP 요청을 보냈기 때문이다.</b> 이처럼 이용자가 웹 서비스에서 사용하는 마이크로서비스의 API 주소를 알아내고, image_url에 주소를 전달하면 <b>외부에서 직접 접근할 수 없는 마이크로서비스의 기능을 임의로 사용할 수 있다.</b></p>
+<h2>웹 서비스의 요청 URL에 이용자의 입력값이 포함되는 경우</h2>
+<p><b>웹 서비스의 요청 URL에 이용자의 입력값이 포함되는 경우 예시 코드</b></p>
+<pre><code>INTERNAL_API = &quot;http://api.internal/&quot;
+# INTERNAL_API = &quot;http://172.17.0.3/&quot;
+
+
+@app.route(&quot;/v1/api/user/information&quot;)
+def user_info():
+    user_idx = request.args.get(&quot;user_idx&quot;, &quot;&quot;)
+    response = requests.get(f&quot;{INTERNAL_API}/user/{user_idx}&quot;)
+    
+
+@app.route(&quot;/v1/api/user/search&quot;)
+def user_search():
+    user_name = request.args.get(&quot;user_name&quot;, &quot;&quot;)
+    user_type = &quot;public&quot;
+    response = requests.get(f&quot;{INTERNAL_API}/user/search?user_name={user_name}&amp;user_type={user_type}&quot;)
+</code></pre>
+<p><b>웹 서비스가 요청하는 URL에 이용자의 입력값이 포함되면 요청을 변조할 수 있다.</b> 이용자의 입력값 중 URL의 구성 요소 문자를 삽입하면 API 경로를 조작할 수 있다. 예를 들어, 예시 코드의 <code>user_info</code> 함수에서 <code>user_idx</code>에 <code>../search</code>를 입력할 경우 웹 서비스는 다음과 같은 URL에 요청을 보낸다.</p>
+<pre><code>http://api.internal/search
+</code></pre>
+<p><code>..</code>는 상위 경로로 이동하기 위한 구분자로, 해당 문자로 요청을 보내는 경로를 조작할 수 있다. <b>해당 취약점은 경로를 변조한다는 의미에서 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#path-traversal">Path Traversal</a>이라고 불린다.</b></p>
+<p>이 외에도, <code>#</code> 문자를 입력해 경로를 조작할 수 있다. 예를 들어, <code>user_search</code> 함수에서 <code>user_name</code>에 <code>secret&amp;user_type=private#</code>를 입력할 경우 웹 서비스는 다음과 같은 URL에 요청을 보낸다.</p>
+<pre><code>http://api.internal/search?user_name=secret&amp;user_type=private#&amp;user_type=public
+</code></pre>
+<p><b><code>#</code> 문자는 Fragment Identifier 구분자로, 뒤에 붙는 문자열은 API 경로에서 생략된다. 따라서 해당 URL은 실제로 아래와 같은 URL을 나타낸다.</b></p>
+<pre><code>http://api.internal/search?user_name=secret&amp;user_type=private
+</code></pre>
+<h2>웹 서비스의 요청 Body에 이용자의 입력값이 포함되는 경우</h2>
+<p><b>웹 서비스의 요청 Body에 이용자의 입력값이 포함되는 경우 예시 코드</b></p>
+<pre><code># pip3 install flask
+# python main.py
+
+from flask import Flask, request, session
+import requests
+from os import urandom
+
+
+app = Flask(__name__)
+app.secret_key = urandom(32)
+INTERNAL_API = &quot;http://127.0.0.1:8000/&quot;
+header = {&quot;Content-Type&quot;: &quot;application/x-www-form-urlencoded&quot;}
+
+
+@app.route(&quot;/v1/api/board/write&quot;, methods=[&quot;POST&quot;])
+def board_write():
+    session[&quot;idx&quot;] = &quot;guest&quot; # session idx를 guest로 설정합니다.
+    title = request.form.get(&quot;title&quot;, &quot;&quot;) # title 값을 form 데이터에서 가져옵니다.
+    body = request.form.get(&quot;body&quot;, &quot;&quot;) # body 값을 form 데이터에서 가져옵니다.
+    data = f&quot;title={title}&amp;body={body}&amp;user={session[&#39;idx&#39;]}&quot; # 전송할 데이터를 구성합니다.
+    response = requests.post(f&quot;{INTERNAL_API}/board/write&quot;, headers=header, data=data) # INTERNAL API 에 이용자가 입력한 값을 HTTP BODY 데이터로 사용해서 요청합니다.
+    return response.content # INTERNAL API 의 응답 결과를 반환합니다.
+    
+    
+@app.route(&quot;/board/write&quot;, methods=[&quot;POST&quot;])
+def internal_board_write():
+    # form 데이터로 입력받은 값을 JSON 형식으로 반환합니다.
+    title = request.form.get(&quot;title&quot;, &quot;&quot;)
+    body = request.form.get(&quot;body&quot;, &quot;&quot;)
+    user = request.form.get(&quot;user&quot;, &quot;&quot;)
+    info = {
+        &quot;title&quot;: title,
+        &quot;body&quot;: body,
+        &quot;user&quot;: user,
+    }
+    return info
+    
+    
+@app.route(&quot;/&quot;)
+def index():
+    # board_write 기능을 호출하기 위한 페이지입니다.
+    return &quot;&quot;&quot;
+        &lt;form action=&quot;/v1/api/board/write&quot; method=&quot;POST&quot;&gt;
+            &lt;input type=&quot;text&quot; placeholder=&quot;title&quot; name=&quot;title&quot;/&gt;&lt;br/&gt;
+            &lt;input type=&quot;text&quot; placeholder=&quot;body&quot; name=&quot;body&quot;/&gt;&lt;br/&gt;
+            &lt;input type=&quot;submit&quot;/&gt;
+        &lt;/form&gt;
+    &quot;&quot;&quot;
+    
+    
+app.run(host=&quot;127.0.0.1&quot;, port=8000, debug=True)
+</code></pre>
+<p>위 코드를 실행하고 URL에 접속하면 title과 body를 입력하는 페이지가 표시된다.</p>
+<p>입력창에 값을 입력하고 제출 버튼을 누르면 다음과 같은 응답을 확인할 수 있다.</p>
+<p><code>{ &quot;body&quot;: &quot;body&quot;, &quot;title&quot;: &quot;title&quot;, &quot;user&quot;: &quot;guest&quot; }</code></p>
+<p>요청을 전송할 때 세션 정보를 <code>&quot;guest&quot;</code>로 설정했기 때문에 <b><code>user</code>가 <code>&quot;guest&quot;</code>인 것을 확인할 수 있다. 예시 코드를 살펴보면, 내부 API로 요청을 보내기 전에 다음과 같이 데이터를 구성하는 것을 확인할 수 있다.</b></p>
+<p><code>data = f&quot;title={title}&amp;body={body}&amp;user={session[&#39;idx&#39;]}</code></p>
+<p>데이터를 구성할 때 이용자의 입력값인 <code>title</code>, <code>body</code> 그리고 <code>user</code>의 값을 파라미터 형식으로 설정한다. 이로 인해 이용자가 URL에서 파라미터를 구분하기 위해 사용하는 구분 문자인 <b><code>&amp;</code>를 포함하면 설정되는 <code>data</code>의 값을 변조할 수 있다. <code>title</code>에서 <code>title&amp;user=admin</code>를 삽입하면 다음과 같이 <code>data</code>가 구성된다.</b></p>
+<pre><code>title=title&amp;user=admin&amp;body=body&amp;user=guest
+</code></pre>
+<p>이용자가 <code>&amp;</code> 구분자를 포함해 <code>user</code> 파라미터를 추가했다. 내부 API에서는 전달받은 값을 파싱할 때 앞에 존재하는 파라미터의 값을 가져와 사용하기 때문에 <b><code>user</code>의 값을 변조할 수 있다.</b> <code>title&amp;user=admin</code>를 삽입했을 때의 실행 결과를 확인해보면 <b><code>user</code>가 <code>&quot;admin&quot;</code>으로 변조된 것을 확인할 수 있다.</b></p>
+<pre><code>{ &quot;body&quot;: &quot;body&quot;, &quot;title&quot;: &quot;title&quot;, &quot;user&quot;: &quot;admin&quot; }
+</code></pre>
+<h1>마무리</h1>
+<p>ssrf에 대해 알아보았다.<br>csrf는 클라이언트 사이드 리퀘스트 포저리!<br>ssrf는 서버 사이드 리퀘스트 포저리!<br>`</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

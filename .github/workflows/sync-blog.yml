@@ -7,6 +7,9 @@ on:
     - cron: '0 0 * * *'   # 매일 UTC 00:00 (한국시간 09:00)
   workflow_dispatch:        # 수동 실행
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -21,4 +24,28 @@ jobs:
           if [ "$STATUS" != "200" ]; then
             echo "동기화 실패: HTTP $STATUS"
             exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 블로그 정적 페이지 · RSS · 사이트맵 빌드
+        run: |
+          cd scripts
+          npm install --no-audit --no-fund
+          node build-blog.mjs
+
+      - name: 변경 사항 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add blog/posts blog/index.html blog/sitemap.xml blog/rss.xml
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "chore(blog): 정적 페이지 · RSS · 사이트맵 갱신"
+            git push
           fi

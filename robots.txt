@@ -1,2 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /worker/
+Disallow: /scripts/
+Disallow: /blog/view/
+Disallow: /blog/preview.html
+Disallow: /blog/preview-post.html
+
+Sitemap: https://njw.kro.kr/sitemap.xml

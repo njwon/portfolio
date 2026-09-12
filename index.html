@@ -4,26 +4,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="고등학교 1학년 학생인 노정원의 웹 포트폴리오 사이트">
-    <meta name="keywords" content="포트폴리오, 웹포폴, 고등학생 포트폴리오, 고딩, 포폴, 웹개발, 웹 포트폴리오, 고등학생, 웹포트폴리오">
+    <title>노정원 | 네트워크·보안·백엔드 개발자 포트폴리오</title>
+    <meta name="description" content="수원정보과학고등학교 노정원의 포트폴리오. 네트워크·정보보안·백엔드·인프라를 중심으로 GetAPI, 홈랩 공격 로그 분석, njwsec.shop 등 프로젝트와 기술 역량, 자격증을 소개합니다.">
+    <meta name="keywords" content="노정원, 노정원 포트폴리오, njwon, nogarden, 개발자 포트폴리오, 네트워크, 정보보안, 백엔드, 풀스택, 인프라, 홈랩, 수원정보과학고등학교, GetAPI">
     <meta name="author" content="노정원">
-    <meta property="og:site_name" content="정원의 포트폴리오">
-    <meta property="og:title" content="고등학교 1학년ㅣ정원의 포트폴리오">
-    <meta property="og:description" content="고등학교 1학년 학생인 노정원의 웹 포트폴리오 사이트">
-    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
-    <meta property="og:url" content="https://njw.kro.kr">
-    <script type="application/ld+json">
-    {
-      "@context" : "https://schema.org",
-      "@type" : "WebSite",
-      "name" : "정원의 포트폴리오",
-      "url" : "https://njw.kro.kr/"
-    }
-    </script>
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://njw.kro.kr/">
     <meta name="google-site-verification" content="coRoYEM3QrcPwBuSPQ2x_u8rO9PK1NdD8d3Z7-mycnM" />
     <meta name="naver-site-verification" content="b20d4802723c2be22da90f7d5dba9297bad17ffd" />
-    <title>📁</title>
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" crossorigin="use-credentials">
+    <meta property="og:type" content="profile">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="노정원 포트폴리오">
+    <meta property="og:title" content="노정원 | 네트워크·보안·백엔드 개발자 포트폴리오">
+    <meta property="og:description" content="네트워크·정보보안·백엔드를 중심으로 프로젝트, 기술 역량, 자격증을 소개하는 노정원의 포트폴리오">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="노정원 | 네트워크·보안·백엔드 개발자 포트폴리오">
+    <meta name="twitter:description" content="네트워크·정보보안·백엔드를 중심으로 프로젝트, 기술 역량, 자격증을 소개하는 노정원의 포트폴리오">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      "url": "https://njw.kro.kr/",
+      "name": "노정원 포트폴리오",
+      "inLanguage": "ko",
+      "mainEntity": {
+        "@type": "Person",
+        "@id": "https://njw.kro.kr/#person",
+        "name": "노정원",
+        "alternateName": "njwon",
+        "url": "https://njw.kro.kr/",
+        "image": "https://njw.kro.kr/img/project/background.jpg",
+        "jobTitle": "네트워크·보안·백엔드·인프라 개발자",
+        "description": "네트워크·정보보안·백엔드를 중심으로 공부하는 수원정보과학고등학교 학생 개발자",
+        "affiliation": { "@type": "EducationalOrganization", "name": "수원정보과학고등학교" },
+        "knowsAbout": ["네트워크", "정보보안", "백엔드", "인프라", "Java", "Python", "Spring Boot", "Linux", "Proxmox", "pfSense", "Suricata", "Cloudflare Workers"],
+        "sameAs": [
+          "https://github.com/njwon",
+          "https://njw.kro.kr/blog/",
+          "https://getapi.lol"
+        ]
+      }
+    }
+    </script>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://kit.fontawesome.com" crossorigin>
     <script rel="preconnect" src="https://kit.fontawesome.com/14611643d9.js" crossorigin="anonymous" defer></script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/font.css" />
@@ -44,15 +71,15 @@
         <div class="menuwrap">
             <menu>
                 <ul class="ul">
-                    <li><a href="#Home" onclick="setSection(0)" aria-label=" "><img class="menuhome menuimg"
+                    <li><a href="#Home" onclick="setSection(0)" aria-label="홈"><img class="menuhome menuimg"
                                 src="img/menu/Home.png" alt=""></a></li>
-                    <li><a href="#About" onclick="setSection(1)" aria-label=" "><img class="menuabout menuimg"
+                    <li><a href="#About" onclick="setSection(1)" aria-label="소개"><img class="menuabout menuimg"
                                 src="img/menu/About.png" alt=""></a></li>
-                    <li><a href="#Skills" onclick="setSection(2)" aria-label=" "><img class="menuskills menuimg"
+                    <li><a href="#Skills" onclick="setSection(2)" aria-label="기술"><img class="menuskills menuimg"
                                 src="img/menu/Skills.png" alt=""></a></li>
-                    <li><a href="#Project" onclick="setSection(3)" aria-label=" "><img class="menuproject menuimg"
+                    <li><a href="#Project" onclick="setSection(3)" aria-label="프로젝트"><img class="menuproject menuimg"
                                 src="img/menu/Project.png" alt=""></a></li>
-                    <li><a href="#Contact" onclick="setSection(4)" aria-label=" "><img class="menucontact menuimg"
+                    <li><a href="#Contact" onclick="setSection(4)" aria-label="연락처"><img class="menucontact menuimg"
                                 src="img/menu/Contact.png" alt=""></a></li>
                 </ul>
             </menu>
@@ -136,7 +163,7 @@
                                                         <img class="aboutangel2" src="img/about/WeirdcoreEyes.webp"
                                                             alt="">
                                                         <strong style="font-size: 0em;">
-                                                            <span><img src="img/about/me.webp" alt="">
+                                                            <span><img src="img/about/me.webp" alt="노정원 프로필 사진" width="600" height="800">
                                                             </span>
                                                         </strong>
                                                     </div>
@@ -260,7 +287,16 @@
 
                                     <b>암호학</b><br>
                                     Hash 알고리즘, 대칭키·비대칭키 암호화를 학습하여
-                                    TLS 인증서 구조와 공개키 인프라(PKI)에 대한 이해를 갖추고 있습니다.
+                                    TLS 인증서 구조와 공개키 인프라(PKI)에 대한 이해를 갖추고 있습니다.<br><br>
+
+                                    <b>인프라 · 서버 운영</b><br>
+                                    <b>Proxmox</b> 하이퍼바이저 위에 <b>pfSense</b> 방화벽과 <b>Suricata IPS</b>를 올린 홈랩을 직접 구축·운영하며,
+                                    VLAN 분리·방화벽 규칙·포트포워딩을 설정하고 IPS 경보 로그를 수집해 공격 트래픽을 분석했습니다.
+                                    Linux 서버 환경에서 SSH 접근 통제, 서비스 데몬 관리, 로그 모니터링을 수행합니다.
+                                    <b>Cloudflare Workers + D1</b>로 서버리스 API를 구축하고 <b>GitHub Actions</b> 스케줄러로
+                                    외부 데이터를 주기적으로 동기화·정적 빌드하는 CI 파이프라인을 운영 중이며,
+                                    GitHub Pages 배포·커스텀 도메인·HTTPS 적용 등 정적 사이트 인프라를 관리합니다.
+                                    Redis·Elasticsearch를 프로젝트에 도입해 캐시·검색 서버를 운영해 본 경험이 있습니다.
                                 </div>
                             </div>
                             <div id="about-four" class="about-one about-gray">
@@ -364,11 +400,20 @@
                 <div class="charts-wrap cards">
                     <div class="chart-block">
                         <p class="chart-label">역량 분야</p>
-                        <canvas id="radarChart"></canvas>
+                        <canvas id="radarChart" role="img" aria-label="역량 분야 레이더 차트"></canvas>
+                        <ul class="sr-only">
+                            <li>네트워크</li><li>정보보안</li><li>백엔드</li><li>프론트엔드</li>
+                            <li>운영체제</li><li>코딩</li><li>알고리즘</li><li>데이터베이스</li>
+                        </ul>
                     </div>
                     <div class="chart-block lang-wrap">
                         <p class="chart-label">스킬</p>
-                        <canvas id="langChart"></canvas>
+                        <canvas id="langChart" role="img" aria-label="언어·프레임워크·도구 숙련도 차트"></canvas>
+                        <dl class="sr-only">
+                            <dt>언어</dt><dd>Java, Python, JavaScript, HTML/CSS, SQL, C</dd>
+                            <dt>프레임워크</dt><dd>Spring Boot, JPA, JSP, FastAPI</dd>
+                            <dt>인프라 · 도구</dt><dd>Linux, Git, Redis, Elasticsearch, Wireshark, Burp Suite, Cloudflare Workers, GitHub Actions</dd>
+                        </dl>
                     </div>
                 </div>
             </section>
@@ -384,12 +429,12 @@
                                 </div>
                                 <p class="proj-desc">홈 서버 공격 로그 분석 프로젝트.<br>28일간 수집한 IPS 경보 로그 약 8만 건을 Python으로 파싱·분석하고,<br>K-means 군집화로 공격자 행동 유형 7종과 오탐 집단을 자동 분류.</p>
                                 <div class="proj-links">
-                                    <a class="proj-link" href="https://github.com/njwon/home-lab-security-analyze" download>분석 프로젝트 깃허브 -></a>
+                                    <a class="proj-link" href="https://github.com/njwon/home-lab-security-analyze" target="_blank">분석 프로젝트 깃허브 -></a>
                                 </div>
                             </div>
                             <div class="proj-polaroid" style="--rot:3.5deg">
-                                <img src="img/project/homeLabAnal.png" alt="homeLabAnal" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/homeLabAnal.png</small></div>
+                                <img src="img/project/homeLabAnal.webp" width="718" height="622" alt="homeLabAnal" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/homeLabAnal.webp</small></div>
                                 <span class="proj-polaroid-cap">Home lab security analyze ㅡ 2026</span>
                             </div>
                         </div>
@@ -409,8 +454,8 @@
                                 </div>
                             </div>
                             <a class="proj-polaroid" style="--rot:-3deg" href="https://getapi.lol" target="_blank">
-                                <img src="img/project/getapi.png" alt="GetAPI" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/getapi.png</small></div>
+                                <img src="img/project/getapi.webp" width="800" height="449" alt="GetAPI" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/getapi.webp</small></div>
                                 <span class="proj-polaroid-cap">GetAPI ㅡ 2026</span>
                             </a>
                         </div>
@@ -429,8 +474,8 @@
                                 </div>
                             </div>
                             <a class="proj-polaroid" style="--rot:2.5deg" href="https://njwsec.shop" target="_blank">
-                                <img src="img/project/njwsec.png" alt="njwsec.shop" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/njwsec.png</small></div>
+                                <img src="img/project/njwsec.webp" width="800" height="449" alt="njwsec.shop" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/njwsec.webp</small></div>
                                 <span class="proj-polaroid-cap">njwsec.shop ㅡ 2025</span>
                             </a>
                         </div>
@@ -454,8 +499,8 @@
                                 </div>
                             </div>
                             <div class="proj-polaroid" style="--rot:2deg">
-                                <img src="img/project/portfolio-v1.png" alt="자기소개 포트폴리오" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">img/project/portfolio-v1.png</div>
+                                <img src="img/project/portfolio-v1.webp" width="800" height="447" alt="자기소개 포트폴리오" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">img/project/portfolio-v1.webp</div>
                                 <span class="proj-polaroid-cap">자기소개 포트폴리오 ㅡ 2024</span>
                             </div>
                         </div>
@@ -470,7 +515,7 @@
                                 <a class="proj-link" href="projects/natural_selection/" target="_blank">데모 보기 -></a>
                             </div>
                             <a class="proj-polaroid" style="--rot:-4.5deg" href="projects/natural_selection/" target="_blank">
-                                <img src="img/project/select2.png" alt="자연선택 시뮬레이터" loading="lazy">
+                                <img src="img/project/select2.webp" width="800" height="385" alt="자연선택 시뮬레이터" loading="lazy">
                                 <span class="proj-polaroid-cap">Natural Selection ㅡ 2025</span>
                             </a>
                         </div>
@@ -485,8 +530,8 @@
                                 <a class="proj-link" href="projects/textrpg/" target="_blank">플레이 하기 -></a>
                             </div>
                             <a class="proj-polaroid" style="--rot:-3deg" href="projects/textrpg/" target="_blank">
-                                <img src="img/project/textrpg.png" alt="DREAM RPG" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">img/project/textrpg.png</div>
+                                <img src="img/project/textrpg.webp" width="800" height="456" alt="DREAM RPG" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">img/project/textrpg.webp</div>
                                 <span class="proj-polaroid-cap">DREAM RPG ㅡ 2025</span>
                             </a>
                         </div>
@@ -501,8 +546,8 @@
                                 <a class="proj-link" href="docs/blockchain_linkedlist.pdf" download>보고서 다운로드 -></a>
                             </div>
                             <div class="proj-polaroid" style="--rot:1.5deg">
-                                <img src="img/project/blockchain.png" alt="블록체인 연결리스트" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">img/project/blockchain.png</div>
+                                <img src="img/project/blockchain.webp" width="800" height="447" alt="블록체인 연결리스트" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">img/project/blockchain.webp</div>
                                 <span class="proj-polaroid-cap">블록체인 연결리스트 ㅡ 2025</span>
                             </div>
                         </div>
@@ -521,8 +566,8 @@
                                 </div>
                             </div>
                             <div class="proj-polaroid" style="--rot:-2deg">
-                                <img src="img/project/ktech.png" alt="COUPLING" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/ktech.png</small></div>
+                                <img src="img/project/ktech.webp" width="800" height="448" alt="COUPLING" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/ktech.webp</small></div>
                                 <span class="proj-polaroid-cap">COUPLING ㅡ 2025</span>
                             </div>
                         </div>
@@ -537,7 +582,7 @@
                                 <a class="proj-link" href="https://dreamhack.io/users/81967" target="_blank">프로필 보기 -></a>
                             </div>
                             <a class="proj-polaroid" style="--rot:2deg" href="https://dreamhack.io/users/81967" target="_blank">
-                                <img src="img/project/wargame.png" alt="Dreamhack 프로필" loading="lazy">
+                                <img src="img/project/wargame.webp" width="800" height="449" alt="Dreamhack 프로필" loading="lazy">
                                 <span class="proj-polaroid-cap">Dreamhack ㅡ 2024~</span>
                             </a>
                         </div>
@@ -555,8 +600,8 @@
                                 </div>
                             </div>
                             <div class="proj-polaroid" style="--rot:3.5deg">
-                                <img src="img/project/mswcs.png" alt="MSWCS" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/mswcs.png</small></div>
+                                <img src="img/project/mswcs.webp" width="800" height="507" alt="MSWCS" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div class="proj-img-ph" style="display:none">이미지를 추가하세요<br><small>img/project/mswcs.webp</small></div>
                                 <span class="proj-polaroid-cap">MSWCS ㅡ 2025</span>
                             </div>
                         </div>

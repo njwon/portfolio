@@ -9,7 +9,11 @@
     <meta property="og:title" content="nogarden.log">
     <meta property="og:description" content="노정원의 개발 블로그">
     <meta property="og:url" content="https://njw.kro.kr/blog/">
-    <title>nogarden.log</title>
+    <title>nogarden.log | 노정원 개발 블로그</title>
+    <link rel="canonical" href="https://njw.kro.kr/blog/">
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ko_KR">
     <link rel="stylesheet" href="../css/font.css" />
     <link rel="stylesheet" href="blog.css" />
     <link rel="icon" href="../img/noise/Sarah.webp" />
@@ -60,6 +64,35 @@
     <main class="posts-container" id="postsContainer">
         <div class="loading" id="loading">Loading...</div>
     </main>
+
+    <!-- 검색엔진용 글 목록 (build-blog.mjs 가 자동 갱신) -->
+    <!-- STATIC-POSTS:START -->
+    <nav class="sr-only" aria-label="전체 글 목록">
+        <ul>
+            <li><a href="posts/%ED%95%B4%ED%82%B9-%ED%83%80%EA%B2%9F-%EC%A0%95%EB%B3%B4-%EC%88%98%EC%A7%91/">[해킹] 타겟 정보 수집</a></li>
+            <li><a href="posts/%EC%9E%90%EA%B2%A9%EC%A6%9D-SQLD-60%ED%9A%8C-%ED%9B%84%EA%B8%B0/">[자격증] SQLD 60회 1주 벼락치기 후기!!</a></li>
+            <li><a href="posts/%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-OSI-7-%EA%B3%84%EC%B8%B5%EA%B3%BC-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC/">[네트워크] OSI 7 계층과 네트워크</a></li>
+            <li><a href="posts/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94/">[데이터베이스] 데이터베이스와 암호화</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">[보안] SSRF 부셔보기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">[보안] File Vulnerability 부셔보기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-Command-Injection-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">[보안] Command Injection 부셔보기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/">[보안] SQL Injection 부셔보기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/">[보안] CSRF 부셔보고 CORS 알아보기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">[보안] XSS 부셔보고 SOP 알아보기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-DNS-%ED%84%B0%EB%84%90%EB%A7%81/">[보안] DNS와 DNS 터널링</a></li>
+            <li><a href="posts/%EC%95%94%ED%98%B8%ED%95%99-PKI%EC%99%80-TLS-%EA%B7%B8%EB%A6%AC%EA%B3%A0-HTTPS/">[암호학] PKI와 TLS 그리고 HTTPS </a></li>
+            <li><a href="posts/%EA%B8%B0%EC%B4%88-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0/">[기초] 암호학 기초 부수기!</a></li>
+            <li><a href="posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/">[보안] 웹의 인증 방식</a></li>
+            <li><a href="posts/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%8C%80-%ED%95%A9%EB%A5%98%EC%99%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EA%B3%84/">[프로젝트] 팀 합류와 프로젝트 설계.</a></li>
+            <li><a href="posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/">[인프라] 1,100원짜리 서버로 550명 버티기.</a></li>
+            <li><a href="posts/JS-Express.js-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4/">[js] Express.js 미들웨어</a></li>
+            <li><a href="posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/">[js] Express.js 라우팅</a></li>
+            <li><a href="posts/Node.js-Express.js/">[js] Node.js / Express.js 소개 및 설치</a></li>
+            <li><a href="posts/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89/">[기초] HTTP / HTTPS 부수기 및 프로토콜 탐색.</a></li>
+            <li><a href="posts/%EC%9B%B9-%EA%B8%B0%EC%B4%88-%EC%A0%95%EB%A6%AC-%EB%B0%8F-%EC%9B%B9%EB%B3%B4%EC%95%88%EC%9D%98-%ED%95%84%EC%9A%94%EC%84%B1/">[기초] 웹 기초 부수기 및 웹 보안의 필요성!</a></li>
+        </ul>
+    </nav>
+    <!-- STATIC-POSTS:END -->
 
     <div class="pagination" id="pagination"></div>
 

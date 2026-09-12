@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[js] Express.js 미들웨어 | nogarden.log</title>
+    <meta name="description" content="전 라우팅 글에서 라우팅 방식에 대해 서술한 바 있다. 이번엔 미들웨어에 대해 서술해보려 한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으로 함. Express 5.x 버전에서는 많은 것이 달라졌음. 미들웨어 &gt; app는 express의 인스턴스이다">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, express.js, js, node.js, 백엔드">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/JS-Express.js-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[js] Express.js 미들웨어">
+    <meta property="og:description" content="전 라우팅 글에서 라우팅 방식에 대해 서술한 바 있다. 이번엔 미들웨어에 대해 서술해보려 한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으로 함. Express 5.x 버전에서는 많은 것이 달라졌음. 미들웨어 &gt; app는 express의 인스턴스이다">
+    <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/JS-Express.js-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4/">
+    <meta property="article:published_time" content="2025-12-30T06:58:36.529Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="express.js">
+    <meta property="article:tag" content="js">
+    <meta property="article:tag" content="node.js">
+    <meta property="article:tag" content="백엔드">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[js] Express.js 미들웨어">
+    <meta name="twitter:description" content="전 라우팅 글에서 라우팅 방식에 대해 서술한 바 있다. 이번엔 미들웨어에 대해 서술해보려 한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으로 함. Express 5.x 버전에서는 많은 것이 달라졌음. 미들웨어 &gt; app는 express의 인스턴스이다">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/JS-Express.js-%EB%AF%B8%EB%93%A4%EC%9B%A8%EC%96%B4/","headline":"[js] Express.js 미들웨어","description":"전 라우팅 글에서 라우팅 방식에 대해 서술한 바 있다. 이번엔 미들웨어에 대해 서술해보려 한다. > 아래 모든 설명은 Express 4.x 버전을 기준으로 함. Express 5.x 버전에서는 많은 것이 달라졌음. 미들웨어 > app는 express의 인스턴스이다","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2025-12-30T06:58:36.529Z","dateModified":"2025-12-30T06:58:36.529Z","keywords":"express.js, js, node.js, 백엔드","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[js] Express.js 미들웨어</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2025-12-30T06:58:36.529Z">2025.12.30</time>
+                    <span class="post-series">JS</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">express.js</span><span class="post-tag">js</span><span class="post-tag">node.js</span><span class="post-tag">백엔드</span></div>
+            </div>
+            
+            <div class="post-body markdown-body">
+<p>전 라우팅 글에서 라우팅 방식에 대해 서술한 바 있다.<br>이번엔 미들웨어에 대해 서술해보려 한다.</p>
+<blockquote>
+<p>아래 모든 설명은 Express 4.x 버전을 기준으로 함.<br>Express 5.x 버전에서는 많은 것이 달라졌음.</p>
+</blockquote>
+<h1>미들웨어</h1>
+<blockquote>
+<pre><code>app.METHOD(PATH, HANDLER)
+</code></pre>
+</blockquote>
+<pre><code>- **app**는 **express의 인스턴스**이다.
+- **METHOD**는 **소문자로 된 HTTP 요청 메서드**이다.
+- **PATH**는 **서버상의 경로**이다.
+- **HANDLER**는 **해당 경로가 일치할 때 실행되는 함수**이다.
+HANDLER에는 익명함수가 많이 들어가는데 이때, 요청 객체(관례적으로 `req`), 응답 객체(관례적으로 `res`) 인자를 받는다.
+`req`는 요청할 때, 들어오는 데이터 객체(Input)로써 사용된다.
+`res`는 반환할 때, 나가는 데이터 객체(Output)로써 사용된다.
+
+HANDLER에 `req`와 `res` 인자를 받는다고 서술했었지만,
+사실 인자 하나를 더 받는다. 이 글의 주제인 **미들웨어와 깊은 관련이 있는 인자 `next`**(관례적인 이름)이다.
+Express 애플리케이션은 거대한 공장 컨베이어 벨트와 같다. **요청(Request)**이 들어오면 여러 직원을 거쳐서 **최종 제품(Response)**이 된다.
+
+만약, 거대한 공장에서 일하는 기계가 자신이 맡은 일을 다 했으나 다음 기계한테 제품을 넘겨주지 않으면 어떻게 될까? **공장은 멈출 것이다.**
+
+`next`도 이와 같다.
+
+아래와 같은 간단한 메인 코드가 있다고 해보자.
+</code></pre>
+<p>const express = require(&#39;express&#39;)<br>const app = express()</p>
+<p>app.get(&#39;/&#39;, (req, res) =&gt; {<br>  res.send(&#39;Hello World!&#39;)<br>})</p>
+<p>app.listen(3000)</p>
+<pre><code>또한, console에 &quot;LOGGED&quot; 문자열을 찍는 myLogger 미들웨어 함수가 있다고 해보자.
+</code></pre>
+<p>const myLogger = function (req, res, next) {<br>  console.log(&#39;LOGGED&#39;)<br>  next()<br>}</p>
+<pre><code>그렇다면 이런식으로 `app.use()`를 통해 **미들웨어**를 **설정**할 수 있다.
+</code></pre>
+<p>const express = require(&#39;express&#39;)<br>const app = express()</p>
+<p>const myLogger = function (req, res, next) {<br>  console.log(&#39;LOGGED&#39;)<br>  next()<br>}</p>
+<p>app.use(myLogger)</p>
+<p>app.get(&#39;/&#39;, (req, res) =&gt; {<br>  res.send(&#39;Hello World!&#39;)<br>})</p>
+<p>app.listen(3000)</p>
+<pre><code>사실 `app.use()` 말고도 **`app.get()`, `app.post()` 등으로도 미들웨어를 설정**할 수 있다. 이쯤되면 그런 의문이 들 것이다. &#39;어? 그럼 `app.post()` 라우트 핸들러랑 미들웨어랑 차이점이 뭐지?&#39; 다른게 없다. **모두 미들웨어가 될 수 있다.** 
+
+결국 **핸들러와 미들웨어의 차이**는 **`response`를 설정해 응답하느냐, 안하느냐의 차이**이다. **반환한다면 핸들러**가 되는것이고, **반환하지 않고 `next()`로 넘긴다면 미들웨어**가 되는 것이다.
+
+또한, 미들웨어를 설정하는 방법으로는 위 예시에서 보여준 `app.use()`외에도 몇가지가 더 있다.
+
+&gt;- app =&gt; **전역 미들웨어**, 애플리케이션 전체에 영향을 미친다. `app.use()`가 호출된 시점 이후에 정의된 모든 라우터에 적용된다.
+심지어 외부 파일에서 `require`로 불러온 **라우터 모듈이라 할지라도, `app.use()` 아래에 등록되었다면 해당 미들웨어의 영향**을 받는다.
+- router =&gt; **지역 미들웨어**, 특정 라우터 모듈 내에서만 영향을 미친다. `router.use()` 이후에 정의된 라우터들에 적용되지만, **그 범위는 해당 라우터 파일 내부로 한정**된다. 다른 모듈(파일)에는 영향을 주지 않아 기능별 독립성을 유지하기 좋다.
+
+&gt;`app`, `router` 두 객체 모두 동일한 인터페이스를 제공한다.
+- .use(콜백함수) =&gt; `app` 또는 `router`에 규칙에 따라 메서드가 호출된 **이후 정의된 모든 라우터 실행 전에 실행**된다.
+- .use(PATH, 콜백함수) =&gt; 만약, 인수가 추가된다면 메서드가 호출된 이**후 정의된 같은 경로인 모든 라우터 실행 전에 실행**된다.
+- .METHOD(PATH, HANDLER, HANDLER, HANDLER...) =&gt; HANDLER를 여러개 삽입해 **특정 라우터에서만 미들웨어로 사용**할 수 있다.
+
+## 주의 사항
+미들웨어 내부에서 DB 조회나 외부 API 호출 같은 **비동기 작업**을 할 때는 반드시 `await`를 사용하여 작업이 끝난 후 **`next()`가 호출되도록 보장**해야 한다.
+만약, `await`이 없다면 작업이 끝나기도 전에 다음 미들웨어로 넘어가 버려, 데이터가 없는 상태에서 **로직이 꼬일 수 있다.**
+
+우리가 사용했던 `next()`는 단순히 **다음으로**만 의미하지 않는다. 괄호 안에 무엇을 넣느냐에 따라 Express의 흐름을 완전히 바꿀 수 있다.
+
+&gt; - next(): 다음 일반 미들웨어/라우터 실행.
+- next(&#39;route&#39;) 또는 next(&#39;router&#39;): **현재 라우트나 라우터 전체를 건너뜀** (단, .METHOD() 형태의 메서드에서만 사용 가능.
+- next(anything): 괄호 안에 **무언가(에러 객체나 메시지 등)**를 넣으면, Express는 즉시 현재 요청을 **에러 상태**로 간주한다.
+
+아래는 `next(&#39;route&#39;)`를 이용해 예외처리를 한 라우터이다.
+</code></pre>
+<p>app.get(&#39;/user/:id&#39;, (req, res, next) =&gt; {<br>  // 만약 user id가 0이라면 다음 라우트로 건너뜀<br>  if (req.params.id === &#39;0&#39;) next(&#39;route&#39;)<br>  // 그렇지 않다면, 이 스택 내의 다음 미들웨어 함수로 제어권을 넘김.<br>  else next()<br>}, (req, res, next) =&gt; {<br>  // &#39;regular&#39; 응답 전송<br>  res.send(&#39;regular&#39;)<br>})</p>
+<p>// /user/:id 경로 핸들러지만, &#39;special&#39; 응답 전송.<br>app.get(&#39;/user/:id&#39;, (req, res, next) =&gt; {<br>  res.send(&#39;special&#39;)<br>})</p>
+<pre><code>또한, 미들웨어를 배열 형태로도 사용 가능하다.
+</code></pre>
+<p>function logOriginalUrl (req, res, next) {<br>  console.log(&#39;Request URL:&#39;, req.originalUrl)<br>  next()<br>}</p>
+<p>function logMethod (req, res, next) {<br>  console.log(&#39;Request Type:&#39;, req.method)<br>  next()<br>}</p>
+<p>const logStuff = [logOriginalUrl, logMethod]<br>app.get(&#39;/user/:id&#39;, logStuff, (req, res, next) =&gt; {<br>  res.send(&#39;User Info&#39;)<br>})</p>
+<pre><code>
+## 오류처리 미들웨어
+**오류처리 미들웨어는 항상 네개의 인자**를 받는다.
+`err, req, res, next` req와 res, next의 기능은 알테지만
+`err`(관례적인 이름)은 처음 보았을 터이다. `err`은 정말 말 그대로 에러가 났을 경우 받는 인자이다. `err.stack`을 통해 확인할 수 있다. 또한, 오류처리 미들웨어를 작성할 때에는 `next()`를 사용하지 않더라도 인자를 넣어놔야 오류처리 미들웨어로 인식한다.
+
+아래는 오류처리 미들웨어의 예시이다.
+</code></pre>
+<p>app.use((err, req, res, next) =&gt; {<br>  console.error(err.stack)<br>  res.status(500).send(&#39;Something broke!&#39;)<br>})</p>
+<pre><code># 마무리
+축하합니다! Express.js 기초가 끝났습니다.
+더욱 공부해보죠.
+</code></pre>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>

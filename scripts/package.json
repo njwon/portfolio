@@ -1,0 +1,11 @@
+{
+  "name": "portfolio-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-blog": "node build-blog.mjs"
+  },
+  "dependencies": {
+    "marked": "^9.1.6"
+  }
+}

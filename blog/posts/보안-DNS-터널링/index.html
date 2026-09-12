@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[보안] DNS와 DNS 터널링 | nogarden.log</title>
+    <meta name="description" content="DNS 통신을 진행할 때, 우리는 IP라는 고유 주소를 통해 정보를 교환한다. IP는 32비트로 이루어진 수 모음으로써 DNS(Domain Name System)">
+    <meta name="author" content="노정원">
+    <meta name="keywords" content="노정원, 기초, 보안, 웹, 통신">
+    <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-DNS-%ED%84%B0%EB%84%90%EB%A7%81/">
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="[보안] DNS와 DNS 터널링">
+    <meta property="og:description" content="DNS 통신을 진행할 때, 우리는 IP라는 고유 주소를 통해 정보를 교환한다. IP는 32비트로 이루어진 수 모음으로써 DNS(Domain Name System)">
+    <meta property="og:image" content="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png">
+    <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-DNS-%ED%84%B0%EB%84%90%EB%A7%81/">
+    <meta property="article:published_time" content="2026-04-24T18:55:12.458Z">
+    <meta property="article:author" content="https://njw.kro.kr/">
+    <meta property="article:tag" content="기초">
+    <meta property="article:tag" content="보안">
+    <meta property="article:tag" content="웹">
+    <meta property="article:tag" content="통신">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="[보안] DNS와 DNS 터널링">
+    <meta name="twitter:description" content="DNS 통신을 진행할 때, 우리는 IP라는 고유 주소를 통해 정보를 교환한다. IP는 32비트로 이루어진 수 모음으로써 DNS(Domain Name System)">
+    <meta name="twitter:image" content="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-DNS-%ED%84%B0%EB%84%90%EB%A7%81/","headline":"[보안] DNS와 DNS 터널링","description":"DNS 통신을 진행할 때, 우리는 IP라는 고유 주소를 통해 정보를 교환한다. IP는 32비트로 이루어진 수 모음으로써 DNS(Domain Name System)","image":"https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png","datePublished":"2026-04-24T18:55:12.458Z","dateModified":"2026-04-24T18:55:12.458Z","keywords":"기초, 보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="/blog/blog.css" />
+    <link rel="icon" href="/img/noise/Sarah.webp" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+</head>
+
+<body>
+    <div class="noise"></div>
+
+    <header class="header" id="header">
+        <div class="header-row">
+            <div class="header-info">
+                <a href="/blog/" class="back-link">&#8592; Blog</a>
+                <p class="blog-title">nogarden.log</p>
+                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="post-container">
+        <article class="post-article">
+            <div class="post-header">
+                <h1 class="post-title">[보안] DNS와 DNS 터널링</h1>
+                <div class="post-meta">
+                    <time class="post-date" datetime="2026-04-24T18:55:12.458Z">2026.04.25</time>
+                    <span class="post-series">보안</span>
+                </div>
+                <div class="post-tags"><span class="post-tag">기초</span><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
+            </div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png" alt="[보안] DNS와 DNS 터널링 썸네일"></div>
+            <div class="post-body markdown-body">
+<h1>DNS</h1>
+<p>통신을 진행할 때, 우리는 <b>IP</b>라는 고유 주소를 통해 정보를 교환한다.<br><b>IP는 32비트로 이루어진 수 모음</b>으로써 <b>각각의 네트워크를 식별</b>하는데에 사용된다.</p>
+<blockquote>
+<p>IP란, 네트워크상에서 데이터를 패킷(packet) 단위로 나누어 목적지까지 안전하게 전달하는 통신 규약이다.</p>
+</blockquote>
+<p>이 같은 IP는 숫자로만 이루어져 있고 길이가 무척 길어 사람이 외우기 힘든 구조였다.</p>
+<p>이를 개선시키고자 나온것이 <b>DNS</b>이다.</p>
+<p>**DNS(Domain Name System)**는 <b>호스트의 도메인네임 (<a href="http://www.example.com)%EC%9D%84">www.example.com)을</a> 네트워크주소(192.168.1.0)로 변환</b>하거나, 그 반대의 역할을 수행하는 시스템이다.</p>
+<p>naver.com , google.com 모두 DNS을 가진 DN(Domain Name)이라고 할 수 있다.</p>
+<p>DNS는 클라이언트가 DNS 서버에 접속하고 IP 주소를 얻기 위해 <b>질의를 보내는 것으로 시작하고 DNS 서버는 IP 주소를 반환</b>한다.<br>클라이언트는 IP 주소를 받으면 이를 이용해 웹서버에 접속한다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png" alt=""></p>
+<p>이때 표면적으로는 <a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 담당하고 있는 DNS 서버에 바로 쿼리를 날리는 것처럼 보인다.</p>
+<p>하지만 도메인 자체가 전 세계에 너무 많기에 조금 다른 <b>계층 방식</b>으로 동작한다.<br><a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 예시로 들어보겠다.</p>
+<h2>DNS 구조</h2>
+<ol>
+<li>브라우저와 OS 모두 접속했던 사이트에 대한 <b>DNS 기록과 매핑되는 IP 캐시</b>를 가지고 있다. 이곳을 제일 먼저 확인한다.</li>
+<li>1번에서 실패하면 DNS 리졸버에게서 확인하고 이에 실패하면 <b>DNS 리졸버가 동작</b>하기 시작한다.</li>
+<li><b>루트 DNS 서버에 TLD DNS 서버를 쿼리</b>한다.<br>example.com의 경우 .com이 TLD DNS이다.</li>
+<li>TLD DNS 서버에게 <b>example.com을 쿼리하여 IP를 얻는다.</b><br><img src="https://velog.velcdn.com/images/njw/post/f9c1938c-4d3a-4655-bb29-41719a9f2b19/image.png" alt=""><br>만약  korea.co.kr처럼 DNS의 길이가 길 경우에도 똑같이 동작한다. 이의 경우에는 TLD DNS 서버에서도 쿼리하여 .co.kr의 DNS 서버를 알아낼 것이다.</li>
+</ol>
+<h1>DNS 터널링</h1>
+<p>이러한 DNS는 IP 주소를 얻기 위한 과정으로써 보편화된 현대에선 필수적이다. 그렇기의 대부분의 네트워크는 <b>DNS 요청(UDP 포트 53)을 차단하지 않는다.</b><br>DNS 터널링은 그 부분에서 착안한 공격기법이다.</p>
+<blockquote>
+<p>DNS 터널링(DNS Tunneling)이란, 악의적인 공격자가 DNS 프로토콜의 통신 방식을 악용하여, 방화벽을 우회하고 은밀하게 데이터를 외부로 유출하거나 명령 및 제어(C2) 서버와 통신하는 사이버 공격 기법이다.</p>
+</blockquote>
+<p>여기서 말하는 <b>터널링은 한 네트워크 프로토콜을 다른 프로토콜의 데이터 페이로드 안에 캡슐화(Encapsulation)하여 전달하는 기술</b>이다.<br><img src="https://velog.velcdn.com/images/njw/post/5cab5b1d-8d82-463f-9cee-1e2353c91542/image.png" alt=""><br>쉽게 말하자면 DNS 트래픽에 자신이 <b>탈취하고자 하는 정보를 숨겨 전달하는 취약점</b>이라고 볼 수 있다. 보안 장비는 기본적으로 <b>DNS를 기본적으로 허용</b>하기 때문에 가능한 공격 방법이다.<br>해커는 공격에 사용할 도메인을 등록하고 DNS를 자신의 서버에 등록한다.<br>감염자가 해커의 DNS 서버로 <b>DNS 요청을 이용해 <code>[탈취데이터].hacker.com</code>와 같이 서브도메인 자리에 정보를 담아 요청</b>을 보내면 해커의 서버는 이를 악용하거나 **DNS 응답(TXT 레코드 등)에 다음 공격 명령(C2)**을 실어 보낸다.<br>DNS 터널링은 방화벽을 우회하는 <b>양방향 비밀 통로 역할</b>을 하며, 기업의 기밀 유출이나 좀비 PC 제어에 치명적으로 사용될 수 있다.</p>
+<h2>DNS 터널링 방어</h2>
+<p>DNS 터널링을 방어하기 위해선, 내부 DNS 서버를 구성해 모든 페이로드가 내부 DNS 서버에 지정된 필터를 거쳐 전송되게 하여야 한다.</p>
+<p>DNS 터널링을 방지하기 위해선 긴** 서브 도메인, 높은 문자 엔트로피, 숫자가 많은 문자열**과 같은 DNS 터널링의 주요 특징들을 필터링 해야한다.<br>다음은 DNS 터널링의 특징들이다.</p>
+<ol>
+<li><b>긴 하위 도메인, 반복되는 패딩 문자, base32, base64 인코딩</b>과 일치하는 패턴</li>
+<li><b>대량으로 반환되는 TXT 레코드와 CNAME 레코드</b>(악성 페이로드 실행 가능성).</li>
+<li><b>여러 서브 도메인으로 구성된 단일 도메인에 대한 요청, 긴 쿼리 길이와 요청 수</b>(5-10분 안에 10,000개 정도의 DNS 쿼리를 보내는 경우)</li>
+</ol>
+<h1>마무리</h1>
+<p>생소했던 DNS 터널링에 대해 공부해보았다!!</p>
+
+            </div>
+        </article>
+    </main>
+
+    <footer class="blog-footer">
+        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+    </footer>
+
+    <script>
+    (function () {
+        var header = document.getElementById('header');
+        var scrolled = false;
+        window.addEventListener('scroll', function () {
+            if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
+            else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
+        });
+    })();
+    </script>
+</body>
+
+</html>
