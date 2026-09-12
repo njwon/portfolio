@@ -3,15 +3,17 @@
  *
  * Worker API(D1)에서 글을 받아 blog/posts/<slug>/index.html 로 미리 렌더링하고
  * blog/sitemap.xml, blog/rss.xml 을 생성한다.
+ * 루트 sitemap-pages.xml(홈·프로젝트 페이지)도 git 최종 수정일 기준으로 함께 갱신한다.
  * 검색엔진이 JS 없이도 글 본문·메타를 읽을 수 있게 하기 위한 용도.
  *
  *   cd scripts && npm install && node build-blog.mjs
  */
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, readdir, rm, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const API_BASE = 'https://blog-api.njwon19.workers.dev';
 const SITE     = 'https://njw.kro.kr';
@@ -24,10 +26,9 @@ const esc = s => String(s ?? '')
 const encSlug = slug => encodeURIComponent(slug);
 const cdata   = html => String(html).split(']]>').join(']]]]><![CDATA[>');
 const postUrl = slug => `${SITE}/blog/posts/${encSlug(slug)}/`;
-const fmtDate = iso => {
-  const d = new Date(iso);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-};
+// 날짜는 실행 환경(로컬 KST / GitHub 러너 UTC)과 무관하게 항상 한국시간 기준으로 표기
+const kstYmd  = iso => new Date(new Date(iso).getTime() + 9 * 3600e3).toISOString().slice(0, 10);
+const fmtDate = iso => kstYmd(iso).replace(/-/g, '.');
 const stripMd = md => String(md ?? '')
   .replace(/```[\s\S]*?```/g, ' ')
   .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
@@ -210,15 +211,46 @@ ${body}
 function renderSitemap(posts) {
   const items = posts.map(p => `  <url>
     <loc>${postUrl(p.slug)}</loc>
-    <lastmod>${p.display_date.slice(0, 10)}</lastmod>
+    <lastmod>${kstYmd(p.display_date)}</lastmod>
   </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${SITE}/blog/</loc>
-    <lastmod>${posts[0]?.display_date.slice(0, 10) || new Date().toISOString().slice(0, 10)}</lastmod>
+    <lastmod>${posts[0] ? kstYmd(posts[0].display_date) : kstYmd(Date.now())}</lastmod>
   </url>
 ${items}
+</urlset>
+`;
+}
+
+// 파일이 마지막으로 바뀐 커밋 날짜(YYYY-MM-DD). git 이력이 없으면 파일 mtime 으로 대체
+async function lastMod(relPath) {
+  try {
+    const out = execFileSync('git', ['log', '-1', '--format=%cs', '--', relPath], { cwd: ROOT }).toString().trim();
+    if (out) return out;
+  } catch {}
+  return (await stat(join(ROOT, relPath))).mtime.toISOString().slice(0, 10);
+}
+
+// 홈 + projects/*/index.html 을 훑어 루트 사이트맵을 만든다
+async function renderPagesSitemap() {
+  const pages = [{ url: `${SITE}/`, path: 'index.html' }];
+  const projDir = join(ROOT, 'projects');
+  for (const d of (await readdir(projDir, { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name).sort()) {
+    try {
+      await stat(join(projDir, d, 'index.html'));
+      pages.push({ url: `${SITE}/projects/${d}/`, path: `projects/${d}/index.html` });
+    } catch {}
+  }
+  const items = [];
+  for (const p of pages) items.push(`  <url>
+    <loc>${p.url}</loc>
+    <lastmod>${await lastMod(p.path)}</lastmod>
+  </url>`);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${items.join('\n')}
 </urlset>
 `;
 }
@@ -297,6 +329,7 @@ ${posts.slice(0, 5).map((p, i) => `        <a class="post-card post-card-link" h
 
   await writeFile(join(ROOT, 'blog', 'sitemap.xml'), renderSitemap(posts));
   await writeFile(join(ROOT, 'blog', 'rss.xml'), renderRss(posts));
+  await writeFile(join(ROOT, 'sitemap-pages.xml'), await renderPagesSitemap());
   console.log(`${posts.length}개 글 빌드 완료`);
 }
 
