@@ -137,6 +137,7 @@ function renderPage(post) {
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://velog.velcdn.com">
     <link rel="stylesheet" href="/css/font.css" />
+    <link rel="stylesheet" href="https://fastly.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard-dynamic-subset.css">
     <link rel="stylesheet" href="/blog/blog.css" />
     <link rel="icon" href="${SITE}/favicon.ico" sizes="48x48">
     <link rel="icon" href="${SITE}/img/favicon.png" type="image/png" sizes="192x192">

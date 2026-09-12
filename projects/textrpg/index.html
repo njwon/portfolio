@@ -14,7 +14,9 @@
     <style>
         @font-face {
             font-family: 'rock';
-            src: url('https://raw.githubusercontent.com/njwon/portfolio/refs/heads/main/projects/textrpg/font/DeathMohawk_PERSONAL_USE_ONLY.otf') format('opentype');
+            /* 원본 OTF 3.7MB → 대문자·꺾쇠만 서브셋한 woff2 200KB (같은 폴더, raw.githubusercontent 경유 제거) */
+            src: url('font/DeathMohawk.subset.woff2') format('woff2');
+            font-display: swap;
         }
 
         body {
