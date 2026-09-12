@@ -283,7 +283,7 @@ function drawRadarChart() {
         { label: '프론트엔드',    value: 85, speed: 0.008 + Math.random() * 0.010 },
         { label: '운영체제',     value: 79, speed: 0.008 + Math.random() * 0.010 },
         { label: '코딩',        value: 89, speed: 0.008 + Math.random() * 0.010 },
-        { label: '알고리즘',     value: 70, speed: 0.008 + Math.random() * 0.010 },
+        { label: '알고리즘',     value: 80, speed: 0.008 + Math.random() * 0.010 },
         { label: '데이터베이스', value: 90, speed: 0.008 + Math.random() * 0.010 },
     ];
     const n        = skills.length;
