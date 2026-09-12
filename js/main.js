@@ -382,9 +382,9 @@ function drawLangChart() {
         : Math.min(380, window.innerWidth * 0.42);
     const groups = [
         { title: '언어', items: [
-            { label: 'HTML / CSS',  value: 90 },
-            { label: 'JavaScript',  value: 85 },
-            { label: 'Python',      value: 83 },
+            { label: 'JavaScript',  value: 90 },
+            { label: 'Python',      value: 85 },
+            { label: 'HTML / CSS',  value: 83 },
             { label: 'SQL',         value: 80 },
             { label: 'C',           value: 79 },
             { label: 'Java',        value: 75 },
