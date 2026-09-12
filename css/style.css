@@ -194,6 +194,14 @@ menu ul li a {
     left: 0;
 }
 
+/* 첫 화면 아래에 쌓인 섹션 2~5는 뷰포트에 들어오기 전까지 스타일·레이아웃·페인트를 건너뛴다.
+   각 섹션이 정확히 100vw×100vh 라 paint 격리로 잘리는 내용은 없음 (테이프가 넘치는 1번은 제외).
+   → 첫 로드의 강제 레이아웃 시간과 아래 섹션 전용 폰트(S-CoreDream 등) 선로드가 줄어든다 */
+#section2, #section3, #section4, #section5 {
+    content-visibility: auto;
+    contain-intrinsic-size: 100vw 100vh;
+}
+
 .weirdimg {
     justify-content: end;
     z-index: -2;

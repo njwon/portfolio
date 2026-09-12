@@ -93,7 +93,7 @@
 <h4>Domain Enumeration SAN</h4>
 <p>SAN은 한개의 인증서로 여러 도메인을 등록할 수 있는 기능인데, Domain Enumeration도 S3 Bucket과 마찬가지로 <code>CT(Certificate Transparency)</code>를 조사함으로써 진행할 수 있다.<br>추천하는 서비스는 <a href="https://sslmate.com/ct_search_api/">여기</a>다.</p>
 <h4>Domain Enumeration amass</h4>
-<p>amass는 정보 수집 도구인데, amass의 enum 속성을 통해 Domain Enumeration을 진행할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/503789dc-dba8-4500-bd71-34b504f7253a/image.png" alt="[해킹] 타겟 정보 수집" loading="lazy" decoding="async"></p>
+<p>amass는 정보 수집 도구인데, amass의 enum 속성을 통해 Domain Enumeration을 진행할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/503789dc-dba8-4500-bd71-34b504f7253a/image.png" alt="[해킹] 타겟 정보 수집" width="578" height="224" loading="lazy" decoding="async"></p>
 <h2>마무리</h2>
 <p>오늘은 해킹의 가장 첫 단계인 정보 수집에 대해 알아보았다!</p>
 ]]></description>
@@ -107,15 +107,15 @@
       <pubDate>Sat, 04 Jul 2026 13:59:48 GMT</pubDate>
       <description><![CDATA[<h2>SQLD 합격</h2>
 <p>2025년에 우연히 SQLD라는 자격증에 대해 알게 되었다.<br>학교에서도 SQL을 가르치던 터라 관심이 생겨 준비하게 되었다.</p>
-<p><del>첫트에 합격했다</del><br><img src="https://velog.velcdn.com/images/njw/post/93c4a460-2a4f-41a6-b2b8-20f9472f9221/image.png" alt="[자격증] SQLD 60회 1주 벼락치기 후기!!" loading="lazy" decoding="async"></p>
+<p><del>첫트에 합격했다</del><br><img src="https://velog.velcdn.com/images/njw/post/93c4a460-2a4f-41a6-b2b8-20f9472f9221/image.png" alt="[자격증] SQLD 60회 1주 벼락치기 후기!!" width="648" height="583" loading="lazy" decoding="async"></p>
 <h3>SQLD?</h3>
-<p>SQLD란 한국데이터산업진흥원에서 주관하는 자격증 시험이다.<br>1년에 4번 시험을 치고 응시료는 5만원이다.<br><img src="https://velog.velcdn.com/images/njw/post/7ba35a64-204b-495c-b785-5d3b460bbcbf/image.png" alt="[자격증] SQLD 60회 1주 벼락치기 후기!!" loading="lazy" decoding="async"><br>나오는 문제 유형은 위와 같다.<br>1시간 반 동안 시험이 진행되며, <b>60점 이상 획득 시 합격</b>이다.<br>다만, 과락제도가 존재해 과목 별로 <b>40% 이상 점수를 얻어야 한다.</b><br>문제은행 제도가 없기 때문에 나오는 문제 유형이 몇가지를 제하고는 항상 다른 식이다. 특히 내가 시험을 쳤던 60회는 난이도가 많이 어려웠다고 한다.</p>
+<p>SQLD란 한국데이터산업진흥원에서 주관하는 자격증 시험이다.<br>1년에 4번 시험을 치고 응시료는 5만원이다.<br><img src="https://velog.velcdn.com/images/njw/post/7ba35a64-204b-495c-b785-5d3b460bbcbf/image.png" alt="[자격증] SQLD 60회 1주 벼락치기 후기!!" width="661" height="846" loading="lazy" decoding="async"><br>나오는 문제 유형은 위와 같다.<br>1시간 반 동안 시험이 진행되며, <b>60점 이상 획득 시 합격</b>이다.<br>다만, 과락제도가 존재해 과목 별로 <b>40% 이상 점수를 얻어야 한다.</b><br>문제은행 제도가 없기 때문에 나오는 문제 유형이 몇가지를 제하고는 항상 다른 식이다. 특히 내가 시험을 쳤던 60회는 난이도가 많이 어려웠다고 한다.</p>
 <h4>배경지식</h4>
 <p>학교에서 SQL 수업을 들었었지만 수업할 당시엔 뜻이 없어 <b>깊게 들어가진 않았다.</b><br><del>하지만, 60회 1번 문제에 책에는 없었지만 학교에서 배웠던 ERD 관련 문제가 나와 맞출 수 있었다.</del></p>
 <h4>준비 과정</h4>
 <p>26년 1~2월부터 공부를 시작했지만..</p>
 <p>사실 이때 미래 유망 프로젝트, 기능반 등과 겹쳐 본격적인 준비를 하지는 못했고 간간히 복원 기출을 풀어보는 식이었다.<br>본격적인 공부는 <b>시험 1~2주 전에 시작</b>했던 것 같다. SQLD는 문제은행 제도가 없기 때문에 <b>단순히 기출문제를 외우는 것으로는 합격이 힘들다.</b> 물론 기출문제를 풀어보는 것이 도움이 안된다는 것은 아니다.</p>
-<p><img src="https://velog.velcdn.com/images/njw/post/27554648-41d6-4840-82b1-1257e2377662/image.jpg" alt="[자격증] SQLD 60회 1주 벼락치기 후기!!" loading="lazy" decoding="async"><br>나는 흔히 SQLD 노랭이라고 알려져 있는 <b>&quot;SQL 자격검정 실전문제&quot;</b> 책을 이용해 준비하였다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/27554648-41d6-4840-82b1-1257e2377662/image.jpg" alt="[자격증] SQLD 60회 1주 벼락치기 후기!!" width="1600" height="1461" loading="lazy" decoding="async"><br>나는 흔히 SQLD 노랭이라고 알려져 있는 <b>&quot;SQL 자격검정 실전문제&quot;</b> 책을 이용해 준비하였다.</p>
 <p>SQLD 노랭이는 SQLD 뿐만 아니라 SQLP를 준비할 때에도 쓰이는 책이기 때문에 <b>난이도가 많이 어렵다.</b><br>책 안에 개념이 나와있는 것이 아닌, <b>문제 유형만 나와</b> 있기 때문에 비전공자가 이 책만으로 준비하는 것은 어렵다고 생각한다. 하지만 SQLD 노랭이는 자격증을 발급하고 주관하는 한국데이터산업진흥원에서 쓴 책이기 때문에 실제로 <b>시험에 몇 문제 정도가 이 책에서 등장</b>한다.</p>
 <p>나는 이 SQLD 노랭이 책 문제에 등장하는 개념을 <b>&quot;모두 이해하면&quot;</b> 어렵지 않게 자격증을 취득할 수 있다고 생각한다.</p>
 <p><b>몇 회독 이런 것은 중요하지 않다.</b> 만약 SQLD를 준비하는 중이라면 SQLD 노랭이를 구매해 <b>딥하게 이론을 파며 모두 이해해야 한다.</b></p>
@@ -294,7 +294,7 @@ USE Dreamhack;
 </blockquote>
 <h2>SSRF</h2>
 <p>이처럼 서비스 간 HTTP 통신이 이뤄질 때 요청 내에 이용자의 입력값이 포함될 수 있다. 이용자의 입력값으로 포함되면 개발자가 의도하지 않은 요청이 전송될 수 있다. **Server-side Request Forgery(SSRF)**는 웹 서비스의 요청을 변조하는 취약점으로, 브라우저가 변조된 요청을 보내는 <b><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">CSRF</a>와는 다르게 웹 서비스의 권한으로 변조된 요청을 보낼 수 있다.</b></p>
-<p><img src="https://velog.velcdn.com/images/njw/post/700d4e3d-3bdb-4d1a-a484-c78b6574378f/image.png" alt="[보안] SSRF 부셔보기!" loading="lazy" decoding="async"></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/700d4e3d-3bdb-4d1a-a484-c78b6574378f/image.png" alt="[보안] SSRF 부셔보기!" width="1280" height="720" loading="lazy" decoding="async"></p>
 <p>최근의 대다수 서비스들은 마이크로서비스로 구조를 많이 바꾸고, 새롭게 개발하는 추세이기 때문에 <b>SSRF 취약점의 파급력이 더욱 높아지고 있다.</b></p>
 <p>백오피스와 같은 기능을 사용하는 웹 서비스들은 관리자만 기능을 사용할 수 있어야 하기 때문에 <b>내부망만 접속가능하도록 구성한다.</b></p>
 <p>이러한 내부망 서비스들을 외부에서는 접속 불가능하지만 <b>웹 서비스 자체는 접속할 수 있어야 하기 때문에 외부에서 직접 접근할 수 없는 내부망 서비스와 접속이 허용되어 있다.</b></p>
@@ -640,9 +640,9 @@ https:<span class="hljs-regexp">//</span>vulnerable-web.dreamhack.io/images.php?
     <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span> 
 <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></span></code></pre>
-<p><code>list.php</code>는 <code>./uploads/</code>의 파일들 중 <code>.</code>, <code>..</code>, <code>index.html</code>을 제외하고 나열한다.<br><img src="https://velog.velcdn.com/images/njw/post/15076e06-ce4f-4417-ba74-1f871110f161/image.png" alt="[보안] File Vulnerability 부셔보기!" loading="lazy" decoding="async"></p>
+<p><code>list.php</code>는 <code>./uploads/</code>의 파일들 중 <code>.</code>, <code>..</code>, <code>index.html</code>을 제외하고 나열한다.<br><img src="https://velog.velcdn.com/images/njw/post/15076e06-ce4f-4417-ba74-1f871110f161/image.png" alt="[보안] File Vulnerability 부셔보기!" width="642" height="109" loading="lazy" decoding="async"></p>
 <p><b><code>upload.php</code>는 이용자가 업로드한 파일을 <code>uploads</code> 폴더에 복사하며, 이용자는 <code>http://host1.dreamhack.games:[PORT]/uploads/[FILENAME]</code> URL을 통해 접근</b>할 수 있다.</p>
-<p>만약 같은 이름의 파일이 있다면 <code>&quot;already exists&quot;</code>라는 메시지를 반환한다.<br><img src="https://velog.velcdn.com/images/njw/post/4669463e-1ee6-42c7-9dd4-b04785cb478d/image.png" alt="[보안] File Vulnerability 부셔보기!" loading="lazy" decoding="async"></p>
+<p>만약 같은 이름의 파일이 있다면 <code>&quot;already exists&quot;</code>라는 메시지를 반환한다.<br><img src="https://velog.velcdn.com/images/njw/post/4669463e-1ee6-42c7-9dd4-b04785cb478d/image.png" alt="[보안] File Vulnerability 부셔보기!" width="465" height="417" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p><code>upload.php</code>는 업로드하는 파일에 어떠한 처리도 하지 않으므로 <b><code>upload.php</code>에 웹 쉘 파일을 업로드하여 쉘 권한을 획득</b>할 수 있다.</p>
 <p><b>웹 쉘 php 파일</b></p>
@@ -658,9 +658,9 @@ https:<span class="hljs-regexp">//</span>vulnerable-web.dreamhack.io/images.php?
         <span class="hljs-title function_ invoke__">system</span>(<span class="hljs-variable">$_GET</span>[<span class="hljs-string">&#x27;cmd&#x27;</span>]);
     }
 <span class="hljs-meta">?&gt;</span></span><span class="language-xml"><span class="hljs-tag">&lt;/<span class="hljs-name">pre</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span></span></code></pre>
-<p>웹 쉘을 업로드하고 웹 쉘에서 <code>ls /</code> 명령어를 실행하면 flag.txt가 존재하고 있음을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/810ec12a-14ad-46a5-87e2-04e10d5ecdfa/image.png" alt="[보안] File Vulnerability 부셔보기!" loading="lazy" decoding="async"></p>
+<p>웹 쉘을 업로드하고 웹 쉘에서 <code>ls /</code> 명령어를 실행하면 flag.txt가 존재하고 있음을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/810ec12a-14ad-46a5-87e2-04e10d5ecdfa/image.png" alt="[보안] File Vulnerability 부셔보기!" width="714" height="373" loading="lazy" decoding="async"></p>
 <p>웹 쉘에서 <code>cat /flag.txt</code>를 통해 플래그를 획득할 수 있다.</p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/507ec8b3-7d13-462c-b12f-80a2d55ee163/image.png" alt="[보안] File Vulnerability 부셔보기!" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/507ec8b3-7d13-462c-b12f-80a2d55ee163/image.png" alt="[보안] File Vulnerability 부셔보기!" width="726" height="135" loading="lazy" decoding="async"></p>
 <h3>File Vulnerability 방어</h3>
 <h4>Path Traversal 방어</h4>
 <p>공격자가 <b>../와 같은 경로 조작 문자열을 사용하여 의도하지 않은 디렉터리에 접근하는 것을 막기 위해 .., /, \ 등의 특수문자를 파일명에서 제거하거나 거부</b>해야 한다.</p>
@@ -771,16 +771,16 @@ def <span class="hljs-title function_">ping</span>():
 <p><b>flag.py</b></p>
 <pre><code class="hljs language-ini"><span class="hljs-attr">FLAG</span> = <span class="hljs-string">&#x27;DH{[REDACTED]}&#x27;</span></code></pre>
 <p><b>플래그는 flag.py에, 웹 어플리케이션은 app.py에서 실행하는 것을 알 수 있다.</b></p>
-<p><b>[flag.py]</b> FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p><b>[app.py]</b> /ping 엔드포인트에서 GET일 땐, html을 렌더하고, POST일 때 사용자의 입력값을 <code>host</code>에 담고 이를 그대로 담아 <b>동적으로 ping 명령어를 구성</b>한다. 또 이를 <b><code>subprocess.check_output</code> 함수를 사용하여 /bin/sh에서 cmd 명령어를 실행</b>하고, 결과 출력을 변수 <code>output</code>에 저장한다. 이때 실행시간이 5초를 넘긴다면 <code>&quot;Timeout !&quot;</code> 메세지와 함께 <code>ping_result.html</code>을 렌더한다. 명령어 실행 중 오류가 발생하면 <code>subprocess.CalledProcessError</code> 예외가 발생하며 해당 오류 메시지와 함께 <code>ping_result.html</code>을 렌더한다.<br>어떠한 예외도 발생하지 않으면 <b>변수 <code>output</code>을 UTF-8로 디코딩하여 <code>ping_result.html</code>과 함께 반환</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/fc586671-b35c-4ecd-a268-537a6ac4a322/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>ping.html의 폼에 <b>영어, 숫자, <code>&quot;.&quot;</code>, 글자 수 5~20자만을 허용하는 정규표현식이 포함</b>되어 있다.<br><img src="https://velog.velcdn.com/images/njw/post/1565b543-948d-4c3d-9f34-75972023b766/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p><b>[flag.py]</b> FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기!" width="222" height="42" loading="lazy" decoding="async"></p>
+<p><b>[app.py]</b> /ping 엔드포인트에서 GET일 땐, html을 렌더하고, POST일 때 사용자의 입력값을 <code>host</code>에 담고 이를 그대로 담아 <b>동적으로 ping 명령어를 구성</b>한다. 또 이를 <b><code>subprocess.check_output</code> 함수를 사용하여 /bin/sh에서 cmd 명령어를 실행</b>하고, 결과 출력을 변수 <code>output</code>에 저장한다. 이때 실행시간이 5초를 넘긴다면 <code>&quot;Timeout !&quot;</code> 메세지와 함께 <code>ping_result.html</code>을 렌더한다. 명령어 실행 중 오류가 발생하면 <code>subprocess.CalledProcessError</code> 예외가 발생하며 해당 오류 메시지와 함께 <code>ping_result.html</code>을 렌더한다.<br>어떠한 예외도 발생하지 않으면 <b>변수 <code>output</code>을 UTF-8로 디코딩하여 <code>ping_result.html</code>과 함께 반환</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/fc586671-b35c-4ecd-a268-537a6ac4a322/image.png" alt="[보안] Command Injection 부셔보기!" width="977" height="268" loading="lazy" decoding="async"></p>
+<p>ping.html의 폼에 <b>영어, 숫자, <code>&quot;.&quot;</code>, 글자 수 5~20자만을 허용하는 정규표현식이 포함</b>되어 있다.<br><img src="https://velog.velcdn.com/images/njw/post/1565b543-948d-4c3d-9f34-75972023b766/image.png" alt="[보안] Command Injection 부셔보기!" width="1049" height="188" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>파일 구조를 확인하기 위해 <code>8.8.8.8&quot;; ls #</code> 명령어를 실행하려한다.</p>
-<p>직접 html 속성을 수정해 정규 표현식을 제거하는 방법도 있겠지만 조금 다르게 풀이하였다.<br><img src="https://velog.velcdn.com/images/njw/post/d340223d-9d0f-433f-ab86-425aea55bf0d/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>Burp Suite에서 직접 값을 변경하여 포워드하면<br><img src="https://velog.velcdn.com/images/njw/post/fd647686-1abf-47cc-812e-a3dd3af44326/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>이런식으로 명령어의 결과가 나온다.<br><img src="https://velog.velcdn.com/images/njw/post/49636b64-5cb0-4950-894c-85bda439d3ef/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>flag.py의 위치를 알았으니 명령어를 수정해서 보내보면<br><img src="https://velog.velcdn.com/images/njw/post/a5852319-b174-4c75-aeda-feb770d1618d/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/db51d849-2908-4a86-8f68-c708700780af/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p>직접 html 속성을 수정해 정규 표현식을 제거하는 방법도 있겠지만 조금 다르게 풀이하였다.<br><img src="https://velog.velcdn.com/images/njw/post/d340223d-9d0f-433f-ab86-425aea55bf0d/image.png" alt="[보안] Command Injection 부셔보기!" width="536" height="38" loading="lazy" decoding="async"></p>
+<p>Burp Suite에서 직접 값을 변경하여 포워드하면<br><img src="https://velog.velcdn.com/images/njw/post/fd647686-1abf-47cc-812e-a3dd3af44326/image.png" alt="[보안] Command Injection 부셔보기!" width="1269" height="358" loading="lazy" decoding="async"></p>
+<p>이런식으로 명령어의 결과가 나온다.<br><img src="https://velog.velcdn.com/images/njw/post/49636b64-5cb0-4950-894c-85bda439d3ef/image.png" alt="[보안] Command Injection 부셔보기!" width="585" height="361" loading="lazy" decoding="async"></p>
+<p>flag.py의 위치를 알았으니 명령어를 수정해서 보내보면<br><img src="https://velog.velcdn.com/images/njw/post/a5852319-b174-4c75-aeda-feb770d1618d/image.png" alt="[보안] Command Injection 부셔보기!" width="364" height="225" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/db51d849-2908-4a86-8f68-c708700780af/image.png" alt="[보안] Command Injection 부셔보기!" width="521" height="217" loading="lazy" decoding="async"></p>
 <h3>Command injection 방어</h3>
 <p>사실 Command 인젝션을 방어하기 위한 제일 좋은 방법은 <b>시스템 호출 함수 사용을 하지 않는 것</b>이다.<br>프로그래밍 언어에서 fs.unlink(path) (Node.js) 또는 os.remove(path) (Python) 와 같은 <b>셸을 직접 실행하지 않고 원격으로 실행할 수 있도록 지원하는 내장 라이브러리 API</b>가 정말 많다. 이를 사용하면 Command 인젝션은 유효하지 않다.<br>이 외에도 <b>입력값에 대한 검증</b>과 <b>메타 문자 필터링</b> 등의 추가 작업을 할 수 있다.</p>
 <h2>마무리</h2>
@@ -803,7 +803,7 @@ def <span class="hljs-title function_">ping</span>():
 <p>**SQL Injection(SQL 인젝션)**을 이해하기 위해선 먼저 데이터베이스에 대해 알아야 한다.</p>
 <p>웹 해킹에서 <b>대부분의 취약점은 미흡한 입력값 검증에서 발생</b>한다.</p>
 <p>SQL 인젝션 또한 그러하다. 미흡한 입력값 검증 때문에 이용자의 입력값이 데이터베이스 문법으로 인식되기 때문에 공격자의 의도대로 <b>DB에서 작업을 수행하는 것</b>이다.</p>
-<p><img src="https://velog.velcdn.com/images/njw/post/8decf5de-9829-41b0-b35a-aa8506dbbea2/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/8decf5de-9829-41b0-b35a-aa8506dbbea2/image.png" alt="[보안] SQL Injection 부셔보기!" width="311" height="162" loading="lazy" decoding="async"></p>
 <p>위 이미지를 보면 흐름을 이해할 수 있다.</p>
 <p><b>SQL Injection 공격 예시</b><br><code>SELECT * FROM accounts WHERE user_id=&#39;njwon&#39; and user_pw=&#39;password&#39;</code> 이 쿼리는 유저의 로그인을 처리하는 아주 기본적인 쿼리이다.</p>
 <p>위 쿼리를 이렇게 바꾸면 어떨까?<br><code>SELECT * FROM accounts WHERE user_id=&#39;njwon&#39; --&#39; and user_pw=&#39;password&#39;</code> <b>password 속성의 비교문을 주석 처리하면서 id만 알면 로그인을 할 수 있게 되었다.</b></p>
@@ -1143,11 +1143,11 @@ def login<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)
         return &#x27;&lt;script&gt;alert<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;wrong&quot;</span><span class="hljs-punctuation">)</span><span class="hljs-comment">;history.go(-1);&lt;/script&gt;&#x27;</span>
 
 app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-number">0.0.0.0</span>&#x27;, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p>FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/a4d4ab87-c08e-46e2-b572-1c02bc17a89c/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p>FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/a4d4ab87-c08e-46e2-b572-1c02bc17a89c/image.png" alt="[보안] SQL Injection 부셔보기!" width="427" height="97" loading="lazy" decoding="async"></p>
 <p>get_db() 함수에서 <b>애플리케이션이 실행되는 동안 필요할 때마다 DB 연결 객체를 가져온다.</b></p>
 <p>query_db() 함수에서 매번 커서를 만들고 닫는 번거로움을 줄여주는 <b>쿼리 실행 편의 기능을 담당한다.</b></p>
 <p>close_connection() 함수는 연결 자동 종료 함수로써 <b>DB 연결을 명시적으로 닫아 메모리 누수나 파일 잠금 문제를 해결한다.</b></p>
-<p><img src="https://velog.velcdn.com/images/njw/post/0dcbf818-8acc-4ab1-a81f-4639ab56a8b0/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/0dcbf818-8acc-4ab1-a81f-4639ab56a8b0/image.png" alt="[보안] SQL Injection 부셔보기!" width="1368" height="619" loading="lazy" decoding="async"></p>
 <p>아래의 코드로 생성된 데이터베이스 구조는 아래와 같다. <b>userid와 userpassword 컬럼은 각각 이용자의 ID와 PW를 저장</b>한다. 아래 schema을 살펴보면, <b>guest 계정은 이용자가 알 수 있지만 admin 계정은 랜덤하게 생성된 16 바이트의 문자열이기 때문에 비밀번호를 예상할 수 없다.</b></p>
 <p><b>users 테이블</b></p>
 <table>
@@ -1170,7 +1170,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
 <h5>GET</h5>
 <p>userid와 userpassword를 입력할 수 있는 로그인 페이지 제공. <b>userid와 password 입력창에 guest를 입력하면 로그인을 수행</b> 가능.</p>
 <h5>POST</h5>
-<p>이용자가 입력한 계정 정보가 데이터베이스에 존재하는지 확인. 이때, <b>로그인 계정이 admin일 경우 FLAG를 출력.</b><br><img src="https://velog.velcdn.com/images/njw/post/cd8af8aa-87b6-42df-937d-57dbb8ec37cb/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p>이용자가 입력한 계정 정보가 데이터베이스에 존재하는지 확인. 이때, <b>로그인 계정이 admin일 경우 FLAG를 출력.</b><br><img src="https://velog.velcdn.com/images/njw/post/cd8af8aa-87b6-42df-937d-57dbb8ec37cb/image.png" alt="[보안] SQL Injection 부셔보기!" width="1169" height="400" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>문제를 해결하기 위해선 <b>admin 계정으로 로그인해 플래그를 획득</b>해야 한다.</p>
 <p>로그인을 진행할 때, <b>사용자의 입력값을 검증없이 그대로 쿼리에 삽입하므로..</b></p>
@@ -1180,10 +1180,10 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
     userid 검색 조건 뒤에 OR (또는) 조건을 추가하여 뒷 내용이 무엇이든, admin 이 반환되도록 하는 방식
     */</span>
     <span class="hljs-keyword">SELECT</span> * <span class="hljs-keyword">FROM</span> users <span class="hljs-keyword">WHERE</span> userid=<span class="hljs-string">&quot;admin&quot;</span> <span class="hljs-keyword">or</span> <span class="hljs-string">&quot;1&quot;</span> <span class="hljs-keyword">AND</span> userpassword=<span class="hljs-string">&quot;DUMMY&quot;</span></code></pre>
-<p><b>userid에 admin&quot; or &quot;1 입력값을 삽입</b>하면 전체 쿼리가 userid=&quot;admin&quot; or &quot;1&quot; 조건이 되어 <b>뒤 AND 연산자를 무시하고 반드시 실행되도록 할 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p><b>userid에 admin&quot; or &quot;1 입력값을 삽입</b>하면 전체 쿼리가 userid=&quot;admin&quot; or &quot;1&quot; 조건이 되어 <b>뒤 AND 연산자를 무시하고 반드시 실행되도록 할 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png" alt="[보안] SQL Injection 부셔보기!" width="485" height="77" loading="lazy" decoding="async"></p>
 <h5>Blind SQL injection</h5>
 <p>/login에서 <b>폼 데이터를 POST할 때, id 값은 userid에 담기고 비밀번호 값은 userpassword에 담기는 것을 확인</b>할 수 있다.</p>
-<p><img src="https://velog.velcdn.com/images/njw/post/8e539171-d47d-4bff-b6c4-0195b489512c/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/8e539171-d47d-4bff-b6c4-0195b489512c/image.png" alt="[보안] SQL Injection 부셔보기!" width="1216" height="309" loading="lazy" decoding="async"></p>
 <p>아래와 같은 페이로드를 이용해 비밀번호의 길이를 알아내 그 수 만큼 반복하여 <b>admin 계정의 비밀번호를 알아낼 수 있다.</b></p>
 <pre><code class="hljs language-python"><span class="hljs-comment">#!/usr/bin/python3</span>
 <span class="hljs-keyword">import</span> requests
@@ -1238,7 +1238,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
     port = sys.argv[<span class="hljs-number">1</span>]
     solver = Solver(port)
     solver.solve()</code></pre>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/3497c214-f91e-4a32-9a88-d07f616ec6e6/image.png" alt="[보안] SQL Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/3497c214-f91e-4a32-9a88-d07f616ec6e6/image.png" alt="[보안] SQL Injection 부셔보기!" width="468" height="617" loading="lazy" decoding="async"></p>
 <h3>SQL injection 방어</h3>
 <p>SQL 인젝션은 결국 <b>사용자의 입력값이 단순 데이터가 아닌 SQL 쿼리로 인식되는 것</b>이기에<br>**매개변수화 쿼리(Prepared Statement)**를 이용해 <b>SQL 쿼리 구조를 선 정의하고 사용자의 입력값을 단순 데이터 취급하여 처리하면 방어</b>된다.<br>이외에도 <b>입력값 검증</b>과 웹 어플리케이션이 이용하는 DB 계정에 필요한 권한만 부여하는 **최소 권한 원칙(Principle of Least Privilege)**을 이용하면 더 좋다.</p>
 <h2>마무리</h2>
@@ -1256,7 +1256,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
 <blockquote>
 <p>CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점</p>
 </blockquote>
-<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
+<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="1698" height="844" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
 <h3>방식</h3>
 <p>CSRF 공격에 성공하기 위해서는 <b>공격자가 작성한 악성 스크립트를 이용자가 실행</b>해야 한다. 이는 공격자가 이용자에게 메일을 보내거나 게시판에 글을 작성해 이용자가 이를 조회하도록 유도하는 방법이 있다. 심지어는 공격자가 직접 자신의 사이트를 만들어 그곳에서 악성 스크립트를 작성할 수도 있다. 여기서 말하는 <b>악성 스크립트는 HTTP 요청을 보내는 코드</b>를 뜻한다.</p>
 <h4>XSS와의 차이점?</h4>
@@ -1269,7 +1269,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
 <h3>CORS란?</h3>
 <p>CSRF 공격의 목적은 요청을 실행시키는 것 자체이다. <b>공격자는 응답을 굳이 읽지 않아도 된다.</b> <code>&lt;form&gt;</code> 태그를 이용한 POST 요청이나 <code>&lt;img&gt;</code> 태그를 이용한 GET 요청처럼 단순한 방식으로도 <b>송금이나 설정 변경은 충분히 가능</b>하다.</p>
 <p>하지만 여기서 <b>공격자가 단순히 요청을 보내는 것을 넘어,</b> 서버의 응답 데이터를 가로채거나(예: 계좌 잔액 조회, 개인정보 탈취), application/json 같은 커스텀 형식으로 정교한 요청을 보내려는 순간, 브라우저라는 문지기가 막는다. 바로 <b>SOP 정책</b> 때문이다.</p>
-<p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="868" height="295" loading="lazy" decoding="async"></p>
 <p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#sop-%EC%A0%95%EC%B1%85">여기서</a> <b>SOP는 Same Origin인 서비스들끼리만 리소스를 공유</b>할 수 있다고 했다.<br>그렇다면 <code>&lt;img&gt;</code> 태그들 같은 것들은 어떻게 작동할까? 분명히 Cross Origin인 리소스를 태그에 담을 수 있지 않은가. 사실 <b>SOP는 Cross Origin끼리의 교환에서 모든 리소스를 막는 것이 아니다.</b> 위에서 서술한 <code>&lt;img&gt;</code> 태그와 같은 이미지 말고도 <code>&lt;style&gt;</code>, <code>&lt;script&gt;</code> 등의 태그의 리소스 교환을 막지 않는다.<br>위 경우들 외에도 Cross Origin인 웹 서비스들끼리 데이터를 처리해야 하는 경우가 있다. 이때 <b>자원을 공유하기 위해 사용하는 방법</b>을 <b>CORS</b>라고 명칭한다.</p>
 <p><b>CORS(Cross-Origin Resource Sharing, 교차 출처 리소스 공유)는 HTTP 헤더에 기반하여 Cross Origin 간에 리소스를 공유</b>하는 방법이다.<br>발신측에서 CORS 헤더를 설정해 요청하면, 수신측에서 헤더를 구분해 정해진 규칙에 맞게 데이터를 가져갈 수 있도록 설정한다.<br><b>웹 리소스 요청 코드</b></p>
 <pre><code class="hljs language-dart"><span class="hljs-comment">/*
@@ -1418,15 +1418,15 @@ def admin_notice_flag<span class="hljs-punctuation">(</span><span class="hljs-pu
 
 
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 전역 변수 <b>memo_txt에 파라미터 값을 지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/efa25945-b496-489d-a4dd-89ac5b2826ac/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>/admin/notice_flag 엔드포인트는 접속 호스트의 주소가 <b>루프백 주소이며 파라미터가 admin이어야지만 플래그를 memo_txt에 추가</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/dfd08d8c-441d-4f8a-a3ce-eadd5ee582ec/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="359" height="76" loading="lazy" decoding="async"></p>
+<p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="603" height="204" loading="lazy" decoding="async"></p>
+<p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="566" height="201" loading="lazy" decoding="async"></p>
+<p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="590" height="632" loading="lazy" decoding="async"></p>
+<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 전역 변수 <b>memo_txt에 파라미터 값을 지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/efa25945-b496-489d-a4dd-89ac5b2826ac/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="661" height="290" loading="lazy" decoding="async"></p>
+<p>/admin/notice_flag 엔드포인트는 접속 호스트의 주소가 <b>루프백 주소이며 파라미터가 admin이어야지만 플래그를 memo_txt에 추가</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/dfd08d8c-441d-4f8a-a3ce-eadd5ee582ec/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="603" height="260" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>/admin/notice_flag 엔드포인트를 이용하면 플래그를 획득할 수 있어보인다.<br>하지만 반드시 루프백 주소로 admin 파라미터로 접근해야지만 플래그를 보여주고, 서버 또한 쿠키를 루프백 주소에 저장하므로 <code>&lt;img src=&quot;/admin/notice_flag?userid=admin&quot;&gt;</code>와 같은 <b>&quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 키워드를 사용하지 않는 CSRF 페이로드를 /flag 엔드포인트를 이용해 동적으로 URL을 만들어 서버의 브라우저를 이용해 열어야 한다.</b></p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/d723dddf-6340-4574-84cf-5b55776ce22a/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/d723dddf-6340-4574-84cf-5b55776ce22a/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="440" height="91" loading="lazy" decoding="async"></p>
 <h3>CSRF 방어</h3>
 <p>방어하기 위해서 쓰이는 가장 대표적인 것은 <b>CSRF Token</b>이다.<br>CSRF Token은 서버가 세션에 랜덤 토큰을 생성해서 심어주고 HTML의 <code>&lt;body&gt;</code> 안에도 담고, 이를 <b>매 요청 시 비교하여 검증</b>하는 식으로 동작한다.<br>공격자가 자신의 사이트에서 스크립트를 작성해 요청해도 토큰이 없기 때문에 막히고, SOP 때문에 공격자가 피해자의 페이지를 읽을 수 없어서 <b>토큰값을 알아낼 방법이 없게 된다.</b><br><b>Referer / Origin 헤더를 검증</b>하는 것과 <b>SameSite일때만 Cookie를 보내도록 설정</b>하는 것 또한 방어를 위한 방법으로 적합하다.</p>
 <h2>마무리</h2>
@@ -1446,7 +1446,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 </blockquote>
 <p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
 <h3>방식</h3>
-<p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
+<p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="820" height="489" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
 <p>평범한 이용자들은 단순히 개발자의 의도대로 자연어로 이루어진 글을 게시할 뿐이겠지만, 여기서 공격자가 <b>인터널 자바스크립트  <code>&lt;script&gt;&lt;/script&gt;</code>를 포함한 글을 게시하면 그 글을 열어본 유저에게는 클라이언트 사이드 스크립트</b>가 로드되어 실행될 것이다.</p>
 <p>이같은 경우를 XSS라고 부르는 것이다.</p>
 <p>XSS는 크게 네가지의 공격기법이 있다.</p>
@@ -1603,14 +1603,14 @@ def memo<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)<
 
 
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p>이 부분을 통해 <b>FLAG 변수</b>에 <b>플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/3d7ab754-a6f0-4320-a07e-90de76be3622/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>/vuln 엔드포인트에서는 <b>파라미터를 그대로 반환</b>해 XSS 공격이 가능함을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/79c7b3ec-d367-4cc5-b54e-faabe952d306/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>이 부분을 통해 /flag 엔드포인트에서 check_xss에 사용자의 요청값과 플래그를 포함해 넘기는 것을 알 수 있는데<br><img src="https://velog.velcdn.com/images/njw/post/313cf32f-d697-45e6-957a-b59347830ce2/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>check_xss는 동적으로 URL을 만들어 <b>서버에서 chrome 드라이버를 통해 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것</b>을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/68a6f591-f114-4c68-bb54-e1da87c75316/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 memo 파라미터를 이용해 변수에 담아 <b>지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2e57873e-6e43-4436-843b-50ec5ec2f926/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>이 부분을 통해 <b>FLAG 변수</b>에 <b>플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/3d7ab754-a6f0-4320-a07e-90de76be3622/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="449" height="96" loading="lazy" decoding="async"></p>
+<p>/vuln 엔드포인트에서는 <b>파라미터를 그대로 반환</b>해 XSS 공격이 가능함을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/79c7b3ec-d367-4cc5-b54e-faabe952d306/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="514" height="115" loading="lazy" decoding="async"></p>
+<p>이 부분을 통해 /flag 엔드포인트에서 check_xss에 사용자의 요청값과 플래그를 포함해 넘기는 것을 알 수 있는데<br><img src="https://velog.velcdn.com/images/njw/post/313cf32f-d697-45e6-957a-b59347830ce2/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="713" height="242" loading="lazy" decoding="async"></p>
+<p>check_xss는 동적으로 URL을 만들어 <b>서버에서 chrome 드라이버를 통해 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것</b>을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/68a6f591-f114-4c68-bb54-e1da87c75316/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="787" height="653" loading="lazy" decoding="async"></p>
+<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 memo 파라미터를 이용해 변수에 담아 <b>지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2e57873e-6e43-4436-843b-50ec5ec2f926/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="455" height="117" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>/flag 엔드포인트에서 <code>&lt;script&gt;location.href = &quot;/memo?memo=&quot; + document.cookie;&lt;/script&gt;</code> 이와 같은 페이로드를 입력하면 서버가 플래그 쿠키를 넣고 URL을 열기 때문에 <b>서버의 브라우저에 있는 쿠키</b>가 <b>출력</b>된다는 것을 알 수 있다.</p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/e3517ab1-be5f-4871-8a44-d2c9d34cbb75/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/e3517ab1-be5f-4871-8a44-d2c9d34cbb75/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="475" height="216" loading="lazy" decoding="async"></p>
 <h3>XSS 방어</h3>
 <p>XSS가 사용자의 악의적인 입력값 주입과 텍스트를 인터널 자바스크립트와 같은 태그로 인식하여 생기는 취약점 이므로 <b>서버 단의 철저한 입력값 검증</b>과 출력할 때 <code>&amp;lt;</code>, <code>&amp;gt;</code>와 같은 <b>특수 입력 기호</b>를 <b>이용</b>하면 대부분의 XSS는 방어 가능하다.</p>
 <h2>마무리</h2>
@@ -1634,7 +1634,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <p>**DNS(Domain Name System)**는 <b>호스트의 도메인네임 (<a href="http://www.example.com)%EC%9D%84">www.example.com)을</a> 네트워크주소(192.168.1.0)로 변환</b>하거나, 그 반대의 역할을 수행하는 시스템이다.</p>
 <p>naver.com , google.com 모두 DNS을 가진 DN(Domain Name)이라고 할 수 있다.</p>
 <p>DNS는 클라이언트가 DNS 서버에 접속하고 IP 주소를 얻기 위해 <b>질의를 보내는 것으로 시작하고 DNS 서버는 IP 주소를 반환</b>한다.<br>클라이언트는 IP 주소를 받으면 이를 이용해 웹서버에 접속한다.</p>
-<p><img src="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png" alt="[보안] DNS와 DNS 터널링" loading="lazy" decoding="async"></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png" alt="[보안] DNS와 DNS 터널링" width="900" height="680" loading="lazy" decoding="async"></p>
 <p>이때 표면적으로는 <a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 담당하고 있는 DNS 서버에 바로 쿼리를 날리는 것처럼 보인다.</p>
 <p>하지만 도메인 자체가 전 세계에 너무 많기에 조금 다른 <b>계층 방식</b>으로 동작한다.<br><a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 예시로 들어보겠다.</p>
 <h3>DNS 구조</h3>
@@ -1642,14 +1642,14 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <li>브라우저와 OS 모두 접속했던 사이트에 대한 <b>DNS 기록과 매핑되는 IP 캐시</b>를 가지고 있다. 이곳을 제일 먼저 확인한다.</li>
 <li>1번에서 실패하면 DNS 리졸버에게서 확인하고 이에 실패하면 <b>DNS 리졸버가 동작</b>하기 시작한다.</li>
 <li><b>루트 DNS 서버에 TLD DNS 서버를 쿼리</b>한다.<br>example.com의 경우 .com이 TLD DNS이다.</li>
-<li>TLD DNS 서버에게 <b>example.com을 쿼리하여 IP를 얻는다.</b><br><img src="https://velog.velcdn.com/images/njw/post/f9c1938c-4d3a-4655-bb29-41719a9f2b19/image.png" alt="[보안] DNS와 DNS 터널링" loading="lazy" decoding="async"><br>만약  korea.co.kr처럼 DNS의 길이가 길 경우에도 똑같이 동작한다. 이의 경우에는 TLD DNS 서버에서도 쿼리하여 .co.kr의 DNS 서버를 알아낼 것이다.</li>
+<li>TLD DNS 서버에게 <b>example.com을 쿼리하여 IP를 얻는다.</b><br><img src="https://velog.velcdn.com/images/njw/post/f9c1938c-4d3a-4655-bb29-41719a9f2b19/image.png" alt="[보안] DNS와 DNS 터널링" width="1360" height="680" loading="lazy" decoding="async"><br>만약  korea.co.kr처럼 DNS의 길이가 길 경우에도 똑같이 동작한다. 이의 경우에는 TLD DNS 서버에서도 쿼리하여 .co.kr의 DNS 서버를 알아낼 것이다.</li>
 </ol>
 <h2>DNS 터널링</h2>
 <p>이러한 DNS는 IP 주소를 얻기 위한 과정으로써 보편화된 현대에선 필수적이다. 그렇기의 대부분의 네트워크는 <b>DNS 요청(UDP 포트 53)을 차단하지 않는다.</b><br>DNS 터널링은 그 부분에서 착안한 공격기법이다.</p>
 <blockquote>
 <p>DNS 터널링(DNS Tunneling)이란, 악의적인 공격자가 DNS 프로토콜의 통신 방식을 악용하여, 방화벽을 우회하고 은밀하게 데이터를 외부로 유출하거나 명령 및 제어(C2) 서버와 통신하는 사이버 공격 기법이다.</p>
 </blockquote>
-<p>여기서 말하는 <b>터널링은 한 네트워크 프로토콜을 다른 프로토콜의 데이터 페이로드 안에 캡슐화(Encapsulation)하여 전달하는 기술</b>이다.<br><img src="https://velog.velcdn.com/images/njw/post/5cab5b1d-8d82-463f-9cee-1e2353c91542/image.png" alt="[보안] DNS와 DNS 터널링" loading="lazy" decoding="async"><br>쉽게 말하자면 DNS 트래픽에 자신이 <b>탈취하고자 하는 정보를 숨겨 전달하는 취약점</b>이라고 볼 수 있다. 보안 장비는 기본적으로 <b>DNS를 기본적으로 허용</b>하기 때문에 가능한 공격 방법이다.<br>해커는 공격에 사용할 도메인을 등록하고 DNS를 자신의 서버에 등록한다.<br>감염자가 해커의 DNS 서버로 <b>DNS 요청을 이용해 <code>[탈취데이터].hacker.com</code>와 같이 서브도메인 자리에 정보를 담아 요청</b>을 보내면 해커의 서버는 이를 악용하거나 **DNS 응답(TXT 레코드 등)에 다음 공격 명령(C2)**을 실어 보낸다.<br>DNS 터널링은 방화벽을 우회하는 <b>양방향 비밀 통로 역할</b>을 하며, 기업의 기밀 유출이나 좀비 PC 제어에 치명적으로 사용될 수 있다.</p>
+<p>여기서 말하는 <b>터널링은 한 네트워크 프로토콜을 다른 프로토콜의 데이터 페이로드 안에 캡슐화(Encapsulation)하여 전달하는 기술</b>이다.<br><img src="https://velog.velcdn.com/images/njw/post/5cab5b1d-8d82-463f-9cee-1e2353c91542/image.png" alt="[보안] DNS와 DNS 터널링" width="868" height="488" loading="lazy" decoding="async"><br>쉽게 말하자면 DNS 트래픽에 자신이 <b>탈취하고자 하는 정보를 숨겨 전달하는 취약점</b>이라고 볼 수 있다. 보안 장비는 기본적으로 <b>DNS를 기본적으로 허용</b>하기 때문에 가능한 공격 방법이다.<br>해커는 공격에 사용할 도메인을 등록하고 DNS를 자신의 서버에 등록한다.<br>감염자가 해커의 DNS 서버로 <b>DNS 요청을 이용해 <code>[탈취데이터].hacker.com</code>와 같이 서브도메인 자리에 정보를 담아 요청</b>을 보내면 해커의 서버는 이를 악용하거나 **DNS 응답(TXT 레코드 등)에 다음 공격 명령(C2)**을 실어 보낸다.<br>DNS 터널링은 방화벽을 우회하는 <b>양방향 비밀 통로 역할</b>을 하며, 기업의 기밀 유출이나 좀비 PC 제어에 치명적으로 사용될 수 있다.</p>
 <h3>DNS 터널링 방어</h3>
 <p>DNS 터널링을 방어하기 위해선, 내부 DNS 서버를 구성해 모든 페이로드가 내부 DNS 서버에 지정된 필터를 거쳐 전송되게 하여야 한다.</p>
 <p>DNS 터널링을 방지하기 위해선 긴** 서브 도메인, 높은 문자 엔트로피, 숫자가 많은 문자열**과 같은 DNS 터널링의 주요 특징들을 필터링 해야한다.<br>다음은 DNS 터널링의 특징들이다.</p>
@@ -1711,7 +1711,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <li><b>서버는 요청받은 ClientHello에 담긴 암호화 방식을 선택해 포함하고 SSL 또는 TSL 버전과 함께 서버가 생성한 임의의 난수를 ServerHello에 담아 전송</b>한다. 또한 Certificate에 자신이 위에서 서명한 인증서를 담는다.<br>서버가 이를 전송할 때 확인해보면 Server Key Exchange가 있는 것을 알 수 있는데 이는 인증서 내부에 있는 서버의 공개키 정보로는 부족할 때 선택적으로 전송하는 세그먼트이다.<br>전송이 끝나면 서버는 ServerHelloDone 세그먼트를 전송한다.</li>
 <li><b>클라이언트는 받은 인증서를 자신이 가지고 발급 CA의 공개키로 복호화한다 이때 복호화에 성공하면 검증에 성공</b>한 것이다. 발급 CA를 믿을 수 없다면 발급 CA에게 인증서를 발급해준 루트 CA의 공개키로 복호화하는 식으로 <b>신뢰체인을 거슬러 올라가 검증</b>한다. 이때 CA를 확인할 수 없다면 AIA 필드를 확인해 직접 인증서를 가져온다.</li>
 <li><b>클라이언트는 ClientKeyExchange에 클라이언트가 생성한 Pre-Master Secret 난수를 인증서 내에 있던 서버의 공개키로 암호화해 포함</b>시켜 보낸다.<br><b>서버의 난수와 클라이언트의 난수, Pre-Master Secret 난수를 섞어 Master 키를 완성</b>시키고 Change Ciper Spec를 통해 Master 대칭키로 통신할 것임을 알린다.<br>Finished를 통해 SSL 또는 TSL 통신 과정의 종료를 알린다.</li>
-<li>서버는 인증서를 발급할 때 생성했던 키 쌍의 개인키로 <b>Pre-Master Secret 키를 복호화하고 서버의 난수와 클라이언트의 난수, Pre-Master Secret 난수를 섞어 Master 키를 완성</b>시키고 Change Ciper Spec를 통해 Master 대칭키로 통신할 것임을 알린다.<br>Finished를 통해 SSL 또는 TSL 통신 과정의 종료를 알린다.<br><img src="https://velog.velcdn.com/images/njw/post/2ee34bf1-7191-4fc2-9bc7-1c0c22830ed7/image.png" alt="[암호학] PKI와 TLS 그리고 HTTPS " loading="lazy" decoding="async"></li>
+<li>서버는 인증서를 발급할 때 생성했던 키 쌍의 개인키로 <b>Pre-Master Secret 키를 복호화하고 서버의 난수와 클라이언트의 난수, Pre-Master Secret 난수를 섞어 Master 키를 완성</b>시키고 Change Ciper Spec를 통해 Master 대칭키로 통신할 것임을 알린다.<br>Finished를 통해 SSL 또는 TSL 통신 과정의 종료를 알린다.<br><img src="https://velog.velcdn.com/images/njw/post/2ee34bf1-7191-4fc2-9bc7-1c0c22830ed7/image.png" alt="[암호학] PKI와 TLS 그리고 HTTPS " width="2918" height="1667" loading="lazy" decoding="async"></li>
 </ol>
 <h2>마무리</h2>
 <p>PKI와 TLS, HTTPS에 대해 공부해보았다!!!<br>이제 서버 운영할 때 쉽게 인증서 발급할 수 있겠지..?</p>
@@ -1758,7 +1758,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <p> <b>동기식 암호화 방식은 비트가 이탈하면 뒤 모든 비트의 복호화가 불가능하다는 특징</b>이 있다.<br>비동기식 스트림 방식은 직전의 암호문이 다음 키의 재료로 들어간다는 특징이 있어 비트가 이탈하더라도 제한적으로 오류가 파급된다.<br> 그러하여, 동기식과 다르게 <b>비동기식 암호화는 이전의 암호화 값을 가지고 있기에 의도적인 변조를 탐지</b>할 수 있다.<br> 또한 이전 암호문을 키를 생성하는데에 쓴다는 특징 덕분에 <b>지속적인 동기화가 필요하지 않다</b>는 특징이 있다.</p>
 <p>대표적으로 <b>CFB 알고리즘</b>이 존재한다.</p>
 <h4>블록 방식</h4>
-<p> 평문 비트의 진행 순서에 따라 순차적으로 XOR 연산을 하는 스트림 방식과 달리 <b>블록 방식은 일정한 단위로 평문을 나눠 일정한 길이의 키를 이용해 암호화</b>를 진행한다.<br> 이때 <b>전치 방식</b>과 <b>치환 방식</b>을 혼합하여 암호화를 진행하는데, <b>전치 방식은 문자의 순서를 임의로 바꾸는 방식</b>이고 (I am bab ↔ aIa b mb) <b>치환 방식은 각 문자를 그에 상응하는 문자로 변환하는 방식</b>이다.(I am bab ↔ h]wa]ewe) 이러한 과정후에 키와 함께 XOR 연산을 진행하여 암호화를 실시하는데 그 각 과정을 라운드라고 한다.<br> 실제 암호화 과정에서는 난독화를 위해 <b>키 길이를 128비트로 하거나, 암호화 라운드를 최소 3회 이상 진행</b>한다.<br> <img src="https://velog.velcdn.com/images/njw/post/8fa1e3fd-ff01-426b-844a-3ee062180911/image.png" alt="[기초] 암호학 기초 부수기!" loading="lazy" decoding="async"></p>
+<p> 평문 비트의 진행 순서에 따라 순차적으로 XOR 연산을 하는 스트림 방식과 달리 <b>블록 방식은 일정한 단위로 평문을 나눠 일정한 길이의 키를 이용해 암호화</b>를 진행한다.<br> 이때 <b>전치 방식</b>과 <b>치환 방식</b>을 혼합하여 암호화를 진행하는데, <b>전치 방식은 문자의 순서를 임의로 바꾸는 방식</b>이고 (I am bab ↔ aIa b mb) <b>치환 방식은 각 문자를 그에 상응하는 문자로 변환하는 방식</b>이다.(I am bab ↔ h]wa]ewe) 이러한 과정후에 키와 함께 XOR 연산을 진행하여 암호화를 실시하는데 그 각 과정을 라운드라고 한다.<br> 실제 암호화 과정에서는 난독화를 위해 <b>키 길이를 128비트로 하거나, 암호화 라운드를 최소 3회 이상 진행</b>한다.<br> <img src="https://velog.velcdn.com/images/njw/post/8fa1e3fd-ff01-426b-844a-3ee062180911/image.png" alt="[기초] 암호학 기초 부수기!" width="773" height="366" loading="lazy" decoding="async"></p>
 <h3>비대칭키</h3>
 <p>대칭키를 보안적으로 아무리 개선을 하더라도 본질적인 문제가 있다.<br><b>키를 가지고 통신할 시 중간에 키를 탈취당하는 것에 매우 취약</b>(중간자 공격)하다는 것이다. 이를 보완하기 위해 <b>암호화와 복호화에 서로 다른 키를 사용하는 암호화 알고리즘이 비대칭키 암호화</b>다.</p>
 <blockquote>
@@ -1791,7 +1791,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <h3>기본 인증</h3>
 <p><b>기본 인증은 HTTP header를 사용하는 인증 방법</b> 중에 하나이다.<br>단순하게 생각해보자.<br>우리가 로그인을 할 때 최소한으로 필요한 것은 ID와 이를 보조하는 Password이다.<br>기본 인증은 이러한 정보를 최소한으로 이용한다.</p>
 <h4>방식</h4>
-<p>처음에 클라이언트가 접속하면 서버는 요청에 헤더가 없는 것을 확인한다.<br>↓<br>확인한 서버는 응답에 <b>401 Unauthorized 상태코드와 WWW-Authenticate 헤더에 기본 인증을 뜻하는 Basic 값을 담아 전송</b>한다.<br>↓<br>이를 확인한 클라이언트는 ID와 Password를 입력하는 기본 입력창을 띄우고 입력받는다.<br>↓<br>클라이언트는 Authorization 헤더에 기본 인증을 뜻하는 Basic 값과 <b>ID:Password 값을 Base64로 인코딩한 형태인 credential</b>을 포함시킨다.<br>↓<br>이를 확인한 서버는 200 성공 상태 코드로 응답한다.<br><img src="https://velog.velcdn.com/images/njw/post/92f8c97e-ad1c-40dd-bc49-9c38146fab9d/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p>처음에 클라이언트가 접속하면 서버는 요청에 헤더가 없는 것을 확인한다.<br>↓<br>확인한 서버는 응답에 <b>401 Unauthorized 상태코드와 WWW-Authenticate 헤더에 기본 인증을 뜻하는 Basic 값을 담아 전송</b>한다.<br>↓<br>이를 확인한 클라이언트는 ID와 Password를 입력하는 기본 입력창을 띄우고 입력받는다.<br>↓<br>클라이언트는 Authorization 헤더에 기본 인증을 뜻하는 Basic 값과 <b>ID:Password 값을 Base64로 인코딩한 형태인 credential</b>을 포함시킨다.<br>↓<br>이를 확인한 서버는 200 성공 상태 코드로 응답한다.<br><img src="https://velog.velcdn.com/images/njw/post/92f8c97e-ad1c-40dd-bc49-9c38146fab9d/image.png" alt="[보안] 웹의 인증 방식" width="562" height="237" loading="lazy" decoding="async"></p>
 <h4>장점</h4>
 <p>아주 옛날부터 사용되어지는 인증 방식이기 때문에 매우 단순하고 모든 브라우저에서 지원한다.</p>
 <h4>단점</h4>
@@ -1803,7 +1803,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 </blockquote>
 <p>쿠키 자체는 브라우저에 저장되기 때문에 악용이 매우 쉽다.<br>여기서 등장한 것이 세션 방식이다. 쿠키 방식은 사용자 정보(ID, 등급 등)가 브라우저에 직접 노출되어 위변조가 쉽지만, <b>세션은 서버에 정보를 저장하므로 클라이언트는 실제 내용을 알 수 없다.</b> 또한, 클라이언트가 자기 마음대로 &quot;나는 관리자다&quot;라고 <b>쿠키 값</b>을 <b>수정</b>하는 것을 <b>방지</b>한다.</p>
 <h4>방식</h4>
-<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증정보와 매핑되어있는 유추할 수 없는 <b>무작위 문자열인 키</b>를 발급하고 이를 저장한 뒤, 이를 응답한다.<br>↓<br>클라이언트는 <b>키를 쿠키</b>에 넣어 기억한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>키를 함께 요청</b>한다.<br>↓<br>서버는 키를 확인하고 이와 매핑되어있는 인증정보를 활용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/df3ff0eb-93d4-487c-b00e-b7a479f891bd/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증정보와 매핑되어있는 유추할 수 없는 <b>무작위 문자열인 키</b>를 발급하고 이를 저장한 뒤, 이를 응답한다.<br>↓<br>클라이언트는 <b>키를 쿠키</b>에 넣어 기억한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>키를 함께 요청</b>한다.<br>↓<br>서버는 키를 확인하고 이와 매핑되어있는 인증정보를 활용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/df3ff0eb-93d4-487c-b00e-b7a479f891bd/image.png" alt="[보안] 웹의 인증 방식" width="604" height="630" loading="lazy" decoding="async"></p>
 <h4>장점</h4>
 <p>서버에 저장하기 때문에 관리가 매우 편하고 효율적이다.<br>구현이 명확하며 실제 서버에서 로그인 상태를 확인하기 유용하다.<br><b>정보를 서버가 가지고 있어</b> 서버의 보안이 두텁다면 보안적으로 <b>매우 안전</b>하다.</p>
 <h4>단점</h4>
@@ -1811,11 +1811,11 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <h3>토큰 인증</h3>
 <p>쿠키 기반 인증 방식(<b>세션 인증</b>)의 가장 큰 <b>단점은 모든 사용자의 정보를 서버가 기억해 부담이 매우 크다는 것이다.</b><br>토큰 인증은 <b>모든 정보를 클라이언트가 가지고 있어 서버의 부담이 사라진다.</b></p>
 <h4>방식</h4>
-<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증 정보를 이용해 필요한 정보들을 구성하고 <b>이를 자신의 비밀키와 함께 해싱하여 토큰</b>으로 만들고 응답한다.<br>↓<br>클라이언트는 <b>발급한 토큰을 쿠키에 넣어 기억</b>한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>토큰을 함께 요청</b>한다.<br>↓<br>서버는 토큰을 확인하고 <b>토큰의 서명과 토큰의 정보 + 자신의 비밀키로 서명하여 위변조를 확인</b>한다.<br>이후 문제가 없으면 토큰의 정보를 이용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/8139f8c4-2c51-43a8-99a8-2b360c323b1e/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증 정보를 이용해 필요한 정보들을 구성하고 <b>이를 자신의 비밀키와 함께 해싱하여 토큰</b>으로 만들고 응답한다.<br>↓<br>클라이언트는 <b>발급한 토큰을 쿠키에 넣어 기억</b>한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>토큰을 함께 요청</b>한다.<br>↓<br>서버는 토큰을 확인하고 <b>토큰의 서명과 토큰의 정보 + 자신의 비밀키로 서명하여 위변조를 확인</b>한다.<br>이후 문제가 없으면 토큰의 정보를 이용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/8139f8c4-2c51-43a8-99a8-2b360c323b1e/image.png" alt="[보안] 웹의 인증 방식" width="1264" height="618" loading="lazy" decoding="async"></p>
 <h5>JWT</h5>
 <p><b>JWT(Json Web Token)는 토큰 기반 인증의 대표적인 방식</b>이다.<br>세 파트로 나누어지며, 각 파트는 점으로 구분하여 표현된다.<br>헤더(Header), 페이로드(Payload), 서명(Sinature)으로 구성되며 최종적으로 base64를 통해 인코딩된다.<br> <br><b>header : 해시 암호화 알고리즘과 토큰의 타입으로 구성</b><br>첫 번째는 HMAC, SHA256 또는 RSA와 같은 서명 생성에 사용된 해시 알고리즘<br>두 번째는 토큰의 유형 (JWT)</p>
 <p><b>payload : 내용, 즉 토큰에 담을 클레임(claim) 정보를 포함</b><br>Payload 에 담는 <b>정보의 한 ‘조각’ 을 클레임</b>이라고 부르며, name / value 의 한 쌍으로 이뤄짐<br>토큰에는 여러개의 클레임 들을 넣을 수 있음<br>클레임의 정보는 <b>등록된(registered) 클레임</b>, <b>공개(public) 클레임</b>, <b>비공개(private) 클레임</b>으로 세 종류가 있음<br><b>등록된 클레임</b> : 토큰 정보를 표현하기 위해 이미 정해진 종류의 데이터들로, 모두 선택적으로 작성이 가능하며 사용할 것을 권장<br>iss: 토큰 발급자(issuer)<br>sub: 토큰 제목(subject)<br>aud: 토큰 대상자(audience)<br>exp: 토큰 만료 시간(expiration)<br>nbf: 토큰 활성 날짜(not before)<br>iat: 토큰 발급 시간(issued at)<br>jti: JWT 토큰 식별자(JWT ID)<br><b>공개 클레임</b> : 사용자 정의 클레임으로, 충돌 방지를 위해 사용된다. 고유 URI 포맷을 이용<br><b>비공개 클레임</b> : 사용자 정의 클레임으로, 서버와 클라이언트 사이에 임의로 지정한 정보를 저장</p>
-<p><b>signature : 서명</b><br><b>Header, Payload, Secret Key를 합쳐 암호화한 결과값</b><br>HS256( base64UrlEncode(header) + &quot;.&quot; + base64UrlEncode(payload), Secret key)<br><img src="https://velog.velcdn.com/images/njw/post/05bd89f8-e860-4fdc-b9fd-f5eeb679ce76/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p><b>signature : 서명</b><br><b>Header, Payload, Secret Key를 합쳐 암호화한 결과값</b><br>HS256( base64UrlEncode(header) + &quot;.&quot; + base64UrlEncode(payload), Secret key)<br><img src="https://velog.velcdn.com/images/njw/post/05bd89f8-e860-4fdc-b9fd-f5eeb679ce76/image.png" alt="[보안] 웹의 인증 방식" width="4000" height="2852" loading="lazy" decoding="async"></p>
 <h5>SWT와 JWT</h5>
 <p>SWT(Simple Web Token)과 JWT(Json Web Token) 모두 토큰 기반 인증 방식이다.<br>하지만 현대 모던 웹은 JWT를 쓴다. 왜 일까?</p>
 <table>
@@ -1876,7 +1876,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <blockquote>
 <p>OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 웹사이트 상의 자신들의 정보에 대해 웹사이트나 애플리케이션의 접근 권한을 부여할 수 있는 공통적인 수단으로서 사용되는, 접근 위임을 위한 개방형 표준이다.</p>
 </blockquote>
-<p><img src="https://velog.velcdn.com/images/njw/post/0a9886d0-353a-4cb4-8aed-1b8829416eea/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"><br>OAuth는 위 처럼 동작하는데 간단하게 설명하자면 제3자 서비스에게 권한을 위임하고 인증이 끝나면 액세스 토큰과 이를 재발급하는 토큰을 받아 이를 이용해 제3자 서비스 리소스 서버에게서 필요한 정보들을 받아올 수 있다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/0a9886d0-353a-4cb4-8aed-1b8829416eea/image.png" alt="[보안] 웹의 인증 방식" width="1280" height="869" loading="lazy" decoding="async"><br>OAuth는 위 처럼 동작하는데 간단하게 설명하자면 제3자 서비스에게 권한을 위임하고 인증이 끝나면 액세스 토큰과 이를 재발급하는 토큰을 받아 이를 이용해 제3자 서비스 리소스 서버에게서 필요한 정보들을 받아올 수 있다.</p>
 <p>현재 OAuth는 <b>OAuth2.0</b>을 사용하는데 이는 OAuth1.0에서 세션 피싱이라는 보안적 결함이 발견되었기 때문이다.</p>
 <h2>마무리</h2>
 <p>웹 상에서의 인증 방식을 알아보았다!<br>자신의 서비스에 맞는 인증 방식을 알아보고 적용해보자.</p>
@@ -1900,7 +1900,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <h2>계획</h2>
 <p>초기엔 API 호스팅까지 모두 지원하는 플랫폼을 만들고자 했다.<br>정리하자면 <b>AI 채팅 검열 시스템을 이용한 커뮤니티 + API 판매 지원 마켓플레이스 + API 서버 호스팅 서비스</b>였다.</p>
 <p>많은 기술적 요소를 녹여내 계획을 구상했지만 여기선 호스팅 부분만 서술하도록 하겠다.</p>
-<p><img src="https://velog.velcdn.com/images/njw/post/470e7368-bc47-4cfc-9ab8-3229738fd2cd/image.png" alt="[프로젝트] 팀 합류와 프로젝트 설계." loading="lazy" decoding="async"></p>
+<p><img src="https://velog.velcdn.com/images/njw/post/470e7368-bc47-4cfc-9ab8-3229738fd2cd/image.png" alt="[프로젝트] 팀 합류와 프로젝트 설계." width="1509" height="754" loading="lazy" decoding="async"></p>
 <p><del>아직 내 소중한 서버 컴퓨터가 오지 않아서</del><br>마음 같아선 온프레미스 인프라를 구축하고 싶었지만,<br>비용 문제, 현실적인 문제와 맞닥뜨려 AWS의 <b>IaaS(Infrastructure as a Service)</b> 서버를 이용해 서브넷을 나누고 API 호스팅까지 제공하는 서비스를 만들고자 했다.</p>
 <blockquote>
 <p>Infrastructure as a Service란, 공동책임모델에서 PaaS, SaaS보다 많은 책임을 사용자가 부담하는 서비스이다. OSI 7계층 중 물리계층을 제외한 모든 부분에 사용자의 책임이 있다.</p>

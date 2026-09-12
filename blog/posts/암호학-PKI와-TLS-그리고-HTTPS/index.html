@@ -71,7 +71,7 @@
                 </div>
                 <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">암호학</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
             </div>
-            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/2ee34bf1-7191-4fc2-9bc7-1c0c22830ed7/image.png" alt="[암호학] PKI와 TLS 그리고 HTTPS  썸네일"></div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/2ee34bf1-7191-4fc2-9bc7-1c0c22830ed7/image.png" alt="[암호학] PKI와 TLS 그리고 HTTPS  썸네일" width="2918" height="1667" fetchpriority="high"></div>
             <div class="post-body markdown-body">
 <h2>PKI</h2>
 <p>인터넷이 보급되던 초기, 데이터 통신에서 가장 큰 고민은 <b>어떻게 하면 서로를 믿고 안전하게 정보를 주고받을 수 있는가</b>였다. 당시에는 통신 주체들이 서로 같은 암호 키를 공유하는 대칭키 암호화 방식을 주로 고려했다. 하지만 이 방식은 치명적인 한계가 있었다. 수만 명의 사용자가 서로 통신하기 위해서는 각자 수많은 키를 관리해야 했고, 무엇보다 그 <b>키를 상대방에게 전달하는 과정에서 해커에게 탈취될 위험이 매우 컸기 때문</b>이다. 즉, &quot;열쇠를 안전하게 전달할 방법이 없다면 암호화가 무슨 소용인가?&quot;라는 근본적인 모순에 부딪힌 것이다.</p>
@@ -115,7 +115,7 @@
 <li><b>서버는 요청받은 ClientHello에 담긴 암호화 방식을 선택해 포함하고 SSL 또는 TSL 버전과 함께 서버가 생성한 임의의 난수를 ServerHello에 담아 전송</b>한다. 또한 Certificate에 자신이 위에서 서명한 인증서를 담는다.<br>서버가 이를 전송할 때 확인해보면 Server Key Exchange가 있는 것을 알 수 있는데 이는 인증서 내부에 있는 서버의 공개키 정보로는 부족할 때 선택적으로 전송하는 세그먼트이다.<br>전송이 끝나면 서버는 ServerHelloDone 세그먼트를 전송한다.</li>
 <li><b>클라이언트는 받은 인증서를 자신이 가지고 발급 CA의 공개키로 복호화한다 이때 복호화에 성공하면 검증에 성공</b>한 것이다. 발급 CA를 믿을 수 없다면 발급 CA에게 인증서를 발급해준 루트 CA의 공개키로 복호화하는 식으로 <b>신뢰체인을 거슬러 올라가 검증</b>한다. 이때 CA를 확인할 수 없다면 AIA 필드를 확인해 직접 인증서를 가져온다.</li>
 <li><b>클라이언트는 ClientKeyExchange에 클라이언트가 생성한 Pre-Master Secret 난수를 인증서 내에 있던 서버의 공개키로 암호화해 포함</b>시켜 보낸다.<br><b>서버의 난수와 클라이언트의 난수, Pre-Master Secret 난수를 섞어 Master 키를 완성</b>시키고 Change Ciper Spec를 통해 Master 대칭키로 통신할 것임을 알린다.<br>Finished를 통해 SSL 또는 TSL 통신 과정의 종료를 알린다.</li>
-<li>서버는 인증서를 발급할 때 생성했던 키 쌍의 개인키로 <b>Pre-Master Secret 키를 복호화하고 서버의 난수와 클라이언트의 난수, Pre-Master Secret 난수를 섞어 Master 키를 완성</b>시키고 Change Ciper Spec를 통해 Master 대칭키로 통신할 것임을 알린다.<br>Finished를 통해 SSL 또는 TSL 통신 과정의 종료를 알린다.<br><img src="https://velog.velcdn.com/images/njw/post/2ee34bf1-7191-4fc2-9bc7-1c0c22830ed7/image.png" alt="[암호학] PKI와 TLS 그리고 HTTPS " loading="lazy" decoding="async"></li>
+<li>서버는 인증서를 발급할 때 생성했던 키 쌍의 개인키로 <b>Pre-Master Secret 키를 복호화하고 서버의 난수와 클라이언트의 난수, Pre-Master Secret 난수를 섞어 Master 키를 완성</b>시키고 Change Ciper Spec를 통해 Master 대칭키로 통신할 것임을 알린다.<br>Finished를 통해 SSL 또는 TSL 통신 과정의 종료를 알린다.<br><img src="https://velog.velcdn.com/images/njw/post/2ee34bf1-7191-4fc2-9bc7-1c0c22830ed7/image.png" alt="[암호학] PKI와 TLS 그리고 HTTPS " width="2918" height="1667" loading="lazy" decoding="async"></li>
 </ol>
 <h2>마무리</h2>
 <p>PKI와 TLS, HTTPS에 대해 공부해보았다!!!<br>이제 서버 운영할 때 쉽게 인증서 발급할 수 있겠지..?</p>

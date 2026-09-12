@@ -26,13 +26,14 @@ const sectionAnimations = [
 
 if (cursor) {
     const move = e => { cursor.style.left = `${e.clientX}px`; cursor.style.top = `${e.clientY}px`; };
+    // innerWidth 는 스크립트 실행 중 전체 페이지 레이아웃을 강제하므로 matchMedia 로 판정
+    const mq = window.matchMedia('(min-width: 1280px)');
     const sync = () => {
-        const wide = window.innerWidth > 1279;
-        cursor.style.display = wide ? 'block' : 'none';
-        window[wide ? 'addEventListener' : 'removeEventListener']('mousemove', move);
+        cursor.style.display = mq.matches ? 'block' : 'none';
+        window[mq.matches ? 'addEventListener' : 'removeEventListener']('mousemove', move);
     };
     sync();
-    window.addEventListener('resize', sync);
+    mq.addEventListener('change', sync);
 }
 
 window.addEventListener('load', () => {
@@ -158,100 +159,6 @@ function updateProjUI() {
     if (projFillEl)    projFillEl.style.width = `${((projCurrent + 1) / PROJ_N) * 100}%`;
     if (projCounterEl) projCounterEl.textContent = `${String(projCurrent + 1).padStart(2, '0')} — ${String(PROJ_N).padStart(2, '0')}`;
 }
-
-// function drawProjPattern(canvas, idx) {
-//     const w = window.innerWidth, h = window.innerHeight;
-//     canvas.width = w; canvas.height = h;
-//     const ctx = canvas.getContext('2d');
-//     ctx.strokeStyle = '#161617';
-//     ctx.fillStyle   = '#161617';
-
-//     if (idx === 0) {
-//         // scanlines
-//         ctx.lineWidth = 0.8;
-//         for (let y = 0; y < h; y += 4) {
-//             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-//         }
-//     } else if (idx === 1) {
-//         // diagonal crosshatch
-//         ctx.lineWidth = 0.6;
-//         for (let x = -h; x < w + h; x += 28) {
-//             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + h, h); ctx.stroke();
-//             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - h, h); ctx.stroke();
-//         }
-//     } else if (idx === 2) {
-//         // dot grid
-//         for (let x = 24; x < w; x += 24) {
-//             for (let y = 24; y < h; y += 24) {
-//                 ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2); ctx.fill();
-//             }
-//         }
-//     } else if (idx === 3) {
-//         // circuit board
-//         ctx.lineWidth = 1;
-//         const g = 32;
-//         for (let x = g; x < w - g; x += g) {
-//             for (let y = g; y < h - g; y += g) {
-//                 if (Math.random() > 0.55) {
-//                     const dir = Math.floor(Math.random() * 4);
-//                     ctx.beginPath(); ctx.moveTo(x, y);
-//                     if      (dir === 0) { ctx.lineTo(x + g, y); ctx.lineTo(x + g, y - g * 0.5); }
-//                     else if (dir === 1) { ctx.lineTo(x, y + g); ctx.lineTo(x + g * 0.5, y + g); }
-//                     else if (dir === 2) { ctx.lineTo(x - g, y); ctx.lineTo(x - g, y + g * 0.5); }
-//                     else               { ctx.lineTo(x, y - g); ctx.lineTo(x + g * 0.5, y - g); }
-//                     ctx.stroke();
-//                     ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
-//                 }
-//             }
-//         }
-//     } else if (idx === 4) {
-//         // hexagonal grid
-//         ctx.lineWidth = 0.8;
-//         const r = 30, wr = r * Math.sqrt(3), hr = r * 1.5;
-//         for (let row = -1; row < h / hr + 2; row++) {
-//             for (let col = -1; col < w / wr + 2; col++) {
-//                 const cx = col * wr + (row % 2 === 0 ? 0 : wr / 2);
-//                 const cy = row * hr;
-//                 ctx.beginPath();
-//                 for (let i = 0; i < 6; i++) {
-//                     const a = Math.PI / 3 * i - Math.PI / 6;
-//                     i === 0 ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
-//                             : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
-//                 }
-//                 ctx.closePath(); ctx.stroke();
-//             }
-//         }
-//     } else if (idx === 5) {
-//         // graph paper (DB schema feel)
-//         ctx.lineWidth = 0.4;
-//         const minor = 16, major = 80;
-//         for (let x = 0; x < w; x += minor) {
-//             ctx.strokeStyle = x % major === 0 ? 'rgba(22,22,23,0.18)' : 'rgba(22,22,23,0.06)';
-//             ctx.lineWidth   = x % major === 0 ? 0.8 : 0.4;
-//             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-//         }
-//         for (let y = 0; y < h; y += minor) {
-//             ctx.strokeStyle = y % major === 0 ? 'rgba(22,22,23,0.18)' : 'rgba(22,22,23,0.06)';
-//             ctx.lineWidth   = y % major === 0 ? 0.8 : 0.4;
-//             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-//         }
-//     } else if (idx === 6) {
-//         // glitch scanlines (cyberpunk / text RPG feel)
-//         ctx.lineWidth = 1;
-//         for (let y = 0; y < h; y += 3) {
-//             const alpha = Math.random() > 0.85 ? 0.12 : 0.04;
-//             ctx.strokeStyle = `rgba(22,22,23,${alpha})`;
-//             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-//         }
-//         for (let i = 0; i < 18; i++) {
-//             const gy = Math.random() * h;
-//             const gh = Math.random() * 6 + 1;
-//             const gx = Math.random() * w * 0.4;
-//             ctx.fillStyle = 'rgba(22,22,23,0.07)';
-//             ctx.fillRect(gx, gy, w * (0.3 + Math.random() * 0.5), gh);
-//         }
-//     }
-// }
 
 // ── Radar Chart ───────────────────────────────────────────────────
 function drawRadarChart() {

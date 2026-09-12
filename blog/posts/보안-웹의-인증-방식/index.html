@@ -79,7 +79,7 @@
 <h3>기본 인증</h3>
 <p><b>기본 인증은 HTTP header를 사용하는 인증 방법</b> 중에 하나이다.<br>단순하게 생각해보자.<br>우리가 로그인을 할 때 최소한으로 필요한 것은 ID와 이를 보조하는 Password이다.<br>기본 인증은 이러한 정보를 최소한으로 이용한다.</p>
 <h4>방식</h4>
-<p>처음에 클라이언트가 접속하면 서버는 요청에 헤더가 없는 것을 확인한다.<br>↓<br>확인한 서버는 응답에 <b>401 Unauthorized 상태코드와 WWW-Authenticate 헤더에 기본 인증을 뜻하는 Basic 값을 담아 전송</b>한다.<br>↓<br>이를 확인한 클라이언트는 ID와 Password를 입력하는 기본 입력창을 띄우고 입력받는다.<br>↓<br>클라이언트는 Authorization 헤더에 기본 인증을 뜻하는 Basic 값과 <b>ID:Password 값을 Base64로 인코딩한 형태인 credential</b>을 포함시킨다.<br>↓<br>이를 확인한 서버는 200 성공 상태 코드로 응답한다.<br><img src="https://velog.velcdn.com/images/njw/post/92f8c97e-ad1c-40dd-bc49-9c38146fab9d/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p>처음에 클라이언트가 접속하면 서버는 요청에 헤더가 없는 것을 확인한다.<br>↓<br>확인한 서버는 응답에 <b>401 Unauthorized 상태코드와 WWW-Authenticate 헤더에 기본 인증을 뜻하는 Basic 값을 담아 전송</b>한다.<br>↓<br>이를 확인한 클라이언트는 ID와 Password를 입력하는 기본 입력창을 띄우고 입력받는다.<br>↓<br>클라이언트는 Authorization 헤더에 기본 인증을 뜻하는 Basic 값과 <b>ID:Password 값을 Base64로 인코딩한 형태인 credential</b>을 포함시킨다.<br>↓<br>이를 확인한 서버는 200 성공 상태 코드로 응답한다.<br><img src="https://velog.velcdn.com/images/njw/post/92f8c97e-ad1c-40dd-bc49-9c38146fab9d/image.png" alt="[보안] 웹의 인증 방식" width="562" height="237" loading="lazy" decoding="async"></p>
 <h4>장점</h4>
 <p>아주 옛날부터 사용되어지는 인증 방식이기 때문에 매우 단순하고 모든 브라우저에서 지원한다.</p>
 <h4>단점</h4>
@@ -91,7 +91,7 @@
 </blockquote>
 <p>쿠키 자체는 브라우저에 저장되기 때문에 악용이 매우 쉽다.<br>여기서 등장한 것이 세션 방식이다. 쿠키 방식은 사용자 정보(ID, 등급 등)가 브라우저에 직접 노출되어 위변조가 쉽지만, <b>세션은 서버에 정보를 저장하므로 클라이언트는 실제 내용을 알 수 없다.</b> 또한, 클라이언트가 자기 마음대로 &quot;나는 관리자다&quot;라고 <b>쿠키 값</b>을 <b>수정</b>하는 것을 <b>방지</b>한다.</p>
 <h4>방식</h4>
-<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증정보와 매핑되어있는 유추할 수 없는 <b>무작위 문자열인 키</b>를 발급하고 이를 저장한 뒤, 이를 응답한다.<br>↓<br>클라이언트는 <b>키를 쿠키</b>에 넣어 기억한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>키를 함께 요청</b>한다.<br>↓<br>서버는 키를 확인하고 이와 매핑되어있는 인증정보를 활용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/df3ff0eb-93d4-487c-b00e-b7a479f891bd/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증정보와 매핑되어있는 유추할 수 없는 <b>무작위 문자열인 키</b>를 발급하고 이를 저장한 뒤, 이를 응답한다.<br>↓<br>클라이언트는 <b>키를 쿠키</b>에 넣어 기억한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>키를 함께 요청</b>한다.<br>↓<br>서버는 키를 확인하고 이와 매핑되어있는 인증정보를 활용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/df3ff0eb-93d4-487c-b00e-b7a479f891bd/image.png" alt="[보안] 웹의 인증 방식" width="604" height="630" loading="lazy" decoding="async"></p>
 <h4>장점</h4>
 <p>서버에 저장하기 때문에 관리가 매우 편하고 효율적이다.<br>구현이 명확하며 실제 서버에서 로그인 상태를 확인하기 유용하다.<br><b>정보를 서버가 가지고 있어</b> 서버의 보안이 두텁다면 보안적으로 <b>매우 안전</b>하다.</p>
 <h4>단점</h4>
@@ -99,11 +99,11 @@
 <h3>토큰 인증</h3>
 <p>쿠키 기반 인증 방식(<b>세션 인증</b>)의 가장 큰 <b>단점은 모든 사용자의 정보를 서버가 기억해 부담이 매우 크다는 것이다.</b><br>토큰 인증은 <b>모든 정보를 클라이언트가 가지고 있어 서버의 부담이 사라진다.</b></p>
 <h4>방식</h4>
-<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증 정보를 이용해 필요한 정보들을 구성하고 <b>이를 자신의 비밀키와 함께 해싱하여 토큰</b>으로 만들고 응답한다.<br>↓<br>클라이언트는 <b>발급한 토큰을 쿠키에 넣어 기억</b>한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>토큰을 함께 요청</b>한다.<br>↓<br>서버는 토큰을 확인하고 <b>토큰의 서명과 토큰의 정보 + 자신의 비밀키로 서명하여 위변조를 확인</b>한다.<br>이후 문제가 없으면 토큰의 정보를 이용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/8139f8c4-2c51-43a8-99a8-2b360c323b1e/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p>클라이언트가 ID, Password를 서버로 전송(요청)한다.(로그인)<br>↓<br>인증정보를 확인한 서버는 인증 정보를 이용해 필요한 정보들을 구성하고 <b>이를 자신의 비밀키와 함께 해싱하여 토큰</b>으로 만들고 응답한다.<br>↓<br>클라이언트는 <b>발급한 토큰을 쿠키에 넣어 기억</b>한다.<br>↓<br>클라이언트는 이후에 HTTP 통신을 진행할 때 쿠키에 저장되어있는 <b>토큰을 함께 요청</b>한다.<br>↓<br>서버는 토큰을 확인하고 <b>토큰의 서명과 토큰의 정보 + 자신의 비밀키로 서명하여 위변조를 확인</b>한다.<br>이후 문제가 없으면 토큰의 정보를 이용해 요청을 처리한다.<br><img src="https://velog.velcdn.com/images/njw/post/8139f8c4-2c51-43a8-99a8-2b360c323b1e/image.png" alt="[보안] 웹의 인증 방식" width="1264" height="618" loading="lazy" decoding="async"></p>
 <h5>JWT</h5>
 <p><b>JWT(Json Web Token)는 토큰 기반 인증의 대표적인 방식</b>이다.<br>세 파트로 나누어지며, 각 파트는 점으로 구분하여 표현된다.<br>헤더(Header), 페이로드(Payload), 서명(Sinature)으로 구성되며 최종적으로 base64를 통해 인코딩된다.<br> <br><b>header : 해시 암호화 알고리즘과 토큰의 타입으로 구성</b><br>첫 번째는 HMAC, SHA256 또는 RSA와 같은 서명 생성에 사용된 해시 알고리즘<br>두 번째는 토큰의 유형 (JWT)</p>
 <p><b>payload : 내용, 즉 토큰에 담을 클레임(claim) 정보를 포함</b><br>Payload 에 담는 <b>정보의 한 ‘조각’ 을 클레임</b>이라고 부르며, name / value 의 한 쌍으로 이뤄짐<br>토큰에는 여러개의 클레임 들을 넣을 수 있음<br>클레임의 정보는 <b>등록된(registered) 클레임</b>, <b>공개(public) 클레임</b>, <b>비공개(private) 클레임</b>으로 세 종류가 있음<br><b>등록된 클레임</b> : 토큰 정보를 표현하기 위해 이미 정해진 종류의 데이터들로, 모두 선택적으로 작성이 가능하며 사용할 것을 권장<br>iss: 토큰 발급자(issuer)<br>sub: 토큰 제목(subject)<br>aud: 토큰 대상자(audience)<br>exp: 토큰 만료 시간(expiration)<br>nbf: 토큰 활성 날짜(not before)<br>iat: 토큰 발급 시간(issued at)<br>jti: JWT 토큰 식별자(JWT ID)<br><b>공개 클레임</b> : 사용자 정의 클레임으로, 충돌 방지를 위해 사용된다. 고유 URI 포맷을 이용<br><b>비공개 클레임</b> : 사용자 정의 클레임으로, 서버와 클라이언트 사이에 임의로 지정한 정보를 저장</p>
-<p><b>signature : 서명</b><br><b>Header, Payload, Secret Key를 합쳐 암호화한 결과값</b><br>HS256( base64UrlEncode(header) + &quot;.&quot; + base64UrlEncode(payload), Secret key)<br><img src="https://velog.velcdn.com/images/njw/post/05bd89f8-e860-4fdc-b9fd-f5eeb679ce76/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"></p>
+<p><b>signature : 서명</b><br><b>Header, Payload, Secret Key를 합쳐 암호화한 결과값</b><br>HS256( base64UrlEncode(header) + &quot;.&quot; + base64UrlEncode(payload), Secret key)<br><img src="https://velog.velcdn.com/images/njw/post/05bd89f8-e860-4fdc-b9fd-f5eeb679ce76/image.png" alt="[보안] 웹의 인증 방식" width="4000" height="2852" loading="lazy" decoding="async"></p>
 <h5>SWT와 JWT</h5>
 <p>SWT(Simple Web Token)과 JWT(Json Web Token) 모두 토큰 기반 인증 방식이다.<br>하지만 현대 모던 웹은 JWT를 쓴다. 왜 일까?</p>
 <table>
@@ -164,7 +164,7 @@
 <blockquote>
 <p>OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 웹사이트 상의 자신들의 정보에 대해 웹사이트나 애플리케이션의 접근 권한을 부여할 수 있는 공통적인 수단으로서 사용되는, 접근 위임을 위한 개방형 표준이다.</p>
 </blockquote>
-<p><img src="https://velog.velcdn.com/images/njw/post/0a9886d0-353a-4cb4-8aed-1b8829416eea/image.png" alt="[보안] 웹의 인증 방식" loading="lazy" decoding="async"><br>OAuth는 위 처럼 동작하는데 간단하게 설명하자면 제3자 서비스에게 권한을 위임하고 인증이 끝나면 액세스 토큰과 이를 재발급하는 토큰을 받아 이를 이용해 제3자 서비스 리소스 서버에게서 필요한 정보들을 받아올 수 있다.</p>
+<p><img src="https://velog.velcdn.com/images/njw/post/0a9886d0-353a-4cb4-8aed-1b8829416eea/image.png" alt="[보안] 웹의 인증 방식" width="1280" height="869" loading="lazy" decoding="async"><br>OAuth는 위 처럼 동작하는데 간단하게 설명하자면 제3자 서비스에게 권한을 위임하고 인증이 끝나면 액세스 토큰과 이를 재발급하는 토큰을 받아 이를 이용해 제3자 서비스 리소스 서버에게서 필요한 정보들을 받아올 수 있다.</p>
 <p>현재 OAuth는 <b>OAuth2.0</b>을 사용하는데 이는 OAuth1.0에서 세션 피싱이라는 보안적 결함이 발견되었기 때문이다.</p>
 <h2>마무리</h2>
 <p>웹 상에서의 인증 방식을 알아보았다!<br>자신의 서비스에 맞는 인증 방식을 알아보고 적용해보자.</p>

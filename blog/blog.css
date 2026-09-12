@@ -414,6 +414,7 @@ a {
 
 .post-thumbnail {
     width: 100%;
+    height: auto;
     border-radius: 8px;
     filter: grayscale(30%);
 }
@@ -443,7 +444,11 @@ a {
 
 .post-body.markdown-body a {
     color: #5eaeff;
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
+/* github-dark 테마의 .hljs-section(#ffa657)은 어두운 배경에서 대비 부족 → 밝게 */
+.post-body.markdown-body .hljs-section { color: #ffc37a; }
 
 .post-body.markdown-body code {
     background: #2c2b29;
@@ -515,6 +520,9 @@ a {
     font-family: 'S-CoreDream-3Light', serif;
     font-size: 18px;
 }
+/* 빌드 시 정적 카드가 들어 있으면 그것이 곧 로딩 상태 → 문구가 자리를 차지해 카드가 밀리지 않게 */
+.loading:has(+ .post-card-link) { display: none; }
+
 
 .empty-message {
     text-align: center;
@@ -703,6 +711,6 @@ a {
 .author-box img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .author-box strong { display: block; font-size: 15px; color: #f5f5f5; }
 .author-box p { margin: 4px 0 0; font-size: 13px; color: #a8a8a8; line-height: 1.5; }
-.author-box a { color: #4da3ff; }
+.author-box a { color: #4da3ff; text-decoration: underline; text-underline-offset: 2px; }
 .post-author { color: #a8a8a8; text-decoration: none; }
 .post-author:hover { color: #f5f5f5; }

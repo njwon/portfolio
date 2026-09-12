@@ -70,13 +70,13 @@
                 </div>
                 <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
             </div>
-            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기! 썸네일"></div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기! 썸네일" width="1698" height="844" fetchpriority="high"></div>
             <div class="post-body markdown-body">
 <h2>CSRF</h2>
 <blockquote>
 <p>CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점</p>
 </blockquote>
-<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
+<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="1698" height="844" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
 <h3>방식</h3>
 <p>CSRF 공격에 성공하기 위해서는 <b>공격자가 작성한 악성 스크립트를 이용자가 실행</b>해야 한다. 이는 공격자가 이용자에게 메일을 보내거나 게시판에 글을 작성해 이용자가 이를 조회하도록 유도하는 방법이 있다. 심지어는 공격자가 직접 자신의 사이트를 만들어 그곳에서 악성 스크립트를 작성할 수도 있다. 여기서 말하는 <b>악성 스크립트는 HTTP 요청을 보내는 코드</b>를 뜻한다.</p>
 <h4>XSS와의 차이점?</h4>
@@ -89,7 +89,7 @@
 <h3>CORS란?</h3>
 <p>CSRF 공격의 목적은 요청을 실행시키는 것 자체이다. <b>공격자는 응답을 굳이 읽지 않아도 된다.</b> <code>&lt;form&gt;</code> 태그를 이용한 POST 요청이나 <code>&lt;img&gt;</code> 태그를 이용한 GET 요청처럼 단순한 방식으로도 <b>송금이나 설정 변경은 충분히 가능</b>하다.</p>
 <p>하지만 여기서 <b>공격자가 단순히 요청을 보내는 것을 넘어,</b> 서버의 응답 데이터를 가로채거나(예: 계좌 잔액 조회, 개인정보 탈취), application/json 같은 커스텀 형식으로 정교한 요청을 보내려는 순간, 브라우저라는 문지기가 막는다. 바로 <b>SOP 정책</b> 때문이다.</p>
-<p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="868" height="295" loading="lazy" decoding="async"></p>
 <p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#sop-%EC%A0%95%EC%B1%85">여기서</a> <b>SOP는 Same Origin인 서비스들끼리만 리소스를 공유</b>할 수 있다고 했다.<br>그렇다면 <code>&lt;img&gt;</code> 태그들 같은 것들은 어떻게 작동할까? 분명히 Cross Origin인 리소스를 태그에 담을 수 있지 않은가. 사실 <b>SOP는 Cross Origin끼리의 교환에서 모든 리소스를 막는 것이 아니다.</b> 위에서 서술한 <code>&lt;img&gt;</code> 태그와 같은 이미지 말고도 <code>&lt;style&gt;</code>, <code>&lt;script&gt;</code> 등의 태그의 리소스 교환을 막지 않는다.<br>위 경우들 외에도 Cross Origin인 웹 서비스들끼리 데이터를 처리해야 하는 경우가 있다. 이때 <b>자원을 공유하기 위해 사용하는 방법</b>을 <b>CORS</b>라고 명칭한다.</p>
 <p><b>CORS(Cross-Origin Resource Sharing, 교차 출처 리소스 공유)는 HTTP 헤더에 기반하여 Cross Origin 간에 리소스를 공유</b>하는 방법이다.<br>발신측에서 CORS 헤더를 설정해 요청하면, 수신측에서 헤더를 구분해 정해진 규칙에 맞게 데이터를 가져갈 수 있도록 설정한다.<br><b>웹 리소스 요청 코드</b></p>
 <pre><code class="hljs language-dart"><span class="hljs-comment">/*
@@ -238,15 +238,15 @@ def admin_notice_flag<span class="hljs-punctuation">(</span><span class="hljs-pu
 
 
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 전역 변수 <b>memo_txt에 파라미터 값을 지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/efa25945-b496-489d-a4dd-89ac5b2826ac/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
-<p>/admin/notice_flag 엔드포인트는 접속 호스트의 주소가 <b>루프백 주소이며 파라미터가 admin이어야지만 플래그를 memo_txt에 추가</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/dfd08d8c-441d-4f8a-a3ce-eadd5ee582ec/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="359" height="76" loading="lazy" decoding="async"></p>
+<p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="603" height="204" loading="lazy" decoding="async"></p>
+<p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="566" height="201" loading="lazy" decoding="async"></p>
+<p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="590" height="632" loading="lazy" decoding="async"></p>
+<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 전역 변수 <b>memo_txt에 파라미터 값을 지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/efa25945-b496-489d-a4dd-89ac5b2826ac/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="661" height="290" loading="lazy" decoding="async"></p>
+<p>/admin/notice_flag 엔드포인트는 접속 호스트의 주소가 <b>루프백 주소이며 파라미터가 admin이어야지만 플래그를 memo_txt에 추가</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/dfd08d8c-441d-4f8a-a3ce-eadd5ee582ec/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="603" height="260" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>/admin/notice_flag 엔드포인트를 이용하면 플래그를 획득할 수 있어보인다.<br>하지만 반드시 루프백 주소로 admin 파라미터로 접근해야지만 플래그를 보여주고, 서버 또한 쿠키를 루프백 주소에 저장하므로 <code>&lt;img src=&quot;/admin/notice_flag?userid=admin&quot;&gt;</code>와 같은 <b>&quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 키워드를 사용하지 않는 CSRF 페이로드를 /flag 엔드포인트를 이용해 동적으로 URL을 만들어 서버의 브라우저를 이용해 열어야 한다.</b></p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/d723dddf-6340-4574-84cf-5b55776ce22a/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/d723dddf-6340-4574-84cf-5b55776ce22a/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="440" height="91" loading="lazy" decoding="async"></p>
 <h3>CSRF 방어</h3>
 <p>방어하기 위해서 쓰이는 가장 대표적인 것은 <b>CSRF Token</b>이다.<br>CSRF Token은 서버가 세션에 랜덤 토큰을 생성해서 심어주고 HTML의 <code>&lt;body&gt;</code> 안에도 담고, 이를 <b>매 요청 시 비교하여 검증</b>하는 식으로 동작한다.<br>공격자가 자신의 사이트에서 스크립트를 작성해 요청해도 토큰이 없기 때문에 막히고, SOP 때문에 공격자가 피해자의 페이지를 읽을 수 없어서 <b>토큰값을 알아낼 방법이 없게 된다.</b><br><b>Referer / Origin 헤더를 검증</b>하는 것과 <b>SameSite일때만 Cookie를 보내도록 설정</b>하는 것 또한 방어를 위한 방법으로 적합하다.</p>
 <h2>마무리</h2>

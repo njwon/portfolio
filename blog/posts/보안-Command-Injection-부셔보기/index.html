@@ -70,7 +70,7 @@
                 </div>
                 <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
             </div>
-            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기! 썸네일"></div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기! 썸네일" width="222" height="42" fetchpriority="high"></div>
             <div class="post-body markdown-body">
 <p>다양한 웹 애플리케이션 제작용 언어는 <b>시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원</b>한다. 각 언어별 시스템 함수로는 <b>PHP의 system</b>, <b>Node JS의 child_process</b>, <b>파이썬의 os.system</b>이 있다. 이러한 함수는 전달된 인자를 <b>셸 프로그램에 전달해 명령어를 실행</b>한다. 예를 들어, <code>system(&quot;cat /etc/passwd&quot;)</code>를 호출하면, 셸 프로그램으로 <code>cat /etc/passwd</code>를 실행한 것과 같다.</p>
 <p>시스템 함수를 사용하면 이미 설치된 소프트웨어들을 쉽게 이용할 수 있다는 장점이 있다. 그러나 함수의 인자를 셸의 명령어로 전달한다는 점에서 치명적인 취약점으로 이어지기도 한다.</p>
@@ -163,16 +163,16 @@ def <span class="hljs-title function_">ping</span>():
 <p><b>flag.py</b></p>
 <pre><code class="hljs language-ini"><span class="hljs-attr">FLAG</span> = <span class="hljs-string">&#x27;DH{[REDACTED]}&#x27;</span></code></pre>
 <p><b>플래그는 flag.py에, 웹 어플리케이션은 app.py에서 실행하는 것을 알 수 있다.</b></p>
-<p><b>[flag.py]</b> FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p><b>[app.py]</b> /ping 엔드포인트에서 GET일 땐, html을 렌더하고, POST일 때 사용자의 입력값을 <code>host</code>에 담고 이를 그대로 담아 <b>동적으로 ping 명령어를 구성</b>한다. 또 이를 <b><code>subprocess.check_output</code> 함수를 사용하여 /bin/sh에서 cmd 명령어를 실행</b>하고, 결과 출력을 변수 <code>output</code>에 저장한다. 이때 실행시간이 5초를 넘긴다면 <code>&quot;Timeout !&quot;</code> 메세지와 함께 <code>ping_result.html</code>을 렌더한다. 명령어 실행 중 오류가 발생하면 <code>subprocess.CalledProcessError</code> 예외가 발생하며 해당 오류 메시지와 함께 <code>ping_result.html</code>을 렌더한다.<br>어떠한 예외도 발생하지 않으면 <b>변수 <code>output</code>을 UTF-8로 디코딩하여 <code>ping_result.html</code>과 함께 반환</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/fc586671-b35c-4ecd-a268-537a6ac4a322/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>ping.html의 폼에 <b>영어, 숫자, <code>&quot;.&quot;</code>, 글자 수 5~20자만을 허용하는 정규표현식이 포함</b>되어 있다.<br><img src="https://velog.velcdn.com/images/njw/post/1565b543-948d-4c3d-9f34-75972023b766/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p><b>[flag.py]</b> FLAG 변수에 플래그가 담긴다.<br><img src="https://velog.velcdn.com/images/njw/post/c1a7ee9d-4f71-4d39-872f-92d5989f984e/image.png" alt="[보안] Command Injection 부셔보기!" width="222" height="42" loading="lazy" decoding="async"></p>
+<p><b>[app.py]</b> /ping 엔드포인트에서 GET일 땐, html을 렌더하고, POST일 때 사용자의 입력값을 <code>host</code>에 담고 이를 그대로 담아 <b>동적으로 ping 명령어를 구성</b>한다. 또 이를 <b><code>subprocess.check_output</code> 함수를 사용하여 /bin/sh에서 cmd 명령어를 실행</b>하고, 결과 출력을 변수 <code>output</code>에 저장한다. 이때 실행시간이 5초를 넘긴다면 <code>&quot;Timeout !&quot;</code> 메세지와 함께 <code>ping_result.html</code>을 렌더한다. 명령어 실행 중 오류가 발생하면 <code>subprocess.CalledProcessError</code> 예외가 발생하며 해당 오류 메시지와 함께 <code>ping_result.html</code>을 렌더한다.<br>어떠한 예외도 발생하지 않으면 <b>변수 <code>output</code>을 UTF-8로 디코딩하여 <code>ping_result.html</code>과 함께 반환</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/fc586671-b35c-4ecd-a268-537a6ac4a322/image.png" alt="[보안] Command Injection 부셔보기!" width="977" height="268" loading="lazy" decoding="async"></p>
+<p>ping.html의 폼에 <b>영어, 숫자, <code>&quot;.&quot;</code>, 글자 수 5~20자만을 허용하는 정규표현식이 포함</b>되어 있다.<br><img src="https://velog.velcdn.com/images/njw/post/1565b543-948d-4c3d-9f34-75972023b766/image.png" alt="[보안] Command Injection 부셔보기!" width="1049" height="188" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>파일 구조를 확인하기 위해 <code>8.8.8.8&quot;; ls #</code> 명령어를 실행하려한다.</p>
-<p>직접 html 속성을 수정해 정규 표현식을 제거하는 방법도 있겠지만 조금 다르게 풀이하였다.<br><img src="https://velog.velcdn.com/images/njw/post/d340223d-9d0f-433f-ab86-425aea55bf0d/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>Burp Suite에서 직접 값을 변경하여 포워드하면<br><img src="https://velog.velcdn.com/images/njw/post/fd647686-1abf-47cc-812e-a3dd3af44326/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>이런식으로 명령어의 결과가 나온다.<br><img src="https://velog.velcdn.com/images/njw/post/49636b64-5cb0-4950-894c-85bda439d3ef/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>flag.py의 위치를 알았으니 명령어를 수정해서 보내보면<br><img src="https://velog.velcdn.com/images/njw/post/a5852319-b174-4c75-aeda-feb770d1618d/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/db51d849-2908-4a86-8f68-c708700780af/image.png" alt="[보안] Command Injection 부셔보기!" loading="lazy" decoding="async"></p>
+<p>직접 html 속성을 수정해 정규 표현식을 제거하는 방법도 있겠지만 조금 다르게 풀이하였다.<br><img src="https://velog.velcdn.com/images/njw/post/d340223d-9d0f-433f-ab86-425aea55bf0d/image.png" alt="[보안] Command Injection 부셔보기!" width="536" height="38" loading="lazy" decoding="async"></p>
+<p>Burp Suite에서 직접 값을 변경하여 포워드하면<br><img src="https://velog.velcdn.com/images/njw/post/fd647686-1abf-47cc-812e-a3dd3af44326/image.png" alt="[보안] Command Injection 부셔보기!" width="1269" height="358" loading="lazy" decoding="async"></p>
+<p>이런식으로 명령어의 결과가 나온다.<br><img src="https://velog.velcdn.com/images/njw/post/49636b64-5cb0-4950-894c-85bda439d3ef/image.png" alt="[보안] Command Injection 부셔보기!" width="585" height="361" loading="lazy" decoding="async"></p>
+<p>flag.py의 위치를 알았으니 명령어를 수정해서 보내보면<br><img src="https://velog.velcdn.com/images/njw/post/a5852319-b174-4c75-aeda-feb770d1618d/image.png" alt="[보안] Command Injection 부셔보기!" width="364" height="225" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/db51d849-2908-4a86-8f68-c708700780af/image.png" alt="[보안] Command Injection 부셔보기!" width="521" height="217" loading="lazy" decoding="async"></p>
 <h3>Command injection 방어</h3>
 <p>사실 Command 인젝션을 방어하기 위한 제일 좋은 방법은 <b>시스템 호출 함수 사용을 하지 않는 것</b>이다.<br>프로그래밍 언어에서 fs.unlink(path) (Node.js) 또는 os.remove(path) (Python) 와 같은 <b>셸을 직접 실행하지 않고 원격으로 실행할 수 있도록 지원하는 내장 라이브러리 API</b>가 정말 많다. 이를 사용하면 Command 인젝션은 유효하지 않다.<br>이 외에도 <b>입력값에 대한 검증</b>과 <b>메타 문자 필터링</b> 등의 추가 작업을 할 수 있다.</p>
 <h2>마무리</h2>

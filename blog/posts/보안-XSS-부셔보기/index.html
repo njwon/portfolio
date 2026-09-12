@@ -70,7 +70,7 @@
                 </div>
                 <div class="post-tags"><span class="post-tag">보안</span><span class="post-tag">웹</span><span class="post-tag">통신</span></div>
             </div>
-            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기! 썸네일"></div>
+            <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기! 썸네일" width="820" height="489" fetchpriority="high"></div>
             <div class="post-body markdown-body">
 <h2>XSS</h2>
 <blockquote>
@@ -78,7 +78,7 @@
 </blockquote>
 <p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
 <h3>방식</h3>
-<p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
+<p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="820" height="489" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
 <p>평범한 이용자들은 단순히 개발자의 의도대로 자연어로 이루어진 글을 게시할 뿐이겠지만, 여기서 공격자가 <b>인터널 자바스크립트  <code>&lt;script&gt;&lt;/script&gt;</code>를 포함한 글을 게시하면 그 글을 열어본 유저에게는 클라이언트 사이드 스크립트</b>가 로드되어 실행될 것이다.</p>
 <p>이같은 경우를 XSS라고 부르는 것이다.</p>
 <p>XSS는 크게 네가지의 공격기법이 있다.</p>
@@ -235,14 +235,14 @@ def memo<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)<
 
 
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p>이 부분을 통해 <b>FLAG 변수</b>에 <b>플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/3d7ab754-a6f0-4320-a07e-90de76be3622/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>/vuln 엔드포인트에서는 <b>파라미터를 그대로 반환</b>해 XSS 공격이 가능함을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/79c7b3ec-d367-4cc5-b54e-faabe952d306/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>이 부분을 통해 /flag 엔드포인트에서 check_xss에 사용자의 요청값과 플래그를 포함해 넘기는 것을 알 수 있는데<br><img src="https://velog.velcdn.com/images/njw/post/313cf32f-d697-45e6-957a-b59347830ce2/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>check_xss는 동적으로 URL을 만들어 <b>서버에서 chrome 드라이버를 통해 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것</b>을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/68a6f591-f114-4c68-bb54-e1da87c75316/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
-<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 memo 파라미터를 이용해 변수에 담아 <b>지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2e57873e-6e43-4436-843b-50ec5ec2f926/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>이 부분을 통해 <b>FLAG 변수</b>에 <b>플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/3d7ab754-a6f0-4320-a07e-90de76be3622/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="449" height="96" loading="lazy" decoding="async"></p>
+<p>/vuln 엔드포인트에서는 <b>파라미터를 그대로 반환</b>해 XSS 공격이 가능함을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/79c7b3ec-d367-4cc5-b54e-faabe952d306/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="514" height="115" loading="lazy" decoding="async"></p>
+<p>이 부분을 통해 /flag 엔드포인트에서 check_xss에 사용자의 요청값과 플래그를 포함해 넘기는 것을 알 수 있는데<br><img src="https://velog.velcdn.com/images/njw/post/313cf32f-d697-45e6-957a-b59347830ce2/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="713" height="242" loading="lazy" decoding="async"></p>
+<p>check_xss는 동적으로 URL을 만들어 <b>서버에서 chrome 드라이버를 통해 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것</b>을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/68a6f591-f114-4c68-bb54-e1da87c75316/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="787" height="653" loading="lazy" decoding="async"></p>
+<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 memo 파라미터를 이용해 변수에 담아 <b>지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2e57873e-6e43-4436-843b-50ec5ec2f926/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="455" height="117" loading="lazy" decoding="async"></p>
 <h4>취약점 분석</h4>
 <p>/flag 엔드포인트에서 <code>&lt;script&gt;location.href = &quot;/memo?memo=&quot; + document.cookie;&lt;/script&gt;</code> 이와 같은 페이로드를 입력하면 서버가 플래그 쿠키를 넣고 URL을 열기 때문에 <b>서버의 브라우저에 있는 쿠키</b>가 <b>출력</b>된다는 것을 알 수 있다.</p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/e3517ab1-be5f-4871-8a44-d2c9d34cbb75/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/e3517ab1-be5f-4871-8a44-d2c9d34cbb75/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="475" height="216" loading="lazy" decoding="async"></p>
 <h3>XSS 방어</h3>
 <p>XSS가 사용자의 악의적인 입력값 주입과 텍스트를 인터널 자바스크립트와 같은 태그로 인식하여 생기는 취약점 이므로 <b>서버 단의 철저한 입력값 검증</b>과 출력할 때 <code>&amp;lt;</code>, <code>&amp;gt;</code>와 같은 <b>특수 입력 기호</b>를 <b>이용</b>하면 대부분의 XSS는 방어 가능하다.</p>
 <h2>마무리</h2>

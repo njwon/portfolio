@@ -11,6 +11,7 @@
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import { mkdir, writeFile, readFile, readdir, rm, stat } from 'node:fs/promises';
+import { imageSize } from 'image-size';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -59,10 +60,39 @@ marked.use({
     image(href, title, text) {
       const alt = text || currentTitle;
       const t = title ? ` title="${esc(title)}"` : '';
-      return `<img src="${esc(href)}" alt="${esc(alt)}"${t} loading="lazy" decoding="async">`;
+      const dim = imageDims[href];
+      const wh = dim ? ` width="${dim.w}" height="${dim.h}"` : '';   // 크기를 알면 CLS 방지용으로 명시
+      return `<img src="${esc(href)}" alt="${esc(alt)}"${t}${wh} loading="lazy" decoding="async">`;
     },
   },
 });
+
+// 본문 이미지 크기 캐시 (scripts/image-dims.json). 새 이미지만 앞부분 256KB 를 받아 헤더에서 크기를 읽는다
+const DIMS_PATH = join(dirname(fileURLToPath(import.meta.url)), 'image-dims.json');
+let imageDims = {};
+async function loadImageDims() {
+  try { imageDims = JSON.parse(await readFile(DIMS_PATH, 'utf8')); } catch { imageDims = {}; }
+}
+async function probeImageDims(posts) {
+  const urls = new Set();
+  for (const p of posts) {
+    if (p.thumbnail) urls.add(p.thumbnail);
+    for (const m of String(p.body || '').matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)) urls.add(m[1]);
+  }
+  let added = 0;
+  for (const u of urls) {
+    if (imageDims[u] !== undefined) continue;
+    try {
+      const r = await fetch(u, { headers: { Range: 'bytes=0-262143' } });
+      const buf = Buffer.from(await r.arrayBuffer());
+      const d = imageSize(buf);
+      imageDims[u] = d.width && d.height ? { w: d.width, h: d.height } : null;
+      added++;
+    } catch { imageDims[u] = null; }   // 못 읽은 이미지는 null 로 기록해 매번 재시도하지 않음
+  }
+  if (added) await writeFile(DIMS_PATH, JSON.stringify(imageDims, null, 0) + '\n');
+  return added;
+}
 
 // description: 문장 경계에서 자르기 (단어 중간에서 끊기지 않게)
 function summarize(post, max = 120) {
@@ -174,7 +204,7 @@ function renderPage(post) {
                 </div>
                 <div class="post-tags">${tags.map(t => `<span class="post-tag">${esc(t)}</span>`).join('')}</div>
             </div>
-            ${post.thumbnail ? `<div class="post-thumbnail-wrap"><img class="post-thumbnail" src="${esc(post.thumbnail)}" alt="${esc(post.title)} 썸네일"></div>` : ''}
+            ${post.thumbnail ? `<div class="post-thumbnail-wrap"><img class="post-thumbnail" src="${esc(post.thumbnail)}" alt="${esc(post.title)} 썸네일"${imageDims[post.thumbnail] ? ` width="${imageDims[post.thumbnail].w}" height="${imageDims[post.thumbnail].h}"` : ''} fetchpriority="high"></div>` : ''}
             <div class="post-body markdown-body">
 ${body}
             </div>
@@ -293,6 +323,9 @@ async function main() {
     posts.push(detail);
   }
   posts.sort((a, b) => new Date(b.display_date) - new Date(a.display_date));
+  await loadImageDims();
+  const probed = await probeImageDims(posts);
+  if (probed) console.log(`이미지 크기 ${probed}개 새로 조회`);
 
   // 삭제된 글의 디렉터리 정리
   await mkdir(OUT, { recursive: true });
@@ -320,7 +353,7 @@ ${posts.slice(0, 5).map((p, i) => `        <a class="post-card post-card-link" h
             <div class="post-card-content">
                 ${p.series_name ? `<span class="post-card-series">${esc(p.series_name)}</span>` : ''}
                 <div class="post-card-title">${esc(p.title)}</div>
-                <div class="post-card-desc">${esc(summarize(p, 100))}</div>
+                <div class="post-card-desc">${esc(p.short_description || summarize(p, 150)).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')}</div>
                 <div class="post-card-footer"><div class="post-card-tags">${(p.tags || []).map(t => `<span class="post-card-tag">${esc(t)}</span>`).join('')}</div></div>
             </div>
         </a>`).join('\n')}
