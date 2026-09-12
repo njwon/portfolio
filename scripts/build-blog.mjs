@@ -272,7 +272,7 @@ function renderRss(posts) {
     <link>${SITE}/blog/</link>
     <description>노정원의 개발 블로그 - 네트워크·정보보안·백엔드</description>
     <language>ko</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <lastBuildDate>${new Date(posts[0]?.display_date ?? Date.now()).toUTCString()}</lastBuildDate>
     <atom:link href="${SITE}/blog/rss.xml" rel="self" type="application/rss+xml" />
 ${items}
   </channel>
