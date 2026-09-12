@@ -40,12 +40,14 @@ const stripMd = md => String(md ?? '')
 
 // 본문 마크다운의 # 제목은 h2부터 시작(페이지 h1은 글 제목 하나만), 이미지는 lazy + alt 보완
 let currentTitle = '';
+let lastHeading = 1;   // 제목 단계 건너뛰기(h2 → h5 등) 방지용: 직전 단계 +1 까지만 허용
 marked.use({
   breaks: true,
   gfm: true,
   renderer: {
     heading(text, level) {                     // marked v9 시그니처
-      const d = Math.min(level + 1, 6);
+      const d = Math.min(level + 1, lastHeading + 1, 6);
+      lastHeading = d;
       return `<h${d}>${text}</h${d}>\n`;
     },
     // 코드 하이라이팅을 빌드 시점에 처리 → 클라이언트에서 highlight.js 실행 불필요
@@ -107,6 +109,7 @@ function summarize(post, max = 120) {
 
 function renderBody(post) {
   currentTitle = post.title;
+  lastHeading = 1;
   return marked.parse(post.body || '').replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>');
 }
 

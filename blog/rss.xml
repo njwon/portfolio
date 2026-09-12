@@ -463,7 +463,7 @@ app = Flask(__name__)
         &quot;&quot;&quot;</span>
 <span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&#x27;__main__&#x27;</span>:
     app.run()</code></pre>
-<h5>정상적인 요청</h5>
+<h4>정상적인 요청</h4>
 <pre><code class="hljs language-dart">POST /fileUpload HTTP/<span class="hljs-number">1.1</span>
 <span class="hljs-title class_">Host</span>: storage.dreamhack.io
 <span class="hljs-title class_">Origin</span>: https:<span class="hljs-comment">//storage.dreamhack.io</span>
@@ -1167,7 +1167,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
 </tr>
 </tbody></table>
 <p>아래 코드는 로그인 페이지를 구성하는 코드이다. 코드를 살펴보면, 메소드에 따른 요청마다 다른 기능을 수행하는 것을 알 수 있다.</p>
-<h5>GET</h5>
+<h4>GET</h4>
 <p>userid와 userpassword를 입력할 수 있는 로그인 페이지 제공. <b>userid와 password 입력창에 guest를 입력하면 로그인을 수행</b> 가능.</p>
 <h5>POST</h5>
 <p>이용자가 입력한 계정 정보가 데이터베이스에 존재하는지 확인. 이때, <b>로그인 계정이 admin일 경우 FLAG를 출력.</b><br><img src="https://velog.velcdn.com/images/njw/post/cd8af8aa-87b6-42df-937d-57dbb8ec37cb/image.png" alt="[보안] SQL Injection 부셔보기!" width="1169" height="400" loading="lazy" decoding="async"></p>
@@ -1933,7 +1933,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
       <link>https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/</link>
       <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/</guid>
       <pubDate>Fri, 09 Jan 2026 04:18:59 GMT</pubDate>
-      <description><![CDATA[<h3>인프라</h3>
+      <description><![CDATA[<h2>인프라</h2>
 <p>학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다.<br>바로 <b>인프라</b> 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도 많은 난관이 있을것이다. 그를 제외하고도 부모님의 돈을 쓰기 때문에 가장 최소한으로 지출을 관리해야한다는 부담도 있다.</p>
 <p>나는 Node.js를 지원하는 한국 호스팅 서버들을 알아보기 시작했다.</p>
 <p>결과적으로 Cafe24의 Node.js 서버가 가장 알맞다고 생각했다.<br>하지만, AWS, 오라클등과 비교했을때 성능이 정말 끔찍했다.</p>
@@ -2261,7 +2261,7 @@ module.exports = router</code></pre>
       <link>https://njw.kro.kr/blog/posts/Node.js-Express.js/</link>
       <guid isPermaLink="true">https://njw.kro.kr/blog/posts/Node.js-Express.js/</guid>
       <pubDate>Mon, 29 Dec 2025 03:18:35 GMT</pubDate>
-      <description><![CDATA[<h3>JS와 Node.js의 역사</h3>
+      <description><![CDATA[<h2>JS와 Node.js의 역사</h2>
 <p>JS는 본래 웹 페이지를 조작하는 동적인 페이지의 핵심 중추인 언어로써 웹 브라우저를 제외한 환경에서는 쓰지 않는 언어였다.<br>하지만 2008년 9월 JS의 초창기와 달리 빨라지고 강력한 C++를 기반으로 동작하는 V8 엔진이 등장하며, 웹 브라우저가 아닌 환경에서 사용할 수 있도록 하자는 의견이 많아졌고 이에 따라 CommonJS 표준이 발표되었다.<br>이 흐름에 힘입어 2009년, CommonJS 표준, V8엔진을 이용하여 non-blocking, evnet-driven I/O 패러다임에서 작업할 수 있는 Node.js가 탄생했다.</p>
 <h3>Express.js의 역사</h3>
 <p>20010년 처음 개발된 Express.js는 Node.js를 위한 웹 애플리케이션 프레임워크로, 서버 측에서의 개발을 간소화하고 효율적으로 할 수 있도록 설계되었다. 이 프레임워크는 RESTful API 및 웹 애플리케이션을 구축할 때 필요한 다양한 기능을 제공한다.<br>Express.js는 빠르고 유연한 구조를 가지고 있으며, 미들웨어를 통해 요청과 응답을 처리할 수 있는 강력한 기능을 지원한다. Express.js의 주요 특징 중 하나는 라우팅 기능으로, 사용자가 정의한 경로에 따라 요청을 적절한 핸들러로 전달할 수 있다. 이러한 특성 덕분에 Express.js는 대규모 애플리케이션 개발에도 적합하다. 또한, Express.js는 다양한 미들웨어와의 호환성이 뛰어나, 개발자들이 필요에 따라 추가 기능을 쉽게 통합할 수 있다. Express.js를 기반으로 한 애플리케이션 개발은 클라이언트와 서버 간의 효과적인 데이터 교환을 가능하게 하며, 이는 현대적인 웹 개발에 필수적인 요소가 되었다.</p>
@@ -2505,12 +2505,12 @@ PS&gt; <span class="hljs-variable">$env</span>:DEBUG=<span class="hljs-string">&
       <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EC%9B%B9-%EA%B8%B0%EC%B4%88-%EC%A0%95%EB%A6%AC-%EB%B0%8F-%EC%9B%B9%EB%B3%B4%EC%95%88%EC%9D%98-%ED%95%84%EC%9A%94%EC%84%B1/</guid>
       <pubDate>Sun, 28 Dec 2025 03:34:05 GMT</pubDate>
       <description><![CDATA[<p>우리가 흔히 웹 사이트 혹은 웹이라 부르는 것의 정체는 무엇일까?<br>흔히 쉽게 지나쳐가는 웹 기초 다지기.</p>
-<h3>웹🕸️</h3>
+<h2>웹🕸️</h2>
 <blockquote>
 <p>HTTP 통신을 이용하여 정보를 공유하는 서비스.</p>
 </blockquote>
 <p>우리가 웹사이트에 접속하면 HTML, CSS, JS와 같은 static한 리소스들을 불러온다.<br>이때, 정보를 제공하는 주체를 <b>서버(Server)</b> 정보를 받는 이용자를 **클라이언트(Client)**라고<br>부른다.<br>우리가 식당에 갈 때 음식을 서빙하는 사람(Server)과 음식을 주문받는 고객(Client)의 관계를 생각하면 편하다.</p>
-<h4>서버와 클라이언트의 관계</h4>
+<h3>서버와 클라이언트의 관계</h3>
 <p>이렇게 보면 서버와 클라이언트의 관계가 명확히 딱딱 정해져 있는 것도 같지만, 그렇지만은 않다.</p>
 <pre><code class="hljs language-erlang"><span class="hljs-string">&quot;클라이언트&quot;</span>와 <span class="hljs-string">&quot;서버&quot;</span>는 고정된 직업이 아니라, 상황에 따른 역할이다.</code></pre>
 <p><b>서버가 클라이언트의 역할을 수행해 다른서버에 리소스를 요청할 때</b>가 있다.<br>반대로 <b>클라이언트 역할을 수행하던 내 컴퓨터에서 서버를 열수도</b> 있다.<br>이와 같이 서버와 클라이언트는 고정돼있지 않으며, 상황에 따라 유동적으로 변화한다.<br>더 자세히 말하자면, 서버와 클라이언트의 관계는 **&quot;누가 요청(Request)을 먼저 보냈느냐&quot;**에 따라 상대적으로 결정된다.</p>
