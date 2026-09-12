@@ -382,18 +382,18 @@ function drawLangChart() {
         : Math.min(380, window.innerWidth * 0.42);
     const groups = [
         { title: '언어', items: [
-            { label: 'Java',        value: 85 },
-            { label: 'Python',      value: 82 },
-            { label: 'JavaScript',  value: 80 },
-            { label: 'HTML / CSS',  value: 77 },
-            { label: 'SQL',         value: 75 },
-            { label: 'C',           value: 60 },
+            { label: 'HTML / CSS',  value: 90 },
+            { label: 'JavaScript',  value: 85 },
+            { label: 'Python',      value: 83 },
+            { label: 'SQL',         value: 80 },
+            { label: 'C',           value: 79 },
+            { label: 'Java',        value: 75 },
         ]},
         { title: '프레임워크', items: [
-            { label: 'JPA',         value: 79 },
-            { label: 'Spring',      value: 78 },
+            { label: 'FastAPI',     value: 80 },
+            { label: 'Spring',      value: 79 },
+            { label: 'JPA',         value: 78 },
             { label: 'JSP',         value: 78 },
-            { label: 'FastAPI',     value: 65 },
         ]},
         { title: '인프라 · 도구', items: [
             { label: 'Linux',       value: 85 },
@@ -526,3 +526,6 @@ function drawLangChart() {
         link.classList.remove('clippy-active');
     });
 })();
+
+// 저작권 연도 자동 갱신
+document.querySelectorAll('.copy-year').forEach(el => { el.textContent = new Date().getFullYear(); });

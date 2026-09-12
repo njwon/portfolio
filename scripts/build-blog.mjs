@@ -189,10 +189,11 @@ ${body}
     </main>
 
     <footer class="blog-footer">
-        <div>Copyright &copy;2024 All rights reserved by jeongwon.</div>
+        <div>Copyright &copy;2024–<span class="copy-year">${new Date().getFullYear()}</span> All rights reserved by jeongwon.</div>
     </footer>
 
     <script>
+    document.querySelectorAll('.copy-year').forEach(function (el) { el.textContent = new Date().getFullYear(); });
     (function () {
         var header = document.getElementById('header');
         var scrolled = false;

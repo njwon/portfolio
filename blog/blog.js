@@ -343,3 +343,6 @@ function escapeHtml(str) {
 function parseBold(str) {
   return str.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 }
+
+// 저작권 연도 자동 갱신
+document.querySelectorAll('.copy-year').forEach(el => { el.textContent = new Date().getFullYear(); });
