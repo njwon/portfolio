@@ -75,15 +75,15 @@ jobs:
             fi
             sleep 10
           done
-          # 403(키 검증 실패)·429·5xx 는 30초 간격으로 최대 3회 재시도
-          for attempt in 1 2 3; do
+          # 한 곳에만 보내면 그쪽이 거부할 때 나머지에도 전달이 안 되므로 각 엔진에 직접 전송
+          # (Bing 은 이 사이트의 키 검증을 403 으로 거부 중 — 원인 미확인, 경고만 남김)
+          for EP in https://searchadvisor.naver.com/indexnow https://yandex.com/indexnow https://api.indexnow.org/indexnow; do
             STATUS=$(curl -s -o /tmp/indexnow.out -w "%{http_code}" \
-              -X POST "https://api.indexnow.org/indexnow" \
+              -X POST "$EP" \
               -H "Content-Type: application/json; charset=utf-8" \
               --data @/tmp/indexnow.json)
-            echo "IndexNow HTTP $STATUS (시도 $attempt)"; cat /tmp/indexnow.out; echo
-            case "$STATUS" in 200|202) break;; esac
-            sleep 30
+            echo "IndexNow $EP → HTTP $STATUS $(head -c 150 /tmp/indexnow.out | tr -d '\n')"
+            case "$STATUS" in 200|202) ;; *) echo "::warning::IndexNow $EP 응답 $STATUS";; esac
           done
-          # 200/202 = 접수. 그 외는 경고만 (사이트맵 커밋은 이미 끝났으므로 실패시키지 않음)
-          case "$STATUS" in 200|202) ;; *) echo "::warning::IndexNow 응답 $STATUS";; esac
+          # 사이트맵 커밋은 이미 끝났으므로 전송 실패로 워크플로우를 실패시키지는 않음
+          exit 0
