@@ -67,10 +67,23 @@ jobs:
             urlList: .
           }' > /tmp/indexnow.json
           echo "$(echo "$URLS" | wc -l)개 URL 전송"
-          STATUS=$(curl -s -o /tmp/indexnow.out -w "%{http_code}" \
-            -X POST "https://api.indexnow.org/indexnow" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            --data @/tmp/indexnow.json)
-          echo "IndexNow HTTP $STATUS"; cat /tmp/indexnow.out; echo
+          # push 직후엔 GitHub Pages 재배포 중이라 키 파일이 잠깐 안 읽힐 수 있음(→ 403). 배포가 끝나 새 사이트맵이 실제로 서빙될 때까지 최대 5분 대기
+          for i in $(seq 1 30); do
+            if curl -sf "https://njw.kro.kr/sitemap-pages.xml" | cmp -s - sitemap-pages.xml \
+               && [ "$(curl -s https://njw.kro.kr/$KEY.txt)" = "$KEY" ]; then
+              echo "배포 확인 (${i}0초)"; break
+            fi
+            sleep 10
+          done
+          # 403(키 검증 실패)·429·5xx 는 30초 간격으로 최대 3회 재시도
+          for attempt in 1 2 3; do
+            STATUS=$(curl -s -o /tmp/indexnow.out -w "%{http_code}" \
+              -X POST "https://api.indexnow.org/indexnow" \
+              -H "Content-Type: application/json; charset=utf-8" \
+              --data @/tmp/indexnow.json)
+            echo "IndexNow HTTP $STATUS (시도 $attempt)"; cat /tmp/indexnow.out; echo
+            case "$STATUS" in 200|202) break;; esac
+            sleep 30
+          done
           # 200/202 = 접수. 그 외는 경고만 (사이트맵 커밋은 이미 끝났으므로 실패시키지 않음)
           case "$STATUS" in 200|202) ;; *) echo "::warning::IndexNow 응답 $STATUS";; esac
