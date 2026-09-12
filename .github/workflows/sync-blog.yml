@@ -59,7 +59,7 @@ jobs:
       - name: IndexNow 갱신 알림
         if: steps.commit.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
-          KEY="55a039653f4bf38c2b56a78133179559"
+          KEY="6a0260f9a2c941fb888d67a53dbe4164"
           URLS=$(cat sitemap-pages.xml blog/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed 's/<\/\?loc>//g' | sort -u)
           echo "$URLS" | jq -R . | jq -s --arg key "$KEY" '{
             host: "njw.kro.kr", key: $key,
