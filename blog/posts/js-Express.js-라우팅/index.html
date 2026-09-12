@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[js] Express.js 라우팅 | nogarden.log</title>
-    <meta name="description" content="급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으">
+    <meta name="description" content="급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다.">
     <meta name="author" content="노정원">
     <meta name="keywords" content="노정원, express.js, js, node.js, 백엔드">
     <link rel="canonical" href="https://njw.kro.kr/blog/posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/">
@@ -13,7 +13,7 @@
     <meta property="og:locale" content="ko_KR">
     <meta property="og:site_name" content="nogarden.log">
     <meta property="og:title" content="[js] Express.js 라우팅">
-    <meta property="og:description" content="급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으">
+    <meta property="og:description" content="급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다.">
     <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
     <meta property="og:url" content="https://njw.kro.kr/blog/posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/">
     <meta property="article:published_time" content="2025-12-29T17:22:59.766Z">
@@ -24,18 +24,26 @@
     <meta property="article:tag" content="백엔드">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="[js] Express.js 라우팅">
-    <meta name="twitter:description" content="급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다. &gt; 아래 모든 설명은 Express 4.x 버전을 기준으">
+    <meta name="twitter:description" content="급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다.">
     <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/","headline":"[js] Express.js 라우팅","description":"급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다. > 아래 모든 설명은 Express 4.x 버전을 기준으","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2025-12-29T17:22:59.766Z","dateModified":"2025-12-29T17:22:59.766Z","keywords":"express.js, js, node.js, 백엔드","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
-    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/js-Express.js-%EB%9D%BC%EC%9A%B0%ED%8C%85/","headline":"[js] Express.js 라우팅","description":"급행 배송(Routing) 🚂!! 라우팅이란 애플리케이션이 특정 엔드포인트(URI 또는 경로)에 대한 클라이언트 요청과 특정 HTTP 요청 메서드(GET, POST 등)에 어떻게 응답할지 결정하는 것을 말한다.","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2025-12-29T17:22:59.766Z","dateModified":"2025-12-29T17:22:59.766Z","keywords":"express.js, js, node.js, 백엔드","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log — 노정원 개발 블로그" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="me" href="https://github.com/njwon">
+    <link rel="me" href="https://velog.io/@njw">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://velog.velcdn.com">
     <link rel="stylesheet" href="/css/font.css" />
     <link rel="stylesheet" href="/blog/blog.css" />
-    <link rel="icon" href="/img/noise/Sarah.webp" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+    <link rel="icon" href="https://njw.kro.kr/favicon.ico" sizes="48x48">
+    <link rel="icon" href="https://njw.kro.kr/img/favicon.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://njw.kro.kr/img/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    </noscript>
 </head>
 
 <body>
@@ -45,8 +53,8 @@
         <div class="header-row">
             <div class="header-info">
                 <a href="/blog/" class="back-link">&#8592; Blog</a>
-                <p class="blog-title">nogarden.log</p>
-                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+                <p class="blog-title"><a href="/blog/" style="color:inherit;text-decoration:none">nogarden.log</a></p>
+                <p class="blog-desc"><a href="/" rel="author" style="color:inherit">노정원(njwon)</a>의 개발 블로그 · 어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
             </div>
         </div>
     </header>
@@ -56,6 +64,7 @@
             <div class="post-header">
                 <h1 class="post-title">[js] Express.js 라우팅</h1>
                 <div class="post-meta">
+                    <a class="post-author" href="/" rel="author">노정원</a>
                     <time class="post-date" datetime="2025-12-29T17:22:59.766Z">2025.12.30</time>
                     <span class="post-series">JS</span>
                 </div>
@@ -63,15 +72,14 @@
             </div>
             
             <div class="post-body markdown-body">
-<h1>급행 배송(Routing) 🚂!!</h1>
+<h2>급행 배송(Routing) 🚂!!</h2>
 <p><b>라우팅</b>이란 애플리케이션이 **특정 엔드포인트(URI 또는 경로)**에 대한 클라이언트 요청과 **특정 HTTP 요청 메서드(GET, POST 등)**에 어떻게 응답할지 결정하는 것을 말한다.</p>
 <blockquote>
 <p>아래 모든 설명은 Express 4.x 버전을 기준으로 함.<br>Express 5.x 버전에서는 많은 것이 달라졌음.</p>
 </blockquote>
-<h2>Express 라우팅</h2>
+<h3>Express 라우팅</h3>
 <p>애플리케이션은 지정된 경로(엔드포인트)와 HTTP 메서드에 대한 요청을 수신하고, 일치하는 요청을 감지하면 지정된 콜백 함수를 호출한다.</p>
-<pre><code>app.METHOD(PATH, HANDLER)
-</code></pre>
+<pre><code class="hljs language-pgsql">app.<span class="hljs-keyword">METHOD</span>(<span class="hljs-type">PATH</span>, <span class="hljs-keyword">HANDLER</span>)</code></pre>
 <ul>
 <li><b>app</b>는 <b>express의 인스턴스</b>이다.</li>
 <li><b>METHOD</b>는 <b>소문자로 된 HTTP 요청 메서드</b>이다.</li>
@@ -84,45 +92,40 @@
 </blockquote>
 <p>res.download() =&gt; 다운로드할 파일을 선택하라는 메시지를 표시한다.<br>res.end() =&gt; 응답 프로세스를 종료한다.<br>res.json() =&gt; JSON 형식의 응답을 보낸다.<br>res.jsonp() =&gt; JSONP를 지원하는 JSON 응답을 전송한다.<br>res.redirect() =&gt; 요청을 리디렉션한다.<br>res.render() =&gt; 뷰 템플릿을 렌더링한다.<br>res.send() =&gt; 다양한 유형의 응답을 보낸다.<br>res.sendFile() =&gt; 파일을 옥텟 스트림으로 전송한다.<br>res.sendStatus() =&gt; 응답 상태 코드를 설정하고 해당 문자열 표현을 응답 본문으로 전송한다.</p>
 <p>루트 경로(/), 애플리케이션의 홈페이지에서 GET 메서드를 통해 Hello World!를 출력하는 코드는 다음과 같다.</p>
-<pre><code>const express = require(&#39;express&#39;)
-const app = express()
+<pre><code class="hljs language-dns">const express = require<span class="hljs-punctuation">(</span>&#x27;express&#x27;<span class="hljs-punctuation">)</span>
+const app = express<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 
-app.get(&#39;/&#39;, (req, res) =&gt; {
-  res.send(&#39;Hello World!&#39;)
-})
-</code></pre>
+app.get<span class="hljs-punctuation">(</span>&#x27;/&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>&#x27;Hello World!&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span></code></pre>
 <p>루트 경로(/), 즉 애플리케이션의 홈페이지에 대한 POST 요청에 응답한다.</p>
-<pre><code>const express = require(&#39;express&#39;)
-const app = express()
+<pre><code class="hljs language-dns">const express = require<span class="hljs-punctuation">(</span>&#x27;express&#x27;<span class="hljs-punctuation">)</span>
+const app = express<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 
-app.post(&#39;/&#39;, (req, res) =&gt; {
-  res.send(&#39;Got a POST request&#39;)
-})
-</code></pre>
+app.post<span class="hljs-punctuation">(</span>&#x27;/&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>&#x27;Got <span class="hljs-keyword">a</span> POST request&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span></code></pre>
 <p>해당 /user 경로에 대한 PUT 요청에 응답한다.</p>
-<pre><code>const express = require(&#39;express&#39;)
-const app = express()
+<pre><code class="hljs language-dns">const express = require<span class="hljs-punctuation">(</span>&#x27;express&#x27;<span class="hljs-punctuation">)</span>
+const app = express<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 
-app.put(&#39;/user&#39;, (req, res) =&gt; {
-  res.send(&#39;Got a PUT request at /user&#39;)
-})
-</code></pre>
+app.put<span class="hljs-punctuation">(</span>&#x27;/user&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>&#x27;Got <span class="hljs-keyword">a</span> PUT request at /user&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span></code></pre>
 <p>해당 /user 경로에 대한 DELETE 요청에 응답한다.</p>
-<pre><code>const express = require(&#39;express&#39;)
-const app = express()
+<pre><code class="hljs language-dns">const express = require<span class="hljs-punctuation">(</span>&#x27;express&#x27;<span class="hljs-punctuation">)</span>
+const app = express<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 
-app.delete(&#39;/user&#39;, (req, res) =&gt; {
-  res.send(&#39;Got a DELETE request at /user&#39;)
-})
-</code></pre>
+app.delete<span class="hljs-punctuation">(</span>&#x27;/user&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>&#x27;Got <span class="hljs-keyword">a</span> DELETE request at /user&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span></code></pre>
 <p><code>app.all()</code>은 모든 HTTP 요청 메소드에 대해 특정 경로에서 미들웨어 함수를 로드하는 특별한 라우팅 방식이다. HTTP 표준에 있는 8가지 메소드 외에도<br>약 39가지 이상의 <b>모든 HTTP 메서드를 인식</b>한다.</p>
 <p>해당 /secret 경로에 대한 모든 HTTP 요청에 응답하고 다음 미들웨어를 호출한다.</p>
-<pre><code>app.all(&#39;/secret&#39;, (req, res, next) =&gt; {
-  console.log(&#39;Accessing the secret section ...&#39;)
-  next() // pass control to the next handler
-})
-</code></pre>
-<h3>기본 라우터</h3>
+<pre><code class="hljs language-vim">app.<span class="hljs-keyword">all</span>(<span class="hljs-string">&#x27;/secret&#x27;</span>, (req, <span class="hljs-keyword">res</span>, <span class="hljs-keyword">next</span>) =&gt; {
+  console.<span class="hljs-built_in">log</span>(<span class="hljs-string">&#x27;Accessing the secret section ...&#x27;</span>)
+  <span class="hljs-keyword">next</span>() // pass control <span class="hljs-keyword">to</span> the <span class="hljs-keyword">next</span> handler
+})</code></pre>
+<h4>기본 라우터</h4>
 <p>위에서 서술한 내용을 정리해보면 다음과 같다.</p>
 <blockquote>
 <p>/ =&gt; root 경로에 대한 요청 감지.</p>
@@ -130,7 +133,7 @@ app.delete(&#39;/user&#39;, (req, res) =&gt; {
 <blockquote>
 <p>/(아무문자열) =&gt; (아무문자열)에 대한 요청 감지.<br>(예: /about, /random.text)</p>
 </blockquote>
-<h3>문자열 패턴</h3>
+<h4>문자열 패턴</h4>
 <p>Express.js에서는 <b>문자열 패턴을 기반으로 한 경로</b>를 지정할 수 있다.<br>아래에 각각의 고유 문자열 패턴이 서술되어 있다.<br>또한 <a href="https://www.npmjs.com/package/path-to-regexp">여기</a>에서 모든 고유 문자열 패턴의 가능성을 확인할 수 있다.</p>
 <blockquote>
 <p>ab?cd =&gt; &quot;?&quot; 앞 문자가 있건, 없건 이와 관계없이 감지.<br>(예: /acd, /abcd)</p>
@@ -144,7 +147,7 @@ app.delete(&#39;/user&#39;, (req, res) =&gt; {
 <blockquote>
 <p>ab(cd)?e =&gt; &quot;(cd)&quot;를 통해 한 그룹으로 묶고 &quot;?&quot;를 통해 (cd)가 있건 없건 이와 관계없이 감지.<br>(예: /abe, /abcde)</p>
 </blockquote>
-<h3>정규 표현식</h3>
+<h4>정규 표현식</h4>
 <p>Express.js에서는 또한 <b>정규 표현식을 기반으로 한 경로</b>를 설정할 수 있다.<br>아래에 몇가지 정규표현식 예시가 서술되어 있다.<br>자세한 가이드는 <a href="https://developer.mozilla.org/docs/Web/JavaScript/Guide/Regular_expressions">여기</a>에서 확인 가능하다.</p>
 <blockquote>
 <p>/a/ =&gt; &quot;a&quot;라는 글자가 단 하나라도 포함된 모든 항목을 감지.<br>(예: /a, /dwasdwd, /dwa, /2a)</p>
@@ -152,12 +155,11 @@ app.delete(&#39;/user&#39;, (req, res) =&gt; {
 <blockquote>
 <p>/.*fly$/ =&gt; 단어의 마지막이 &quot;fly&quot;로 끝나는 모든 항목을 감지.<br>(예: /butterfly, /dragonfly<br>하지만 /butterflyman, /dragonflyman등과는 불일치)</p>
 </blockquote>
-<h3>경로 매개변수</h3>
+<h4>경로 매개변수</h4>
 <p><b>경로 매개변수</b>는 URL에서 해당 위치에 지정된 값을 캡처하는 데 사용되는 <b>명명된 URL 세그먼트</b>이다. 캡처된 값은 req.params 객체에 채워지며, 경로에 지정된 경로 매개변수 이름이 각각의 키로 사용된다.</p>
-<pre><code>Route path: /users/:userId/books/:bookId
-Request URL: http://localhost:3000/users/34/books/8989
-req.params: { &quot;userId&quot;: &quot;34&quot;, &quot;bookId&quot;: &quot;8989&quot; }
-</code></pre>
+<pre><code class="hljs language-awk">Route path: <span class="hljs-regexp">/users/</span>:userId<span class="hljs-regexp">/books/</span>:bookId
+Request URL: http:<span class="hljs-regexp">//</span>localhost:<span class="hljs-number">3000</span><span class="hljs-regexp">/users/</span><span class="hljs-number">34</span><span class="hljs-regexp">/books/</span><span class="hljs-number">8989</span>
+req.params: { <span class="hljs-string">&quot;userId&quot;</span>: <span class="hljs-string">&quot;34&quot;</span>, <span class="hljs-string">&quot;bookId&quot;</span>: <span class="hljs-string">&quot;8989&quot;</span> }</code></pre>
 <p>아래는 경로 매개변수명을 설정하는 규칙이다.</p>
 <blockquote>
 <ol>
@@ -167,19 +169,16 @@ req.params: { &quot;userId&quot;: &quot;34&quot;, &quot;bookId&quot;: &quot;8989
 </ol>
 </blockquote>
 <p>경로 매개변수를 사용하여 경로를 정의하려면 아래와 같이 경로에 경로 매개변수를 지정하기만 하면 된다. 이때, 매개변수명은 위에서 서술한 바와 같이 <code>[A-Za-z0-9_]</code>로 구성되어야만 한다.</p>
-<pre><code>app.get(&#39;/users/:userId/books/:bookId&#39;, (req, res) =&gt; {
-  res.send(req.params)
-})
-</code></pre>
+<pre><code class="hljs language-dns">app.get<span class="hljs-punctuation">(</span>&#x27;/users/:userId/books/:bookId&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>req.params<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span></code></pre>
 <p>위에서 서술한 바와 같이 <code>--</code>과 <code>..</code>은 문자 그대로 해석되므로 경로 매개변수와 함께 유용하게 사용할 수 있다.</p>
-<pre><code>Route path: /flights/:from-:to
-Request URL: http://localhost:3000/flights/LAX-SFO
-req.params: { &quot;from&quot;: &quot;LAX&quot;, &quot;to&quot;: &quot;SFO&quot; }
-</code></pre>
-<pre><code>Route path: /plantae/:genus.:species
-Request URL: http://localhost:3000/plantae/Prunus.persica
-req.params: { &quot;genus&quot;: &quot;Prunus&quot;, &quot;species&quot;: &quot;persica&quot; }
-</code></pre>
+<pre><code class="hljs language-nix">Route <span class="hljs-params">path:</span> <span class="hljs-operator">/</span>flights<span class="hljs-operator">/</span>:from-:to
+Request <span class="hljs-params">URL:</span> http:<span class="hljs-operator">//</span>localhost:<span class="hljs-number">3000</span><span class="hljs-symbol">/flights/LAX-SFO</span>
+req.<span class="hljs-params">params:</span> { <span class="hljs-string">&quot;from&quot;</span>: <span class="hljs-string">&quot;LAX&quot;</span>, <span class="hljs-string">&quot;to&quot;</span>: <span class="hljs-string">&quot;SFO&quot;</span> }</code></pre>
+<pre><code class="hljs language-nix">Route <span class="hljs-params">path:</span> <span class="hljs-operator">/</span>plantae<span class="hljs-operator">/</span>:genus.:species
+Request <span class="hljs-params">URL:</span> http:<span class="hljs-operator">//</span>localhost:<span class="hljs-number">3000</span><span class="hljs-symbol">/plantae/Prunus.persica</span>
+req.<span class="hljs-params">params:</span> { <span class="hljs-string">&quot;genus&quot;</span>: <span class="hljs-string">&quot;Prunus&quot;</span>, <span class="hljs-string">&quot;species&quot;</span>: <span class="hljs-string">&quot;persica&quot;</span> }</code></pre>
 <p>위에서 서술한 바와 같이 경로 매개변수를 조작하기 위해 <code>()</code>안에 정규 표현식을 적을 수 있다.</p>
 <blockquote>
 <p>정규 표현식은 일반적으로 리터럴 문자열의 일부이므로 모든 &quot;&quot; 문자를 <code>\</code>를 추가하여 이스케이프해야 한다. (예를 들어, <code>\\d+</code>)</p>
@@ -188,98 +187,98 @@ req.params: { &quot;genus&quot;: &quot;Prunus&quot;, &quot;species&quot;: &quot;
 <p>Express 4.x에서는 정규 표현식의 문자 &quot;*&quot;이 문자열 패턴으로 등록되어 있어 일반적인 방식으로 해석되지 않는다. &quot;*&quot; 대신 {0,}를 사용하여 해결 가능하다.</p>
 </blockquote>
 <p>아래는 정규표현식 예시이다.</p>
-<pre><code>Route path: /user/:userId(\\d+)(매개변수로 숫자만 올 수 있음)
-Request URL: http://localhost:3000/user/42
-req.params: {&quot;userId&quot;: &quot;42&quot;}
-(잘못된 예시: req.params: {&quot;userId&quot;: &quot;kim&quot;})
-</code></pre>
-<h3>모듈화</h3>
+<pre><code class="hljs language-dns">Route path: /user/:userId<span class="hljs-punctuation">(</span>\\d+<span class="hljs-punctuation">)</span><span class="hljs-punctuation">(</span>매개변수로 숫자만 올 수 있음<span class="hljs-punctuation">)</span>
+Request URL: http://localhost:<span class="hljs-number">3000</span>/user/<span class="hljs-number">42</span>
+req.params: {<span class="hljs-string">&quot;userId&quot;</span>: <span class="hljs-string">&quot;42&quot;</span>}
+<span class="hljs-punctuation">(</span>잘못된 예시: req.params: {<span class="hljs-string">&quot;userId&quot;</span>: <span class="hljs-string">&quot;kim&quot;</span>}<span class="hljs-punctuation">)</span></code></pre>
+<h4>모듈화</h4>
 <p>지금은 코드가 무척 단순하다. 하지만 코드를 적으며 라우터를 공부할 때와는 다르게 실무에서는 <b>코드가 수천 줄</b>이 되기 때문에 <b>마구잡이로 코드를 작성할 순 없다.</b> 그렇기 때문에 <code>app.route()</code>를 통해 같은 경로지만 다른 메서드를 받는 라우터를 묶거나, <code>express.Router</code>를 통해 라우터를 모듈화한다.</p>
-<h4>app.route()</h4>
+<h5>app.route()</h5>
 <p>아래 코드는 <code>/book</code> 경로로 오는 GET, POST, PUT 요청을 한데 모아 묶어놓은 코드이다.</p>
-<pre><code>app.route(&#39;/book&#39;)
-  .get((req, res) =&gt; {
-    res.send(&#39;Get a random book&#39;)
-  })
-  .post((req, res) =&gt; {
-    res.send(&#39;Add a book&#39;)
-  })
-  .put((req, res) =&gt; {
-    res.send(&#39;Update the book&#39;)
-  })
-</code></pre>
-<h4>express.Router</h4>
+<pre><code class="hljs language-dns">app.route<span class="hljs-punctuation">(</span>&#x27;/book&#x27;<span class="hljs-punctuation">)</span>
+  .get<span class="hljs-punctuation">(</span><span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+    res.send<span class="hljs-punctuation">(</span>&#x27;Get <span class="hljs-keyword">a</span> random book&#x27;<span class="hljs-punctuation">)</span>
+  }<span class="hljs-punctuation">)</span>
+  .post<span class="hljs-punctuation">(</span><span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+    res.send<span class="hljs-punctuation">(</span>&#x27;Add <span class="hljs-keyword">a</span> book&#x27;<span class="hljs-punctuation">)</span>
+  }<span class="hljs-punctuation">)</span>
+  .put<span class="hljs-punctuation">(</span><span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+    res.send<span class="hljs-punctuation">(</span>&#x27;Update the book&#x27;<span class="hljs-punctuation">)</span>
+  }<span class="hljs-punctuation">)</span></code></pre>
+<h5>express.Router</h5>
 <p><b>express.Router 클래스</b>를 사용하면 <b>모듈식의 마운트 가능한 경로 핸들러를 만들 수 있다.</b> Router 인스턴스는 그 자체로 완전한 미들웨어이자 라우팅 시스템이므로, 종종 미니 앱(mini-app)이라고도 불린다.</p>
 <p>다음 예제는 라우터를 모듈로 생성하고, 그 안에 미들웨어 함수를 로드한 뒤 몇 가지 경로를 정의하고, 메인 앱의 특정 경로에 이 라우터 모듈을 마운트하는 방법을 보여준다.</p>
 <p>먼저, 앱 디렉토리에 다음과 같은 내용으로 birds.js라는 이름의 라우터 파일을 생성한다.</p>
 <p><b>bird.js</b></p>
-<pre><code>const express = require(&#39;express&#39;)
-const router = express.Router()
+<pre><code class="hljs language-dns">const express = require<span class="hljs-punctuation">(</span>&#x27;express&#x27;<span class="hljs-punctuation">)</span>
+const router = express.Router<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 
 // 이 라우터에서만 작동하는 전용 미들웨어
-const timeLog = (req, res, next) =&gt; {
-  console.log(&#39;Time: &#39;, Date.now())
-  next()
+const timeLog = <span class="hljs-punctuation">(</span>req, res, next<span class="hljs-punctuation">)</span> =&gt; {
+  console.log<span class="hljs-punctuation">(</span>&#x27;Time: &#x27;, Date.now<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span><span class="hljs-punctuation">)</span>
+  next<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 }
 
-router.use(timeLog)
+router.use<span class="hljs-punctuation">(</span>timeLog<span class="hljs-punctuation">)</span>
 
 // 홈 페이지 경로 정의
-router.get(&#39;/&#39;, (req, res) =&gt; {
-  res.send(&#39;Birds home page&#39;)
-})
+router.get<span class="hljs-punctuation">(</span>&#x27;/&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>&#x27;Birds home page&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span>
 
 // about 경로 정의
-router.get(&#39;/about&#39;, (req, res) =&gt; {
-  res.send(&#39;About birds&#39;)
-})
+router.get<span class="hljs-punctuation">(</span>&#x27;/about&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  res.send<span class="hljs-punctuation">(</span>&#x27;About birds&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span>
 
-module.exports = router
-</code></pre>
+module.exports = router</code></pre>
 <p>그 다음, 메인 앱에서 이 라우터 모듈을 불러온다.</p>
 <p><b>mainApp.js</b></p>
-<pre><code>const birds = require(&#39;./birds&#39;)
+<pre><code class="hljs language-dart"><span class="hljs-keyword">const</span> birds = <span class="hljs-title function_">require</span>(<span class="hljs-string">&#x27;./birds&#x27;</span>)
 
-// ...
+<span class="hljs-comment">// ...</span>
 
-app.use(&#39;/birds&#39;, birds)
-</code></pre>
+app.<span class="hljs-title function_">use</span>(<span class="hljs-string">&#x27;/birds&#x27;</span>, birds)</code></pre>
 <p>이제 이 앱은 /birds 및 /birds/about에 대한 요청을 처리할 수 있으며, 해당 경로에 특화된 timeLog 미들웨어 함수를 호출할 수 있게 된다.</p>
 <p>하지만, 모듈화를 진행할 때, 만약 부모 경로인 /birds에 경로 매개변수(path parameters)가 포함되어 있다면, 기본적으로 하위 라우터에서는 이에 접근할 수 없다.</p>
 <p><b>mainApp.js</b></p>
-<pre><code>app.use(&#39;/posts/:postId/comments&#39;, commentRouter)
-</code></pre>
+<pre><code class="hljs language-dart">app.<span class="hljs-title function_">use</span>(<span class="hljs-string">&#x27;/posts/:postId/comments&#x27;</span>, commentRouter)</code></pre>
 <p>이렇게 /comments의 상위 경로에 매개변수가 있다면,</p>
-<pre><code>const router = express.Router()
+<pre><code class="hljs language-dns">const router = express.Router<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 
-router.get(&#39;/:commentId&#39;, (req, res) =&gt; {
-  console.log(req.params.postId)    // undefined (부모의 변수를 못 읽음)
-  console.log(req.params.commentId) // &quot;456&quot; (자기 변수는 잘 읽음)
-  res.send(&#39;댓글 확인&#39;)
-});
+router.get<span class="hljs-punctuation">(</span>&#x27;/:commentId&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  console.log<span class="hljs-punctuation">(</span>req.params.postId<span class="hljs-punctuation">)</span>    // undefined <span class="hljs-punctuation">(</span>부모의 변수를 못 읽음<span class="hljs-punctuation">)</span>
+  console.log<span class="hljs-punctuation">(</span>req.params.commentId<span class="hljs-punctuation">)</span> // <span class="hljs-string">&quot;456&quot;</span> <span class="hljs-punctuation">(</span>자기 변수는 잘 읽음<span class="hljs-punctuation">)</span>
+  res.send<span class="hljs-punctuation">(</span>&#x27;댓글 확인&#x27;<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span><span class="hljs-comment">;</span>
 
-module.exports = router
-</code></pre>
+module.exports = router</code></pre>
 <p>자기 자신에게 오는 매개변수는 잘 읽지만 상위 경로의 매개변수를 인식하지 못하는 것을 알 수 있다.</p>
 <p>이를 해결하기 위해 라우터 생성 시 mergeParams 옵션을 전달하면 변수가 병합되어 하위 라우터에서도 접근이 가능하게 할 수 있다.</p>
-<pre><code>const router = express.Router({ mergeParams: true })
-</code></pre>
-<pre><code>// ✅ mergeParams: true 를 설정한 경우
-const router = express.Router({ mergeParams: true });
+<pre><code class="hljs language-dart"><span class="hljs-keyword">const</span> router = express.<span class="hljs-title class_">Router</span>({ mergeParams: <span class="hljs-keyword">true</span> })</code></pre>
+<pre><code class="hljs language-dns">// ✅ mergeParams: true 를 설정한 경우
+const router = express.Router<span class="hljs-punctuation">(</span>{ mergeParams: true }<span class="hljs-punctuation">)</span><span class="hljs-comment">;</span>
 
-router.get(&#39;/:commentId&#39;, (req, res) =&gt; {
-  console.log(req.params.postId)    // &quot;123&quot; (부모가 받은 값을 공유받음!)
-  console.log(req.params.commentId) // &quot;456&quot;
-  res.send(`${req.params.postId}번 게시글의 ${req.params.commentId}번 댓글입니다.`)
-})
+router.get<span class="hljs-punctuation">(</span>&#x27;/:commentId&#x27;, <span class="hljs-punctuation">(</span>req, res<span class="hljs-punctuation">)</span> =&gt; {
+  console.log<span class="hljs-punctuation">(</span>req.params.postId<span class="hljs-punctuation">)</span>    // <span class="hljs-string">&quot;123&quot;</span> <span class="hljs-punctuation">(</span>부모가 받은 값을 공유받음!<span class="hljs-punctuation">)</span>
+  console.log<span class="hljs-punctuation">(</span>req.params.commentId<span class="hljs-punctuation">)</span> // <span class="hljs-string">&quot;456&quot;</span>
+  res.send<span class="hljs-punctuation">(</span>`${req.params.postId}번 게시글의 ${req.params.commentId}번 댓글입니다.`<span class="hljs-punctuation">)</span>
+}<span class="hljs-punctuation">)</span>
 
-module.exports = router
-</code></pre>
-<h1>마무리</h1>
+module.exports = router</code></pre>
+<h2>마무리</h2>
 <p>몇가지 주의사항을 적자면, 기본적으로 Express는 위에서부터 아래로 경로를 찾는다.<br>/* 같은 광범위한 경로는 항상 맨 아래에 두어야 다른 구체적인 경로들이 무시되지 않는다. 항상 하위 경로부터 작성하는 것을 잊지말자.</p>
 <p>또한, req.params를 console.log로 찍어보는 습관을 들이면, 내가 짠 패턴이 문자열을 어떻게 쪼개서 가져오는지 바로 확인할 수 있다.</p>
 
             </div>
+            <aside class="author-box">
+                <img src="/img/about/me.webp" width="56" height="56" alt="노정원 프로필 사진" loading="lazy">
+                <div>
+                    <strong>노정원 (njwon)</strong>
+                    <p>수원정보과학고등학교에 재학 중인 네트워크·정보보안·백엔드·인프라 개발자.
+                    <a href="/" rel="author">포트폴리오 보기</a> · <a href="https://github.com/njwon" rel="me noopener" target="_blank">GitHub</a> · <a href="https://velog.io/@njw" rel="me noopener" target="_blank">Velog</a></p>
+                </div>
+            </aside>
         </article>
     </main>
 
@@ -294,9 +293,6 @@ module.exports = router
         window.addEventListener('scroll', function () {
             if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
             else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
-        });
-        window.addEventListener('DOMContentLoaded', function () {
-            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
         });
     })();
     </script>

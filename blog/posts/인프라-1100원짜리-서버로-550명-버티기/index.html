@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[인프라] 1,100원짜리 서버로 550명 버티기. | nogarden.log</title>
-    <meta name="description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도">
+    <meta name="description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다.">
     <meta name="author" content="노정원">
     <meta name="keywords" content="노정원, 백엔드, 인프라">
     <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/">
@@ -13,7 +13,7 @@
     <meta property="og:locale" content="ko_KR">
     <meta property="og:site_name" content="nogarden.log">
     <meta property="og:title" content="[인프라] 1,100원짜리 서버로 550명 버티기.">
-    <meta property="og:description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도">
+    <meta property="og:description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다.">
     <meta property="og:image" content="https://njw.kro.kr/img/project/background.jpg">
     <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/">
     <meta property="article:published_time" content="2026-01-09T04:18:59.872Z">
@@ -22,18 +22,26 @@
     <meta property="article:tag" content="인프라">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="[인프라] 1,100원짜리 서버로 550명 버티기.">
-    <meta name="twitter:description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도">
+    <meta name="twitter:description" content="학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다.">
     <meta name="twitter:image" content="https://njw.kro.kr/img/project/background.jpg">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/","headline":"[인프라] 1,100원짜리 서버로 550명 버티기.","description":"학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2026-01-09T04:18:59.872Z","dateModified":"2026-01-09T04:18:59.872Z","keywords":"백엔드, 인프라","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
-    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EC%9D%B8%ED%94%84%EB%9D%BC-1100%EC%9B%90%EC%A7%9C%EB%A6%AC-%EC%84%9C%EB%B2%84%EB%A1%9C-550%EB%AA%85-%EB%B2%84%ED%8B%B0%EA%B8%B0/","headline":"[인프라] 1,100원짜리 서버로 550명 버티기.","description":"학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다. 바로 인프라 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다.","image":"https://njw.kro.kr/img/project/background.jpg","datePublished":"2026-01-09T04:18:59.872Z","dateModified":"2026-01-09T04:18:59.872Z","keywords":"백엔드, 인프라","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log — 노정원 개발 블로그" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="me" href="https://github.com/njwon">
+    <link rel="me" href="https://velog.io/@njw">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://velog.velcdn.com">
     <link rel="stylesheet" href="/css/font.css" />
     <link rel="stylesheet" href="/blog/blog.css" />
-    <link rel="icon" href="/img/noise/Sarah.webp" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+    <link rel="icon" href="https://njw.kro.kr/favicon.ico" sizes="48x48">
+    <link rel="icon" href="https://njw.kro.kr/img/favicon.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://njw.kro.kr/img/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    </noscript>
 </head>
 
 <body>
@@ -43,8 +51,8 @@
         <div class="header-row">
             <div class="header-info">
                 <a href="/blog/" class="back-link">&#8592; Blog</a>
-                <p class="blog-title">nogarden.log</p>
-                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+                <p class="blog-title"><a href="/blog/" style="color:inherit;text-decoration:none">nogarden.log</a></p>
+                <p class="blog-desc"><a href="/" rel="author" style="color:inherit">노정원(njwon)</a>의 개발 블로그 · 어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
             </div>
         </div>
     </header>
@@ -54,6 +62,7 @@
             <div class="post-header">
                 <h1 class="post-title">[인프라] 1,100원짜리 서버로 550명 버티기.</h1>
                 <div class="post-meta">
+                    <a class="post-author" href="/" rel="author">노정원</a>
                     <time class="post-date" datetime="2026-01-09T04:18:59.872Z">2026.01.09</time>
                     <span class="post-series">인프라</span>
                 </div>
@@ -61,7 +70,7 @@
             </div>
             
             <div class="post-body markdown-body">
-<h2>인프라</h2>
+<h3>인프라</h3>
 <p>학교 커뮤니티 백엔드를 설계하던 중에 한가지 의문이 생겼다.<br>바로 <b>인프라</b> 문제였다. 우리 팀원 전부가 학생이기 때문에 해외결제를 요구하는 카드를 준비할 수 없어 AWS, 오라클등의 VPS를 쓰기는 힘들다. 또한 장기적으로 봤을 때 졸업한 후 이를 후배들에게 넘겨줄때에도 많은 난관이 있을것이다. 그를 제외하고도 부모님의 돈을 쓰기 때문에 가장 최소한으로 지출을 관리해야한다는 부담도 있다.</p>
 <p>나는 Node.js를 지원하는 한국 호스팅 서버들을 알아보기 시작했다.</p>
 <p>결과적으로 Cafe24의 Node.js 서버가 가장 알맞다고 생각했다.<br>하지만, AWS, 오라클등과 비교했을때 성능이 정말 끔찍했다.</p>
@@ -87,6 +96,14 @@
 <p>결론적으로 최적화와는 별개로 다른 호스팅 서버를 알아봐야 할 것 같다.</p>
 
             </div>
+            <aside class="author-box">
+                <img src="/img/about/me.webp" width="56" height="56" alt="노정원 프로필 사진" loading="lazy">
+                <div>
+                    <strong>노정원 (njwon)</strong>
+                    <p>수원정보과학고등학교에 재학 중인 네트워크·정보보안·백엔드·인프라 개발자.
+                    <a href="/" rel="author">포트폴리오 보기</a> · <a href="https://github.com/njwon" rel="me noopener" target="_blank">GitHub</a> · <a href="https://velog.io/@njw" rel="me noopener" target="_blank">Velog</a></p>
+                </div>
+            </aside>
         </article>
     </main>
 
@@ -101,9 +118,6 @@
         window.addEventListener('scroll', function () {
             if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
             else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
-        });
-        window.addEventListener('DOMContentLoaded', function () {
-            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
         });
     })();
     </script>

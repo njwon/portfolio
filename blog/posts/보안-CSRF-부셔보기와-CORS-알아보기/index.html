@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[보안] CSRF 부셔보고 CORS 알아보기! | nogarden.log</title>
-    <meta name="description" content="CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할을 한다.CSRF(Cross Site">
+    <meta name="description" content="CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의…">
     <meta name="author" content="노정원">
     <meta name="keywords" content="노정원, 보안, 웹, 통신">
     <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/">
@@ -13,7 +13,7 @@
     <meta property="og:locale" content="ko_KR">
     <meta property="og:site_name" content="nogarden.log">
     <meta property="og:title" content="[보안] CSRF 부셔보고 CORS 알아보기!">
-    <meta property="og:description" content="CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할을 한다.CSRF(Cross Site">
+    <meta property="og:description" content="CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의…">
     <meta property="og:image" content="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png">
     <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/">
     <meta property="article:published_time" content="2026-04-25T07:11:48.999Z">
@@ -23,18 +23,26 @@
     <meta property="article:tag" content="통신">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="[보안] CSRF 부셔보고 CORS 알아보기!">
-    <meta name="twitter:description" content="CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할을 한다.CSRF(Cross Site">
+    <meta name="twitter:description" content="CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의…">
     <meta name="twitter:image" content="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/","headline":"[보안] CSRF 부셔보고 CORS 알아보기!","description":"CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할을 한다.CSRF(Cross Site","image":"https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png","datePublished":"2026-04-25T07:11:48.999Z","dateModified":"2026-04-25T07:11:48.999Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
-    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/","headline":"[보안] CSRF 부셔보고 CORS 알아보기!","description":"CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점사용자의 신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의…","image":"https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png","datePublished":"2026-04-25T07:11:48.999Z","dateModified":"2026-04-25T07:11:48.999Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log — 노정원 개발 블로그" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="me" href="https://github.com/njwon">
+    <link rel="me" href="https://velog.io/@njw">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://velog.velcdn.com">
     <link rel="stylesheet" href="/css/font.css" />
     <link rel="stylesheet" href="/blog/blog.css" />
-    <link rel="icon" href="/img/noise/Sarah.webp" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+    <link rel="icon" href="https://njw.kro.kr/favicon.ico" sizes="48x48">
+    <link rel="icon" href="https://njw.kro.kr/img/favicon.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://njw.kro.kr/img/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    </noscript>
 </head>
 
 <body>
@@ -44,8 +52,8 @@
         <div class="header-row">
             <div class="header-info">
                 <a href="/blog/" class="back-link">&#8592; Blog</a>
-                <p class="blog-title">nogarden.log</p>
-                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+                <p class="blog-title"><a href="/blog/" style="color:inherit;text-decoration:none">nogarden.log</a></p>
+                <p class="blog-desc"><a href="/" rel="author" style="color:inherit">노정원(njwon)</a>의 개발 블로그 · 어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
             </div>
         </div>
     </header>
@@ -55,6 +63,7 @@
             <div class="post-header">
                 <h1 class="post-title">[보안] CSRF 부셔보고 CORS 알아보기!</h1>
                 <div class="post-meta">
+                    <a class="post-author" href="/" rel="author">노정원</a>
                     <time class="post-date" datetime="2026-04-25T07:11:48.999Z">2026.04.25</time>
                     <span class="post-series">보안</span>
                 </div>
@@ -62,75 +71,70 @@
             </div>
             <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기! 썸네일"></div>
             <div class="post-body markdown-body">
-<h1>CSRF</h1>
+<h2>CSRF</h2>
 <blockquote>
 <p>CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점</p>
 </blockquote>
-<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt=""><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
-<h2>방식</h2>
+<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
+<h3>방식</h3>
 <p>CSRF 공격에 성공하기 위해서는 <b>공격자가 작성한 악성 스크립트를 이용자가 실행</b>해야 한다. 이는 공격자가 이용자에게 메일을 보내거나 게시판에 글을 작성해 이용자가 이를 조회하도록 유도하는 방법이 있다. 심지어는 공격자가 직접 자신의 사이트를 만들어 그곳에서 악성 스크립트를 작성할 수도 있다. 여기서 말하는 <b>악성 스크립트는 HTTP 요청을 보내는 코드</b>를 뜻한다.</p>
-<h3>XSS와의 차이점?</h3>
+<h4>XSS와의 차이점?</h4>
 <p>XSS와 CSRF는 스크립트를 웹 페이지에 작성해 공격한다는 점에서 매우 유사하다. 두 취약점의 공통점과 차이점은 다음과 같다.</p>
-<h4>공통점</h4>
+<h5>공통점</h5>
 <p>두 개의 취약점은 모두 클라이언트를 대상으로 하는 공격이며, <b>이용자가 악성 스크립트가 포함된 페이지에 접속하도록 유도</b>해야 한다.</p>
-<h4>차이점</h4>
+<h5>차이점</h5>
 <p>두 개의 취약점은 공격에 있어 서로 다른 목적을 가진다. <b>XSS는 인증 정보인 세션 및 쿠키 탈취를 목적으로 하는 공격이며, 공격할 사이트의 오리진에서 스크립트를 실행</b>시킨다.</p>
 <p>CSRF는 이용자가 임의 페이지에 HTTP 요청을 보내는 것을 목적으로 하는 공격이다. 또한, <b>공격자는 악성 스크립트가 포함된 페이지에 접근한 이용자의 권한으로 웹 서비스의 임의 기능을 실행</b>할 수 있다.</p>
-<h2>CORS란?</h2>
+<h3>CORS란?</h3>
 <p>CSRF 공격의 목적은 요청을 실행시키는 것 자체이다. <b>공격자는 응답을 굳이 읽지 않아도 된다.</b> <code>&lt;form&gt;</code> 태그를 이용한 POST 요청이나 <code>&lt;img&gt;</code> 태그를 이용한 GET 요청처럼 단순한 방식으로도 <b>송금이나 설정 변경은 충분히 가능</b>하다.</p>
 <p>하지만 여기서 <b>공격자가 단순히 요청을 보내는 것을 넘어,</b> 서버의 응답 데이터를 가로채거나(예: 계좌 잔액 조회, 개인정보 탈취), application/json 같은 커스텀 형식으로 정교한 요청을 보내려는 순간, 브라우저라는 문지기가 막는다. 바로 <b>SOP 정책</b> 때문이다.</p>
-<p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt=""></p>
+<p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
 <p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#sop-%EC%A0%95%EC%B1%85">여기서</a> <b>SOP는 Same Origin인 서비스들끼리만 리소스를 공유</b>할 수 있다고 했다.<br>그렇다면 <code>&lt;img&gt;</code> 태그들 같은 것들은 어떻게 작동할까? 분명히 Cross Origin인 리소스를 태그에 담을 수 있지 않은가. 사실 <b>SOP는 Cross Origin끼리의 교환에서 모든 리소스를 막는 것이 아니다.</b> 위에서 서술한 <code>&lt;img&gt;</code> 태그와 같은 이미지 말고도 <code>&lt;style&gt;</code>, <code>&lt;script&gt;</code> 등의 태그의 리소스 교환을 막지 않는다.<br>위 경우들 외에도 Cross Origin인 웹 서비스들끼리 데이터를 처리해야 하는 경우가 있다. 이때 <b>자원을 공유하기 위해 사용하는 방법</b>을 <b>CORS</b>라고 명칭한다.</p>
 <p><b>CORS(Cross-Origin Resource Sharing, 교차 출처 리소스 공유)는 HTTP 헤더에 기반하여 Cross Origin 간에 리소스를 공유</b>하는 방법이다.<br>발신측에서 CORS 헤더를 설정해 요청하면, 수신측에서 헤더를 구분해 정해진 규칙에 맞게 데이터를 가져갈 수 있도록 설정한다.<br><b>웹 리소스 요청 코드</b></p>
-<pre><code>/*
+<pre><code class="hljs language-dart"><span class="hljs-comment">/*
     XMLHttpRequest 객체를 생성합니다. 
     XMLHttpRequest는 웹 브라우저와 웹 서버 간에 데이터 전송을
     도와주는 객체 입니다. 이를 통해 HTTP 요청을 보낼 수 있습니다.
-*/
-xhr = new XMLHttpRequest();
-/* https://theori.io/whoami 페이지에 POST 요청을 보내도록 합니다. */
-xhr.open(&#39;POST&#39;, &#39;https://njwon.io/lol&#39;);
-/* HTTP 요청을 보낼 때, 쿠키 정보도 함께 사용하도록 해줍니다. */
-xhr.withCredentials = true;
-/* HTTP Body를 JSON 형태로 보낼 것이라고 수신측에 알려줍니다. */
-xhr.setRequestHeader(&#39;Content-Type&#39;, &#39;application/json&#39;);
-/* xhr 객체를 통해 HTTP 요청을 실행합니다. */
-xhr.send(&quot;{&#39;data&#39;:&#39;WhoAmI&#39;}&quot;);
-</code></pre>
+*/</span>
+xhr = <span class="hljs-keyword">new</span> <span class="hljs-title class_">XMLHttpRequest</span>();
+<span class="hljs-comment">/* https://theori.io/whoami 페이지에 POST 요청을 보내도록 합니다. */</span>
+xhr.<span class="hljs-title function_">open</span>(<span class="hljs-string">&#x27;POST&#x27;</span>, <span class="hljs-string">&#x27;https://njwon.io/lol&#x27;</span>);
+<span class="hljs-comment">/* HTTP 요청을 보낼 때, 쿠키 정보도 함께 사용하도록 해줍니다. */</span>
+xhr.withCredentials = <span class="hljs-keyword">true</span>;
+<span class="hljs-comment">/* HTTP Body를 JSON 형태로 보낼 것이라고 수신측에 알려줍니다. */</span>
+xhr.<span class="hljs-title function_">setRequestHeader</span>(<span class="hljs-string">&#x27;Content-Type&#x27;</span>, <span class="hljs-string">&#x27;application/json&#x27;</span>);
+<span class="hljs-comment">/* xhr 객체를 통해 HTTP 요청을 실행합니다. */</span>
+xhr.<span class="hljs-title function_">send</span>(<span class="hljs-string">&quot;{&#x27;data&#x27;:&#x27;WhoAmI&#x27;}&quot;</span>);</code></pre>
 <p><b>발신 측의 HTTP 요청</b></p>
-<pre><code>OPTIONS /lol HTTP/1.1
-Host: njwon.io
-Connection: keep-alive
-Access-Control-Request-Method: POST
-Access-Control-Request-Headers: content-type
-Origin: https://bank.com
-Accept: */*
-Referer: https://bank.com/
-</code></pre>
+<pre><code class="hljs language-http"><span class="hljs-keyword">OPTIONS</span> <span class="hljs-string">/lol</span> <span class="hljs-meta">HTTP/1.1</span>
+<span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>njwon.io
+<span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>keep-alive
+<span class="hljs-attribute">Access-Control-Request-Method</span><span class="hljs-punctuation">: </span>POST
+<span class="hljs-attribute">Access-Control-Request-Headers</span><span class="hljs-punctuation">: </span>content-type
+<span class="hljs-attribute">Origin</span><span class="hljs-punctuation">: </span>https://bank.com
+<span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>*/*
+<span class="hljs-attribute">Referer</span><span class="hljs-punctuation">: </span>https://bank.com/</code></pre>
 <p>위 요청 코드와 실제 요청된 HTTP 메세지를 보면 POST로 요청하도록 코드를 작성했지만 실제로는 OPTIONS 메서드로 메세지가 날라간 것을 알 수 있다.<br>이를 <b>CORS preflight</b>라고 하며, 수신측에 웹 리소스를 요청해도 되는지 질의하는 과정이다.</p>
 <p>위처럼 질의하면 서버는 아래와 같이 응답한다.<br><b>서버 측의 HTTP 응답</b></p>
-<pre><code>    HTTP/1.1 200 OK
-    Access-Control-Allow-Origin: https://dreamhack.io
-    Access-Control-Allow-Methods: POST, GET, OPTIONS
-    Access-Control-Allow-Credentials: true
-    Access-Control-Allow-Headers: Content-Type
-</code></pre>
+<pre><code class="hljs language-dart">    HTTP/<span class="hljs-number">1.1</span> <span class="hljs-number">200</span> OK
+    <span class="hljs-title class_">Access</span>-<span class="hljs-title class_">Control</span>-<span class="hljs-title class_">Allow</span>-<span class="hljs-title class_">Origin</span>: https:<span class="hljs-comment">//dreamhack.io</span>
+    <span class="hljs-title class_">Access</span>-<span class="hljs-title class_">Control</span>-<span class="hljs-title class_">Allow</span>-<span class="hljs-title class_">Methods</span>: POST, GET, OPTIONS
+    <span class="hljs-title class_">Access</span>-<span class="hljs-title class_">Control</span>-<span class="hljs-title class_">Allow</span>-<span class="hljs-title class_">Credentials</span>: <span class="hljs-keyword">true</span>
+    <span class="hljs-title class_">Access</span>-<span class="hljs-title class_">Control</span>-<span class="hljs-title class_">Allow</span>-<span class="hljs-title class_">Headers</span>: <span class="hljs-title class_">Content</span>-<span class="hljs-title class_">Type</span></code></pre>
 <p>여기서 <b>Access-Control-Allow-Origin</b>은 <b>요청을 처리할 수 있는 Origin</b>을 의미한다.<br><b>Access-Control-Allow-Methods</b>는 <b>처리할 수 있는 메서드 목록</b>을 뜻하고,<br><b>Access-Control-Allow-Credentials</b>는 <b>쿠키 사용 여부를 판단</b>한다.<br><b>Access-Control-Allow-Headers</b>는 <b>헤더의 사용 가능 여부</b>를 나타낸다.</p>
 <p>그러니 사실 <b>CORS 에러는 진짜 CORS 에러라기 보다는 SOP 정책을 위반한 요청을 보내 뜨는 에러</b>라고 보는것이 합당하다.</p>
-<h2>CSRF 페이로드</h2>
+<h3>CSRF 페이로드</h3>
 <p><b>HTML img 태그 공격 코드 예시</b></p>
-<pre><code>&lt;img src=&#39;http://bank.com/sendmoney?to=njwon&amp;amount=100&#39; width=0px height=0px&gt;
-</code></pre>
+<pre><code class="hljs language-routeros">&lt;img <span class="hljs-attribute">src</span>=<span class="hljs-string">&#x27;http://bank.com/sendmoney?to=njwon&amp;amount=100&#x27;</span> <span class="hljs-attribute">width</span>=0px <span class="hljs-attribute">height</span>=0px&gt;</code></pre>
 <p><b>Javascript 공격 코드 예시</b></p>
-<pre><code>/* 새 창 띄우기 */
-window.open(&#39;http://bank.com/sendmoney?to=njwon&amp;amount=100&#39;);
-/* 현재 창 주소 옮기기 */
-location.href = &#39;http://bank.com/sendmoney?to=njwon&amp;amount=100&#39;;
-location.replace(&#39;http://bank.com/sendmoney?to=njwon&amp;amount=100&#39;);
-</code></pre>
-<h2>wargame 풀이</h2>
+<pre><code class="hljs language-pgsql"><span class="hljs-comment">/* 새 창 띄우기 */</span>
+<span class="hljs-keyword">window</span>.<span class="hljs-keyword">open</span>(<span class="hljs-string">&#x27;http://bank.com/sendmoney?to=njwon&amp;amount=100&#x27;</span>);
+<span class="hljs-comment">/* 현재 창 주소 옮기기 */</span>
+<span class="hljs-keyword">location</span>.href = <span class="hljs-string">&#x27;http://bank.com/sendmoney?to=njwon&amp;amount=100&#x27;</span>;
+<span class="hljs-keyword">location</span>.replace(<span class="hljs-string">&#x27;http://bank.com/sendmoney?to=njwon&amp;amount=100&#x27;</span>);</code></pre>
+<h3>wargame 풀이</h3>
 <p><a href="https://dreamhack.io/wargame/challenges/26">csrf-1</a> 워게임 문제를 풀이해 보았다.</p>
-<pre><code>#!/usr/bin/python3
+<pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template
 from selenium import webdriver
 import urllib
@@ -140,115 +144,122 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-app = Flask(__name__)
-app.secret_key = os.urandom(32)
+app = Flask<span class="hljs-punctuation">(</span>__name__<span class="hljs-punctuation">)</span>
+app.secret_key = os.urandom<span class="hljs-punctuation">(</span><span class="hljs-number">32</span><span class="hljs-punctuation">)</span>
 
 try:
-    FLAG = open(&quot;./flag.txt&quot;, &quot;r&quot;).read()
+    FLAG = open<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;./flag.txt&quot;</span>, <span class="hljs-string">&quot;r&quot;</span><span class="hljs-punctuation">)</span>.read<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 except:
-    FLAG = &quot;[**FLAG**]&quot;
+    FLAG = <span class="hljs-string">&quot;[**FLAG**]&quot;</span>
 
 
-def read_url(url, cookie={&quot;name&quot;: &quot;name&quot;, &quot;value&quot;: &quot;value&quot;}):
-    cookie.update({&quot;domain&quot;: &quot;127.0.0.1&quot;})
+def read_url<span class="hljs-punctuation">(</span>url, cookie={<span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;name&quot;</span>, <span class="hljs-string">&quot;value&quot;</span>: <span class="hljs-string">&quot;value&quot;</span>}<span class="hljs-punctuation">)</span>:
+    cookie.update<span class="hljs-punctuation">(</span>{<span class="hljs-string">&quot;domain&quot;</span>: <span class="hljs-string">&quot;127.0.0.1&quot;</span>}<span class="hljs-punctuation">)</span>
     try:
-        service = Service(executable_path=&quot;/usr/local/bin/chromedriver&quot;)
-        options = webdriver.ChromeOptions()
-        for arg in [
-            &quot;headless&quot;,
-            &quot;window-size=1920x1080&quot;,
-            &quot;disable-gpu&quot;,
-            &quot;no-sandbox&quot;,
-            &quot;disable-dev-shm-usage&quot;,
+        service = Service<span class="hljs-punctuation">(</span>executable_path=<span class="hljs-string">&quot;/usr/local/bin/chromedriver&quot;</span><span class="hljs-punctuation">)</span>
+        options = webdriver.ChromeOptions<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
+        for arg <span class="hljs-type">in</span> [
+            <span class="hljs-string">&quot;headless&quot;</span>,
+            <span class="hljs-string">&quot;window-size=1920x1080&quot;</span>,
+            <span class="hljs-string">&quot;disable-gpu&quot;</span>,
+            <span class="hljs-string">&quot;no-sandbox&quot;</span>,
+            <span class="hljs-string">&quot;disable-dev-shm-usage&quot;</span>,
         ]:
-            options.add_argument(arg)
+            options.add_argument<span class="hljs-punctuation">(</span>arg<span class="hljs-punctuation">)</span>
 
-        driver = webdriver.Chrome(service=service, options=options)
-        driver.implicitly_wait(3)
-        driver.set_page_load_timeout(3)
-        driver.get(&quot;http://127.0.0.1:8000/&quot;)
-        driver.add_cookie(cookie)
-        driver.get(url)
+        driver = webdriver.Chrome<span class="hljs-punctuation">(</span>service=service, options=options<span class="hljs-punctuation">)</span>
+        driver.implicitly_wait<span class="hljs-punctuation">(</span><span class="hljs-number">3</span><span class="hljs-punctuation">)</span>
+        driver.set_page_load_timeout<span class="hljs-punctuation">(</span><span class="hljs-number">3</span><span class="hljs-punctuation">)</span>
+        driver.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;http://127.0.0.1:8000/&quot;</span><span class="hljs-punctuation">)</span>
+        driver.add_cookie<span class="hljs-punctuation">(</span>cookie<span class="hljs-punctuation">)</span>
+        driver.get<span class="hljs-punctuation">(</span>url<span class="hljs-punctuation">)</span>
     except Exception as e:
-        print(str(e))
-        driver.quit()
-        # return str(e)
+        print<span class="hljs-punctuation">(</span>str<span class="hljs-punctuation">(</span>e<span class="hljs-punctuation">)</span><span class="hljs-punctuation">)</span>
+        driver.quit<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
+        # return str<span class="hljs-punctuation">(</span>e<span class="hljs-punctuation">)</span>
         return False
-    driver.quit()
+    driver.quit<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
     return True
 
 
-def check_csrf(param, cookie={&quot;name&quot;: &quot;name&quot;, &quot;value&quot;: &quot;value&quot;}):
-    url = f&quot;http://127.0.0.1:8000/vuln?param={urllib.parse.quote(param)}&quot;
-    return read_url(url, cookie)
+def check_csrf<span class="hljs-punctuation">(</span>param, cookie={<span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;name&quot;</span>, <span class="hljs-string">&quot;value&quot;</span>: <span class="hljs-string">&quot;value&quot;</span>}<span class="hljs-punctuation">)</span>:
+    url = f<span class="hljs-string">&quot;http://127.0.0.1:8000/vuln?param={urllib.parse.quote(param)}&quot;</span>
+    return read_url<span class="hljs-punctuation">(</span>url, cookie<span class="hljs-punctuation">)</span>
 
 
-@app.route(&quot;/&quot;)
-def index():
-    return render_template(&quot;index.html&quot;)
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/&quot;</span><span class="hljs-punctuation">)</span>
+def index<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
+    return render_template<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;index.html&quot;</span><span class="hljs-punctuation">)</span>
 
 
-@app.route(&quot;/vuln&quot;)
-def vuln():
-    param = request.args.get(&quot;param&quot;, &quot;&quot;).lower()
-    xss_filter = [&quot;frame&quot;, &quot;script&quot;, &quot;on&quot;]
-    for _ in xss_filter:
-        param = param.replace(_, &quot;*&quot;)
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/vuln&quot;</span><span class="hljs-punctuation">)</span>
+def vuln<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
+    param = request.args.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;param&quot;</span>, <span class="hljs-string">&quot;&quot;</span><span class="hljs-punctuation">)</span>.lower<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
+    xss_filter = [<span class="hljs-string">&quot;frame&quot;</span>, <span class="hljs-string">&quot;script&quot;</span>, <span class="hljs-string">&quot;on&quot;</span>]
+    for _ <span class="hljs-type">in</span> xss_filter:
+        param = param.replace<span class="hljs-punctuation">(</span>_, <span class="hljs-string">&quot;*&quot;</span><span class="hljs-punctuation">)</span>
     return param
 
 
-@app.route(&quot;/flag&quot;, methods=[&quot;GET&quot;, &quot;POST&quot;])
-def flag():
-    if request.method == &quot;GET&quot;:
-        return render_template(&quot;flag.html&quot;)
-    elif request.method == &quot;POST&quot;:
-        param = request.form.get(&quot;param&quot;, &quot;&quot;)
-        if not check_csrf(param):
-            return &#39;&lt;script&gt;alert(&quot;wrong??&quot;);history.go(-1);&lt;/script&gt;&#39;
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/flag&quot;</span>, methods=[<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;POST&quot;</span>]<span class="hljs-punctuation">)</span>
+def flag<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
+    if request.method == <span class="hljs-string">&quot;GET&quot;</span>:
+        return render_template<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;flag.html&quot;</span><span class="hljs-punctuation">)</span>
+    elif request.method == <span class="hljs-string">&quot;POST&quot;</span>:
+        param = request.form.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;param&quot;</span>, <span class="hljs-string">&quot;&quot;</span><span class="hljs-punctuation">)</span>
+        if not check_csrf<span class="hljs-punctuation">(</span>param<span class="hljs-punctuation">)</span>:
+            return &#x27;&lt;script&gt;alert<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;wrong??&quot;</span><span class="hljs-punctuation">)</span><span class="hljs-comment">;history.go(-1);&lt;/script&gt;&#x27;</span>
 
-        return &#39;&lt;script&gt;alert(&quot;good&quot;);history.go(-1);&lt;/script&gt;&#39;
-
-
-memo_text = &quot;&quot;
+        return &#x27;&lt;script&gt;alert<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;good&quot;</span><span class="hljs-punctuation">)</span><span class="hljs-comment">;history.go(-1);&lt;/script&gt;&#x27;</span>
 
 
-@app.route(&quot;/memo&quot;)
-def memo():
+memo_text = <span class="hljs-string">&quot;&quot;</span>
+
+
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/memo&quot;</span><span class="hljs-punctuation">)</span>
+def memo<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
     global memo_text
-    text = request.args.get(&quot;memo&quot;, None)
+    text = request.args.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;memo&quot;</span>, None<span class="hljs-punctuation">)</span>
     if text:
         memo_text += text
-    return render_template(&quot;memo.html&quot;, memo=memo_text)
+    return render_template<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;memo.html&quot;</span>, memo=memo_text<span class="hljs-punctuation">)</span>
 
 
-@app.route(&quot;/admin/notice_flag&quot;)
-def admin_notice_flag():
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/admin/notice_flag&quot;</span><span class="hljs-punctuation">)</span>
+def admin_notice_flag<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
     global memo_text
-    if request.remote_addr != &quot;127.0.0.1&quot;:
-        return &quot;Access Denied&quot;
-    if request.args.get(&quot;userid&quot;, &quot;&quot;) != &quot;admin&quot;:
-        return &quot;Access Denied 2&quot;
-    memo_text += f&quot;[Notice] flag is {FLAG}\n&quot;
-    return &quot;Ok&quot;
+    if request.remote_addr != <span class="hljs-string">&quot;127.0.0.1&quot;</span>:
+        return <span class="hljs-string">&quot;Access Denied&quot;</span>
+    if request.args.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;userid&quot;</span>, <span class="hljs-string">&quot;&quot;</span><span class="hljs-punctuation">)</span> != <span class="hljs-string">&quot;admin&quot;</span>:
+        return <span class="hljs-string">&quot;Access Denied 2&quot;</span>
+    memo_text += f<span class="hljs-string">&quot;[Notice] flag is {FLAG}<span class="hljs-char escape_">\n</span>&quot;</span>
+    return <span class="hljs-string">&quot;Ok&quot;</span>
 
 
-app.run(host=&quot;0.0.0.0&quot;, port=8000)
-</code></pre>
-<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt=""></p>
-<p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt=""></p>
-<p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt=""></p>
-<p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt=""></p>
-<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 전역 변수 <b>memo_txt에 파라미터 값을 지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/efa25945-b496-489d-a4dd-89ac5b2826ac/image.png" alt=""></p>
-<p>/admin/notice_flag 엔드포인트는 접속 호스트의 주소가 <b>루프백 주소이며 파라미터가 admin이어야지만 플래그를 memo_txt에 추가</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/dfd08d8c-441d-4f8a-a3ce-eadd5ee582ec/image.png" alt=""></p>
-<h3>취약점 분석</h3>
+app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
+<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 전역 변수 <b>memo_txt에 파라미터 값을 지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/efa25945-b496-489d-a4dd-89ac5b2826ac/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<p>/admin/notice_flag 엔드포인트는 접속 호스트의 주소가 <b>루프백 주소이며 파라미터가 admin이어야지만 플래그를 memo_txt에 추가</b>한다.<br><img src="https://velog.velcdn.com/images/njw/post/dfd08d8c-441d-4f8a-a3ce-eadd5ee582ec/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<h4>취약점 분석</h4>
 <p>/admin/notice_flag 엔드포인트를 이용하면 플래그를 획득할 수 있어보인다.<br>하지만 반드시 루프백 주소로 admin 파라미터로 접근해야지만 플래그를 보여주고, 서버 또한 쿠키를 루프백 주소에 저장하므로 <code>&lt;img src=&quot;/admin/notice_flag?userid=admin&quot;&gt;</code>와 같은 <b>&quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 키워드를 사용하지 않는 CSRF 페이로드를 /flag 엔드포인트를 이용해 동적으로 URL을 만들어 서버의 브라우저를 이용해 열어야 한다.</b></p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/d723dddf-6340-4574-84cf-5b55776ce22a/image.png" alt=""></p>
-<h2>CSRF 방어</h2>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/d723dddf-6340-4574-84cf-5b55776ce22a/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" loading="lazy" decoding="async"></p>
+<h3>CSRF 방어</h3>
 <p>방어하기 위해서 쓰이는 가장 대표적인 것은 <b>CSRF Token</b>이다.<br>CSRF Token은 서버가 세션에 랜덤 토큰을 생성해서 심어주고 HTML의 <code>&lt;body&gt;</code> 안에도 담고, 이를 <b>매 요청 시 비교하여 검증</b>하는 식으로 동작한다.<br>공격자가 자신의 사이트에서 스크립트를 작성해 요청해도 토큰이 없기 때문에 막히고, SOP 때문에 공격자가 피해자의 페이지를 읽을 수 없어서 <b>토큰값을 알아낼 방법이 없게 된다.</b><br><b>Referer / Origin 헤더를 검증</b>하는 것과 <b>SameSite일때만 Cookie를 보내도록 설정</b>하는 것 또한 방어를 위한 방법으로 적합하다.</p>
-<h1>마무리</h1>
+<h2>마무리</h2>
 <p>CSRF에 대해 공부해보았다. CSRF Token을 사용해 보았지만 정확히 원리를 파악하기 힘들어 헤맸던 경험이 있는데 블로그를 작성하며 조금 정리된 것 같다.</p>
 
             </div>
+            <aside class="author-box">
+                <img src="/img/about/me.webp" width="56" height="56" alt="노정원 프로필 사진" loading="lazy">
+                <div>
+                    <strong>노정원 (njwon)</strong>
+                    <p>수원정보과학고등학교에 재학 중인 네트워크·정보보안·백엔드·인프라 개발자.
+                    <a href="/" rel="author">포트폴리오 보기</a> · <a href="https://github.com/njwon" rel="me noopener" target="_blank">GitHub</a> · <a href="https://velog.io/@njw" rel="me noopener" target="_blank">Velog</a></p>
+                </div>
+            </aside>
         </article>
     </main>
 
@@ -263,9 +274,6 @@ app.run(host=&quot;0.0.0.0&quot;, port=8000)
         window.addEventListener('scroll', function () {
             if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
             else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
-        });
-        window.addEventListener('DOMContentLoaded', function () {
-            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
         });
     })();
     </script>

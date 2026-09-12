@@ -87,7 +87,9 @@ async function initList() {
 
     renderFiltered();
   } catch (err) {
-    loading.textContent = 'Failed to load posts.';
+    // 빌드 시 삽입된 정적 카드가 있으면 그대로 보여주고 에러 문구는 숨김
+    if (container.querySelector('.post-card-link')) loading.style.display = 'none';
+    else loading.textContent = 'Failed to load posts.';
     console.error(err);
   }
 }
@@ -147,11 +149,11 @@ function renderPostCards(posts) {
     return;
   }
 
-  container.innerHTML = posts.map(post => {
+  container.innerHTML = posts.map((post, i) => {
     const date = formatDate(post.display_date);
     const tags = (post.tags || []).map(t => `<span class="post-card-tag">${escapeHtml(t)}</span>`).join('');
     const thumb = post.thumbnail
-      ? `<img class="post-card-thumb" src="${escapeHtml(post.thumbnail)}" alt="" loading="lazy">`
+      ? `<img class="post-card-thumb" src="${escapeHtml(post.thumbnail)}" alt="" ${i < 2 ? 'fetchpriority="high"' : 'loading="lazy"'}>`
       : '';
     const series = post.series_name
       ? `<span class="post-card-series">${escapeHtml(post.series_name)}</span>`

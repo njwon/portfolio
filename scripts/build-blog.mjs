@@ -8,6 +8,7 @@
  *   cd scripts && npm install && node build-blog.mjs
  */
 import { marked } from 'marked';
+import hljs from 'highlight.js';
 import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +22,7 @@ const esc = s => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const encSlug = slug => encodeURIComponent(slug);
+const cdata   = html => String(html).split(']]>').join(']]]]><![CDATA[>');
 const postUrl = slug => `${SITE}/blog/posts/${encSlug(slug)}/`;
 const fmtDate = iso => {
   const d = new Date(iso);
@@ -34,16 +36,57 @@ const stripMd = md => String(md ?? '')
   .replace(/\s+/g, ' ')
   .trim();
 
-marked.use({ breaks: true, gfm: true });
+// 본문 마크다운의 # 제목은 h2부터 시작(페이지 h1은 글 제목 하나만), 이미지는 lazy + alt 보완
+let currentTitle = '';
+marked.use({
+  breaks: true,
+  gfm: true,
+  renderer: {
+    heading(text, level) {                     // marked v9 시그니처
+      const d = Math.min(level + 1, 6);
+      return `<h${d}>${text}</h${d}>\n`;
+    },
+    // 코드 하이라이팅을 빌드 시점에 처리 → 클라이언트에서 highlight.js 실행 불필요
+    code(code, infostring) {
+      const lang = (infostring || '').trim().split(/\s+/)[0];
+      const out = lang && hljs.getLanguage(lang)
+        ? hljs.highlight(code, { language: lang, ignoreIllegals: true })
+        : hljs.highlightAuto(code);
+      const cls = out.language ? ` class="hljs language-${esc(out.language)}"` : ' class="hljs"';
+      return `<pre><code${cls}>${out.value}</code></pre>\n`;
+    },
+    image(href, title, text) {
+      const alt = text || currentTitle;
+      const t = title ? ` title="${esc(title)}"` : '';
+      return `<img src="${esc(href)}" alt="${esc(alt)}"${t} loading="lazy" decoding="async">`;
+    },
+  },
+});
+
+// description: 문장 경계에서 자르기 (단어 중간에서 끊기지 않게)
+function summarize(post, max = 120) {
+  const text = (post.short_description || stripMd(post.body)).replace(/\s+/g, ' ').trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const end = Math.max(cut.lastIndexOf('다.'), cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+  if (end > max * 0.4) return cut.slice(0, end + (cut[end] === '다' ? 2 : 1)).trim();
+  const sp = cut.lastIndexOf(' ');
+  return (sp > max * 0.5 ? cut.slice(0, sp) : cut).trim() + '…';
+}
+
+function renderBody(post) {
+  currentTitle = post.title;
+  return marked.parse(post.body || '').replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>');
+}
 
 function renderPage(post) {
   const url   = postUrl(post.slug);
   const title = `${post.title} | nogarden.log`;
-  const desc  = (post.short_description || stripMd(post.body)).replace(/\s+/g, ' ').trim().slice(0, 150);
+  const desc  = summarize(post);
+  currentTitle = post.title;
   const tags  = post.tags || [];
   const image = post.thumbnail || `${SITE}/img/project/background.jpg`;
-  const body  = marked.parse(post.body || '')
-    .replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>');
+  const body  = renderBody(post);
 
   const ld = {
     '@context': 'https://schema.org',
@@ -86,15 +129,23 @@ function renderPage(post) {
     <meta name="twitter:description" content="${esc(desc)}">
     <meta name="twitter:image" content="${esc(image)}">
     <script type="application/ld+json">${JSON.stringify(ld)}</script>
-    <link rel="alternate" type="application/rss+xml" title="nogarden.log" href="${SITE}/blog/rss.xml">
+    <link rel="alternate" type="application/rss+xml" title="nogarden.log — 노정원 개발 블로그" href="${SITE}/blog/rss.xml">
+    <link rel="me" href="https://github.com/njwon">
+    <link rel="me" href="https://velog.io/@njw">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://velog.velcdn.com">
     <link rel="stylesheet" href="/css/font.css" />
     <link rel="stylesheet" href="/blog/blog.css" />
-    <link rel="icon" href="/img/noise/Sarah.webp" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js" defer></script>
+    <link rel="icon" href="${SITE}/favicon.ico" sizes="48x48">
+    <link rel="icon" href="${SITE}/img/favicon.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="${SITE}/img/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    </noscript>
 </head>
 
 <body>
@@ -104,8 +155,8 @@ function renderPage(post) {
         <div class="header-row">
             <div class="header-info">
                 <a href="/blog/" class="back-link">&#8592; Blog</a>
-                <p class="blog-title">nogarden.log</p>
-                <p class="blog-desc">어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
+                <p class="blog-title"><a href="/blog/" style="color:inherit;text-decoration:none">nogarden.log</a></p>
+                <p class="blog-desc"><a href="/" rel="author" style="color:inherit">노정원(njwon)</a>의 개발 블로그 · 어제보다 더 나은 오늘, 오늘보다 더 나은 내일의 코드를 짠다.</p>
             </div>
         </div>
     </header>
@@ -115,6 +166,7 @@ function renderPage(post) {
             <div class="post-header">
                 <h1 class="post-title">${esc(post.title)}</h1>
                 <div class="post-meta">
+                    <a class="post-author" href="/" rel="author">노정원</a>
                     <time class="post-date" datetime="${esc(post.display_date)}">${fmtDate(post.display_date)}</time>
                     ${post.series_name ? `<span class="post-series">${esc(post.series_name)}</span>` : ''}
                 </div>
@@ -124,6 +176,14 @@ function renderPage(post) {
             <div class="post-body markdown-body">
 ${body}
             </div>
+            <aside class="author-box">
+                <img src="/img/about/me.webp" width="56" height="56" alt="노정원 프로필 사진" loading="lazy">
+                <div>
+                    <strong>노정원 (njwon)</strong>
+                    <p>수원정보과학고등학교에 재학 중인 네트워크·정보보안·백엔드·인프라 개발자.
+                    <a href="/" rel="author">포트폴리오 보기</a> · <a href="https://github.com/njwon" rel="me noopener" target="_blank">GitHub</a> · <a href="https://velog.io/@njw" rel="me noopener" target="_blank">Velog</a></p>
+                </div>
+            </aside>
         </article>
     </main>
 
@@ -139,9 +199,6 @@ ${body}
             if (!scrolled && window.scrollY > 120) { scrolled = true; header.classList.add('scrolled'); }
             else if (scrolled && window.scrollY < 30) { scrolled = false; header.classList.remove('scrolled'); }
         });
-        window.addEventListener('DOMContentLoaded', function () {
-            if (typeof hljs !== 'undefined') document.querySelectorAll('pre code').forEach(function (b) { hljs.highlightElement(b); });
-        });
     })();
     </script>
 </body>
@@ -154,16 +211,12 @@ function renderSitemap(posts) {
   const items = posts.map(p => `  <url>
     <loc>${postUrl(p.slug)}</loc>
     <lastmod>${p.display_date.slice(0, 10)}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
   </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${SITE}/blog/</loc>
-    <lastmod>${new Date().toISOString().slice(0, 10)}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <lastmod>${posts[0]?.display_date.slice(0, 10) || new Date().toISOString().slice(0, 10)}</lastmod>
   </url>
 ${items}
 </urlset>
@@ -176,7 +229,8 @@ function renderRss(posts) {
       <link>${postUrl(p.slug)}</link>
       <guid isPermaLink="true">${postUrl(p.slug)}</guid>
       <pubDate>${new Date(p.display_date).toUTCString()}</pubDate>
-      <description>${esc((p.short_description || stripMd(p.body)).replace(/\s+/g, ' ').trim().slice(0, 300))}</description>
+      <description><![CDATA[${cdata(renderBody(p))}]]></description>
+      <author>njwon19@gmail.com (노정원)</author>
       ${(p.tags || []).map(t => `<category>${esc(t)}</category>`).join('')}
     </item>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -226,7 +280,20 @@ ${posts.map(p => `            <li><a href="posts/${encSlug(p.slug)}/">${esc(p.ti
         </ul>
     </nav>
     <!-- STATIC-POSTS:END -->`;
-  await writeFile(indexPath, index.replace(/<!-- STATIC-POSTS:START -->[\s\S]*?<!-- STATIC-POSTS:END -->/, links));
+  const cards = `<!-- STATIC-CARDS:START -->
+${posts.slice(0, 5).map((p, i) => `        <a class="post-card post-card-link" href="posts/${encSlug(p.slug)}/">
+            ${p.thumbnail ? `<img class="post-card-thumb" src="${esc(p.thumbnail)}" alt="${esc(p.title)} 썸네일"${i < 2 ? ' fetchpriority="high"' : ' loading="lazy"'}>` : ''}
+            <div class="post-card-content">
+                ${p.series_name ? `<span class="post-card-series">${esc(p.series_name)}</span>` : ''}
+                <div class="post-card-title">${esc(p.title)}</div>
+                <div class="post-card-desc">${esc(summarize(p, 100))}</div>
+                <div class="post-card-footer"><div class="post-card-tags">${(p.tags || []).map(t => `<span class="post-card-tag">${esc(t)}</span>`).join('')}</div></div>
+            </div>
+        </a>`).join('\n')}
+        <!-- STATIC-CARDS:END -->`;
+  await writeFile(indexPath, index
+    .replace(/<!-- STATIC-POSTS:START -->[\s\S]*?<!-- STATIC-POSTS:END -->/, links)
+    .replace(/<!-- STATIC-CARDS:START -->[\s\S]*?<!-- STATIC-CARDS:END -->/, cards));
 
   await writeFile(join(ROOT, 'blog', 'sitemap.xml'), renderSitemap(posts));
   await writeFile(join(ROOT, 'blog', 'rss.xml'), renderRss(posts));
