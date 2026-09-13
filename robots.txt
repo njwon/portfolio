@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /docs/
 Disallow: /worker/
 Disallow: /scripts/
 Disallow: /blog/view/
