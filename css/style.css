@@ -635,6 +635,7 @@ video {
     border: 2px solid #2c2b29;
     text-indent: 0;
     display: table;
+    table-layout: fixed;            /* Firefox: 자동 배치는 셀 안 100% 사진의 원본 폭(600px)만큼 표를 키워 박스 밖으로 넘침 */
     unicode-bidi: isolate;
     border-spacing: 2px;
     word-break: break-all;
@@ -735,7 +736,7 @@ video {
 }
 
 .tr-div-inner strong span img {
-    max-width: none;
+    max-width: 100%;
     bottom: 0;
     left: 0;
     right: 0;
