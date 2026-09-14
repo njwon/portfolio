@@ -17,17 +17,23 @@ body {
     height: 100%;
 }
 
-/* 화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용. 커서(.cursor)는 항상 선명.
-   선명하게 만들 요소에 data-blur="off" 를 붙이면 된다 (섹션이든 그 안의 어떤 요소든).
-   filter 는 조상에 걸리면 자식에서 못 풀기 때문에, 그 요소의 조상 체인은 블러를 빼고
-   조상들의 '다른' 자식들에 각각 블러를 건다 → 결과적으로 해당 요소만 선명해진다. */
-.section, .load, .menuwrap, .noise, .clippy-link, .blog-dialog {
-    filter: blur(0.7px);
+/* ── 블러 ─────────────────────────────────────────────────────────
+   화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용. 커서(.cursor)는 항상 선명.
+   섹션은 filter 를 "고유 효과(--fx) + 블러(--blur)" 합성으로 쓴다 — #section3 의 sepia,
+   #section4 의 grayscale 처럼 섹션 자체 filter 가 있어도 블러가 덮어써지지 않게.
+   선명하게 만들 요소에 data-blur="off" 를 붙이면 된다 (섹션이든 그 안의 어떤 요소든):
+   그 섹션의 블러를 빼고(고유 효과는 유지), 조상 체인의 '다른' 자식들에 각각 블러를 건다.
+   주의: 그 '다른' 자식이 자기 filter 를 갖고 있으면 여기서 건 블러가 그것을 덮어쓴다. */
+:root { --blur: blur(0.7px); }
+.load, .menuwrap, .noise, .clippy-link, .blog-dialog {
+    filter: var(--blur);
+}
+.section {
+    filter: var(--fx,) var(--blur);
 }
 .section[data-blur="off"],
-.section:has([data-blur="off"]),
-.section :has([data-blur="off"]) {
-    filter: none;
+.section:has([data-blur="off"]) {
+    --blur: ;                       /* 빈 값 → 고유 효과만 남거나(none 이면) filter 해제 */
 }
 :is(.section, .section *):has([data-blur="off"]) > :not([data-blur="off"]):not(:has([data-blur="off"])) {
     filter: blur(0.7px);
@@ -755,7 +761,7 @@ video {
 #section3 {
     height: 100vh;
     width: 100vw;
-    filter: sepia(30%);
+    --fx: sepia(30%);               /* 블러와 합성됨 (.section filter 참고) */
 }
 
 .scrollAnimation5 {
@@ -851,7 +857,7 @@ video {
 #section4 {
     height: 100vh;
     width: 100vw;
-    filter: grayscale(50%);
+    --fx: grayscale(50%);           /* 블러와 합성됨 (.section filter 참고) */
     position: relative;
     overflow: hidden;
 }
