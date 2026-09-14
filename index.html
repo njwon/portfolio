@@ -161,25 +161,25 @@
                 <div class="in-section2">
                     <div class="about amain">
                         <div class="aboutmain" data-blur="off">
-                            <h1 class="about-gray"><a class="h1" href="#section2" onclick="setSection(1); return false">노정원</a></h1>
+                            <h1 class="about-gray"><a class="h1" href="#section2" onclick="return scrollAbout('top')">노정원</a></h1>
                             <p class="about-gray">최근 수정 시각: <span id="datetime"></span></p>
                             <div class="aboutjeong about-gray">분류: <a class="about-link" href="#section2"
-                                    onclick="setSection(1); return false">고등학생</a></div>
+                                    onclick="return scrollAbout('top')">고등학생</a></div>
                             <img class="about-banner-top" style="display: none;" src="" alt="">
                             <div class="aboutstart">
                                 <div class="mokcha about-gray" id="toc">
                                     <div class="first">목차</div>
                                     <div class="mokcha-in" style="padding-left: 20px; margin-top: 12px; font-size: 15px;">
-                                        <span><a class="about-link" style="font-size: 15px;" href="#section2" onclick="setSection(1); return false">1</a></span>. 소개
+                                        <span><a class="about-link" style="font-size: 15px;" href="#about-one" onclick="return scrollAbout('about-one')">1</a></span>. 소개
                                     </div>
                                     <div style="padding-left: 20px; font-size: 15px;">
-                                        <span><a class="about-link" style="font-size: 15px;" href="#section2" onclick="setSection(1); return false">2</a></span>. 활동 및 경험
+                                        <span><a class="about-link" style="font-size: 15px;" href="#about-two" onclick="return scrollAbout('about-two')">2</a></span>. 활동 및 경험
                                     </div>
                                     <div style="padding-left: 20px; font-size: 15px;">
-                                        <span><a class="about-link" style="font-size: 15px;" href="#section2" onclick="setSection(1); return false">3</a></span>. 기술 역량
+                                        <span><a class="about-link" style="font-size: 15px;" href="#about-three" onclick="return scrollAbout('about-three')">3</a></span>. 기술 역량
                                     </div>
                                     <div style="padding-left: 20px; font-size: 15px;">
-                                        <span><a class="about-link" style="font-size: 15px;" href="#section2" onclick="setSection(1); return false">4</a></span>. 계획
+                                        <span><a class="about-link" style="font-size: 15px;" href="#about-four" onclick="return scrollAbout('about-four')">4</a></span>. 계획
                                     </div>
                                 </div>
                                 <table class="introduce about-gray">
@@ -264,10 +264,10 @@
                             </div>
                             <div id="about-one" class="about-one about-gray">
                                 <h2 class="about-one-in">
-                                    <div><a class="about-link" href="#toc" onclick="document.getElementById('toc').scrollIntoView({block: 'start'}); return false">1.</a>
+                                    <div><a class="about-link" href="#toc" onclick="return scrollAbout('toc')">1.</a>
                                         <span>소개</span>
                                     </div>
-                                    <div><a class="edit about-link" style="font-size: 15px;">[편집]</a></div>
+                                    <div><a class="edit about-link" style="font-size: 15px;" href="https://github.com/njwon/portfolio/blob/main/index.html" target="_blank" rel="noopener" title="GitHub 에서 원문 보기">[편집]</a></div>
                                 </h2>
                                 <div class="realtext">
                                     수원정보과학고등학교에 재학 중인 네트워크·보안·백엔드 개발자 노정원(njwon)입니다.<br>
@@ -284,10 +284,10 @@
                             </div>
                             <div id="about-two" class="about-one about-gray">
                                 <h2 class="about-one-in">
-                                    <div><a class="about-link" href="#toc" onclick="document.getElementById('toc').scrollIntoView({block: 'start'}); return false">2.</a>
+                                    <div><a class="about-link" href="#toc" onclick="return scrollAbout('toc')">2.</a>
                                         <span>활동 및 경험</span>
                                     </div>
-                                    <div><a class="edit about-link" style="font-size: 15px;">[편집]</a></div>
+                                    <div><a class="edit about-link" style="font-size: 15px;" href="https://github.com/njwon/portfolio/blob/main/index.html" target="_blank" rel="noopener" title="GitHub 에서 원문 보기">[편집]</a></div>
                                 </h2>
                                 <div class="realtext">
                                     <b>전교부회장</b>으로 취임하며 학교 행사와 대의원 회의, 학생회 인원 관리와 학생들을 선도 하는 역할을 맡았고, 성공적으로 수행 하였으며,<br>
@@ -298,10 +298,10 @@
                             </div>
                             <div id="about-three" class="about-one about-gray">
                                 <h2 class="about-one-in">
-                                    <div><a class="about-link" href="#toc" onclick="document.getElementById('toc').scrollIntoView({block: 'start'}); return false">3.</a>
+                                    <div><a class="about-link" href="#toc" onclick="return scrollAbout('toc')">3.</a>
                                         <span>기술 역량</span>
                                     </div>
-                                    <div><a class="edit about-link" style="font-size: 15px;">[편집]</a></div>
+                                    <div><a class="edit about-link" style="font-size: 15px;" href="https://github.com/njwon/portfolio/blob/main/index.html" target="_blank" rel="noopener" title="GitHub 에서 원문 보기">[편집]</a></div>
                                 </h2>
                                 <div class="realtext">
                                     <b>자료구조 기초</b><br>
@@ -346,10 +346,10 @@
                             </div>
                             <div id="about-four" class="about-one about-gray">
                                 <h2 class="about-one-in">
-                                    <div><a class="about-link" href="#toc" onclick="document.getElementById('toc').scrollIntoView({block: 'start'}); return false">4.</a>
+                                    <div><a class="about-link" href="#toc" onclick="return scrollAbout('toc')">4.</a>
                                         <span>계획</span>
                                     </div>
-                                    <div><a class="edit about-link" style="font-size: 15px;">[편집]</a></div>
+                                    <div><a class="edit about-link" style="font-size: 15px;" href="https://github.com/njwon/portfolio/blob/main/index.html" target="_blank" rel="noopener" title="GitHub 에서 원문 보기">[편집]</a></div>
                                 </h2>
                                 <div class="realtext">
                                     <b>백엔드 심화</b><br>

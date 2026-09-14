@@ -107,6 +107,18 @@ function scrollToSection(idx) {
 
 function setSection(idx) { scrollToSection(currentSection = idx); }
 
+// 소개 섹션 안 링크: 목차 번호 → 해당 문단, 문단 번호 → 목차, 제목 → 맨 위. 소개 박스(.about) 안에서만 스크롤
+function scrollAbout(id) {
+    if (currentSection !== 1) setSection(1);
+    const box = about;
+    if (id === 'top') box.scrollTo({ top: 0, behavior: 'smooth' });
+    else {
+        const el = document.getElementById(id);
+        if (el) box.scrollTo({ top: el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12, behavior: 'smooth' });
+    }
+    return false;
+}
+
 const videos = ['img/home/core1.webm', 'img/home/core2.webm', 'img/home/core3.webm', 'img/home/core4.webm', 'img/home/core5.webm', 'img/home/core6.webm', 'img/home/core7.webm', 'img/home/core8.webm', 'img/home/core9.webm', 'img/home/core10.webm'];
 
 function changeVideo() {
