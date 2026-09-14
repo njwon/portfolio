@@ -544,6 +544,14 @@ video {
     0%   { transform: translateX(100vw); }
     100% { transform: translateX(0vw); }
 }
+/* 소개 박스가 세로 전체·전체화면이 되는 1023px 이하에선 100vw 슬라이드가 어색해 페이드+살짝 떠오르기로 */
+@media (max-width: 1023px) {
+    .scrollAnimation4 { animation: aboutFadeUp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+    @keyframes aboutFadeUp {
+        0%   { opacity: 0; transform: translateY(28px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+}
 
 .aboutmain h1 {
     width: 100%;
@@ -835,9 +843,9 @@ video {
     max-width: 100%;
 }
 
-@media (max-width: 700px) {
-    /* 모바일: 소개 섹션처럼 차트 영역이 화면 전체를 차지하고 그 안에서 스크롤 (끝까지 내리면 다음 스와이프에 섹션 전환).
-       아래 여백은 우하단 Clippy 에 마지막 줄이 가려지지 않게 */
+/* 모바일과 세로 태블릿: 차트를 위아래로 쌓고, 영역이 화면 전체를 차지하며 그 안에서 스크롤
+   (끝까지 내리면 다음 스와이프에 섹션 전환). 아래 여백은 우하단 Clippy 에 마지막 줄이 가려지지 않게 */
+@media (max-width: 700px), ((max-width: 1024px) and (orientation: portrait)) {
     .charts-wrap {
         flex-direction: column;
         align-items: center;
@@ -851,7 +859,13 @@ video {
         -webkit-overflow-scrolling: touch;
     }
     .chart-label { font-size: 18px; }
-
+    /* 여유가 있으면 세로 가운데, 넘치면 위부터 스크롤 (justify-content: center 는 넘칠 때 위가 잘림) */
+    .charts-wrap > :first-child { margin-top: auto; }
+    .charts-wrap > :last-child  { margin-bottom: auto; }
+}
+@media (min-width: 701px) and (max-width: 1024px) and (orientation: portrait) {
+    .charts-wrap { padding-top: 48px; gap: 16px; }
+    .chart-label { font-size: 22px; }
 }
 
 #section4 {
@@ -1127,14 +1141,15 @@ video {
     }
 }
 
-/* 모바일 가로 & 태블릿 세로 (~ 767px) */
-@media (max-width: 767px) {
+/* 좁은 화면(~767px) 과 세로로 든 태블릿(768~1023 portrait): 폴라로이드 위 · 내용 아래, 세로 가운데 정렬.
+   아래 여백은 하단 카운터(.proj-ui)와 우하단 Clippy 에 본문이 가리지 않게 */
+@media (max-width: 767px), ((max-width: 1024px) and (orientation: portrait)) {
     .proj-slide {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-end;
-        padding: 0 24px 72px;
+        justify-content: center;
+        padding: 24px 24px 140px;
         box-sizing: border-box;
     }
     .proj-polaroid {
@@ -1164,9 +1179,18 @@ video {
     .proj-desc  { font-size: 12px; }
 }
 
+/* 세로 태블릿(768~1023 portrait): 위 레이아웃에서 크기만 키움 */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    .proj-polaroid { width: min(380px, 46vw); margin-bottom: 28px; }
+    .proj-content  { max-width: 560px; }
+    .proj-title    { font-size: clamp(32px, 5.5vw, 44px); }
+    .proj-desc     { font-size: 14px; line-height: 1.75; }
+    .proj-num      { font-size: 34vw; }
+}
+
 /* 모바일 세로 (~ 479px) */
 @media (max-width: 479px) {
-    .proj-slide  { padding: 0 20px 64px; }
+    .proj-slide  { padding: 20px 20px 130px; }
     .proj-polaroid { width: 46vw; }
     .proj-title { font-size: clamp(22px, 9vw, 32px); }
     .proj-cat   { font-size: 10px; margin-bottom: 10px; }

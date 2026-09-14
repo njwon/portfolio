@@ -188,11 +188,18 @@ function updateProjUI() {
 function chartLayout() {
     const vw = window.innerWidth, vh = window.innerHeight;
     const mobile = vw <= 700, tablet = !mobile && vw <= 1023;
+    const portraitTablet = !mobile && vw <= 1024 && vh > vw;    // 세로로 든 태블릿: 모바일처럼 위아래로 쌓되 크게
     if (mobile) {
         // 모바일은 차트 영역(.charts-wrap)이 화면 전체를 차지하고 안에서 스크롤되므로 높이에 맞춰 줄이지 않는다
         const radar  = Math.round(Math.min(240, vw * 0.66));
         const langW  = Math.round(Math.min(320, vw - 70));      // 좌측 메뉴 아이콘 열(≈35px)과 겹치지 않게
         return { mobile, tablet, dpr: window.devicePixelRatio || 1, radar, langW, langMaxH: Infinity };
+    }
+    if (portraitTablet) {
+        const radar  = Math.round(Math.min(360, vw * 0.48));
+        const langW  = Math.round(Math.min(480, vw * 0.66));
+        // 제목 2줄·간격·위아래 여백(≈300px)을 뺀 높이 안에 막대 차트가 들어가게
+        return { mobile, tablet, dpr: window.devicePixelRatio || 1, radar, langW, langMaxH: Math.max(300, vh - radar - 300) };
     }
     const radar = Math.round(tablet ? Math.min(300, vw * 0.36) : Math.min(480, vw * 0.36, vh * 0.62));
     const langW = Math.round(tablet ? Math.min(320, vw * 0.40) : Math.min(480, vw * 0.40));
@@ -347,7 +354,7 @@ function drawLangChart() {
 
     // 행 높이: 폭 기준 상한과 '허용 높이 안에 전부 들어가는' 상한 중 작은 값 (h = rowH·행수 + 0.85·rowH·그룹수 + 20)
     const rowByH = (langMaxH - 20) / (langs.length + 0.85 * groups.length);
-    const rowH   = Math.max(15, Math.min(mobile ? 24 : 36, (w * 0.95) / langs.length, rowByH));
+    const rowH   = Math.max(15, Math.min(mobile ? 24 : tablet ? 28 : 36, (w * 0.95) / langs.length, rowByH));
     const headH  = rowH * 0.85;
     const h      = Math.round(rowH * langs.length + headH * groups.length + 20);
     const ctx    = setupCanvas(canvas, w, h, dpr);
