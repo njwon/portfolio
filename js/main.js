@@ -502,6 +502,32 @@ function drawLangChart() {
         localStorage.setItem('clippyClickedDate', today);
         link.classList.remove('clippy-active');
     });
+
+    // 작은 화면: 아래로 스크롤(휠·터치·안쪽 스크롤 영역)하면 가장자리로 숨고, 위로 스크롤하면 다시 나오며 말풍선·통통 재생
+    const small = window.matchMedia('(max-width: 1024px)');
+    let tucked = false, lastTouchY = 0;
+    const setTucked = down => {
+        if (!small.matches) down = false;
+        if (down === tucked) return;
+        tucked = down;
+        document.body.classList.toggle('clippy-tucked', down);
+        if (!down) {                                   // 다시 나올 때 애니메이션을 처음부터
+            link.classList.remove('clippy-active');
+            void link.offsetWidth;
+            link.classList.add('clippy-active');
+        }
+    };
+    document.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > 4) setTucked(e.deltaY > 0); }, { passive: true });
+    document.addEventListener('touchstart', e => { lastTouchY = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchmove', e => {
+        const y = e.touches[0].clientY;
+        if (Math.abs(y - lastTouchY) > 8) { setTucked(y < lastTouchY); lastTouchY = y; }
+    }, { passive: true });
+    document.querySelectorAll('.about, .charts-wrap').forEach(el => {
+        let prev = el.scrollTop;
+        el.addEventListener('scroll', () => { const d = el.scrollTop - prev; if (Math.abs(d) > 4) setTucked(d > 0); prev = el.scrollTop; }, { passive: true });
+    });
+    small.addEventListener('change', () => { if (!small.matches) setTucked(false); });
 })();
 
 // 저작권 연도 자동 갱신
