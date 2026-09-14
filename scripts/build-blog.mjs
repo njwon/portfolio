@@ -113,6 +113,13 @@ function renderBody(post) {
   return marked.parse(post.body || '').replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>');
 }
 
+let vendorCss = '';
+async function loadVendorCss() {
+  const dir = join(ROOT, 'blog', 'vendor');
+  vendorCss = (await readFile(join(dir, 'github-markdown-dark.min.css'), 'utf8')).trim() + '\n'
+            + (await readFile(join(dir, 'hljs-github-dark.min.css'), 'utf8')).trim();
+}
+
 function renderPage(post) {
   const url   = postUrl(post.slug);
   const title = `${post.title} | nogarden.log`;
@@ -174,12 +181,9 @@ function renderPage(post) {
     <link rel="icon" href="${SITE}/favicon.ico" sizes="48x48">
     <link rel="icon" href="${SITE}/img/favicon.png" type="image/png" sizes="192x192">
     <link rel="apple-touch-icon" href="${SITE}/img/apple-touch-icon.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
-    </noscript>
+    <!-- 마크다운·코드 하이라이트 테마는 인라인 (blog/vendor/). CDN 비동기 로드는 첫 그리기 뒤에 긴 글 전체를 다시 배치해
+         모바일에서 TBT·CLS 를 크게 만들었음 -->
+    <style>${vendorCss}</style>
 </head>
 
 <body>
@@ -326,6 +330,7 @@ async function main() {
   }
   posts.sort((a, b) => new Date(b.display_date) - new Date(a.display_date));
   await loadImageDims();
+  await loadVendorCss();
   const probed = await probeImageDims(posts);
   if (probed) console.log(`이미지 크기 ${probed}개 새로 조회`);
 
