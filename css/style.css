@@ -756,12 +756,10 @@ video {
 
 .minimi {
     font-size: .6333333333em;
-    color: #0275d8;
 }
 /* 나무위키 문서 링크 (개념어·학교·자격증 등) — 위키처럼 파란 글자, 마우스 올리면 밑줄 */
 .wiki-link { color: #0275d8; text-decoration: none; }
 .wiki-link:hover { text-decoration: underline; color: #014076; }
-.minimi .wiki-link { color: inherit; }
 
 .about-one {
     display: block;
