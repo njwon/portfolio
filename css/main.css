@@ -29,7 +29,8 @@
     menu ul { justify-content: center; }
     menu ul li { margin-bottom: 30px; }
 
-    .aboutstart { display: block; }
+    /* 위키 태블릿처럼 목차 왼쪽 · 인물 정보 표 오른쪽(폭의 60%), 표 안 사진은 셀을 꽉 채움 */
+    .aboutstart { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 
     .about {
         width: 88vw;
@@ -41,8 +42,9 @@
         border-radius: 0;
     }
 
-    .introduce { width: 100%; }
-    .mokcha { margin: 0 0 1em; }
+    .introduce { width: 60%; flex: none; }
+    .mokcha { margin: 0; flex: none; }
+    .tr-div-inner strong span img { width: 100%; display: block; }
     .about-banner { display: none; }
 
     .about-banner-top {
@@ -135,8 +137,8 @@
     .first      { font-size: 17px; }
     .mokcha-in  { font-size: 14px; margin-top: 8px; }
 
-    /* 전체 폭 표에서 프로필 사진이 화면을 다 덮지 않게 */
-    .tr-div-inner strong span img { width: min(100%, 240px); margin: 0 auto; display: block; }
+    /* 사진은 셀 폭을 꽉 채운다 (작게 두면 어두운 셀 양옆이 빈 공간으로 남음) */
+    .tr-div-inner strong span img { width: 100%; display: block; }
     .aboutangel1, .aboutangel2 { display: none; }        /* 표 밖으로 삐져나오는 장식 눈 이미지는 좁은 화면에서 숨김 */
     .table-div  { font-size: 14px; }
     .tr td      { padding: 4px 8px; }
@@ -149,5 +151,25 @@
     .about-one-in div span { font-size: 21px; }
     .about-one-in .edit     { font-size: 13px !important; }
     .realtext     { font-size: 14px; line-height: 1.65; }
-    .realtext br.br-soft { display: none; }                  /* 데스크톱용 문장 중간 줄바꿈은 좁은 폭에서 어색 → 자연 줄바꿈 (분류는 main.js) */
+}
+
+/* 480~767: 폭이 있으니 위키 데스크톱처럼 목차 왼쪽 · 표 오른쪽(최대 420px). 480 미만은 위 규칙대로 세로로 쌓임 */
+@media all and (min-width: 480px) and (max-width: 767px) {
+    .aboutstart { flex-direction: row; align-items: flex-start; gap: 16px; }
+    .mokcha     { order: 0; margin: 0; flex: none; }
+    .introduce  { order: 0; width: auto; flex: 1 1 auto; max-width: 420px; margin: 0 0 16px auto; }
+}
+
+/* 1024px 이하: 데스크톱 폭 기준으로 문장 중간에 넣은 <br>(main.js 가 .br-soft 로 분류)은 숨겨 자연 줄바꿈 */
+@media all and (max-width: 1024px) {
+    .realtext br.br-soft { display: none; }
+}
+
+/* 세로로 든 큰 태블릿(1024 portrait, iPad Pro 등): 768~1023 과 같이 소개 박스 세로 전체 */
+@media all and (min-width: 1024px) and (max-width: 1024px) and (orientation: portrait) {
+    .about { width: 88vw; height: 100vh; height: 100dvh; margin-bottom: 0; border-top: 0; border-bottom: 0; border-radius: 0; }
+    .aboutstart { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+    .introduce { width: 60%; flex: none; }
+    .mokcha { margin: 0; flex: none; }
+    .tr-div-inner strong span img { width: 100%; display: block; }
 }
