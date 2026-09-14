@@ -758,9 +758,10 @@ video {
     font-size: .6333333333em;
     color: #0275d8;
 }
-/* 표 안 나무위키 링크 (유신론·졸업·재학) — 위키 링크 색, 마우스 올리면 밑줄 */
-.wiki-link { color: inherit; text-decoration: none; }
+/* 나무위키 문서 링크 (개념어·학교·자격증 등) — 위키처럼 파란 글자, 마우스 올리면 밑줄 */
+.wiki-link { color: #0275d8; text-decoration: none; }
 .wiki-link:hover { text-decoration: underline; color: #014076; }
+.minimi .wiki-link { color: inherit; }
 
 .about-one {
     display: block;
