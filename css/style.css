@@ -17,13 +17,20 @@ body {
     height: 100%;
 }
 
-/* 화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용 → 섹션별로 끄고 켤 수 있다.
-   끄려면 <section ... data-blur="off">. 커서(.cursor)는 항상 선명. */
+/* 화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용. 커서(.cursor)는 항상 선명.
+   선명하게 만들 요소에 data-blur="off" 를 붙이면 된다 (섹션이든 그 안의 어떤 요소든).
+   filter 는 조상에 걸리면 자식에서 못 풀기 때문에, 그 요소의 조상 체인은 블러를 빼고
+   조상들의 '다른' 자식들에 각각 블러를 건다 → 결과적으로 해당 요소만 선명해진다. */
 .section, .load, .menuwrap, .noise, .clippy-link, .blog-dialog {
     filter: blur(0.7px);
 }
-.section[data-blur="off"] {
+.section[data-blur="off"],
+.section:has([data-blur="off"]),
+.section :has([data-blur="off"]) {
     filter: none;
+}
+:is(.section, .section *):has([data-blur="off"]) > :not([data-blur="off"]):not(:has([data-blur="off"])) {
+    filter: blur(0.7px);
 }
 
 a {
