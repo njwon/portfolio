@@ -93,9 +93,11 @@ function handleScroll(down) {
     if (canMove) scrollToSection(currentSection += down ? 1 : -1);
 }
 
+// 섹션 높이 단위: iOS 는 100vh 가 주소창 포함 높이라 실제 보이는 영역과 어긋남 → 지원되면 dvh
+const VH_UNIT = (window.CSS && CSS.supports('height', '100dvh')) ? 'dvh' : 'vh';
 function scrollToSection(idx) {
     sections.forEach((s, i) => {
-        s.style.transform = `translateY(-${idx * 100}vh)`;
+        s.style.transform = `translateY(-${idx * 100}${VH_UNIT})`;
         s.classList.toggle('active', i === idx);
     });
     sectionAnimations[idx]?.();

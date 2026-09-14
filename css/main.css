@@ -34,6 +34,7 @@
     .about {
         width: 88vw;
         height: 100vh;
+        height: 100dvh;
         margin-bottom: 0;
         border-top: 0;
         border-bottom: 0;
@@ -64,6 +65,7 @@
     .about {
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
         min-width: 0;
         margin-bottom: 0;
         border: 0;
@@ -95,6 +97,7 @@
     .about {
         width: 100vw;
         height: 100vh;
+        height: 100dvh;
         min-width: 0;
         margin-bottom: 0;
         border: 0;

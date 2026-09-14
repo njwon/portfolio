@@ -1,5 +1,8 @@
 html {
     scroll-behavior: smooth;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 * {
@@ -11,10 +14,18 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    overflow: clip;                 /* hidden 은 iOS 에서 포커스·scrollIntoView 로 밀릴 수 있음. clip 은 아예 스크롤 불가 */
+    overscroll-behavior: none;
     background-color: #e0e0e0;
     position: fixed;
     width: 100%;
     height: 100%;
+}
+.page {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: clip;
 }
 
 /* ── 블러 ─────────────────────────────────────────────────────────
@@ -115,6 +126,7 @@ a {
     pointer-events: none;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -130,6 +142,7 @@ a {
 .menuwrap {
     width: 5vw;
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     position: fixed;
     top: 0;
     display: flex;
@@ -151,6 +164,7 @@ menu {
     margin: 0;
     padding: 0;
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     display: flex;
 }
 
@@ -204,6 +218,7 @@ menu ul li a {
     margin: 0 auto;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -222,6 +237,7 @@ menu ul li a {
 #section2, #section3, #section4, #section5 {
     content-visibility: auto;
     contain-intrinsic-size: 100vw 100vh;
+    contain-intrinsic-size: 100vw 100dvh;
 }
 
 .weirdimg {
@@ -373,6 +389,7 @@ video {
 
 #section2 {
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     width: 100vw;
     z-index: 4;
 }
@@ -761,6 +778,7 @@ video {
 
 #section3 {
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     width: 100vw;
     --fx: sepia(30%);               /* 블러와 합성됨 (.section filter 참고) */
 }
@@ -827,6 +845,7 @@ video {
         padding: 0 16px;
         overflow-y: auto;
         max-height: calc(86vh - 140px);     /* 우하단 Clippy+말풍선 위에서 끝나게. 짧은 화면에선 내부 스크롤 */
+        max-height: calc(86dvh - 140px);
         -webkit-overflow-scrolling: touch;
     }
     .chart-label { font-size: 18px; }
@@ -835,6 +854,7 @@ video {
 
 #section4 {
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     width: 100vw;
     --fx: grayscale(50%);           /* 블러와 합성됨 (.section filter 참고) */
     position: relative;
@@ -851,6 +871,7 @@ video {
 .proj-track {
     display: flex;
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
     will-change: transform;
 }
 
@@ -1157,12 +1178,14 @@ video {
 
 #section5 {
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
 }
 
 .sec5-full {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;                 /* 모바일: 주소창을 뺀 실제 보이는 높이 */
 }
 
 .in-contact a {
