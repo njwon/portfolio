@@ -795,7 +795,7 @@ video {
 
 .chart-label {
     font-family: 'PartialSansKR-Regular', serif;
-    font-size: 14px;
+    font-size: 18px;
     color: rgb(22, 22, 23);
     letter-spacing: 0.08em;
     margin: 0;
@@ -810,48 +810,26 @@ video {
     100% { opacity: 1; transform: translateY(0); }
 }
 
-#radarChart {
-    width: min(400px, 42vw);
-    height: min(400px, 42vw);
+/* 캔버스 크기는 main.js chartLayout() 이 화면 폭·높이에 맞춰 style 로 지정 (CSS 고정값과 어긋나 흐려지는 것 방지) */
+#radarChart, #langChart {
     background: transparent;
-}
-
-#langChart {
-    width: min(380px, 42vw);
-    height: min(400px, 42vw);
-    background: transparent;
-}
-
-@media (min-width: 701px) and (max-width: 1023px) {
-    #radarChart {
-        width: min(250px, 33vw);
-        height: min(250px, 33vw);
-    }
-    #langChart {
-        width: min(280px, 38vw);
-        height: min(280px, 38vw);
-    }
+    max-width: 100%;
 }
 
 @media (max-width: 700px) {
     .charts-wrap {
         flex-direction: column;
         align-items: center;
+        justify-content: flex-start;        /* 넘칠 때 위가 잘리지 않게 */
         top: 14%;
-        gap: 16px;
+        gap: 12px;
         padding: 0 16px;
         overflow-y: auto;
-        max-height: 82vh;
+        max-height: calc(86vh - 140px);     /* 우하단 Clippy+말풍선 위에서 끝나게. 짧은 화면에선 내부 스크롤 */
+        -webkit-overflow-scrolling: touch;
     }
+    .chart-label { font-size: 14px; }
 
-    #radarChart {
-        width: min(210px, 65vw);
-        height: min(210px, 65vw);
-    }
-    #langChart {
-        width: min(260px, 75vw);
-        height: min(260px, 75vw);
-    }
 }
 
 #section4 {
@@ -919,7 +897,8 @@ video {
 }
 
 .proj-cat {
-    font-family: 'PartialSansKR-Regular', serif;
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -1106,7 +1085,8 @@ video {
 }
 
 .proj-counter {
-    font-family: 'PartialSansKR-Regular', serif;
+    font-family: 'Pretendard', serif;
+    font-weight: 400;
     font-size: 11px;
     letter-spacing: 0.12em;
     color: rgba(22,22,23,0.5);

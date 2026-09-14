@@ -59,13 +59,20 @@ document.addEventListener('wheel', e => {
     setTimeout(() => { scrolling = false; }, 900);
 });
 
+let touchScrollBox = null;   // 터치가 시작된 내부 스크롤 영역(차트 목록 등)
 document.addEventListener('touchstart', e => {
     touchStartY = e.touches[0].clientY;
     touchStartX = e.touches[0].clientX;
+    touchScrollBox = e.target.closest?.('.charts-wrap') || null;
 });
 document.addEventListener('touchend', e => {
     const diffY = touchStartY - e.changedTouches[0].clientY;
     const diffX = touchStartX - e.changedTouches[0].clientX;
+    // 내부 스크롤 영역이 아직 그 방향으로 더 스크롤될 수 있으면 섹션 전환 대신 내부 스크롤로 처리
+    if (touchScrollBox && Math.abs(diffY) > Math.abs(diffX)) {
+        const b = touchScrollBox, canDown = b.scrollTop + b.clientHeight < b.scrollHeight - 1, canUp = b.scrollTop > 0;
+        if ((diffY > 0 && canDown) || (diffY < 0 && canUp)) return;
+    }
     if (currentSection === 3 && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 30) {
         navigateProj(diffX > 0 ? 1 : -1);
     } else if (Math.abs(diffY) > 30) {
@@ -161,22 +168,40 @@ function updateProjUI() {
     if (projCounterEl) projCounterEl.textContent = `${String(projCurrent + 1).padStart(2, '0')} — ${String(PROJ_N).padStart(2, '0')}`;
 }
 
+// ── 차트 공통 ─────────────────────────────────────────────────────
+// 화면 폭·높이로 두 차트의 CSS 크기를 정하고, 캔버스는 devicePixelRatio 배로 잡아 선명하게 그린다.
+// 모바일은 세로로 쌓이므로(라벨 2줄 + 간격 포함) 스와이프로 섹션이 넘어가는 구조상 스크롤 없이 한 화면에 다 들어가야 한다.
+function chartLayout() {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const mobile = vw <= 700, tablet = !mobile && vw <= 1023;
+    if (mobile) {
+        const avail  = vh * 0.86 - 140 - 72;                    // charts-wrap(top 14%) 안, 우하단 Clippy+말풍선(≈140px)·라벨 2줄·간격(≈72px) 제외
+        // 레이더는 170px 아래로는 안 줄인다 — 아주 짧은 화면은 차트 영역이 내부 스크롤되도록 둠 (터치 핸들러가 스크롤을 우선 처리)
+        const radar  = Math.round(Math.max(170, Math.min(220, vw * 0.62, avail * 0.40)));
+        const langW  = Math.round(Math.min(320, vw - 70));      // 좌측 메뉴 아이콘 열(≈35px)과 겹치지 않게
+        return { mobile, tablet, dpr: window.devicePixelRatio || 1, radar, langW, langMaxH: avail - radar };
+    }
+    const radar = Math.round(tablet ? Math.min(300, vw * 0.36) : Math.min(480, vw * 0.36, vh * 0.62));
+    const langW = Math.round(tablet ? Math.min(320, vw * 0.40) : Math.min(480, vw * 0.40));
+    return { mobile, tablet, dpr: window.devicePixelRatio || 1, radar, langW, langMaxH: vh * 0.72 };
+}
+function setupCanvas(canvas, cssW, cssH, dpr) {
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+}
+
 // ── Radar Chart ───────────────────────────────────────────────────
 function drawRadarChart() {
     const canvas = document.getElementById('radarChart');
     if (!canvas) return;
 
-    const mobile = window.innerWidth <= 700;
-    const tablet = !mobile && window.innerWidth <= 1023;
-    const size = mobile
-        ? Math.min(210, window.innerWidth * 0.65)
-        : tablet
-        ? Math.min(250, window.innerWidth * 0.33)
-        : Math.min(340, window.innerWidth * 0.36);
-    canvas.width  = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext('2d');
+    const { mobile, tablet, dpr, radar: size } = chartLayout();
+    const ctx = setupCanvas(canvas, size, size, dpr);
     const cx  = size / 2;
     const cy  = size / 2;
     const maxR   = size * (mobile ? 0.28 : tablet ? 0.31 : 0.34);
@@ -196,7 +221,7 @@ function drawRadarChart() {
     ];
     const n        = skills.length;
     const levels   = 5;
-    const fontSize = Math.max(mobile ? 13 : tablet ? 12 : 11, size * (mobile ? 0.042 : tablet ? 0.034 : 0.026));
+    const fontSize = Math.max(mobile ? 12 : tablet ? 13 : 15, size * (mobile ? 0.055 : tablet ? 0.045 : 0.034));
     const progs    = skills.map(() => 0);
 
     const angle = i => (Math.PI * 2 * i / n) - Math.PI / 2;
@@ -281,13 +306,7 @@ function drawLangChart() {
     const canvas = document.getElementById('langChart');
     if (!canvas) return;
 
-    const mobile = window.innerWidth <= 700;
-    const tablet = !mobile && window.innerWidth <= 1023;
-    const w = mobile
-        ? Math.min(260, window.innerWidth * 0.75)
-        : tablet
-        ? Math.min(280, window.innerWidth * 0.38)
-        : Math.min(380, window.innerWidth * 0.42);
+    const { mobile, tablet, dpr, langW: w, langMaxH } = chartLayout();
     const groups = [
         { title: '언어', items: [
             { label: 'JavaScript',  value: 90 },
@@ -313,16 +332,15 @@ function drawLangChart() {
     const langs = groups.flatMap(g => g.items);
     langs.forEach(l => { l.speed = 0.008 + Math.random() * 0.010; });
 
-    const rowH   = Math.min(52, (w * 0.95) / langs.length);
+    // 행 높이: 폭 기준 상한과 '허용 높이 안에 전부 들어가는' 상한 중 작은 값 (h = rowH·행수 + 0.85·rowH·그룹수 + 20)
+    const rowByH = (langMaxH - 20) / (langs.length + 0.85 * groups.length);
+    const rowH   = Math.max(15, Math.min(mobile ? 26 : 36, (w * 0.95) / langs.length, rowByH));
     const headH  = rowH * 0.85;
-    const h      = rowH * langs.length + headH * groups.length + 20;
-    canvas.width  = w;
-    canvas.height = h;
-
-    const ctx = canvas.getContext('2d');
-    const barX     = w * (mobile ? 0.42 : 0.30);
-    const barW     = w * (mobile ? 0.44 : 0.56);
-    const fontSize = Math.max(mobile ? 9 : 10, w * (mobile ? 0.030 : 0.032));
+    const h      = Math.round(rowH * langs.length + headH * groups.length + 20);
+    const ctx    = setupCanvas(canvas, w, h, dpr);
+    const barX     = w * (mobile ? 0.36 : 0.30);
+    const barW     = w * (mobile ? 0.48 : 0.56);
+    const fontSize = Math.min(mobile ? 13 : 16, Math.max(mobile ? 11 : 12, rowH * 0.5));
     const easeOut  = t => 1 - Math.pow(1 - t, 3);
     const progs    = langs.map(() => 0);
 
