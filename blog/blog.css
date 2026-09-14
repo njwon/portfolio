@@ -8,7 +8,7 @@
 body {
     background-color: #1a1a1a;
     color: #e0e0e0;
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Pretendard', 'Pretendard Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 16px;
     line-height: 1.6;
     min-height: 100vh;
@@ -426,7 +426,7 @@ a {
     color: #d4d4d4;
     font-size: 16px;
     line-height: 1.8;
-    font-family: 'Pretendard', sans-serif;
+    font-family: 'Pretendard', 'Pretendard Fallback', sans-serif;
 }
 
 .post-body.markdown-body h1,
@@ -438,7 +438,7 @@ a {
 
 .post-body.markdown-body b,
 .post-body.markdown-body strong {
-    font-family: 'Pretendard', sans-serif;
+    font-family: 'Pretendard', 'Pretendard Fallback', sans-serif;
     font-weight: 700;
     color: #f0f0f0;
 }

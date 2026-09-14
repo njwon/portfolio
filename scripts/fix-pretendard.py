@@ -11,6 +11,12 @@ import os, re, urllib.request, concurrent.futures
 from pathlib import Path
 from fontTools.ttLib import TTFont
 
+FALLBACK_CSS = '''/* 폰트 도착 전에 쓰는 대체 글꼴의 세로 metric 을 Pretendard(ascent 1950/2048, descent 494/2048, lineGap 0)에 맞춤.
+   → 조각(unicode-range)이 하나씩 도착하며 글꼴이 바뀌어도 줄 높이가 같아 글이 밀리지 않는다(CLS·재배치 감소).
+   같은 family 의 @font-face 는 마지막 것만 남으므로 플랫폼별 local() 은 한 규칙의 src 목록으로 */
+@font-face{font-family:'Pretendard Fallback';src:local('Apple SD Gothic Neo'),local('AppleSDGothicNeo-Regular'),local('Malgun Gothic'),local('맑은 고딕'),local('Noto Sans KR'),local('Noto Sans CJK KR'),local('NotoSansCJKkr-Regular'),local('Roboto'),local('Segoe UI'),local('Arial');ascent-override:95.2%;descent-override:24.1%;line-gap-override:0%;size-adjust:100%}
+@font-face{font-family:'Pretendard Fallback';font-weight:700;src:local('Apple SD Gothic Neo Bold'),local('AppleSDGothicNeo-Bold'),local('Malgun Gothic Bold'),local('맑은 고딕 Bold'),local('Noto Sans KR Bold'),local('Noto Sans CJK KR Bold'),local('NotoSansCJKkr-Bold'),local('Roboto Bold'),local('Segoe UI Bold'),local('Arial Bold');ascent-override:95.2%;descent-override:24.1%;line-gap-override:0%;size-adjust:100%}
+'''
 VER     = '1.3.9'
 WEIGHTS = {400, 700}                    # 본문·굵게만. 600/900 요청은 브라우저가 700 으로 대체 (CSS 크기 절반)
 ROOT    = Path(__file__).resolve().parent.parent
@@ -60,5 +66,6 @@ lines = [lic, '',
   f'   파일은 fonts/pretendard/ 에 있고 서빙은 jsdelivr 가 리포 커밋 {FONT_REF[:7]} 기준으로 한다 */']
 for w, f, ur in faces:
     lines.append(f"@font-face{{font-family:'Pretendard';font-style:normal;font-display:swap;font-weight:{w};src:url({FONT_URL}{f}) format('woff2');unicode-range:{ur}}}")
+lines.append(FALLBACK_CSS.rstrip())
 CSS_OUT.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 print(f'{len(faces)} faces → {OUT}, {CSS_OUT}')
