@@ -1151,8 +1151,6 @@ video {
         justify-content: flex-start;
         padding: 24px 24px 140px;
         box-sizing: border-box;
-        overflow-y: auto;                   /* 링크가 많은 슬라이드는 세로 스크롤 (여유가 있으면 아래 margin:auto 로 가운데) */
-        overscroll-behavior: contain;
     }
     .proj-slide > .proj-polaroid { margin-top: auto; }
     .proj-slide > .proj-content  { margin-bottom: auto; }

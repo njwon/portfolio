@@ -51,9 +51,11 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft'  && currentSection === 3) navigateProj(-1);
 });
 
+// deltaMode 가 줄(1)/페이지(2) 단위인 브라우저(Firefox 일부 설정)도 픽셀 기준으로 맞춘다
+const wheelPx = e => e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
 document.addEventListener('wheel', e => {
     if (scrolling) return;
-    if (Math.abs(e.deltaY) < 40) return;
+    if (Math.abs(wheelPx(e)) < 40) return;
     scrolling = true;
     handleScroll(e.deltaY > 0);
     setTimeout(() => { scrolling = false; }, 900);
@@ -63,7 +65,7 @@ let touchScrollBox = null;   // 터치가 시작된 내부 스크롤 영역(차�
 document.addEventListener('touchstart', e => {
     touchStartY = e.touches[0].clientY;
     touchStartX = e.touches[0].clientX;
-    touchScrollBox = e.target.closest?.('.charts-wrap, .proj-slide') || null;
+    touchScrollBox = e.target.closest?.('.charts-wrap') || null;
 });
 document.addEventListener('touchend', e => {
     const diffY = touchStartY - e.changedTouches[0].clientY;
@@ -518,13 +520,13 @@ function drawLangChart() {
             link.classList.add('clippy-active');
         }
     };
-    document.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > 4) setTucked(e.deltaY > 0); }, { passive: true });
+    document.addEventListener('wheel', e => { const d = wheelPx(e); if (Math.abs(d) > 4) setTucked(d > 0); }, { passive: true });
     document.addEventListener('touchstart', e => { lastTouchY = e.touches[0].clientY; }, { passive: true });
     document.addEventListener('touchmove', e => {
         const y = e.touches[0].clientY;
         if (Math.abs(y - lastTouchY) > 8) { setTucked(y < lastTouchY); lastTouchY = y; }
     }, { passive: true });
-    document.querySelectorAll('.about, .charts-wrap, .proj-slide').forEach(el => {
+    document.querySelectorAll('.about, .charts-wrap').forEach(el => {
         let prev = el.scrollTop;
         el.addEventListener('scroll', () => { const d = el.scrollTop - prev; if (Math.abs(d) > 4) setTucked(d > 0); prev = el.scrollTop; }, { passive: true });
     });
