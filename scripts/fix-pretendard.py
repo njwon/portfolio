@@ -12,7 +12,7 @@ from pathlib import Path
 from fontTools.ttLib import TTFont
 
 VER     = '1.3.9'
-WEIGHTS = {400, 600, 700, 900}          # 사이트에서 실제 쓰는 굵기만
+WEIGHTS = {400, 700}                    # 본문·굵게만. 600/900 요청은 브라우저가 700 으로 대체 (CSS 크기 절반)
 ROOT    = Path(__file__).resolve().parent.parent
 OUT     = ROOT / 'fonts' / 'pretendard'
 CSS_OUT = ROOT / 'css' / 'pretendard.css'

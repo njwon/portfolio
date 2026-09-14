@@ -21,9 +21,10 @@ body {
    화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용. 커서(.cursor)는 항상 선명.
    섹션은 filter 를 "고유 효과(--fx) + 블러(--blur)" 합성으로 쓴다 — #section3 의 sepia,
    #section4 의 grayscale 처럼 섹션 자체 filter 가 있어도 블러가 덮어써지지 않게.
-   선명하게 만들 요소에 data-blur="off" 를 붙이면 된다 (섹션이든 그 안의 어떤 요소든):
-   그 섹션의 블러를 빼고(고유 효과는 유지), 조상 체인의 '다른' 자식들에 각각 블러를 건다.
-   주의: 그 '다른' 자식이 자기 filter 를 갖고 있으면 여기서 건 블러가 그것을 덮어쓴다. */
+   선명하게 만들 요소에 data-blur="off" 를 붙이면 main.js(applyBlurOptOut) 가 시작 시 한 번:
+   - 그 섹션에 .blur-off 를 붙여 블러만 뺀다(고유 효과 유지)
+   - 조상 체인의 '다른' 자식들에 .blur-sib 를 붙여 각자 블러를 건다 (자기 filter 가 있는 요소는 덮어써지므로 주의)
+   (:has() 선택자로도 되지만 로드 시 스타일 계산이 수백 ms 늘어나 JS 로 처리) */
 :root { --blur: blur(0.7px); }
 .load, .menuwrap, .noise, .clippy-link, .blog-dialog {
     filter: var(--blur);
@@ -32,10 +33,10 @@ body {
     filter: var(--fx,) var(--blur);
 }
 .section[data-blur="off"],
-.section:has([data-blur="off"]) {
+.section.blur-off {
     --blur: ;                       /* 빈 값 → 고유 효과만 남거나(none 이면) filter 해제 */
 }
-:is(.section, .section *):has([data-blur="off"]) > :not([data-blur="off"]):not(:has([data-blur="off"])) {
+.blur-sib {
     filter: blur(0.7px);
 }
 

@@ -168,6 +168,18 @@ function updateProjUI() {
     if (projCounterEl) projCounterEl.textContent = `${String(projCurrent + 1).padStart(2, '0')} — ${String(PROJ_N).padStart(2, '0')}`;
 }
 
+// ── 블러 선택 해제 (style.css '블러' 주석 참고) ─────────────────────
+(function applyBlurOptOut() {
+    // getComputedStyle 은 쓰지 않는다 — 스크립트 도중 전체 페이지 스타일 계산을 강제해 로드가 느려짐.
+    // 형제에 자기 filter 가 있으면 .blur-sib 가 그것을 덮어쓰므로, 그런 요소는 CSS 에서 직접 합성할 것.
+    document.querySelectorAll('.section [data-blur="off"]').forEach(el => {
+        for (let node = el; node.parentElement && !node.classList.contains('section'); node = node.parentElement) {
+            for (const sib of node.parentElement.children) if (sib !== node) sib.classList.add('blur-sib');
+        }
+        el.closest('.section')?.classList.add('blur-off');
+    });
+})();
+
 // ── 차트 공통 ─────────────────────────────────────────────────────
 // 화면 폭·높이로 두 차트의 CSS 크기를 정하고, 캔버스는 devicePixelRatio 배로 잡아 선명하게 그린다.
 // 모바일은 세로로 쌓이므로(라벨 2줄 + 간격 포함) 스와이프로 섹션이 넘어가는 구조상 스크롤 없이 한 화면에 다 들어가야 한다.
@@ -424,10 +436,8 @@ function drawLangChart() {
     dialog.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dialog.hidden) close(); });
 
-    // RSS 첫 항목으로 최신 글 제목을 채운다 (실패해도 대화상자는 그대로 표시)
-    fetch('blog/rss.xml').then(r => r.text()).then(xml => {
-        const item = new DOMParser().parseFromString(xml, 'application/xml').querySelector('item');
-        const title = item?.querySelector('title')?.textContent?.trim();
+    // 빌드가 만든 blog/latest.json(수백 B)으로 최신 글 제목을 채운다 (실패해도 대화상자는 그대로 표시)
+    fetch('blog/latest.json').then(r => r.json()).then(({ title }) => {
         if (!title) return;
         const latest = document.getElementById('blogDialogLatest');
         latest.textContent = '최신 글: ';

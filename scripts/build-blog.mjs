@@ -366,6 +366,9 @@ ${posts.slice(0, 5).map((p, i) => `        <a class="post-card post-card-link" h
 
   await writeFile(join(ROOT, 'blog', 'sitemap.xml'), renderSitemap(posts));
   await writeFile(join(ROOT, 'blog', 'rss.xml'), renderRss(posts));
+  // 홈 첫 방문 대화상자용 최신 글 요약 (rss.xml 전체를 받지 않게)
+  const latest = posts[0];
+  await writeFile(join(ROOT, 'blog', 'latest.json'), JSON.stringify(latest ? { title: latest.title, slug: latest.slug, date: kstYmd(latest.display_date) } : {}) + '\n');
   await writeFile(join(ROOT, 'sitemap-pages.xml'), await renderPagesSitemap());
   console.log(`${posts.length}개 글 빌드 완료`);
 }
