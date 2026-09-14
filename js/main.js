@@ -19,7 +19,8 @@ const totalSections = sections.length;
 const sectionAnimations = [
     () => { tapeTop.classList.add('scrollAnimation1'); tapeBottom.classList.add('scrollAnimation2'); tv.classList.add('scrollAnimation3'); },
     () => { aboutContent.classList.add('scrollAnimation4'); aboutBanner?.classList.add('scrollAnimation10'); },
-    () => { cards.classList.add('scrollAnimation6'); drawRadarChart(); drawLangChart(); },
+    // 캔버스는 폰트가 아직 안 내려왔으면 대체 폰트로 굳어 버리므로, 로드 보장 후 그린다
+    () => { cards.classList.add('scrollAnimation6'); document.fonts.load('16px Paperlogy-8ExtraBold').finally(() => { drawRadarChart(); drawLangChart(); }); },
     () => { initProjSlider(); },
     () => contactItems.forEach(el => el.classList.add('scrollAnimation9')),
 ];
@@ -259,12 +260,12 @@ function drawRadarChart() {
         ctx.textBaseline = 'middle';
         for (let i = 0; i < n; i++) {
             let { x, y } = pt(labelR, i);
-            ctx.font      = `${fontSize}px PartialSansKR-Regular, serif`;
+            ctx.font      = `${fontSize}px Paperlogy-8ExtraBold, serif`;
             const halfW   = ctx.measureText(skills[i].label).width / 2 + 2;
             x = Math.min(size - halfW, Math.max(halfW, x));
             ctx.fillStyle = '#161617';
             ctx.fillText(skills[i].label, x, y - fontSize * 0.6);
-            ctx.font      = `bold ${fontSize * 0.82}px PartialSansKR-Regular, serif`;
+            ctx.font      = `bold ${fontSize * 0.82}px Paperlogy-8ExtraBold, serif`;
             ctx.fillStyle = 'rgba(22,22,23,0.55)';
             ctx.fillText(skills[i].value + '%', x, y + fontSize * 0.75);
         }
@@ -340,7 +341,7 @@ function drawLangChart() {
             const hy = cursor + headH * 0.6;
             ctx.textAlign    = 'left';
             ctx.textBaseline = 'middle';
-            ctx.font         = `bold ${fontSize * 0.8}px PartialSansKR-Regular, serif`;
+            ctx.font         = `bold ${fontSize * 0.8}px Paperlogy-8ExtraBold, serif`;
             ctx.fillStyle    = 'rgba(22,22,23,0.45)';
             ctx.fillText(g.title, 0, hy);
             ctx.beginPath();
@@ -369,15 +370,15 @@ function drawLangChart() {
 
                 ctx.textAlign    = 'right';
                 ctx.textBaseline = 'middle';
-                ctx.font         = `${fontSize}px PartialSansKR-Regular, serif`;
+                ctx.font         = `${fontSize}px Paperlogy-8ExtraBold, serif`;
                 const maxLabelW  = barX - 14;
                 const labelW     = ctx.measureText(item.label).width;
-                if (labelW > maxLabelW) ctx.font = `${fontSize * maxLabelW / labelW}px PartialSansKR-Regular, serif`;
+                if (labelW > maxLabelW) ctx.font = `${fontSize * maxLabelW / labelW}px Paperlogy-8ExtraBold, serif`;
                 ctx.fillStyle    = '#161617';
                 ctx.fillText(item.label, barX - 10, y);
 
                 ctx.textAlign = 'left';
-                ctx.font      = `${fontSize * 0.82}px PartialSansKR-Regular, serif`;
+                ctx.font      = `${fontSize * 0.82}px Paperlogy-8ExtraBold, serif`;
                 ctx.fillStyle = 'rgba(22,22,23,0.45)';
                 ctx.fillText(item.value + '%', barX + barW + 8, y);
 
