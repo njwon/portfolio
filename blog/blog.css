@@ -413,7 +413,8 @@ a {
 }
 
 .post-thumbnail {
-    width: 100%;
+    width: auto;
+    max-width: 100%;      /* 원본(예: 485px)보다 크게 늘리지 않음 — 확대되면 흐려지고 Lighthouse 도 지적 */
     height: auto;
     border-radius: 8px;
     filter: grayscale(30%);
@@ -697,7 +698,7 @@ a {
 }
 
 /* 정적 카드(빌드 시 삽입) — blog.js 가 로드되면 교체됨 */
-.post-card-link { display: block; color: inherit; text-decoration: none; }
+.post-card-link { display: flex; color: inherit; text-decoration: none; }   /* 정적 카드도 JS 카드(.post-card flex)와 같은 배치 → 교체 시 높이 변화 없음 */
 .author-box {
     margin-top: 48px;
     padding: 20px 24px;
