@@ -63,7 +63,7 @@ let touchScrollBox = null;   // 터치가 시작된 내부 스크롤 영역(차�
 document.addEventListener('touchstart', e => {
     touchStartY = e.touches[0].clientY;
     touchStartX = e.touches[0].clientX;
-    touchScrollBox = e.target.closest?.('.charts-wrap') || null;
+    touchScrollBox = e.target.closest?.('.charts-wrap, .proj-slide') || null;
 });
 document.addEventListener('touchend', e => {
     const diffY = touchStartY - e.changedTouches[0].clientY;
@@ -505,13 +505,14 @@ function drawLangChart() {
 
     // 작은 화면: 아래로 스크롤(휠·터치·안쪽 스크롤 영역)하면 가장자리로 숨고, 위로 스크롤하면 다시 나오며 말풍선·통통 재생
     const small = window.matchMedia('(max-width: 1024px)');
-    let tucked = false, lastTouchY = 0;
+    let tucked = false, lastTouchY = 0, wasActive = false;
     const setTucked = down => {
         if (!small.matches) down = false;
         if (down === tucked) return;
         tucked = down;
         document.body.classList.toggle('clippy-tucked', down);
-        if (!down) {                                   // 다시 나올 때 애니메이션을 처음부터
+        if (down) wasActive = link.classList.contains('clippy-active');
+        else if (wasActive) {                          // 숨기 전에 말풍선·통통이 있었을 때만 처음부터 재생
             link.classList.remove('clippy-active');
             void link.offsetWidth;
             link.classList.add('clippy-active');
@@ -523,7 +524,7 @@ function drawLangChart() {
         const y = e.touches[0].clientY;
         if (Math.abs(y - lastTouchY) > 8) { setTucked(y < lastTouchY); lastTouchY = y; }
     }, { passive: true });
-    document.querySelectorAll('.about, .charts-wrap').forEach(el => {
+    document.querySelectorAll('.about, .charts-wrap, .proj-slide').forEach(el => {
         let prev = el.scrollTop;
         el.addEventListener('scroll', () => { const d = el.scrollTop - prev; if (Math.abs(d) > 4) setTucked(d > 0); prev = el.scrollTop; }, { passive: true });
     });

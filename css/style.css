@@ -1148,10 +1148,14 @@ video {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 24px 24px 140px;
         box-sizing: border-box;
+        overflow-y: auto;                   /* 링크가 많은 슬라이드는 세로 스크롤 (여유가 있으면 아래 margin:auto 로 가운데) */
+        overscroll-behavior: contain;
     }
+    .proj-slide > .proj-polaroid { margin-top: auto; }
+    .proj-slide > .proj-content  { margin-bottom: auto; }
     .proj-polaroid {
         position: relative;
         right: auto; top: auto; left: auto;
@@ -1172,7 +1176,8 @@ video {
         text-align: center;
     }
     .proj-stack { justify-content: center; }
-    .proj-links { flex-direction: column; align-items: center; gap: 10px; }
+    /* 링크가 많은 슬라이드(자기소개 포트폴리오 8개)가 세로로 길어져 폴라로이드를 화면 위로 밀어내지 않게 두 줄 배치 */
+    .proj-links { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 8px 18px; }
     .proj-title { font-size: clamp(28px, 8vw, 40px); }
     .proj-num   { font-size: 42vw; }
     .proj-ui    { left: 24px; bottom: 20px; }
