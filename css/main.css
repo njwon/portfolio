@@ -46,7 +46,8 @@
     .introduce { float: right; width: min(480px, 60%); margin: 10px 0 20px 20px; }
     .mokcha { margin: 0 0 16px; display: inline-block; }
     .aboutmain::after { content: ''; display: block; clear: both; }
-    .tr-div-inner strong span img { width: 100%; display: block; }
+    .tr-div-inner strong span img { width: 100%; max-width: 100%; display: block; }
+    .introduce { table-layout: fixed; }     /* Firefox: 자동 표 배치는 100% 너비 이미지의 원본 폭(600px)만큼 표를 키워 박스 밖으로 넘침 */
     .about-banner { display: none; }
 
     .about-banner-top {
@@ -140,7 +141,8 @@
     .mokcha-in  { font-size: 14px; margin-top: 8px; }
 
     /* 사진은 셀 폭을 꽉 채운다 (작게 두면 어두운 셀 양옆이 빈 공간으로 남음) */
-    .tr-div-inner strong span img { width: 100%; display: block; }
+    .tr-div-inner strong span img { width: 100%; max-width: 100%; display: block; }
+    .introduce { table-layout: fixed; }     /* Firefox: 자동 표 배치는 100% 너비 이미지의 원본 폭(600px)만큼 표를 키워 박스 밖으로 넘침 */
     .aboutangel1, .aboutangel2 { display: none; }        /* 표 밖으로 삐져나오는 장식 눈 이미지는 좁은 화면에서 숨김 */
     .table-div  { font-size: 15px; }
     .tr td      { padding: 5px 10px; }
@@ -176,5 +178,6 @@
     .introduce { float: right; width: min(480px, 60%); margin: 10px 0 20px 20px; }
     .mokcha { margin: 0 0 16px; display: inline-block; }
     .aboutmain::after { content: ''; display: block; clear: both; }
-    .tr-div-inner strong span img { width: 100%; display: block; }
+    .tr-div-inner strong span img { width: 100%; max-width: 100%; display: block; }
+    .introduce { table-layout: fixed; }     /* Firefox: 자동 표 배치는 100% 너비 이미지의 원본 폭(600px)만큼 표를 키워 박스 밖으로 넘침 */
 }
