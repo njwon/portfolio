@@ -170,6 +170,20 @@ function updateProjUI() {
     if (projCounterEl) projCounterEl.textContent = `${String(projCurrent + 1).padStart(2, '0')} — ${String(PROJ_N).padStart(2, '0')}`;
 }
 
+// ── 소개 본문의 <br> 분류 ─────────────────────────────────────────
+// 데스크톱 폭에 맞춰 문장 중간에 넣은 <br>(soft)과, 소제목 뒤·문단 사이의 <br>(hard)을 구분해
+// 좁은 화면에서는 soft 만 숨긴다 (CSS 형제 선택자는 사이의 텍스트를 못 보므로 여기서 판정)
+(function classifyAboutBreaks() {
+    const isWs = n => n && n.nodeType === 3 && !n.textContent.trim();
+    const prevEl = n => { let x = n.previousSibling; while (isWs(x)) x = x.previousSibling; return x; };
+    const nextEl = n => { let x = n.nextSibling; while (isWs(x)) x = x.nextSibling; return x; };
+    document.querySelectorAll('.realtext br').forEach(br => {
+        const p = prevEl(br), q = nextEl(br);
+        const hard = (p && p.nodeType === 1 && (p.tagName === 'B' || p.tagName === 'BR')) || (q && q.nodeType === 1 && q.tagName === 'BR');
+        if (!hard) br.classList.add('br-soft');
+    });
+})();
+
 // ── 블러 선택 해제 (style.css '블러' 주석 참고) ─────────────────────
 (function applyBlurOptOut() {
     // getComputedStyle 은 쓰지 않는다 — 스크립트 도중 전체 페이지 스타일 계산을 강제해 로드가 느려짐.
