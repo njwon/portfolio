@@ -12,10 +12,18 @@ body {
     padding: 0;
     overflow: hidden;
     background-color: #e0e0e0;
-    filter: blur(0.7px);
     position: fixed;
     width: 100%;
     height: 100%;
+}
+
+/* 화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용 → 섹션별로 끄고 켤 수 있다.
+   끄려면 <section ... data-blur="off">. 커서(.cursor)는 항상 선명. */
+.section, .load, .menuwrap, .noise, .clippy-link, .blog-dialog {
+    filter: blur(0.7px);
+}
+.section[data-blur="off"] {
+    filter: none;
 }
 
 a {
