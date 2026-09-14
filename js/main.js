@@ -505,7 +505,7 @@ function drawLangChart() {
         link.classList.remove('clippy-active');
     });
 
-    // 작은 화면: 아래로 스크롤(휠·터치·안쪽 스크롤 영역)하면 가장자리로 숨고, 위로 스크롤하면 다시 나오며 말풍선·통통 재생
+    // 작은 화면: 아래로 스크롤(휠·터치 이동)하면 가장자리로 숨고, 위로 스크롤하면 다시 나오며 말풍선·통통 재생
     const small = window.matchMedia('(max-width: 1024px)');
     let tucked = false, lastTouchY = 0, wasActive = false;
     const setTucked = down => {
@@ -526,10 +526,8 @@ function drawLangChart() {
         const y = e.touches[0].clientY;
         if (Math.abs(y - lastTouchY) > 8) { setTucked(y < lastTouchY); lastTouchY = y; }
     }, { passive: true });
-    document.querySelectorAll('.about, .charts-wrap').forEach(el => {
-        let prev = el.scrollTop;
-        el.addEventListener('scroll', () => { const d = el.scrollTop - prev; if (Math.abs(d) > 4) setTucked(d > 0); prev = el.scrollTop; }, { passive: true });
-    });
+    // 안쪽 스크롤 영역의 scroll 이벤트는 쓰지 않는다 — 끝에서 튕겨 되돌아올 때(iOS rubber-band) 위로 스크롤한 것처럼
+    // 읽혀 섹션 전환 순간 Clippy 가 나왔다 들어감. 터치 이동·휠 방향만으로 판정
     small.addEventListener('change', () => { if (!small.matches) setTucked(false); });
 })();
 
