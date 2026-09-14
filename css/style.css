@@ -795,7 +795,7 @@ video {
 
 .chart-label {
     font-family: 'PartialSansKR-Regular', serif;
-    font-size: 18px;
+    font-size: 26px;
     color: rgb(22, 22, 23);
     letter-spacing: 0.08em;
     margin: 0;
@@ -828,7 +828,7 @@ video {
         max-height: calc(86vh - 140px);     /* 우하단 Clippy+말풍선 위에서 끝나게. 짧은 화면에선 내부 스크롤 */
         -webkit-overflow-scrolling: touch;
     }
-    .chart-label { font-size: 14px; }
+    .chart-label { font-size: 18px; }
 
 }
 
