@@ -836,16 +836,18 @@ video {
 }
 
 @media (max-width: 700px) {
+    /* 모바일: 소개 섹션처럼 차트 영역이 화면 전체를 차지하고 그 안에서 스크롤 (끝까지 내리면 다음 스와이프에 섹션 전환).
+       아래 여백은 우하단 Clippy 에 마지막 줄이 가려지지 않게 */
     .charts-wrap {
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start;        /* 넘칠 때 위가 잘리지 않게 */
-        top: 14%;
+        justify-content: flex-start;
+        top: 0;
+        bottom: 0;
         gap: 12px;
-        padding: 0 16px;
+        padding: 28px 16px 160px;
         overflow-y: auto;
-        max-height: calc(86vh - 140px);     /* 우하단 Clippy+말풍선 위에서 끝나게. 짧은 화면에선 내부 스크롤 */
-        max-height: calc(86dvh - 140px);
+        overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
     }
     .chart-label { font-size: 18px; }
@@ -1320,6 +1322,11 @@ footer div {
     padding-top: 8px;
 }
 .blog-dialog-latest:empty { display: none; }
+/* 소개 버전 / 새 글 버전 문구 전환 (.is-new-post 는 main.js 가 붙임) */
+.blog-dialog .blog-dialog-msg-new { display: none; }
+.blog-dialog.is-new-post .blog-dialog-msg-new { display: revert; }
+.blog-dialog.is-new-post .blog-dialog-msg-intro { display: none; }
+.blog-dialog.is-new-post .blog-dialog-title { background: #1a5fb4; }
 .blog-dialog-latest b { font-weight: 700; color: #000; }
 
 .blog-dialog-actions {

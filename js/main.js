@@ -189,11 +189,10 @@ function chartLayout() {
     const vw = window.innerWidth, vh = window.innerHeight;
     const mobile = vw <= 700, tablet = !mobile && vw <= 1023;
     if (mobile) {
-        const avail  = vh * 0.86 - 140 - 72;                    // charts-wrap(top 14%) 안, 우하단 Clippy+말풍선(≈140px)·라벨 2줄·간격(≈72px) 제외
-        // 레이더는 170px 아래로는 안 줄인다 — 아주 짧은 화면은 차트 영역이 내부 스크롤되도록 둠 (터치 핸들러가 스크롤을 우선 처리)
-        const radar  = Math.round(Math.max(170, Math.min(220, vw * 0.62, avail * 0.40)));
+        // 모바일은 차트 영역(.charts-wrap)이 화면 전체를 차지하고 안에서 스크롤되므로 높이에 맞춰 줄이지 않는다
+        const radar  = Math.round(Math.min(240, vw * 0.66));
         const langW  = Math.round(Math.min(320, vw - 70));      // 좌측 메뉴 아이콘 열(≈35px)과 겹치지 않게
-        return { mobile, tablet, dpr: window.devicePixelRatio || 1, radar, langW, langMaxH: avail - radar };
+        return { mobile, tablet, dpr: window.devicePixelRatio || 1, radar, langW, langMaxH: Infinity };
     }
     const radar = Math.round(tablet ? Math.min(300, vw * 0.36) : Math.min(480, vw * 0.36, vh * 0.62));
     const langW = Math.round(tablet ? Math.min(320, vw * 0.40) : Math.min(480, vw * 0.40));
@@ -348,7 +347,7 @@ function drawLangChart() {
 
     // 행 높이: 폭 기준 상한과 '허용 높이 안에 전부 들어가는' 상한 중 작은 값 (h = rowH·행수 + 0.85·rowH·그룹수 + 20)
     const rowByH = (langMaxH - 20) / (langs.length + 0.85 * groups.length);
-    const rowH   = Math.max(15, Math.min(mobile ? 26 : 36, (w * 0.95) / langs.length, rowByH));
+    const rowH   = Math.max(15, Math.min(mobile ? 24 : 36, (w * 0.95) / langs.length, rowByH));
     const headH  = rowH * 0.85;
     const h      = Math.round(rowH * langs.length + headH * groups.length + 20);
     const ctx    = setupCanvas(canvas, w, h, dpr);
@@ -425,32 +424,51 @@ function drawLangChart() {
     draw();
 }
 
-// ── 첫 방문 블로그 안내 대화상자 ───────────────────────────────────
+// ── 블로그 안내 대화상자 ─────────────────────────────────────────
+// 처음 온 방문자에겐 블로그 소개를, 이미 봤던 방문자에겐 그 뒤로 새 글이 올라왔을 때만 "새 글" 버전을 띄운다.
+// localStorage.blogDialogSeenSlug = 마지막으로 대화상자에서 보여준 글의 slug (닫을 때 저장)
 (function () {
     const dialog = document.getElementById('blogDialog');
-    if (!dialog || localStorage.getItem('blogDialogShown')) return;
+    if (!dialog) return;
+    const seenSlug = localStorage.getItem('blogDialogSeenSlug');
+    const legacySeen = localStorage.getItem('blogDialogShown');   // 예전 키(제목만 저장하던 시절) 호환
+    let latest = null;
 
     const close = () => {
-        localStorage.setItem('blogDialogShown', '1');
+        localStorage.setItem('blogDialogSeenSlug', latest?.slug || seenSlug || '');
+        localStorage.removeItem('blogDialogShown');
         dialog.classList.remove('is-open');
         setTimeout(() => { dialog.hidden = true; }, 300);
     };
     dialog.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dialog.hidden) close(); });
 
-    // 빌드가 만든 blog/latest.json(수백 B)으로 최신 글 제목을 채운다 (실패해도 대화상자는 그대로 표시)
-    fetch('blog/latest.json').then(r => r.json()).then(({ title }) => {
-        if (!title) return;
-        const latest = document.getElementById('blogDialogLatest');
-        latest.textContent = '최신 글: ';
-        const b = document.createElement('b'); b.textContent = title; latest.appendChild(b);
-    }).catch(() => {});
+    const open = (mode) => {
+        dialog.classList.toggle('is-new-post', mode === 'new');
+        const latestEl = document.getElementById('blogDialogLatest');
+        if (latest?.title) {
+            latestEl.textContent = mode === 'new' ? '새 글: ' : '최신 글: ';
+            const b = document.createElement('b'); b.textContent = latest.title; latestEl.appendChild(b);
+            if (latest.slug) dialog.querySelector('.blog-dialog-btn-primary').href = `blog/posts/${encodeURIComponent(latest.slug)}/`;
+        }
+        // 로딩 타이틀이 어느 정도 걷힌 뒤에 띄운다
+        const show = () => setTimeout(() => {
+            dialog.hidden = false;
+            requestAnimationFrame(() => requestAnimationFrame(() => dialog.classList.add('is-open')));
+        }, 4000);
+        document.readyState === 'complete' ? show() : window.addEventListener('load', show);
+    };
 
-    // 로딩 타이틀이 어느 정도 걷힌 뒤에 띄운다
-    window.addEventListener('load', () => setTimeout(() => {
-        dialog.hidden = false;
-        requestAnimationFrame(() => requestAnimationFrame(() => dialog.classList.add('is-open')));
-    }, 4000));
+    // 빌드가 만든 blog/latest.json(수백 B)으로 최신 글을 확인한 뒤 어떤 버전을 띄울지 정한다
+    fetch('blog/latest.json').then(r => r.json()).then(data => {
+        latest = data && data.title ? data : null;
+        if (!seenSlug && !legacySeen) open('intro');                                   // 첫 방문
+        else if (!seenSlug && legacySeen) {                                              // 예전 키만 있는 방문자: 지금 글을 본 것으로 기록만
+            if (latest?.slug) localStorage.setItem('blogDialogSeenSlug', latest.slug);
+            localStorage.removeItem('blogDialogShown');
+        }
+        else if (latest?.slug && latest.slug !== seenSlug) open('new');                  // 마지막으로 본 글과 다르면 새 글
+    }).catch(() => { if (!seenSlug && !legacySeen) open('intro'); });
 })();
 
 // ── Clippy ────────────────────────────────────────────────────────
