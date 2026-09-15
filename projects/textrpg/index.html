@@ -149,7 +149,7 @@
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
             <p class="status" id="createStatus"></p>
-            <p class="hint">AI 심사관이 설정을 읽어 성향과 일관성을 매기고, 서버가 <b>모든 캐릭터에 같은 예산</b>으로 능력치를 정합니다. 전투는 말로 선언 → AI 심사관이 허용·난이도 판정 → 규칙 엔진(주사위)이 결과 → 게임 마스터가 서술합니다.</p>
+            <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)을 매기고, 서버가 등급에 따라 예산을 정합니다. 위력은 낮게 나오긴 쉽고 높게 나오긴 어렵습니다 — "최강·무적" 같은 주장은 오히려 깎이고, 능력의 <b>구체성·한계·대가</b>가 적혀 있어야 올라갑니다. 등급은 심사 점수를 중심으로 <b>확률적으로</b> 뽑히며(상승은 하락보다 훨씬 드묾) 항목별 ±8% 흔들림도 섞입니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다. 전투는 말로 선언 → AI 심사관이 허용·난이도 판정 → 규칙 엔진(주사위)이 결과 → 게임 마스터가 서술합니다.</p>
         </section>
 
         <!-- 2. 홈 -->
@@ -332,7 +332,7 @@
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.' }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? localStorage.setItem(SESS, JSON.stringify(v)) : localStorage.removeItem(SESS);
@@ -392,9 +392,9 @@
             const act = entry.acts[k], j = entry.judge?.[k];
             const kind = act.type === 'defend' ? '🛡 방어' : act.type === 'ult' ? '⚡ 필살기' : '⚔ 공격';
             const tgt = act.type !== 'defend' && act.target && names[act.target] ? ` <span class="hint">→ ${esc(names[act.target])}</span>` : '';
-            out += msg('p' + k, esc(names[k]), `<b>${kind}</b>${tgt} ${act.text ? '“' + esc(act.text) + '”' : act.type === 'defend' ? '' : '<span class="hint">기본 공격</span>'}${act.skipped ? ' <span class="hint">(시간 초과 → 자동 방어)</span>' : ''}`);
+            out += msg('p' + k, esc(names[k]), `<b>${kind}</b>${tgt} ${act.text ? '“' + esc(act.text) + '”' : act.policy ? `<span class="hint">(이용 정책 위반 — ${esc(act.policy)} — 으로 가려짐)</span>` : act.type === 'defend' ? '' : '<span class="hint">기본 공격</span>'}${act.skipped ? ' <span class="hint">(시간 초과 → 자동 방어)</span>' : ''}`);
             if (j && act.type !== 'defend' && (act.text || j.verdict)) {
-                const d = j.allowed === false ? 'denied' : (j.difficulty || 'normal');
+                const d = j.policy ? 'denied' : j.allowed === false ? 'denied' : (j.difficulty || 'normal');
                 out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''} ${esc(j.verdict || '')}`);
             }
         }
