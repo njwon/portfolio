@@ -29,7 +29,7 @@
     header nav a:hover { color: var(--text); text-decoration: underline; }
 
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; padding: 10px 20px 24px; max-width: 1400px; margin: 0 auto; }
-    .stage { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .stage { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; height: fit-content;}
     canvas#sim { display: block; width: 100%; height: auto; touch-action: none; }
     .hud { position: absolute; left: 10px; top: 10px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
     .hud span { background: rgba(255,255,255,0.9); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -113,15 +113,20 @@
         <div class="row"><label for="predCount">개체 수</label><input type="range" id="predCount" min="0" max="20" step="1" value="8"><output id="predCountOut">8</output></div>
         <div class="row"><label for="predSize">크기</label><input type="range" id="predSize" min="5" max="60" step="1" value="20"><output id="predSizeOut">20</output></div>
         <div class="row"><label for="predSpeed">속도</label><input type="range" id="predSpeed" min="1" max="20" step="0.5" value="8"><output id="predSpeedOut">8</output></div>
+        <label class="switch"><input type="checkbox" id="predAI" checked> 추적 AI (가까운 먹이를 쫓음)</label>
+        <div class="row"><label for="predSense">감지 거리</label><input type="range" id="predSense" min="40" max="500" step="10" value="180"><output id="predSenseOut">180</output></div>
       </div>
 
       <div class="card">
         <h2>피식자 · 진화</h2>
-        <div class="row"><label for="birthRate">번식 확률 / 프레임</label><input type="range" id="birthRate" min="0" max="0.2" step="0.005" value="0.02"><output id="birthRateOut">2.0%</output></div>
+        <div class="row"><label for="birthRate">번식 확률 / 프레임</label><input type="range" id="birthRate" min="0" max="0.2" step="0.005" value="0.01"><output id="birthRateOut">1.0%</output></div>
         <div class="row"><label for="mutRate">돌연변이 확률</label><input type="range" id="mutRate" min="0" max="0.5" step="0.01" value="0.10"><output id="mutRateOut">10%</output></div>
         <div class="row"><label for="mutStrength">돌연변이 강도</label><input type="range" id="mutStrength" min="0.05" max="1" step="0.05" value="0.3"><output id="mutStrengthOut">0.30</output></div>
         <div class="row"><label for="maxPop">최대 개체 수</label><input type="range" id="maxPop" min="100" max="3000" step="100" value="1500"><output id="maxPopOut">1500</output></div>
         <label class="switch"><input type="checkbox" id="tradeoff" checked> 크기–속도 트레이드오프 (클수록 느림)</label>
+        <label class="switch"><input type="checkbox" id="preyAI" checked> 도주 AI (포식자를 감지하면 피함)</label>
+        <label class="switch"><input type="checkbox" id="senseCost" checked> 감지 비용 (감지 거리가 길수록 번식 ↓)</label>
+        <label class="switch"><input type="checkbox" id="showTrace"> 추적선·도주 표시</label>
       </div>
 
       <div class="card">
@@ -131,11 +136,12 @@
           <span class="k">잡힌 수</span><b id="stEaten">0</b>
           <span class="k">평균 크기</span><b id="stMean">0</b>
           <span class="k">최소 / 최대</span><b id="stRange">0 / 0</b>
+          <span class="k">평균 감지 거리</span><b id="stSense">0</b>
           <span class="k">경과</span><b id="stTime">0s</b>
           <span class="k">프레임</span><b id="stFrame">0</b>
         </div>
         <canvas id="chart" width="600" height="220" aria-label="평균 크기 변화 그래프"></canvas>
-        <div class="legend"><i style="background:var(--prey)"></i>평균 크기 <i style="background:#999"></i>개체 수(상대)</div>
+        <div class="legend"><i style="background:var(--prey)"></i>평균 크기 <i style="background:#f2a93b"></i>평균 감지 거리 <i style="background:#999"></i>개체 수(상대)</div>
       </div>
     </aside>
   </div>
@@ -145,8 +151,8 @@
     // ── 설정값 (컨트롤 패널과 연결) ──────────────────────────────────
     const cfg = {
       simSpeed: 1, safeOn: true, safeRadius: 100,
-      predCount: 8, predSize: 20, predSpeed: 8,
-      birthRate: 0.02, mutRate: 0.10, mutStrength: 0.30, maxPop: 1500, tradeoff: true,
+      predCount: 8, predSize: 20, predSpeed: 8, predAI: true, predSense: 180,
+      birthRate: 0.01, mutRate: 0.10, mutStrength: 0.30, maxPop: 1500, tradeoff: true, preyAI: true, senseCost: true, showTrace: false,
     };
     const W = 1000, H = 800;
     const canvas = document.getElementById('sim');
@@ -156,30 +162,78 @@
     // ── 개체 ───────────────────────────────────────────────────────
     // 피식자: 크기(radius)가 유전 형질. 번식 시 자식은 부모 크기를 물려받고 낮은 확률로 돌연변이(로그정규 흔들림).
     // 트레이드오프를 켜면 클수록 느려서, 포식자 크기에 따라 유리한 크기가 달라진다 — 그게 이 시뮬레이션의 핵심.
+    // 유전 형질 두 가지: 크기(radius)와 감지 거리(sense). 둘 다 자식에게 물려주고 돌연변이로 흔들린다.
+    // 감지 거리가 길수록 포식자를 일찍 보고 도망치지만(도주 AI), 감지 비용을 켜면 번식 확률이 그만큼 깎인다 → 무한정 커지지 않음.
     class Prey {
-      constructor(x, y, radius, gen) {
-        this.x = x; this.y = y; this.radius = radius; this.gen = gen;
+      constructor(x, y, radius, gen, sense = 80) {
+        this.x = x; this.y = y; this.radius = radius; this.gen = gen; this.sense = sense;
         this.angle = Math.random() * Math.PI * 2;
+        this.fleeing = false;
       }
       get speed() { return cfg.tradeoff ? 30 / Math.sqrt(this.radius + 4) : 6; }   // r=10 → 8, r=30 → 5, r=80 → 3.3
+      get birthChance() { return cfg.senseCost ? cfg.birthRate * Math.max(0.2, 1 - this.sense / 500) : cfg.birthRate; }
       step() {
-        this.angle += (Math.random() - 0.5) * 1.2;             // 방향을 조금씩 바꾸는 랜덤 워크
-        this.x += Math.cos(this.angle) * this.speed;
-        this.y += Math.sin(this.angle) * this.speed;
+        this.fleeing = false;
+        if (cfg.preyAI) {
+          // 감지 거리 안의 가장 가까운 포식자에게서 멀어지는 방향으로 (안전지대가 켜져 있고 가까우면 그쪽으로 꺾음)
+          let near = null, nd = this.sense * this.sense;
+          for (const q of predators) { const d = (q.x - this.x) ** 2 + (q.y - this.y) ** 2; if (d < nd) { nd = d; near = q; } }
+          if (near) {
+            let ax = this.x - near.x, ay = this.y - near.y;
+            if (cfg.safeOn) {
+              const sx = safe.x - this.x, sy = safe.y - this.y, sd = Math.hypot(sx, sy);
+              if (sd < cfg.safeRadius * 2.5 && sd > 1) { ax += sx / sd * 1.2; ay += sy / sd * 1.2; }   // 도망 방향 + 안전지대 방향 섞기
+            }
+            const want = Math.atan2(ay, ax);
+            let diff = ((want - this.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+            this.angle += Math.sign(diff) * Math.min(0.6, Math.abs(diff));   // 회전 속도 제한
+            this.fleeing = true;
+          }
+        }
+        if (!this.fleeing) this.angle += (Math.random() - 0.5) * 1.2;   // 위협이 없으면 방향을 조금씩 바꾸는 랜덤 워크
+        const v = this.speed * (this.fleeing ? 1.25 : 1);               // 도주 중엔 잠깐 힘을 냄
+        this.x += Math.cos(this.angle) * v;
+        this.y += Math.sin(this.angle) * v;
         if (this.x < this.radius || this.x > W - this.radius) { this.angle = Math.PI - this.angle; this.x = clamp(this.x, this.radius, W - this.radius); }
         if (this.y < this.radius || this.y > H - this.radius) { this.angle = -this.angle; this.y = clamp(this.y, this.radius, H - this.radius); }
       }
       reproduce() {
-        let r = this.radius;
+        let r = this.radius, se = this.sense;
         if (Math.random() < cfg.mutRate) r = clamp(r * Math.exp((Math.random() * 2 - 1) * cfg.mutStrength), 2, 120);
-        return new Prey(this.x, this.y, r, this.gen + 1);
+        if (Math.random() < cfg.mutRate) se = clamp(se * Math.exp((Math.random() * 2 - 1) * cfg.mutStrength), 10, 400);
+        return new Prey(this.x, this.y, r, this.gen + 1, se);
       }
     }
+    // 포식자: 추적 AI 를 켜면 감지 거리 안에서 가장 가까운(안전지대 밖의) 피식자를 향해 제한된 회전 속도로 방향을 튼다.
+    // 목표가 없으면 살짝씩 방향을 바꾸며 배회. 끄면 옛 버전처럼 직진·반사만 한다.
     class Predator {
       constructor(x, y) {
         this.x = x; this.y = y;
         const a = Math.random() * Math.PI * 2;
         this.dx = Math.cos(a); this.dy = Math.sin(a);
+        this.target = null;
+      }
+      hunt(grid) {
+        this.target = null;
+        if (!cfg.predAI) return;
+        const R = cfg.predSense, R2 = R * R, sr2 = cfg.safeRadius * cfg.safeRadius;
+        const c0x = Math.max(0, ((this.x - R) / cell) | 0), c1x = ((this.x + R) / cell) | 0, c0y = Math.max(0, ((this.y - R) / cell) | 0), c1y = ((this.y + R) / cell) | 0;
+        let best = null, bd = R2;
+        for (let gy = c0y; gy <= c1y; gy++) for (let gx = c0x; gx <= c1x; gx++) {
+          const bucket = grid.get(gy * cols + gx); if (!bucket) continue;
+          for (const i of bucket) {
+            const p = prey[i];
+            if (cfg.safeOn && (p.x - safe.x) ** 2 + (p.y - safe.y) ** 2 < sr2) continue;   // 안전지대 안 개체는 쫓지 않음
+            const d = (p.x - this.x) ** 2 + (p.y - this.y) ** 2;
+            if (d < bd) { bd = d; best = p; }
+          }
+        }
+        this.target = best;
+        const cur = Math.atan2(this.dy, this.dx);
+        const want = best ? Math.atan2(best.y - this.y, best.x - this.x) : cur + (Math.random() - 0.5) * 0.3;
+        let diff = ((want - cur + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        diff = Math.sign(diff) * Math.min(Math.abs(diff), 0.12);   // 최대 회전 속도 — 작고 빠른 먹이는 크게 돌아야 잡힘
+        this.dx = Math.cos(cur + diff); this.dy = Math.sin(cur + diff);
       }
       step() {
         const r = cfg.predSize, s = cfg.predSpeed;
@@ -198,7 +252,7 @@
     const history = [];                                   // [{mean, count}] 그래프용, 최대 600점
 
     function reset() {
-      prey = [new Prey(W / 2 + 150, H / 2, 10, 0)];
+      prey = Array.from({ length: 25 }, () => new Prey(Math.random() * W, Math.random() * H, 10, 0));   // 추적 AI 포식자 앞에서 1마리는 금방 전멸하므로 25마리로 시작
       predators = Array.from({ length: cfg.predCount }, () => new Predator(Math.random() * W, Math.random() * H));
       frame = 0; eaten = 0; history.length = 0; startedAt = performance.now(); pausedTotal = 0;
       if (paused) pausedAt = performance.now();
@@ -210,8 +264,19 @@
 
     // ── 한 프레임의 시뮬레이션 ─────────────────────────────────────
     // 충돌 판정은 균일 격자(cell = 최대 반지름)로 근처 셀만 검사 → 피식자 3000마리·포식자 20마리에서도 부드럽게
+    const cell = 130, cols = Math.ceil(W / cell);
+    function buildGrid() {
+      const grid = new Map();
+      for (let i = 0; i < prey.length; i++) {
+        const p = prey[i], k = ((p.y / cell) | 0) * cols + ((p.x / cell) | 0);
+        (grid.get(k) || grid.set(k, []).get(k)).push(i);
+      }
+      return grid;
+    }
     function tick() {
       frame++;
+      let grid = buildGrid();
+      for (const q of predators) q.hunt(grid);             // 목표 선택(이동 전 위치 기준)
       for (const p of prey) p.step();
       for (const q of predators) q.step();
 
@@ -219,16 +284,12 @@
       const room = cfg.maxPop - prey.length;
       if (room > 0) {
         const born = [];
-        for (const p of prey) { if (born.length >= room) break; if (Math.random() < cfg.birthRate) born.push(p.reproduce()); }
+        for (const p of prey) { if (born.length >= room) break; if (Math.random() < p.birthChance) born.push(p.reproduce()); }
         prey.push(...born);
       }
 
-      // 포식
-      const cell = 130, cols = Math.ceil(W / cell), grid = new Map();
-      for (let i = 0; i < prey.length; i++) {
-        const p = prey[i], k = ((p.y / cell) | 0) * cols + ((p.x / cell) | 0);
-        (grid.get(k) || grid.set(k, []).get(k)).push(i);
-      }
+      // 포식 (이동 후 위치로 격자 재구성)
+      grid = buildGrid();
       const dead = new Set();
       const sr2 = cfg.safeRadius * cfg.safeRadius;
       for (const q of predators) {
@@ -250,11 +311,12 @@
       if (prey.length === 0) prey.push(new Prey(Math.random() * W, Math.random() * H, 10, 0));
 
       if (frame % 6 === 0) {                              // 그래프 샘플 (10fps)
-        history.push({ mean: meanRadius(), count: prey.length });
+        history.push({ mean: meanRadius(), sense: meanSense(), count: prey.length });
         if (history.length > 600) history.shift();
       }
     }
     const meanRadius = () => prey.reduce((s, p) => s + p.radius, 0) / (prey.length || 1);
+    const meanSense  = () => prey.reduce((s, p) => s + p.sense, 0) / (prey.length || 1);
 
     // ── 그리기 ─────────────────────────────────────────────────────
     function draw() {
@@ -267,8 +329,12 @@
       // 피식자: 크기에 따라 색을 살짝 바꿔(작음=하늘, 큼=남색) 분포가 한눈에 보이게
       for (const p of prey) {
         const t = clamp((p.radius - 4) / 60, 0, 1);
-        ctx.fillStyle = `hsl(${215 - t * 20} ${70 - t * 20}% ${62 - t * 30}%)`;
+        ctx.fillStyle = p.fleeing && cfg.showTrace ? '#f2a93b' : `hsl(${215 - t * 20} ${70 - t * 20}% ${62 - t * 30}%)`;   // 도주 중이면 주황
         ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+      }
+      if (cfg.predAI && cfg.showTrace) {                    // 추적 중인 목표까지 얇은 선
+        ctx.strokeStyle = 'rgba(214,58,58,0.35)'; ctx.lineWidth = 1;
+        for (const q of predators) if (q.target) { ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.target.x, q.target.y); ctx.stroke(); }
       }
       ctx.fillStyle = '#d63a3a';
       for (const q of predators) { ctx.beginPath(); ctx.arc(q.x, q.y, cfg.predSize, 0, Math.PI * 2); ctx.fill(); }
@@ -285,6 +351,7 @@
       $('hudPrey').textContent = n; $('hudPred').textContent = predators.length; $('hudGen').textContent = maxGen; $('hudSize').textContent = mean.toFixed(1);
       $('stPrey').textContent = n; $('stEaten').textContent = eaten; $('stMean').textContent = mean.toFixed(1);
       $('stRange').textContent = n ? `${min.toFixed(1)} / ${max.toFixed(1)}` : '0 / 0';
+      $('stSense').textContent = meanSense().toFixed(0);
       $('stTime').textContent = `${elapsed.toFixed(0)}s`; $('stFrame').textContent = frame;
       drawChart();
     }
@@ -297,10 +364,14 @@
       cctx.lineWidth = 2;
       cctx.strokeStyle = '#999'; cctx.beginPath();
       history.forEach((s, i) => { const y = h - pad - (s.count / maxCount) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
+      const maxSense = Math.max(100, ...history.map(s => s.sense)) * 1.1;
+      cctx.strokeStyle = '#f2a93b'; cctx.beginPath();
+      history.forEach((s, i) => { const y = h - pad - (s.sense / maxSense) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
       cctx.strokeStyle = '#2f6fd6'; cctx.beginPath();
       history.forEach((s, i) => { const y = h - pad - (s.mean / maxMean) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
       cctx.fillStyle = '#6b6b66'; cctx.font = '12px sans-serif'; cctx.textBaseline = 'top';
-      cctx.fillText(`평균 ${history[history.length - 1].mean.toFixed(1)}`, pad + 2, pad);
+      const last = history[history.length - 1];
+      cctx.fillText(`크기 ${last.mean.toFixed(1)} · 감지 ${last.sense.toFixed(0)}`, pad + 2, pad);
     }
 
     // ── 루프 ───────────────────────────────────────────────────────
@@ -314,12 +385,12 @@
 
     // ── 컨트롤 바인딩 ─────────────────────────────────────────────
     const fmt = { simSpeed: v => `${v}×`, birthRate: v => `${(v * 100).toFixed(1)}%`, mutRate: v => `${Math.round(v * 100)}%`, mutStrength: v => (+v).toFixed(2) };
-    for (const id of ['simSpeed', 'safeRadius', 'predCount', 'predSize', 'predSpeed', 'birthRate', 'mutRate', 'mutStrength', 'maxPop']) {
+    for (const id of ['simSpeed', 'safeRadius', 'predCount', 'predSize', 'predSpeed', 'predSense', 'birthRate', 'mutRate', 'mutStrength', 'maxPop']) {
       const el = $(id), out = $(id + 'Out');
       const apply = () => { cfg[id] = +el.value; out.textContent = (fmt[id] || (v => v))(el.value); if (id === 'predCount') syncPredatorCount(); if (id === 'maxPop' && prey.length > cfg.maxPop) prey.length = cfg.maxPop; };
       el.addEventListener('input', apply); apply();
     }
-    for (const id of ['safeOn', 'tradeoff']) { const el = $(id); const apply = () => { cfg[id] = el.checked; }; el.addEventListener('change', apply); apply(); }
+    for (const id of ['safeOn', 'tradeoff', 'predAI', 'preyAI', 'senseCost', 'showTrace']) { const el = $(id); const apply = () => { cfg[id] = el.checked; }; el.addEventListener('change', apply); apply(); }
 
     const setPaused = v => { paused = v; stage.classList.toggle('is-paused', v); $('btnPause').textContent = v ? '재개' : '일시정지'; if (v) pausedAt = performance.now(); else pausedTotal += performance.now() - pausedAt; };
     $('btnPause').addEventListener('click', () => setPaused(!paused));
