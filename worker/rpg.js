@@ -76,9 +76,10 @@ const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODEL
 const DAILY_BUDGET = 9000;
 // 사용자(IP)별 몫: 전체 무료 용량을 '최근 24시간 활동 IP 수'(하한 USERS_MIN)로 나눠 배분하고, 제공자별 초기화 시각에 맞춰 충전한다.
 //   · Workers AI·OpenRouter: UTC 자정(한국 09:00)에 하루 몫 충전   · Gemini: 태평양 자정(한국 16~17시)에 충전
+//   이용자 수는 최근 24시간에 AI 를 호출한 IP 수(하한 1). 혼자면 상한(IP_CAP_MAX)까지, 늘어나면 자동으로 나뉜다
 //   · Groq·Mistral: 토큰 버킷(1 요청/86.4초/모델)이라 시간에 비례해 계속 충전
 //   버킷 상한 = 하루 몫(IP_CAP_MIN~IP_CAP_MAX). 새 IP 는 상한만큼 갖고 시작.
-const USERS_MIN = 10, IP_CAP_MIN = 20, IP_CAP_MAX = 600;
+const USERS_MIN = 1, IP_CAP_MIN = 20, IP_CAP_MAX = 1200;   // 이용자 수 = 최근 24시간에 실제로 AI 를 호출한 IP 수 (본인 포함)
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
 
@@ -178,7 +179,7 @@ async function ipBucket(env, ip, providers) {
   const now = Date.now();
   const row = await env.DB.prepare('SELECT tokens, updated, used FROM rpg_ip_bucket WHERE ip = ?').bind(ip).first();
   const act = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_ip_bucket WHERE updated > ?').bind(now - 86400e3).first();
-  const users = Math.max(USERS_MIN, act?.n ?? 0);
+  const users = Math.max(USERS_MIN, (act?.n ?? 0) + (row && row.updated > now - 86400e3 ? 0 : 1));   // 본인이 아직 집계에 없으면 +1
   const g = resetGroups(providers, now);
   const cap = Math.max(IP_CAP_MIN, Math.min(IP_CAP_MAX, Math.floor((g.utc.cap + g.pt.cap + g.cont.perDay) / users)));
   let tokens = cap;
