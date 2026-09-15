@@ -42,10 +42,15 @@ let modelIdx = 0;
 const MAX_TOKENS = 380;
 // 무료 제공자 체인: 앞에서부터 남은 횟수가 있는 곳을 쓴다. 키는 워커 시크릿(wrangler secret put <key>) — 없으면 건너뜀.
 //   한도는 각사 무료 티어(2026-09 기준)보다 조금 낮게 잡아 429 를 피한다. 전부 소진되면 클라이언트가 크롬 내장 AI(Gemini Nano)로 이어간다.
+//   Gemini API 는 모델별로 일일 한도가 따로다(같은 키): gemma-3-27b 14,400 · flash-lite 1,000 · flash 250 → 세 항목으로 나눠 순서대로 소진.
+//   Gemma 는 system 역할을 받지 않아(400) 시스템 프롬프트를 user 메시지 앞에 합친다.
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const PROVIDERS = [
   { id: 'cf', name: 'Workers AI', kind: 'cf' },
+  { id: 'gemma', name: 'Gemini (Gemma 3 27B)', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemma-3-27b-it', daily: 6000, noSystem: true },   // 문서상 14,400 이지만 일찍 429 나는 보고가 있어 보수적으로
+  { id: 'gemini', name: 'Gemini (Flash-Lite)', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-2.5-flash-lite', daily: 950 },
+  { id: 'gemini-flash', name: 'Gemini (Flash)', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-2.5-flash', daily: 230 },
   { id: 'groq', name: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', daily: 950 },
-  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-2.5-flash-lite', daily: 950 },
   { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'llama-3.3-70b', daily: 700 },
   { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000 },
   { id: 'github', name: 'GitHub Models', key: 'GITHUB_MODELS_TOKEN', url: 'https://models.github.ai/inference/chat/completions', model: 'openai/gpt-4o-mini', daily: 140 },
@@ -196,7 +201,7 @@ async function ask(env, provider, system, user, temperature) {
     const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 25e3);
     try {
       const res = await fetch(provider.url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env[provider.key], ...(provider.id === 'openrouter' ? { 'HTTP-Referer': 'https://njw.kro.kr', 'X-Title': 'DREAM RPG' } : {}) },
-        body: JSON.stringify({ model: provider.model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens, temperature }) });
+        body: JSON.stringify({ model: provider.model, messages: provider.noSystem ? [{ role: 'user', content: system + '\n\n---\n\n' + user }] : [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens, temperature }) });
       if (!res.ok) throw new Error(provider.id + ' ' + res.status + ' ' + (await res.text()).slice(0, 200));
       const data = await res.json();
       const text = data.choices?.[0]?.message?.content ?? '';
