@@ -64,3 +64,10 @@ CREATE TABLE IF NOT EXISTS rpg_provider (
   requests INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (day, provider)
 );
+-- DREAM RPG: 사용자(IP)별 몫 버킷 — 제공자 초기화 시각에 맞춰 충전 (rpg_ip 는 더 이상 사용하지 않음)
+CREATE TABLE IF NOT EXISTS rpg_ip_bucket (
+  ip      TEXT PRIMARY KEY,
+  tokens  REAL NOT NULL,
+  updated INTEGER NOT NULL,
+  used    INTEGER NOT NULL DEFAULT 0
+);

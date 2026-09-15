@@ -128,15 +128,15 @@
         <section class="screen active" id="s-create">
             <div class="div-group">
                 <label for="char-name">캐릭터 이름</label>
-                <input type="text" id="char-name" maxlength="20" placeholder="예) 노정원">
+                <input type="text" id="char-name" maxlength="20" placeholder="예) 홍길동">
             </div>
             <div class="div-group">
                 <label for="char-setting">캐릭터 설정 <span class="hint">(200자 · 앞뒤가 맞고 한계가 분명할수록 기술이 안정적으로 발동합니다. "뭐든 다 한다"는 불안정)</span></label>
-                <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 유도를 배워 업어치기를 할 수 있다. 밤을 새면 힘이 빠진다."></textarea>
+                <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 복싱를 배워 잽을 날ㄴ릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
             <p class="status" id="createStatus"></p>
-            <p class="hint">AI 심사관(Gemma 4 · Cloudflare Workers AI)이 설정을 읽어 성향과 일관성을 매기고, 서버가 <b>모든 캐릭터에 같은 예산</b>으로 능력치를 정합니다. 전투는 말로 선언 → AI 심사관이 허용·난이도 판정 → 규칙 엔진(주사위)이 결과 → 게임 마스터가 서술합니다. API 키 없이 무료 한도(Workers AI → Groq → Gemini 등 무료 API 순서)로 플레이하고, 전부 소진되면 데스크톱 크롬의 내장 AI(Gemini Nano)가 이어받습니다.</p>
+            <p class="hint">AI 심사관이 설정을 읽어 성향과 일관성을 매기고, 서버가 <b>모든 캐릭터에 같은 예산</b>으로 능력치를 정합니다. 전투는 말로 선언 → AI 심사관이 허용·난이도 판정 → 규칙 엔진(주사위)이 결과 → 게임 마스터가 서술합니다.</p>
         </section>
 
         <!-- 2. 홈 -->
@@ -227,7 +227,11 @@
         const calls = Math.min(q.global.estCalls, q.ip.remaining);
         const active = (q.providers || []).find(p => p.id === q.active);
         $('quotaText').textContent = `약 ${q.global.estCalls}회 남음 (≈ ${Math.floor(q.global.estCalls / 2)}라운드)` + (active ? ` · 지금 ${active.name} ${active.remaining}/${active.limit}` : '');
-        $('quotaIp').textContent = `내 몫 ${q.ip.remaining}/${q.ip.limit}회 (한국 09:00 초기화)`;
+        // 내 몫: 전체 무료 용량을 활동 이용자 수로 나눈 버킷. 제공자별 초기화 시각(Workers AI 09:00 · Gemini 16~17시)에 충전, Groq 는 시간당 충전
+        const hm = t => new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const refills = (q.ip.refills || []).filter(r => r.add > 0 || r.perHour > 0).map(r => r.at ? `${hm(r.at)} +${r.add}` : `시간당 +${r.perHour}`).join(' · ');
+        $('quotaIp').textContent = `내 몫 ${q.ip.remaining}/${q.ip.limit}회` + (refills ? ` · 충전 ${refills}` : '') + (q.ip.users ? ` · 이용자 ${q.ip.users}명 기준` : '');
+        $('quotaIp').title = (q.ip.refills || []).map(r => r.at ? `${r.name}: 매일 ${hm(r.at)} +${r.add}회` : `${r.name}: 시간당 +${r.perHour}회`).join('\n');
         $('quota').classList.toggle('low', calls <= 5);
         if (calls <= 0) {
             // 서버 쪽 무료 AI(Workers AI → Groq → Gemini → …)가 전부 소진됐거나 내 몫이 끝남 → 데스크톱 크롬이면 내장 AI(Gemini Nano)로 이어간다

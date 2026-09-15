@@ -64,13 +64,18 @@ const PROVIDERS = [
   { id: 'openrouter', name: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'nvidia/nemotron-3-super-120b-a12b:free', daily: 45, extra: { models: ['nvidia/nemotron-3-super-120b-a12b:free', 'nvidia/nemotron-3.5-lightning:free', 'google/gemma-4-26b-a4b-it:free'], reasoning: { enabled: false } } },
   // Cerebras 는 2026-09 현재 무료 티어 없음(PayGo, 잔액 0 이면 402) → 크레딧을 넣을 때만 아래 줄을 살린다
   // { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'qwen-3.8-27b', daily: 3000, extra: { reasoning_effort: 'none' } },
-  { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000 },
+  { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000, unverified: true },   // 플랜이 켜져 오늘 한 번 성공하기 전엔 용량에 안 넣음
 ];
 const failedAt = {};   // 제공자별 { at, until } — 실패 뒤 until 까지 건너뜀 (일시 오류 10분, 결제·플랜 미활성(402, 한도 0) 6시간)
 const PROVIDER_COOLDOWN = 10 * 60e3, PLAN_COOLDOWN = 6 * 3600e3;
 const paused = id => !!failedAt[id] && Date.now() < failedAt[id].until;
 const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODELS[0].nout);   // ≈ 24
-const DAILY_BUDGET = 9000, PER_IP_DAILY = 80;   // 턴당 최대 2회(심사+서술) → IP 당 하루 40턴
+const DAILY_BUDGET = 9000;
+// 사용자(IP)별 몫: 전체 무료 용량을 '최근 24시간 활동 IP 수'(하한 USERS_MIN)로 나눠 배분하고, 제공자별 초기화 시각에 맞춰 충전한다.
+//   · Workers AI·OpenRouter: UTC 자정(한국 09:00)에 하루 몫 충전   · Gemini: 태평양 자정(한국 16~17시)에 충전
+//   · Groq·Mistral: 토큰 버킷(1 요청/86.4초/모델)이라 시간에 비례해 계속 충전
+//   버킷 상한 = 하루 몫(IP_CAP_MIN~IP_CAP_MAX). 새 IP 는 상한만큼 갖고 시작.
+const USERS_MIN = 10, IP_CAP_MIN = 20, IP_CAP_MAX = 600;
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
 
@@ -87,7 +92,7 @@ export async function handleRpg(request, env, path) {
   const url = new URL(request.url), m = request.method;
   const body = m === 'POST' ? await request.json().catch(() => ({})) : {};
   let mm;
-  if (path === '/api/rpg/quota' && m === 'GET') return json(await quota(env, ip));
+  if (path === '/api/rpg/quota' && m === 'GET') return json(pubQuota(await quota(env, ip)));
   if (path === '/api/rpg/aitest' && m === 'GET') {   // 운영자 점검: 특정 제공자로 서술 1회 (RPG_ADMIN_KEY 시크릿 필요, 한도에 포함)
     if (!env.RPG_ADMIN_KEY || url.searchParams.get('key') !== env.RPG_ADMIN_KEY) return json({ error: 'forbidden' }, 403);
     const pv = PROVIDERS.find(x => x.id === url.searchParams.get('provider'));
@@ -124,7 +129,6 @@ export async function handleRpg(request, env, path) {
 async function quota(env, ip) {
   const day = today();
   const g = await env.DB.prepare('SELECT neurons, requests FROM rpg_quota WHERE day = ?').bind(day).first();
-  const i = await env.DB.prepare('SELECT requests FROM rpg_ip WHERE day = ? AND ip = ?').bind(day, ip).first();
   const pr = await env.DB.prepare('SELECT provider, requests FROM rpg_provider WHERE day = ?').bind(day).all();
   const usedBy = {}; for (const r of (pr?.results || [])) usedBy[r.provider] = r.requests;
   const used = g?.neurons ?? 0, remaining = Math.max(0, DAILY_BUDGET - used);
@@ -133,20 +137,60 @@ async function quota(env, ip) {
     if (p.kind === 'cf') return { id: p.id, name: p.name, configured: !!env.AI, limit: Math.floor(DAILY_BUDGET / perCall), used: g?.requests ?? 0, remaining: remaining < MAX_NEURONS_PER_CALL ? 0 : Math.floor(remaining / perCall) };
     const u = usedBy[p.id] ?? 0;
     // 쿨다운 중(결제 미활성 등)이면 남은 횟수를 0 으로 보여 준다 — 활성화되면 쿨다운이 끝난 뒤 자동 합류
-    return { id: p.id, name: p.name, configured: !!env[p.key], limit: p.daily, used: u, remaining: paused(p.id) ? 0 : Math.max(0, p.daily - u), paused: paused(p.id) || undefined };
+    const probe = p.unverified && u === 0;   // 아직 오늘 성공한 적 없는 미검증 제공자: 용량 0 으로 보이되, 체인 끝에서 한 번은 시도
+    return { id: p.id, name: p.name, configured: !!env[p.key], limit: probe ? 0 : p.daily, used: u, remaining: paused(p.id) || probe ? 0 : Math.max(0, p.daily - u), paused: paused(p.id) || undefined, probe: probe && !paused(p.id) || undefined };
   });
   const active = providers.find(p => p.configured && p.remaining > 0);
   const estCalls = providers.reduce((n, p) => n + (p.configured ? p.remaining : 0), 0);
   const capacity = providers.reduce((n, p) => n + (p.configured ? p.limit : 0), 0);
+  const b = await ipBucket(env, ip, providers);
   return {
     day, resetsAt: Date.parse(day + 'T00:00:00Z') + 86400e3,
     global: { budget: DAILY_BUDGET, used: Math.round(used), remaining: Math.round(remaining), estCalls, capacity, perCall: Math.round(perCall * 10) / 10, requests: g?.requests ?? 0 },
-    ip: { limit: PER_IP_DAILY, used: i?.requests ?? 0, remaining: Math.max(0, PER_IP_DAILY - (i?.requests ?? 0)) },
-    providers, active: active?.id || null, exhausted: estCalls <= 0,
+    ip: { limit: b.cap, used: b.used, remaining: Math.floor(b.tokens), users: b.users, refills: b.refills },
+    providers, active: active?.id || null, exhausted: estCalls <= 0, _bucket: b,
   };
 }
+const pubQuota = q => { const { _bucket, ...rest } = q; return rest; };
+// 초기화 시각 묶음: 각 제공자 그룹의 하루 용량과 마지막·다음 초기화 시각
+const RESET_GROUP = { cf: 'utc', openrouter: 'utc', 'gemini-lite35': 'pt', 'gemini-lite31': 'pt', 'gemini-flash25': 'pt', gemma4: 'pt' };   // 나머지(groq·mistral)는 연속 충전
+function lastMidnight(tz, now) {
+  // tz 기준 오늘 0시의 UTC 시각 (DST 반영)
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(now)).map(x => [x.type, x.value]));
+  const local = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour % 24, +parts.minute, +parts.second);
+  const offset = local - now;                       // tz 가 UTC 보다 앞선 양
+  return Date.UTC(+parts.year, +parts.month - 1, +parts.day) - offset;
+}
+function resetGroups(providers, now) {
+  const cap = g => providers.filter(p => p.configured && !p.paused && RESET_GROUP[p.id] === g).reduce((n, p) => n + p.limit, 0);
+  const cont = providers.filter(p => p.configured && !p.paused && !RESET_GROUP[p.id]).reduce((n, p) => n + p.limit, 0);
+  const utc = lastMidnight('UTC', now), pt = lastMidnight('America/Los_Angeles', now);
+  return {
+    utc: { name: 'Workers AI·OpenRouter', cap: cap('utc'), last: utc, next: utc + 86400e3 },
+    pt: { name: 'Gemini', cap: cap('pt'), last: pt, next: pt + 86400e3 },
+    cont: { name: 'Groq·Mistral', perDay: cont },
+  };
+}
+async function ipBucket(env, ip, providers) {
+  const now = Date.now();
+  const row = await env.DB.prepare('SELECT tokens, updated, used FROM rpg_ip_bucket WHERE ip = ?').bind(ip).first();
+  const act = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_ip_bucket WHERE updated > ?').bind(now - 86400e3).first();
+  const users = Math.max(USERS_MIN, act?.n ?? 0);
+  const g = resetGroups(providers, now);
+  const cap = Math.max(IP_CAP_MIN, Math.min(IP_CAP_MAX, Math.floor((g.utc.cap + g.pt.cap + g.cont.perDay) / users)));
+  let tokens = cap;
+  if (row) {
+    tokens = row.tokens;
+    for (const k of ['utc', 'pt']) if (row.updated < g[k].last && g[k].last <= now) tokens += g[k].cap / users;   // 초기화 시각을 지났으면 그 그룹의 하루 몫 충전
+    tokens += g.cont.perDay / users * (now - row.updated) / 86400e3;                                                 // 연속 충전분
+    tokens = Math.min(cap, tokens);
+  }
+  const share = k => Math.min(cap, Math.round(g[k].cap / users));
+  return { tokens, cap, users, used: row?.used ?? 0, exists: !!row, now,
+    refills: [{ name: g.utc.name, at: g.utc.next, add: share('utc') }, { name: g.pt.name, at: g.pt.next, add: share('pt') }, { name: g.cont.name, perHour: Math.round(g.cont.perDay / users / 24 * 10) / 10 }] };
+}
 // 카운터 증감 (delta = +1 예약 / -1 환불). Workers AI 는 rpg_quota, 나머지는 rpg_provider. IP 는 공통
-async function bump(env, day, ip, providerId, delta) {
+async function bump(env, day, ip, providerId, delta, b) {
   const stmts = [];
   if (providerId === 'cf') stmts.push(delta > 0
     ? env.DB.prepare('INSERT INTO rpg_quota (day, neurons, requests) VALUES (?, 0, 1) ON CONFLICT(day) DO UPDATE SET requests = requests + 1').bind(day)
@@ -154,9 +198,10 @@ async function bump(env, day, ip, providerId, delta) {
   else stmts.push(delta > 0
     ? env.DB.prepare('INSERT INTO rpg_provider (day, provider, requests) VALUES (?, ?, 1) ON CONFLICT(day, provider) DO UPDATE SET requests = requests + 1').bind(day, providerId)
     : env.DB.prepare('UPDATE rpg_provider SET requests = MAX(0, requests - 1) WHERE day = ? AND provider = ?').bind(day, providerId));
+  // 사용자 버킷: 예약이면 (충전 반영한 값 - 1) 로 저장, 환불이면 +1
   stmts.push(delta > 0
-    ? env.DB.prepare('INSERT INTO rpg_ip (day, ip, requests) VALUES (?, ?, 1) ON CONFLICT(day, ip) DO UPDATE SET requests = requests + 1').bind(day, ip)
-    : env.DB.prepare('UPDATE rpg_ip SET requests = MAX(0, requests - 1) WHERE day = ? AND ip = ?').bind(day, ip));
+    ? env.DB.prepare('INSERT INTO rpg_ip_bucket (ip, tokens, updated, used) VALUES (?, ?, ?, 1) ON CONFLICT(ip) DO UPDATE SET tokens = ?, updated = ?, used = used + 1').bind(ip, b.tokens - 1, b.now, b.tokens - 1, b.now)
+    : env.DB.prepare('UPDATE rpg_ip_bucket SET tokens = tokens + 1, used = MAX(0, used - 1) WHERE ip = ?').bind(ip));
   await env.DB.batch(stmts);
 }
 async function record(env, usage, model) {
@@ -171,14 +216,14 @@ async function aiCall(env, ip, system, user, temperature) {
   if (q.ip.remaining <= 0) return { ok: false, reason: 'ip' };
   let tried = 0;
   for (const p of q.providers) {
-    if (!p.configured || p.remaining <= 0 || paused(p.id)) continue;
-    await bump(env, q.day, ip, p.id, +1);
+    if (!p.configured || (p.remaining <= 0 && !p.probe) || paused(p.id)) continue;
+    await bump(env, q.day, ip, p.id, +1, q._bucket); q._bucket = { ...q._bucket, tokens: q._bucket.tokens - 1 };
     try {
       const out = await ask(env, PROVIDERS.find(x => x.id === p.id), system, user, temperature);
       if (p.id === 'cf') await record(env, out.usage, out.model);
       return { ok: true, parsed: out.parsed, raw: out.raw, provider: p.id };
     } catch (e) {
-      await bump(env, q.day, ip, p.id, -1);
+      await bump(env, q.day, ip, p.id, -1, q._bucket);
       // 지역 불가(Gemini, 송신 지점에 따라 간헐적)는 쿨다운 없이 다음 제공자로 — 다음 호출은 다른 지점에서 나가 성공할 수 있다
       if (!/User location/i.test(e.message) && (p.id !== 'cf' || !/quota|limit|429/i.test(e.message))) {
         const plan = / 402 |payment_required|limit-req-minute: 0|"code":"1300"/i.test(e.message);   // 결제·플랜 문제 → 길게 쉼
@@ -438,8 +483,8 @@ async function createChar(body, env, ip) {
   let parsed, judgedBy = r.provider;
   if (r.ok) parsed = r.parsed;
   else if (body.local && typeof body.local === 'object') { parsed = body.local; judgedBy = 'local'; }   // 서버 AI 소진 → 클라이언트 크롬 내장 AI 의 심사 결과 (buildStats 가 예산·범위를 강제)
-  else if (r.reason === 'failed') return json({ error: 'ai_failed', quota: await quota(env, ip) }, 502);
-  else return json({ error: 'quota', reason: r.reason, quota: await quota(env, ip) }, 429);
+  else if (r.reason === 'failed') return json({ error: 'ai_failed', quota: pubQuota(await quota(env, ip)) }, 502);
+  else return json({ error: 'quota', reason: r.reason, quota: pubQuota(await quota(env, ip)) }, 429);
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
@@ -451,7 +496,7 @@ async function createChar(body, env, ip) {
   };
   const token = uid();
   await env.DB.prepare('INSERT INTO rpg_chars (id, token, json, created) VALUES (?, ?, ?, ?)').bind(c.id, token, JSON.stringify(c), c.created).run();
-  return json({ char: publicChar(c), token, quota: await quota(env, ip) });
+  return json({ char: publicChar(c), token, quota: pubQuota(await quota(env, ip)) });
 }
 async function getChar(id, token, env) {
   const c = await loadChar(env, id, token);
@@ -540,7 +585,7 @@ async function battleTurn(id, body, env, ip) {
     await saveChar(env, c); st.me.char = c;
   } else st.turn++;
   await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ?').bind(JSON.stringify(st), Date.now(), id).run();
-  return json({ battle: st, quota: await quota(env, ip), quotaBlocked: t.quotaBlocked });
+  return json({ battle: st, quota: pubQuota(await quota(env, ip)), quotaBlocked: t.quotaBlocked });
 }
 
 // ─── 온라인 대전 (2~6명) ─────────────────────────────────────────────
@@ -656,7 +701,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
   } else s.round++;
   s.moves = {}; s.busy = false;
   await saveRoom(env, code, s, v2);
-  return json({ state: pub(s, slot), quota: await quota(env, ip), quotaBlocked });
+  return json({ state: pub(s, slot), quota: pubQuota(await quota(env, ip)), quotaBlocked });
 }
 async function leaveRoom(code, body, env, ip) {
   const r = await loadRoom(env, code);
