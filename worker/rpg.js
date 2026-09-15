@@ -64,7 +64,10 @@ const PROVIDERS = [
   { id: 'openrouter', name: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'nvidia/nemotron-3-super-120b-a12b:free', daily: 45, extra: { models: ['nvidia/nemotron-3-super-120b-a12b:free', 'nvidia/nemotron-3.5-lightning:free', 'google/gemma-4-26b-a4b-it:free'], reasoning: { enabled: false } } },
   // Cerebras 는 2026-09 현재 무료 티어 없음(PayGo, 잔액 0 이면 402) → 크레딧을 넣을 때만 아래 줄을 살린다
   // { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'qwen-3.8-27b', daily: 3000, extra: { reasoning_effort: 'none' } },
-  { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000, unverified: true },   // 플랜이 켜져 오늘 한 번 성공하기 전엔 용량에 안 넣음
+  // Mistral Free 플랜: 월 $10 포함 API 사용량. mistral-small 은 무료 플랜에서 요청 한도 0(429) → ministral 계열만 열려 있음(14b 30 RPM · 8b 188 RPM, 헤더 확인).
+  //   호출당 ≈ $0.0003 → 하루 1,200회면 월 $10 안. 14b(품질) 먼저, 8b 로 이어감
+  { id: 'mistral-14b', name: 'Mistral Ministral 14B', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'ministral-14b-2512', daily: 700 },
+  { id: 'mistral-8b', name: 'Mistral Ministral 8B', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'ministral-8b-2512', daily: 500 },
 ];
 const failedAt = {};   // 제공자별 { at, until } — 실패 뒤 until 까지 건너뜀 (일시 오류 10분, 결제·플랜 미활성(402, 한도 0) 6시간)
 const PROVIDER_COOLDOWN = 10 * 60e3, PLAN_COOLDOWN = 6 * 3600e3;
@@ -258,7 +261,7 @@ function lenientJson(text) {
   return any ? out : null;
 }
 // 서술은 innerHTML 로 그려지므로 태그를 막고 <br> 만 허용 (모델 출력이든 클라이언트 로컬 AI 출력이든)
-const safeHtml = v => String(v || '').replace(/<\/?p>|<\/?div>|\n/g, '<br>').replace(/(<br>\s*){2,}/g, '<br>').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500);
+const safeHtml = v => String(v || '').trim().replace(/<\/?p>|<\/?div>|\n/g, '<br>').replace(/(<br>\s*){2,}/g, '<br>').replace(/^(<br>)+|(<br>)+$/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500);
 // 판정문에 JSON 조각("fit":0.9 …)이나 중괄호가 섞여 나오면 그 앞까지만 남긴다
 function cleanVerdict(v) {
   return String(v || '').replace(/\\"/g, '"').replace(/\s*[,{}]?\s*"?(allowed|difficulty|fit|verdict|p\d)"?\s*:[\s\S]*$/, '').replace(/[{}]/g, '').replace(/[\s,]+$/, '').replace(/"$/, m => (v.match(/"/g) || []).length % 2 ? '' : m).trim().slice(0, 300);
