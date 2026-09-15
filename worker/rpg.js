@@ -24,10 +24,16 @@
  *   POST /api/rpg/rooms/:code/action             { token, type, text }        (둘 다 내면 판정 + 서술 1회)
  */
 
-const MODEL = '@cf/google/gemma-3-12b-it';
-const NEURON_IN = 31371 / 1e6, NEURON_OUT = 50560 / 1e6;
+// 모델 후보 (앞에서부터 시도, 계정에서 막힌 모델(5018)이면 다음으로). 뉴런 = 달러 / 0.011 per 1k 뉴런
+//   gemma-4-26b-a4b-it  $0.10 / $0.30 per M  → 한국어 품질 좋고 가장 저렴한 편
+//   llama-3.1-8b-fp8    $0.152 / $0.287      → 폴백
+const MODELS = [
+  { name: '@cf/google/gemma-4-26b-a4b-it', nin: 0.10 / 0.011 / 1000, nout: 0.30 / 0.011 / 1000 },
+  { name: '@cf/meta/llama-3.1-8b-instruct-fp8', nin: 0.152 / 0.011 / 1000, nout: 0.287 / 0.011 / 1000 },
+];
+let modelIdx = 0;
 const MAX_TOKENS = 380;
-const MAX_NEURONS_PER_CALL = Math.ceil(1500 * NEURON_IN + MAX_TOKENS * NEURON_OUT);   // ≈ 67
+const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODELS[0].nout);   // ≈ 24
 const DAILY_BUDGET = 9000, PER_IP_DAILY = 40;
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
@@ -82,34 +88,63 @@ async function reserve(env, ip) {
   ]);
   return { ok: true, q };
 }
-async function record(env, usage) {
+async function record(env, usage, model) {
   const inTok = usage?.prompt_tokens ?? 1200, outTok = usage?.completion_tokens ?? MAX_TOKENS;
-  await env.DB.prepare('UPDATE rpg_quota SET neurons = neurons + ? WHERE day = ?').bind(inTok * NEURON_IN + outTok * NEURON_OUT, today()).run();
+  const neurons = Number.isFinite(usage?.neurons) ? usage.neurons : inTok * model.nin + outTok * model.nout;   // Workers AI 가 뉴런을 직접 주면 그 값
+  await env.DB.prepare('UPDATE rpg_quota SET neurons = neurons + ? WHERE day = ?').bind(neurons, today()).run();
+}
+// AI 호출이 실패하면 예약했던 횟수를 돌려준다 (한도를 헛되이 쓰지 않게)
+async function refund(env, ip) {
+  const day = today();
+  await env.DB.batch([
+    env.DB.prepare('UPDATE rpg_quota SET requests = MAX(0, requests - 1) WHERE day = ?').bind(day),
+    env.DB.prepare('UPDATE rpg_ip SET requests = MAX(0, requests - 1) WHERE day = ? AND ip = ?').bind(day, ip),
+  ]);
 }
 
 // ─── AI (심사·서술 전용) ─────────────────────────────────────────────
 async function ask(env, system, user, temperature) {
-  const res = await env.AI.run(MODEL, { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: MAX_TOKENS, temperature });
-  const text = typeof res === 'string' ? res : (res.response ?? '');
-  const mt = text.match(/\{[\s\S]*\}/);
-  let parsed = null; if (mt) { try { parsed = JSON.parse(mt[0]); } catch {} }
-  return { parsed, usage: res.usage };
+  for (let i = modelIdx; i < MODELS.length; i++) {
+    const model = MODELS[i];
+    try {
+      // gemma-4 는 기본이 '생각(reasoning_content)' 모드라 max_tokens 를 생각에 다 쓰고 답이 비어 나온다 → 생각 끄기 요청
+      const res = await env.AI.run(model.name, { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: system === SYS_JUDGE_ACTION ? 260 : MAX_TOKENS, temperature, enable_thinking: false, reasoning: { effort: 'none' }, chat_template_kwargs: { enable_thinking: false } });
+      modelIdx = i;
+      // 모델마다 응답 형태가 다르다: { response } | OpenAI 호환 { choices:[{message:{content}}] } | { output_text }
+      const text = typeof res === 'string' ? res
+        : (res.response ?? res.choices?.[0]?.message?.content ?? res.output_text ?? res.result?.response ?? '');
+      const mt = text.replace(/<think>[\s\S]*?<\/think>/g, '').match(/\{[\s\S]*\}/);
+      let parsed = null; if (mt) { try { parsed = JSON.parse(mt[0]); } catch {} }
+      return { parsed, usage: res?.usage, model, raw: (text || JSON.stringify({ t: typeof res, keys: res && typeof res === 'object' ? Object.keys(res) : null, s: JSON.stringify(res.choices?.[0]).slice(0, 500), u: JSON.stringify(res.usage) })).slice(0, 900) };
+    } catch (e) {
+      if (/5018|not allowed|No such model|not found/i.test(e.message) && i + 1 < MODELS.length) continue;   // 이 계정에서 막힌 모델 → 다음 후보
+      throw e;
+    }
+  }
+  throw new Error('no model available');
 }
 
 const SYS_JUDGE = `당신은 텍스트 RPG 캐릭터 심사관입니다. 사용자가 쓴 캐릭터 설정을 읽고 아래만 정합니다. 숫자 능력치는 정하지 않습니다(서버가 정함).
 1) concept: 설정을 요약한 수식어 (예: 평범한 고등학생, 바다의 신, 은퇴한 검사)
 2) alloc: 이 캐릭터의 성향을 6개 항목에 합계 100으로 배분. atk(공격) hp(체력) def(방어) spd(속도) acc(명중) eva(회피). 설정에 근거해서만.
-3) coherence 0~100: 설정의 내적 일관성. 앞뒤가 맞고 한계·약점이 분명하면 높음. "무엇이든 다 한다", 모순, 근거 없는 전능은 낮음. 현실적/비현실적 여부와 무관.
-4) ult: 필살기 하나. name(짧게), effect(한 문장), style 은 burst(한 방)·precise(명중 위주)·drain(피해+회복)·shield(피해+다음 턴 방어) 중 하나.
-반드시 이 JSON 하나만 출력:
-{"concept":"...","alloc":{"atk":0,"hp":0,"def":0,"spd":0,"acc":0,"eva":0},"coherence":0,"ult":{"name":"...","effect":"...","style":"burst"}}
-설정이 비어 있거나 해석 불가면 {"error":"reason"} 만.`;
+3) coherence 0~100: 설정의 내적 일관성. 앞뒤가 맞고 한계·약점이 분명하면 높음(80~100). 짧거나 막연하면 중간(40~60). "무엇이든 다 한다", 모순, 근거 없는 전능은 낮음(5~25). 현실적/비현실적 여부와 무관. 낮은 점수는 거절 사유가 아니라 그냥 점수입니다.
+4) ult: 필살기 하나. name(짧게), effect(한 문장), style 은 burst(한 방)·precise(명중 위주)·drain(피해+회복)·shield(피해+다음 턴 방어) 중 하나. 설정이 짧으면 설정에서 자연스럽게 유추해 만드세요(고양이 → 할퀴기).
+어떤 설정이든 거절하지 말고 반드시 이 JSON 하나만 출력:
+{"concept":"...","alloc":{"atk":0,"hp":0,"def":0,"spd":0,"acc":0,"eva":0},"coherence":0,"ult":{"name":"...","effect":"...","style":"burst"}}`;
 
-const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1턴의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술하세요.
-할 일:
-1) fit1, fit2: 각 플레이어의 '이번 행동 문장'이 그 캐릭터 설정·필살기와 얼마나 어울리는지 0.0~1.0. 문장이 없거나 '기본 공격'이면 0.5. 설정에 없는 능력을 갑자기 쓰면 0.2 이하.
-2) narration: 주어진 사실(명중/빗나감/크리티컬/방어/피해)을 정확히 반영해 4~6문장으로 생생하게. 캐릭터 설정을 근거로 왜 그렇게 됐는지 한 번씩 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
-반드시 이 JSON 하나만 출력: {"fit1":0.5,"fit2":0.5,"narration":"..."}`;
+const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 두 플레이어가 말로 선언한 이번 턴 행동을 각자의 캐릭터 설정에 비추어 심사합니다. 성공 여부와 피해는 주사위와 규칙이 정하므로 당신은 아래만 정합니다.
+각 플레이어에 대해:
+- allowed: 게임 안에서 시도 가능한 행동인지 (true/false). 메타 발언("내가 이겼다", "상대 HP 0"), 규칙 조작, 행동이 아닌 말은 false.
+- difficulty: 그 캐릭터의 설정으로 그 행동을 해낼 난이도. easy(설정에 딱 맞는 특기) / normal(할 법한 행동) / hard(설정에 없거나 무리한 시도) / impossible(설정상 절대 불가, 예: 평범한 학생이 운석 소환).
+- fit 0.0~1.0: 행동 문장이 캐릭터 설정·필살기와 어울리는 정도.
+- verdict: 판정 근거를 캐릭터 설정을 인용해 한두 문장으로. 심사관 말투(간결, 존댓말).
+문장이 비었거나 '기본 공격'이면 allowed true, difficulty normal, fit 0.5, verdict "기본 공격으로 진행합니다."
+반드시 이 JSON 하나만 출력:
+{"p1":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."},"p2":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."}}`;
+
+const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1턴의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술만 하세요.
+주어진 사실(선공, 심사관 판정, 명중/빗나감/크리티컬/방어/피해)을 정확히 반영해 4~6문장으로 생생하게. 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 한 번씩 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
+반드시 이 JSON 하나만 출력: {"narration":"..."}`;
 
 // ─── 규칙 엔진 ───────────────────────────────────────────────────────
 // 동일 예산: 모든 캐릭터는 alloc(합 100)을 같은 공식으로 스탯화한다. 설정이 아무리 세도 예산은 같다.
@@ -133,20 +168,26 @@ function buildStats(alloc, coherence, tier = 1) {
 const ULT_COST = 3;
 
 // 한 턴 판정. a/b = { char, hp, gauge, guard }, act = { type: 'attack'|'ult'|'defend', text }
-function resolveTurn(a, b, actA, actB, fitA = 0.5, fitB = 0.5) {
+const DIFF_MOD = { easy: 0.10, normal: 0, hard: -0.15, impossible: -1 };
+// judge = { 1: {allowed, difficulty, fit}, 2: {...} } — 심사관 판정. 없으면 중립
+function resolveTurn(a, b, actA, actB, judge = {}) {
+  const jA = judge[1] || {}, jB = judge[2] || {};
   const first = a.char.stats.spd + rnd() * 30 >= b.char.stats.spd + rnd() * 30 ? 'a' : 'b';
-  const order = first === 'a' ? [[a, b, actA, fitA, 1], [b, a, actB, fitB, 2]] : [[b, a, actB, fitB, 2], [a, b, actA, fitA, 1]];
+  const order = first === 'a' ? [[a, b, actA, jA, 1], [b, a, actB, jB, 2]] : [[b, a, actB, jB, 2], [a, b, actA, jA, 1]];
   const events = [];
   // 방어 선언은 행동 순서와 무관하게 이번 턴 내내 유효
   if (actA.type === 'defend') a.guard = true; if (actB.type === 'defend') b.guard = true;
-  for (const [me, foe, act, fit, who] of order) {
+  for (const [me, foe, act, j, who] of order) {
     if (me.hp <= 0) continue;
+    const fit = num(j.fit, 0, 1, 0.5), diff = DIFF_MOD[j.difficulty] ?? 0, allowed = j.allowed !== false;
     if (act.type === 'defend') { me.gauge = Math.min(ULT_COST, me.gauge + 2); events.push({ who, type: 'defend' }); continue; }
     const isUlt = act.type === 'ult' && me.gauge >= ULT_COST;
     if (act.type === 'ult' && !isUlt) events.push({ who, type: 'ult_fail' });   // 게이지 부족 → 기본 공격으로
     const s = me.char.stats, t = foe.char.stats, style = ULT_STYLES[me.char.ult.style] || ULT_STYLES.burst;
     const acc = s.acc + (isUlt && style.accBonus ? style.accBonus : 0);
-    const chance = Math.min(0.95, Math.max(0.1, (acc - t.eva) / 100 * s.stability + (fit - 0.5) * 0.2));
+    // 심사관 판정 반영: 불허(allowed=false) → 기본 공격 취급 + 난이도 hard, impossible → 자동 실패
+    const dmod = diff <= -1 ? -1 : (!allowed ? DIFF_MOD.hard : diff);   // 불가능 판정은 불허 여부와 무관하게 자동 실패
+    const chance = dmod <= -1 ? 0 : Math.min(0.95, Math.max(0.05, (acc - t.eva) / 100 * s.stability + dmod));
     const hit = rnd() < chance, crit = hit && rnd() < 0.1;
     let dmg = 0;
     if (hit) {
@@ -158,7 +199,7 @@ function resolveTurn(a, b, actA, actB, fitA = 0.5, fitB = 0.5) {
       if (isUlt && style.guard) me.guardNext = true;
     }
     if (isUlt) me.gauge -= ULT_COST; else me.gauge = Math.min(ULT_COST, me.gauge + 1);
-    events.push({ who, type: isUlt ? 'ult' : 'attack', hit, crit, dmg, chance: Math.round(chance * 100), guarded: hit && foe.guard });
+    events.push({ who, type: isUlt ? 'ult' : 'attack', hit, crit, dmg, chance: Math.round(chance * 100), guarded: hit && foe.guard, fit, difficulty: allowed ? (j.difficulty || 'normal') : 'denied' });
     if (foe.hp <= 0) break;
   }
   a.guard = !!a.guardNext; b.guard = !!b.guardNext; a.guardNext = b.guardNext = false;
@@ -169,45 +210,53 @@ function factsText(names, events) {
     const n = names[e.who];
     if (e.type === 'defend') return `${n}: 방어 태세 (받는 피해 절반, 게이지 +2)`;
     if (e.type === 'ult_fail') return `${n}: 필살기를 쓰려 했으나 게이지 부족 → 기본 공격`;
-    const k = e.type === 'ult' ? '필살기' : '공격';
-    return e.hit ? `${n}: ${k} 명중(${e.chance}%)${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (상대 방어로 절반)' : ''} → 피해 ${e.dmg}` : `${n}: ${k} 빗나감(명중률 ${e.chance}%)`;
+    const k = e.type === 'ult' ? '필살기' : '공격', d = { easy: '쉬움', normal: '보통', hard: '어려움', impossible: '불가', denied: '불허' }[e.difficulty] || '보통';
+    return e.hit ? `${n}: ${k} 명중(${e.chance}%, 난이도 ${d})${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (상대 방어로 절반)' : ''} → 피해 ${e.dmg}` : `${n}: ${k} 실패(명중률 ${e.chance}%, 난이도 ${d})`;
   }).join('\n');
 }
 function templateNarration(names, events) {
   return factsText(names, events).replace(/\n/g, '<br>') + '<br>(게임 마스터의 목소리가 닿지 않아 사실만 기록합니다)';
 }
 
-// 서술 + 적합도 한 번의 AI 호출. 순서: 적합도가 피해에 영향을 주므로 먼저 fit 을 받고 → 판정 → 서술이 이상적이지만 2회 호출이 되므로,
-// 한도 절약을 위해 '판정(fit 0.5 가정) → 서술+fit' 1회로 하고 fit 은 피해에 ±15% 로 사후 보정한다 (결과 사실은 서술에 그대로 반영).
-async function narrateTurn(env, ip, a, b, actA, actB) {
+// 한 턴 = 심사관(AI, 짧음) → 규칙 엔진 → 게임 마스터 서술(AI). 어느 AI 호출이든 실패/한도면 그 단계만 기본값으로 진행.
+const actLabel = t => t === 'defend' ? '방어' : t === 'ult' ? '필살기' : '공격';
+function charLine(label, p, act) {
+  return `[${label}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult.name}: ${p.char.ult.effect}
+행동 종류: ${actLabel(act.type)} / 선언: "${act.text || '기본 공격'}"`;
+}
+async function runTurn(env, ip, a, b, actA, actB) {
   const names = { 1: a.char.name, 2: b.char.name };
-  const pre = resolveTurn(a, b, actA, actB);                        // 사실 확정 (fit 0.5 기준)
-  let narration = templateNarration(names, pre.events), fit = { 1: 0.5, 2: 0.5 }, usedAi = false;
-  const r = await reserve(env, ip);
-  if (r.ok) {
-    try {
-      const user = `[플레이어1] ${a.char.name} (${a.char.fiction}) — 설정: ${a.char.info} / 필살기 ${a.char.ult.name}: ${a.char.ult.effect}
-행동: ${actA.type === 'defend' ? '방어' : actA.type === 'ult' ? '필살기' : '공격'} — "${actA.text || '기본 공격'}"
-[플레이어2] ${b.char.name} (${b.char.fiction}) — 설정: ${b.char.info} / 필살기 ${b.char.ult.name}: ${b.char.ult.effect}
-행동: ${actB.type === 'defend' ? '방어' : actB.type === 'ult' ? '필살기' : '공격'} — "${actB.text || '기본 공격'}"
-선공: ${pre.first === 'a' ? a.char.name : b.char.name}
+  const judge = { 1: { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' }, 2: { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' } };
+  let judgedByAi = false, usedAi = false, quotaBlocked = null;
+  const needJudge = !!(actA.text || actB.text);                     // 둘 다 말이 없으면 심사 생략 (한도 절약)
+  if (needJudge) {
+    const r = await reserve(env, ip);
+    if (!r.ok) quotaBlocked = r.reason;
+    else try {
+      const { parsed, usage, model } = await ask(env, SYS_JUDGE_ACTION, charLine('플레이어1', a, actA) + '\n\n' + charLine('플레이어2', b, actB), 0.2);
+      await record(env, usage, model);
+      for (const k of [1, 2]) { const p = parsed?.['p' + k]; if (p) judge[k] = { allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: String(p.verdict || '').slice(0, 300) }; }
+      judgedByAi = !!parsed;
+    } catch { await refund(env, ip); }
+  }
+  const res = resolveTurn(a, b, actA, actB, judge);
+  let narration = templateNarration(names, res.events);
+  const r2 = await reserve(env, ip);
+  if (!r2.ok) quotaBlocked = quotaBlocked || r2.reason;
+  else try {
+    const user = `${charLine('플레이어1', a, actA)}
+심사관 판정: ${judge[1].allowed ? '' : '불허 — '}${judge[1].verdict || '기본 공격'}
+${charLine('플레이어2', b, actB)}
+심사관 판정: ${judge[2].allowed ? '' : '불허 — '}${judge[2].verdict || '기본 공격'}
+선공: ${res.first === 'a' ? a.char.name : b.char.name}
 [확정된 결과]
-${factsText(names, pre.events)}
+${factsText(names, res.events)}
 남은 HP: ${a.char.name} ${a.hp}/${a.char.stats.hp}, ${b.char.name} ${b.hp}/${b.char.stats.hp}`;
-      const { parsed, usage } = await ask(env, SYS_NARRATE, user, 0.9);
-      await record(env, usage);
-      if (parsed?.narration) { narration = String(parsed.narration).slice(0, 1200); usedAi = true; }
-      fit = { 1: num(parsed?.fit1, 0, 1, 0.5), 2: num(parsed?.fit2, 0, 1, 0.5) };
-    } catch {}
-  }
-  // 적합도 사후 보정: 명중한 피해에 (0.85 + fit·0.3) 배율 재적용 (기준 0.5 → 1.0 배)
-  for (const e of pre.events) if (e.hit && e.dmg) {
-    const tgt = e.who === 1 ? b : a;
-    if (tgt.hp === 0) continue;                                      // 이미 쓰러진 결과(서술에 반영됨)는 되살리지 않는다
-    const f = fit[e.who], adj = Math.round(e.dmg * (0.85 + f * 0.3)) - e.dmg;
-    if (adj) { tgt.hp = Math.max(1, Math.min(tgt.char.stats.hp, tgt.hp - adj)); e.dmg += adj; e.fit = f; }
-  }
-  return { events: pre.events, first: pre.first, narration, fit, usedAi, quotaBlocked: !r.ok ? r.reason : null };
+    const { parsed, usage, model } = await ask(env, SYS_NARRATE, user, 0.9);
+    await record(env, usage, model);
+    if (parsed?.narration) { narration = String(parsed.narration).slice(0, 1200); usedAi = true; }
+  } catch { await refund(env, ip); }
+  return { events: res.events, first: res.first, judge, judgedByAi, narration, usedAi, quotaBlocked };
 }
 
 // ─── 캐릭터 ─────────────────────────────────────────────────────────
@@ -224,13 +273,14 @@ async function createChar(body, env, ip) {
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
   const r = await reserve(env, ip);
   if (!r.ok) return json({ error: 'quota', reason: r.reason, quota: r.q }, 429);
-  let parsed, usage;
-  try { ({ parsed, usage } = await ask(env, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2)); await record(env, usage); }
-  catch (e) { return json({ error: 'ai_failed', message: e.message, quota: await quota(env, ip) }, 502); }
-  if (!parsed || parsed.error || !parsed.alloc) return json({ error: 'ai_reject', quota: await quota(env, ip) }, 422);
+  let parsed, usage, model, raw;
+  try { ({ parsed, usage, model, raw } = await ask(env, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2)); await record(env, usage, model); }
+  catch (e) { await refund(env, ip); return json({ error: 'ai_failed', message: e.message, quota: await quota(env, ip) }, 502); }
+  // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
+  if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
   const c = {
-    id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || '이름 없는 몽상가',
+    id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: !parsed.fallback,
     stats: buildStats(parsed.alloc, parsed.coherence),
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
@@ -273,9 +323,9 @@ function pickEnemy(c) {
 }
 // 상대 AI: 게이지 차면 필살기(HP 낮을수록 더 자주), 내 HP 가 낮고 상대 게이지가 차 있으면 가끔 방어
 function enemyDecide(e, me) {
-  if (e.gauge >= ULT_COST && rnd() < (e.hp < e.char.stats.hp * 0.5 ? 0.85 : 0.5)) return { type: 'ult', text: `필살기 ${e.char.ult.name}` };
-  if (me.gauge >= ULT_COST && e.hp < e.char.stats.hp * 0.4 && rnd() < 0.35) return { type: 'defend', text: '방어 태세' };
-  return { type: 'attack', text: '기본 공격' };
+  if (e.gauge >= ULT_COST && rnd() < (e.hp < e.char.stats.hp * 0.5 ? 0.85 : 0.5)) return { type: 'ult', text: `${e.char.ult.name}! ${e.char.ult.effect}` };
+  if (me.gauge >= ULT_COST && e.hp < e.char.stats.hp * 0.4 && rnd() < 0.35) return { type: 'defend', text: '자세를 낮추고 상대의 다음 수를 기다린다' };
+  return { type: 'attack', text: '' };
 }
 
 async function createBattle(body, env) {
@@ -300,8 +350,8 @@ async function battleTurn(id, body, env, ip) {
   const lock = await env.DB.prepare('UPDATE rpg_battles SET updated = ? WHERE id = ? AND updated = ?').bind(Date.now(), id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
   const actMe = parseAct(body), actFoe = enemyDecide(st.foe, st.me);
-  const t = await narrateTurn(env, ip, st.me, st.foe, actMe, actFoe);
-  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, first: t.first, events: t.events, narration: t.narration, ai: t.usedAi });
+  const t = await runTurn(env, ip, st.me, st.foe, actMe, actFoe);
+  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, first: t.first, events: t.events, narration: t.narration, ai: t.usedAi });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
@@ -373,8 +423,8 @@ async function roomAction(code, body, env, ip) {
   s.busy = true;
   const v = await saveRoom(env, code, s, r.v);
   if (!v) return json({ error: 'retry' }, 409);
-  const t = await narrateTurn(env, ip, s.p[1], s.p[2], s.moves[1], s.moves[2]);
-  s.log.push({ round: s.round, acts: { ...s.moves }, first: t.first, events: t.events, narration: t.narration, ai: t.usedAi });
+  const t = await runTurn(env, ip, s.p[1], s.p[2], s.moves[1], s.moves[2]);
+  s.log.push({ round: s.round, acts: { ...s.moves }, judge: t.judge, first: t.first, events: t.events, narration: t.narration, ai: t.usedAi });
   if (s.log.length > 40) s.log.shift();
   if (s.p[1].hp <= 0 || s.p[2].hp <= 0) {
     s.status = 'finished'; s.winner = s.p[1].hp <= 0 && s.p[2].hp <= 0 ? 0 : s.p[1].hp <= 0 ? 2 : 1;
