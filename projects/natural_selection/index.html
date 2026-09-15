@@ -143,12 +143,16 @@
           <span class="k">최소 / 최대</span><b id="stRange">0 / 0</b>
           <span class="k">평균 감지 거리</span><b id="stSense">0</b>
           <span class="k">평균 공격성</span><b id="stAggr">0</b>
-          <span class="k">다툼 / 부상 사망</span><b id="stFights">0 / 0</b>
+          <span class="k">양보 / 다툼 / 부상 사망</span><b id="stFights">0 / 0 / 0</b>
+          <span class="k">매 비율 (공격성 ≥ 0.5)</span><b id="stHawk">0%</b>
+          <span class="k">적합도 매 / 비둘기 <small>(최근 600프레임, 1000마리당 순증)</small></span><b id="stFit">0 / 0</b>
+          <span class="k">도전자 승률 / 큰 쪽 승률</span><b id="stWin">– / –</b>
+          <span class="k">안전지대 자리 사용률 / 막힘</span><b id="stZone">0% / 0</b>
           <span class="k">경과</span><b id="stTime">0s</b>
           <span class="k">프레임</span><b id="stFrame">0</b>
         </div>
         <canvas id="chart" width="600" height="220" aria-label="평균 크기 변화 그래프"></canvas>
-        <div class="legend"><i style="background:var(--prey)"></i>평균 크기 <i style="background:#f2a93b"></i>평균 감지 거리 <i style="background:#c93cc9"></i>평균 공격성 <i style="background:#999"></i>개체 수(상대)</div>
+        <div class="legend"><i style="background:var(--prey)"></i>평균 크기 <i style="background:#f2a93b"></i>평균 감지 거리 <i style="background:#c93cc9"></i>평균 공격성 <i style="background:#7a4cff"></i>매 비율 <i style="background:#999"></i>개체 수(상대)</div>
       </div>
     </aside>
   </div>
@@ -227,9 +231,12 @@
         if (cfg.safeOn && cfg.capacityOn && !wasInSafeBefore && this.inSafe && zone.used + this.area > zone.cap) {
           const sx = this.x - safe.x, sy = this.y - safe.y, sd = Math.hypot(sx, sy) || 1, r = cfg.safeRadius + this.radius * 0.5 + 1;
           this.x = safe.x + sx / sd * r; this.y = safe.y + sy / sd * r;     // 경계 바로 밖에 멈춤
-          this.blocked++;
-          if (cfg.contestOn && Math.random() < this.aggr) contest(this);     // 매 성향: 안쪽의 누군가에게 싸움을 건다
-          else if (this.blocked > 20 || Math.random() < 0.15) { this.angle = Math.atan2(sy, sx) + (Math.random() - 0.5) * 1.5; this.blocked = 0; }   // 비둘기 성향: 잠시 기다리다 다른 데로
+          this.blocked++; cur().blocked++;
+          const threatened = !!near || this.alarm > 0;
+          // 자리 다툼은 은신처가 실제로 가치 있을 때(포식자를 봤거나 경계 중)만 건다 — 위협이 없을 때 먹이도 적은 안으로 들어가려고 다치는 건 손해
+          if (cfg.contestOn && threatened && Math.random() < this.aggr) contest(this);     // 매 성향: 안쪽의 누군가에게 싸움을 건다
+          else if (near) { this.angle = Math.atan2(this.y - near.y, this.x - near.x) + (Math.random() - 0.5) * 0.8; this.blocked = 0; }   // 비둘기 성향 + 위협: 포식자 반대편으로 달아남
+          else if (this.blocked > 20 || Math.random() < 0.15) { this.angle = Math.atan2(sy, sx) + (Math.random() - 0.5) * 1.5; this.blocked = 0; }   // 위협 없음: 잠시 기다리다 다른 데로
           this.sheltering = false; this.fleeing = !!near;
         } else {
           this.blocked = 0;
@@ -254,18 +261,31 @@
     //   승률 = 체중 비례 (r_c² / (r_c² + r_o²)) — 큰 쪽이 유리하지만 확률적. 이긴 쪽이 안, 진 쪽은 밖으로 밀려나고 부상(속도 ↓ 60프레임)·부상 사망 확률.
     //   둘 다 몇 프레임 멈추므로 밖에 남는 쪽은 그동안 포식자에게 무방비 → 싸움 자체가 비용.
     const zone = { used: 0, cap: 0, n: 0 };
-    let fights = 0, fightDeaths = 0;
+    let fights = 0, fightDeaths = 0, yields = 0;
+    // 빈도 의존 선택을 눈으로 확인하기 위한 지표: 매(공격성 ≥ 0.5)와 비둘기 각각의 출생·사망을 최근 600프레임 창으로 모아
+    //   1000마리당 순증(출생 − 사망)을 비교한다. 매가 많을 때 매의 적합도가 떨어지고, 적을 때 올라가면 빈도 의존 선택.
+    const isHawk = p => p.aggr >= 0.5;
+    const newBucket = () => ({ hb: 0, db: 0, hd: 0, dd: 0, hn: 0, dn: 0, fights: 0, yields: 0, chalWin: 0, bigWin: 0, blocked: 0 });
+    let buckets = [newBucket()];
+    const win = () => buckets.reduce((a, b) => { for (const k in b) a[k] += b[k]; return a; }, newBucket());
+    const cur = () => buckets[buckets.length - 1];
     function contest(c) {
       let best = null, bd = Infinity;
       for (const o of prey) { if (o === c || !o.inSafe || o.fighting) continue; const d = (o.x - c.x) ** 2 + (o.y - c.y) ** 2; if (d < bd) { bd = d; best = o; } }
       if (!best || bd > (cfg.safeRadius * 0.6) ** 2) return;
-      fights++;
+      // 매·비둘기 게임의 핵심: 안쪽 개체(방어자)도 자기 공격성만큼만 맞서 싸운다. 비둘기 성향이면 물러나 자리를 내주고(둘 다 비용 없음),
+      //   맞서면 실제 몸싸움(체중 비례 승률 + 부상·정지·사망 비용). → 매가 드물면 공짜로 자리를 얻고, 매가 흔하면 매끼리 싸워 다친다
+      const swap = () => { [c.x, best.x] = [best.x, c.x]; [c.y, best.y] = [best.y, c.y]; best.blocked = 0; best.angle = Math.atan2(best.y - safe.y, best.x - safe.x) + (Math.random() - 0.5); };
+      if (Math.random() >= best.aggr) { yields++; cur().yields++; swap(); c.fightMark = 4; return; }   // 방어자가 물러남 (비둘기)
+      fights++; cur().fights++;
       const pWin = c.area / (c.area + best.area);
       const winner = Math.random() < pWin ? c : best, loser = winner === c ? best : c;
-      if (winner === c) { [c.x, best.x] = [best.x, c.x]; [c.y, best.y] = [best.y, c.y]; }   // 자리를 맞바꿈: 진 쪽이 밖으로
+      if (winner === c) cur().chalWin++;
+      if (winner.area > loser.area) cur().bigWin++; else if (winner.area === loser.area) cur().bigWin += 0.5;
+      if (winner === c) swap();                             // 자리를 맞바꿈: 진 쪽이 밖으로
       loser.injured = 60; loser.blocked = 0; loser.angle = Math.atan2(loser.y - safe.y, loser.x - safe.x) + (Math.random() - 0.5);
       winner.fighting = 8; loser.fighting = 12; winner.fightMark = 10; loser.fightMark = 10;
-      if (Math.random() < cfg.fightCost) loser.dead = true;   // 부상 사망
+      if (Math.random() < cfg.fightCost) { loser.dead = true; if (isHawk(loser)) cur().hd++; else cur().dd++; }   // 부상 사망
     }
     function updateZone() {
       zone.cap = cfg.capacityOn ? cfg.fill * cfg.safeRadius * cfg.safeRadius : Infinity;
@@ -323,7 +343,7 @@
     function reset() {
       prey = Array.from({ length: 25 }, () => new Prey(Math.random() * W, Math.random() * H, 10, 0));   // 추적 AI 포식자 앞에서 1마리는 금방 전멸하므로 25마리로 시작
       predators = Array.from({ length: cfg.predCount }, () => new Predator(Math.random() * W, Math.random() * H));
-      frame = 0; eaten = 0; fights = 0; fightDeaths = 0; history.length = 0; startedAt = performance.now(); pausedTotal = 0;
+      frame = 0; eaten = 0; fights = 0; fightDeaths = 0; yields = 0; buckets = [newBucket()]; history.length = 0; startedAt = performance.now(); pausedTotal = 0;
       if (paused) pausedAt = performance.now();
     }
     function syncPredatorCount() {
@@ -364,7 +384,7 @@
             if (zone.used + c.area > zone.cap) { const a = Math.atan2(c.y - safe.y, c.x - safe.x), r = cfg.safeRadius + c.radius + 2; c.x = clamp(safe.x + Math.cos(a) * r, c.radius, W - c.radius); c.y = clamp(safe.y + Math.sin(a) * r, c.radius, H - c.radius); }
             else zone.used += c.area;
           }
-          born.push(c);
+          born.push(c); if (isHawk(p)) cur().hb++; else cur().db++;
         }
         prey.push(...born);
       }
@@ -386,19 +406,25 @@
           }
         }
       }
-      if (dead.size) { prey = prey.filter((_, i) => !dead.has(i)); eaten += dead.size; }
+      if (dead.size) { for (const i of dead) { if (isHawk(prey[i])) cur().hd++; else cur().dd++; } prey = prey.filter((_, i) => !dead.has(i)); eaten += dead.size; }
+      if (frame % 60 === 0) {                              // 60프레임마다 버킷 교체 (창 = 10버킷 = 600프레임). 매·비둘기 평균 마리 수도 버킷에 누적
+        let hn = 0; for (const p of prey) if (isHawk(p)) hn++;
+        cur().hn += hn; cur().dn += prey.length - hn;
+        buckets.push(newBucket()); if (buckets.length > 10) buckets.shift();
+      }
 
       // 멸종 시 자동 재시작 (초기 1마리)
       if (prey.length === 0) prey.push(new Prey(Math.random() * W, Math.random() * H, 10, 0));
 
       if (frame % 6 === 0) {                              // 그래프 샘플 (10fps)
-        history.push({ mean: meanRadius(), sense: meanSense(), aggr: meanAggr(), count: prey.length });
+        history.push({ mean: meanRadius(), sense: meanSense(), aggr: meanAggr(), hawk: hawkShare(), count: prey.length });
         if (history.length > 600) history.shift();
       }
     }
     const meanRadius = () => prey.reduce((s, p) => s + p.radius, 0) / (prey.length || 1);
     const meanSense  = () => prey.reduce((s, p) => s + p.sense, 0) / (prey.length || 1);
     const meanAggr   = () => prey.reduce((s, p) => s + p.aggr, 0) / (prey.length || 1);
+    const hawkShare  = () => prey.reduce((s, p) => s + (isHawk(p) ? 1 : 0), 0) / (prey.length || 1);
 
     // ── 그리기 ─────────────────────────────────────────────────────
     function draw() {
@@ -441,7 +467,13 @@
       $('stPrey').textContent = n; $('stEaten').textContent = eaten; $('stMean').textContent = mean.toFixed(1);
       $('stRange').textContent = n ? `${min.toFixed(1)} / ${max.toFixed(1)}` : '0 / 0';
       $('stSense').textContent = meanSense().toFixed(0);
-      $('stAggr').textContent = meanAggr().toFixed(2); $('stFights').textContent = `${fights} / ${fightDeaths}`;
+      $('stAggr').textContent = meanAggr().toFixed(2); $('stFights').textContent = `${yields} / ${fights} / ${fightDeaths}`;
+      const w = win(), nb = buckets.length;                 // 버킷당 평균 마리 수 = hn/nb → 1000마리당 순증 = (출생 − 사망) / (마리 수) × 1000
+      const fit = (b, d, nsum) => nsum > 0 ? ((b - d) / (nsum / nb) * 1000).toFixed(0) : '–';
+      $('stHawk').textContent = `${(hawkShare() * 100).toFixed(0)}%`;
+      $('stFit').textContent = `${fit(w.hb, w.hd, w.hn)} / ${fit(w.db, w.dd, w.dn)}`;
+      $('stWin').textContent = w.fights ? `${(w.chalWin / w.fights * 100).toFixed(0)}% / ${(w.bigWin / w.fights * 100).toFixed(0)}%` : '– / –';
+      $('stZone').textContent = cfg.safeOn && cfg.capacityOn ? `${Math.min(999, zone.used / zone.cap * 100).toFixed(0)}% / ${(w.blocked / Math.max(1, Math.min(frame, 600))).toFixed(1)}/프레임` : '– / –';
       $('stTime').textContent = `${elapsed.toFixed(0)}s`; $('stFrame').textContent = frame;
       drawChart();
     }
@@ -459,11 +491,13 @@
       history.forEach((s, i) => { const y = h - pad - (s.sense / maxSense) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
       cctx.strokeStyle = '#c93cc9'; cctx.beginPath();
       history.forEach((s, i) => { const y = h - pad - (s.aggr || 0) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
+      cctx.strokeStyle = '#7a4cff'; cctx.setLineDash([4, 3]); cctx.beginPath();
+      history.forEach((s, i) => { const y = h - pad - (s.hawk || 0) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke(); cctx.setLineDash([]);
       cctx.strokeStyle = '#2f6fd6'; cctx.beginPath();
       history.forEach((s, i) => { const y = h - pad - (s.mean / maxMean) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
       cctx.fillStyle = '#6b6b66'; cctx.font = '12px sans-serif'; cctx.textBaseline = 'top';
       const last = history[history.length - 1];
-      cctx.fillText(`크기 ${last.mean.toFixed(1)} · 감지 ${last.sense.toFixed(0)} · 공격성 ${(last.aggr || 0).toFixed(2)}`, pad + 2, pad);
+      cctx.fillText(`크기 ${last.mean.toFixed(1)} · 감지 ${last.sense.toFixed(0)} · 공격성 ${(last.aggr || 0).toFixed(2)} · 매 ${((last.hawk || 0) * 100).toFixed(0)}%`, pad + 2, pad);
     }
 
     // ── 루프 ───────────────────────────────────────────────────────
