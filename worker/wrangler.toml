@@ -1,6 +1,6 @@
 name = "blog-api"
 main = "worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
 
 [vars]
 VELOG_USERNAME = "njw"
@@ -11,3 +11,7 @@ VELOG_USERNAME = "njw"
 binding = "DB"
 database_name = "blog-db"
 database_id = "1f3222d0-0343-429c-af67-f771a39b5f2d"
+
+# DREAM RPG: Workers AI (Gemma 3 12B). 무료 하루 10,000 뉴런 안에서만 쓰도록 rpg.js 가 강제
+[ai]
+binding = "AI"

@@ -9,6 +9,8 @@
  *   DB              - blog-db
  */
 
+import { handleRpg } from './rpg.js';
+
 const VELOG_API = 'https://v2.velog.io/graphql';
 
 const CORS_HEADERS = {
@@ -27,6 +29,9 @@ export default {
     const path = url.pathname;
 
     try {
+      if (path.startsWith('/api/rpg/')) {
+        return await handleRpg(request, env, path);
+      }
       if (path === '/api/sync' && request.method === 'POST') {
         return await handleSync(request, env);
       }
