@@ -126,7 +126,7 @@
         <label class="switch"><input type="checkbox" id="tradeoff" checked> 크기–속도 트레이드오프 (클수록 느림)</label>
         <label class="switch"><input type="checkbox" id="preyAI" checked> 도주 AI (포식자를 감지하면 피함)</label>
         <label class="switch"><input type="checkbox" id="senseCost" checked> 감지 비용 (감지 거리가 길수록 번식 ↓)</label>
-        <label class="switch"><input type="checkbox" id="showTrace"> 추적선·도주 표시</label>
+        <label class="switch"><input type="checkbox" id="showTrace"> 추적선·도주(주황)·피신(초록) 표시</label>
       </div>
 
       <div class="card">
@@ -168,32 +168,48 @@
       constructor(x, y, radius, gen, sense = 80) {
         this.x = x; this.y = y; this.radius = radius; this.gen = gen; this.sense = sense;
         this.angle = Math.random() * Math.PI * 2;
-        this.fleeing = false;
+        this.fleeing = false; this.sheltering = false;
+        this.alarm = 0;                                   // 포식자를 마지막으로 본 뒤 경계 상태로 남는 프레임 수 (기억)
       }
       get speed() { return cfg.tradeoff ? 30 / Math.sqrt(this.radius + 4) : 6; }   // r=10 → 8, r=30 → 5, r=80 → 3.3
       get birthChance() { return cfg.senseCost ? cfg.birthRate * Math.max(0.2, 1 - this.sense / 500) : cfg.birthRate; }
+      get inSafe() { return cfg.safeOn && (this.x - safe.x) ** 2 + (this.y - safe.y) ** 2 < cfg.safeRadius * cfg.safeRadius; }
       step() {
-        this.fleeing = false;
+        this.fleeing = false; this.sheltering = false;
+        let near = null;
         if (cfg.preyAI) {
-          // 감지 거리 안의 가장 가까운 포식자에게서 멀어지는 방향으로 (안전지대가 켜져 있고 가까우면 그쪽으로 꺾음)
-          let near = null, nd = this.sense * this.sense;
+          let nd = this.sense * this.sense;
           for (const q of predators) { const d = (q.x - this.x) ** 2 + (q.y - this.y) ** 2; if (d < nd) { nd = d; near = q; } }
-          if (near) {
-            let ax = this.x - near.x, ay = this.y - near.y;
-            if (cfg.safeOn) {
-              const sx = safe.x - this.x, sy = safe.y - this.y, sd = Math.hypot(sx, sy);
-              if (sd < cfg.safeRadius * 2.5 && sd > 1) { ax += sx / sd * 1.2; ay += sy / sd * 1.2; }   // 도망 방향 + 안전지대 방향 섞기
-            }
-            const want = Math.atan2(ay, ax);
-            let diff = ((want - this.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-            this.angle += Math.sign(diff) * Math.min(0.6, Math.abs(diff));   // 회전 속도 제한
-            this.fleeing = true;
-          }
         }
-        if (!this.fleeing) this.angle += (Math.random() - 0.5) * 1.2;   // 위협이 없으면 방향을 조금씩 바꾸는 랜덤 워크
-        const v = this.speed * (this.fleeing ? 1.25 : 1);               // 도주 중엔 잠깐 힘을 냄
+        const steer = (want, max) => { let diff = ((want - this.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI; this.angle += Math.sign(diff) * Math.min(max, Math.abs(diff)); };
+        if (near) this.alarm = 90; else if (this.alarm > 0) this.alarm--;
+        const wasInSafe = this.inSafe;
+        if ((near || this.alarm > 0) && wasInSafe) {
+          // 안전지대 안에서 위협을 느끼면: 밖으로 도망치지 않고 안에 머문다 (가장자리에 가까우면 중심 쪽으로, 아니면 천천히 배회)
+          const sx = safe.x - this.x, sy = safe.y - this.y, sd = Math.hypot(sx, sy);
+          if (sd > cfg.safeRadius * 0.6) steer(Math.atan2(sy, sx), 0.6); else this.angle += (Math.random() - 0.5) * 0.6;
+          this.sheltering = true;                         // 방금 본 포식자를 기억하는 동안(alarm)에는 밖으로 나가지 않는다
+        } else if (near || (this.alarm > 0 && cfg.safeOn)) {
+          // 밖에서 위협을 느끼거나 방금 봤으면: 포식자 반대 방향 (없으면 마지막 위협 무시하고 안전지대 방향만)
+          // 밖에서 위협을 느끼면: 포식자 반대 방향. 안전지대가 감지 거리 안이면 그쪽으로 강하게 꺾는다 (안전한 곳임을 안다)
+          let ax = 0, ay = 0;
+          if (near) { ax = this.x - near.x; ay = this.y - near.y; const al = Math.hypot(ax, ay) || 1; ax /= al; ay /= al; }
+          if (cfg.safeOn) {
+            const sx = safe.x - this.x, sy = safe.y - this.y, sd = Math.hypot(sx, sy);
+            if (sd < this.sense + cfg.safeRadius && sd > 1) { ax += sx / sd * 1.6; ay += sy / sd * 1.6; }
+          }
+          if (ax || ay) { steer(Math.atan2(ay, ax), 0.6); this.fleeing = true; }
+          else this.angle += (Math.random() - 0.5) * 1.2;
+        } else {
+          this.angle += (Math.random() - 0.5) * 1.2;   // 위협이 없으면 방향을 조금씩 바꾸는 랜덤 워크 (안전지대 안팎을 자유롭게 오감)
+        }
+        const v = this.speed * (this.fleeing ? 1.25 : this.sheltering ? 0.6 : 1);   // 도주 중엔 잠깐 힘을 내고, 피신 중엔 느긋하게
         this.x += Math.cos(this.angle) * v;
         this.y += Math.sin(this.angle) * v;
+        if (this.sheltering && !this.inSafe) {          // 피신 중에 가장자리를 넘었으면 다시 안으로
+          const sx = this.x - safe.x, sy = this.y - safe.y, sd = Math.hypot(sx, sy) || 1, r = cfg.safeRadius - 1;
+          this.x = safe.x + sx / sd * r; this.y = safe.y + sy / sd * r; this.angle = Math.atan2(-sy, -sx);
+        }
         if (this.x < this.radius || this.x > W - this.radius) { this.angle = Math.PI - this.angle; this.x = clamp(this.x, this.radius, W - this.radius); }
         if (this.y < this.radius || this.y > H - this.radius) { this.angle = -this.angle; this.y = clamp(this.y, this.radius, H - this.radius); }
       }
@@ -329,7 +345,7 @@
       // 피식자: 크기에 따라 색을 살짝 바꿔(작음=하늘, 큼=남색) 분포가 한눈에 보이게
       for (const p of prey) {
         const t = clamp((p.radius - 4) / 60, 0, 1);
-        ctx.fillStyle = p.fleeing && cfg.showTrace ? '#f2a93b' : `hsl(${215 - t * 20} ${70 - t * 20}% ${62 - t * 30}%)`;   // 도주 중이면 주황
+        ctx.fillStyle = cfg.showTrace && p.fleeing ? '#f2a93b' : cfg.showTrace && p.sheltering ? '#2eaa5a' : `hsl(${215 - t * 20} ${70 - t * 20}% ${62 - t * 30}%)`;   // 도주 중 주황, 피신 중 초록
         ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
       }
       if (cfg.predAI && cfg.showTrace) {                    // 추적 중인 목표까지 얇은 선
