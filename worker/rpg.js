@@ -23,6 +23,7 @@
  *   GET  /api/rpg/battles/:id?token=             (재접속)
  *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 전투 삭제, 패배 아님)
  *   POST /api/rpg/rooms                          { charId, token }            → { code, roomToken, state }
+ *   POST /api/rpg/match                          { charId, token }            → 랜덤 대전: 기다리는 공개 방이 있으면 들어가 바로 시작, 없으면 공개 방을 만들고 대기
  *   POST /api/rpg/rooms/:code/join               { charId, token }            (같은 캐릭터가 다시 오면 기존 자리로 재접속)
  *   GET  /api/rpg/rooms/:code?token=
  *   POST /api/rpg/rooms/:code/start              { token }                    (방장, 2명 이상)
@@ -117,6 +118,7 @@ export async function handleRpg(request, env, path) {
     if (sub === 'narrate' && m === 'POST') return narrateBattle(id, body, env);
   }
   if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env);
+  if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env);
   if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave|narrate))?$/))) {
     const [, code, sub] = mm;
     if (!sub && m === 'GET') return getRoom(code, url.searchParams.get('token'), env);
@@ -618,14 +620,32 @@ function pub(s, slot) {
   const firstAt = Math.min(...Object.values(s.moves).map(m => m.at || Infinity));
   return { ...rest, you: slot, moves, myMove: s.moves[slot] || null, waitingSince: Number.isFinite(firstAt) ? firstAt : null, max: ROOM_MAX };
 }
-async function createRoom(body, env) {
+async function createRoom(body, env, isPublic = false) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_rooms WHERE updated < ?').bind(Date.now() - ROOM_TTL).run();
   const code = code6(), rt = uid(), now = Date.now();
-  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, round: 0, moves: {}, log: [], status: 'waiting', winner: null };
+  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined };
   await env.DB.prepare('INSERT INTO rpg_rooms (code, created, updated, state) VALUES (?, ?, ?, ?)').bind(code, now, now, JSON.stringify(s)).run();
   return json({ code, roomToken: rt, slot: 1, state: pub(s, 1) });
+}
+// 랜덤 대전(1:1): 최근 2분 안에 만들어진 공개 대기 방 중 하나에 들어가 바로 시작. 없으면 공개 방을 만들고 기다린다 (방장 시작 불필요)
+const MATCH_FRESH_MS = 2 * 60e3;
+async function matchRoom(body, env) {
+  const c = await loadChar(env, body.charId, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  const rows = await env.DB.prepare('SELECT code, state, updated FROM rpg_rooms WHERE updated > ? ORDER BY updated ASC LIMIT 30').bind(Date.now() - MATCH_FRESH_MS).all();
+  for (const row of (rows?.results || [])) {
+    const s = JSON.parse(row.state);
+    if (!s.public || s.status !== 'waiting' || Object.keys(s.p).length !== 1) continue;
+    if (s.p[1].char.id === c.id) return json({ code: s.code, roomToken: s.tokens[1], slot: 1, state: pub(s, 1), rejoined: true });   // 내가 만든 대기 방
+    const rt = uid();
+    s.p[2] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[2] = rt;
+    s.status = 'playing'; s.round = 1;   // 둘이 모이면 바로 시작
+    if (await saveRoom(env, s.code, s, row.updated)) return json({ code: s.code, roomToken: rt, slot: 2, state: pub(s, 2), matched: true });
+    // 동시에 다른 사람이 들어갔으면 다음 방으로
+  }
+  return createRoom(body, env, true);
 }
 async function joinRoom(code, body, env) {
   const c = await loadChar(env, body.charId, body.token);
@@ -637,6 +657,7 @@ async function joinRoom(code, body, env) {
   const mine = Object.keys(s.p).find(k => s.p[k].char.id === c.id);
   if (mine) return json({ code, roomToken: s.tokens[mine], slot: Number(mine), state: pub(s, Number(mine)), rejoined: true });
   if (s.status !== 'waiting') return json({ error: 'started' }, 409);
+  if (s.public) return json({ error: 'no_room' }, 404);   // 랜덤 매칭용 공개 방은 코드로 못 들어감
   if (Object.keys(s.p).length >= ROOM_MAX) return json({ error: 'full' }, 409);
   const slot = [1, 2, 3, 4, 5, 6].find(k => !s.p[k]), rt = uid();
   s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt;
@@ -647,7 +668,9 @@ async function getRoom(code, t, env) {
   const r = await loadRoom(env, code);
   if (!r) return json({ error: 'no_room' }, 404);
   const slot = slotOf(r.s, t);
-  return slot ? json({ state: pub(r.s, slot) }) : json({ error: 'forbidden' }, 403);
+  if (!slot) return json({ error: 'forbidden' }, 403);
+  if (r.s.public && r.s.status === 'waiting' && Date.now() - r.v > 45e3) await saveRoom(env, code, r.s, r.v);   // 대기 중인 공개 방은 폴링으로 살아 있음을 갱신 (매칭 후보 유지)
+  return json({ state: pub(r.s, slot) });
 }
 async function startRoom(code, body, env) {
   const r = await loadRoom(env, code);

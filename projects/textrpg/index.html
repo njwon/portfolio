@@ -132,7 +132,7 @@
             </div>
             <div class="div-group">
                 <label for="char-setting">캐릭터 설정 <span class="hint">(200자 · 앞뒤가 맞고 한계가 분명할수록 기술이 안정적으로 발동합니다. "뭐든 다 한다"는 불안정)</span></label>
-                <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 복싱를 배워 잽을 날ㄴ릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
+                <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 복싱를 배워 잽을 날릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
             <p class="status" id="createStatus"></p>
@@ -177,7 +177,7 @@
                 <h3>온라인 대전 (2~6명)</h3>
                 <p class="meta">방을 만들어 코드를 알려주거나, 받은 코드로 들어갑니다. 방장이 시작하면 라운드마다 각자 <b>공격 대상</b>을 고르고 행동을 말로 선언합니다. 전원이 내면 심사관이 판정하고 규칙 엔진이 주사위를 굴린 뒤 게임 마스터가 서술합니다 (라운드당 무료 몽상 1회). 마지막까지 서 있는 사람이 승리.</p>
             </div>
-            <div class="btn-row"><button id="btnRoomCreate">방 만들기</button></div>
+            <div class="btn-row"><button id="btnMatch">랜덤 대전 (1:1)</button><button id="btnRoomCreate">방 만들기 (2~6명)</button></div>
             <div class="div-group" style="margin-top:16px">
                 <label for="roomCodeInput">코드로 참가</label>
                 <input type="text" id="roomCodeInput" maxlength="6" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:.3em">
@@ -459,6 +459,10 @@
         $('lobbyStatus').textContent = '방 만드는 중…';
         try { enterRoom(await api('/api/rpg/rooms', { charId: me.id, token: myToken })); } catch (e) { $('lobbyStatus').textContent = errMsg(e); }
     });
+    $('btnMatch').addEventListener('click', async () => {
+        $('lobbyStatus').textContent = '상대를 찾는 중…';
+        try { enterRoom(await api('/api/rpg/match', { charId: me.id, token: myToken })); } catch (e) { $('lobbyStatus').textContent = errMsg(e); }
+    });
     $('btnRoomJoin').addEventListener('click', async () => {
         const code = $('roomCodeInput').value.trim().toUpperCase();
         if (code.length !== 6) return $('lobbyStatus').textContent = '6자리 코드를 입력하세요.';
@@ -469,7 +473,7 @@
     function enterRoom(d) {
         room = { code: d.code, token: d.roomToken, slot: d.slot, state: d.state }; renderedRounds = 0; target = null; pollFails = 0;
         saveSess({ room: { code: d.code, token: d.roomToken, slot: d.slot } });
-        $('roomCode').textContent = d.code; $('oLog').innerHTML = ''; $('oResult').style.display = 'none'; $('oStatus').textContent = '';
+        $('roomCode').textContent = d.state.public ? '랜덤 대전' : d.code; $('oLog').innerHTML = ''; $('oResult').style.display = 'none'; $('oStatus').textContent = '';
         show('s-online'); renderRoom(); startPoll();
         if (d.rejoined) $('oStatus').textContent += ' · 다시 접속했습니다.';
     }
@@ -510,7 +514,7 @@
             const p = s.p[k], tags = [k === s.host ? '방장' : '', k === my ? '나' : '', playing && p.hp > 0 ? (s.moves[k] ? '✓ 제출' : (p.afk ? `… 무응답 ${p.afk}회` : '… 고르는 중')) : '', p.left === 'left' ? '🚪 기권' : p.left === 'afk' ? '💤 무응답 기권' : p.hp <= 0 ? '☠ 탈락' : ''].filter(Boolean).join(' · ');
             return `<div class="card c${k}${k === my ? ' me' : ''}${p.hp <= 0 ? ' dead' : ''}"><span class="badge">${tags}</span>${cardHtml(p, k !== my)}</div>`;
         }).join('');
-        $('oHostRow').style.display = waiting && my === s.host ? '' : 'none';
+        $('oHostRow').style.display = waiting && my === s.host && !s.public ? '' : 'none';
         $('btnOStart').disabled = slots.length < 2;
         const submitted = !!s.myMove, iAmAlive = mine.hp > 0, canAct = playing && iAmAlive && !submitted;
         // 대상 선택 (살아 있는 다른 플레이어)
@@ -537,7 +541,8 @@
         const missing = alive.filter(k => !s.moves[k]);
         const overdue = playing && s.waitingSince && Date.now() - s.waitingSince > 60000 && missing.length > 0;
         $('btnOSkip').style.display = overdue ? '' : 'none';
-        if (waiting) $('oStatus').textContent = my === s.host ? `${slots.length}명 입장 · 코드를 알려주고 2명 이상 모이면 시작을 누르세요 (최대 ${s.max || 6}명)` : `${slots.length}명 입장 · 방장이 시작하기를 기다리는 중…`;
+        if (waiting && s.public) $('oStatus').textContent = '랜덤 상대를 찾는 중… 다른 사람이 랜덤 대전을 누르면 바로 시작됩니다 (나가기로 취소)';
+        else if (waiting) $('oStatus').textContent = my === s.host ? `${slots.length}명 입장 · 코드를 알려주고 2명 이상 모이면 시작을 누르세요 (최대 ${s.max || 6}명)` : `${slots.length}명 입장 · 방장이 시작하기를 기다리는 중…`;
         else if (s.status === 'finished') {
             stopPoll(); $('oResult').style.display = '';
             saveSess(null);

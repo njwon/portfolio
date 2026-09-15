@@ -13,6 +13,8 @@ html {
 body {
     margin: 0;
     padding: 0;
+    word-break: keep-all;           /* 한글도 단어(띄어쓰기) 단위로만 줄바꿈 */
+    overflow-wrap: break-word;      /* 칸보다 긴 한 단어만 예외적으로 끊음 */
     overflow: hidden;
     overflow: clip;                 /* hidden 은 iOS 에서 포커스·scrollIntoView 로 밀릴 수 있음. clip 은 아예 스크롤 불가 */
     overscroll-behavior: none;
@@ -563,7 +565,7 @@ video {
     font-size: 2rem;
     font-weight: 700;
     line-height: 1;
-    word-break: break-all;
+    word-break: keep-all;
     color: #212529;
 }
 
@@ -640,7 +642,7 @@ video {
     table-layout: fixed;            /* Firefox: 자동 배치는 셀 안 100% 사진의 원본 폭(600px)만큼 표를 키워 박스 밖으로 넘침 */
     unicode-bidi: isolate;
     border-spacing: 2px;
-    word-break: break-all;
+    word-break: keep-all;
     position: relative;
 }
 
@@ -651,7 +653,7 @@ video {
     border-color: inherit;
     border-collapse: collapse;
     border-spacing: 2px;
-    word-break: break-all;
+    word-break: keep-all;
 }
 
 .tr {
@@ -660,7 +662,7 @@ video {
     border-collapse: collapse;
     text-indent: 0;
     border-spacing: 2px;
-    word-break: break-all;
+    word-break: keep-all;
     line-height: 1.5;
 }
 
@@ -677,7 +679,7 @@ video {
     border-collapse: collapse;
     text-indent: 0;
     border-spacing: 2px;
-    word-break: break-all;
+    word-break: keep-all;
     line-height: 1.5;
 }
 
@@ -693,7 +695,7 @@ video {
     border-collapse: collapse;
     text-indent: 0;
     border-spacing: 2px;
-    word-break: break-all;
+    word-break: keep-all;
     line-height: 1.5;
 }
 
@@ -723,7 +725,7 @@ video {
     border-collapse: collapse;
     text-indent: 0;
     border-spacing: 2px;
-    word-break: break-all;
+    word-break: keep-all;
     line-height: 1.5;
 }
 
