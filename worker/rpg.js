@@ -340,7 +340,7 @@ const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 여러 
 {"p1":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."},"p2":{...}}`;
 
 const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1라운드의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술만 하세요.
-주어진 사실(행동 순서, 심사관 판정, 누가 누구를 노렸는지, 명중/빗나감/크리티컬/방어/피해, 쓰러진 사람)을 정확히 반영해 4~7문장으로 생생하게. 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
+주어진 사실(행동 순서, 심사관 판정, 누가 누구를 노렸는지, 명중/빗나감/크리티컬/방어/피해, 쓰러진 사람)을 정확히 반영해 4~7문장으로 생생하게. 현재 라운드 번호와 직전 라운드 요약이 주어지면 그 흐름을 이어서 서술하세요(2라운드 이후엔 전투 시작 장면을 다시 쓰지 말 것). 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
 반드시 이 JSON 하나만 출력: {"narration":"..."}`;
 
 // ─── 규칙 엔진 ───────────────────────────────────────────────────────
@@ -451,7 +451,8 @@ function charLine(k, p, act, names) {
   return `[p${k}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult.name}: ${p.char.ult.effect}
 행동: ${actLabel(act.type)}${tgt} / 선언: "${act.text || '기본 공격'}"`;
 }
-async function runRound(env, ip, players, acts) {
+// ctx: { round, prev } — 라운드 번호와 직전 라운드 요약을 GM 에게 넘겨 "첫 라운드"라고 반복하지 않게 한다
+async function runRound(env, ip, players, acts, ctx = {}) {
   const names = {}; for (const k in players) if (players[k]) names[k] = players[k].char.name;
   const slots = aliveSlots(players);
   const judge = {}; for (const k of slots) judge[k] = { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
@@ -470,7 +471,8 @@ async function runRound(env, ip, players, acts) {
   }
   const res = resolveRound(players, acts, judge);
   let narration = templateNarration(names, res.events);
-  const narrateUser = slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
+  const head = ctx.round ? `현재 ${ctx.round}라운드${ctx.round === 1 ? ' (전투 시작)' : ' (전투는 이미 진행 중 — "첫 라운드"·"전투가 시작되자" 같은 표현 금지)'}${ctx.prev ? `\n직전 라운드 요약: ${ctx.prev}` : ''}\n\n` : '';
+  const narrateUser = head + slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
     + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
   const r2 = await aiCall(env, ip, SYS_NARRATE, narrateUser, 0.9);
   if (r2.ok) { provider = provider || r2.provider; if (r2.parsed?.narration) { narration = safeHtml(r2.parsed.narration); usedAi = true; } }
@@ -617,7 +619,8 @@ async function battleTurn(id, body, env, ip) {
   const lock = await env.DB.prepare('UPDATE rpg_battles SET updated = ? WHERE id = ? AND updated = ?').bind(Date.now(), id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
   const actMe = { ...parseAct(body), target: 2, local: body.local }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
-  const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe });
+  const prevLog = st.log[st.log.length - 1];
+  const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '' });
   delete actMe.local;
   st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser });
   if (st.log.length > 40) st.log.shift();
@@ -752,7 +755,8 @@ async function settleRoom(env, ip, code, s, v, slot) {
   if (!v2) return json({ error: 'retry' }, 409);
   let quotaBlocked = null;
   if (alive.length > 1) {
-    const t = await runRound(env, ip, s.p, s.moves);
+    const prevLog = s.log[s.log.length - 1], nm = {}; for (const k in s.p) nm[k] = s.p[k].char.name;
+    const t = await runRound(env, ip, s.p, s.moves, { round: s.round, prev: prevLog ? factsText(nm, prevLog.events).replace(/\n/g, ' / ') : '' });
     const acts = {}; for (const k in s.moves) { const { local, ...a } = s.moves[k]; acts[k] = a; }
     s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser });
     if (s.log.length > 40) s.log.shift();

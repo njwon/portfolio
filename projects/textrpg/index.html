@@ -39,11 +39,12 @@
             100% { box-shadow: inset 2px 0.5px 2px #ea36af, inset -1px -0.5px 2px #75fa69; text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69; }
         }
         /* 테두리가 있는 모든 요소에 상자 깜빡임(box-shadow) — 글자 깜빡임은 .main-container * 로 전부 적용됨 */
-        .card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, .btn-row button { animation-name: boxflicker; }
+        .card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, .btn-row button, .main-container textarea, .hint kbd { animation-name: boxflicker; }
         .main-container { width: min(920px, 94vw); margin: 0 auto; padding: 8px 0 60px; position: relative; filter: blur(0.6px); }
         ::-webkit-scrollbar { display: none; }
         /* 노이즈: 3MB tenor GIF + 전체화면 blur 대신 SVG feTurbulence 한 장(수백 바이트, 필터 없음). 보이는 정도(불투명도 3%)는 같다 */
-        .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.2 0 0 0 0 0.7 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 300px 300px; }
+        .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.2 0 0 0 0 0.7 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 300px 300px; animation: noiseflicker 0.3s steps(2, jump-none) infinite alternate; }   /* 불투명도만 바꿔 GPU 합성으로 지직거림 */
+        @keyframes noiseflicker { from { opacity: 0.035; } to { opacity: 0.07; } }
         /* 모바일·터치 기기: 깜빡임을 steps(2) 로(프레임마다가 아니라 초당 4번만 바뀜). blur 는 유지하되 컨테이너를 별도 레이어로 올려 GPU 에서 합성 */
         @media (hover: none), (max-width: 768px) {
             .main-container { will-change: transform; transform: translateZ(0); }
@@ -75,7 +76,7 @@
         .full { width: 100%; }
 
         /* 한도 표시줄 */
-        .quota { position: sticky; top: 0; z-index: 2; background: #1d1d1dee; border: 0.5px dashed #eee; border-radius: 4px; padding: 8px 12px; font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .quota { position: relative; z-index: 2; background: #1d1d1dee; border: 0.5px dashed #eee; border-radius: 4px; padding: 8px 12px; font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
         .quota .bar { flex: 1 1 160px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
         .quota .bar i { display: block; height: 100%; background: #75fa69; width: 0; transition: width .4s; }
         .quota.low .bar i { background: #ea36af; }
