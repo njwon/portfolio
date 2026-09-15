@@ -62,11 +62,13 @@ const PROVIDERS = [
   // gemini-3.5-flash 는 생각을 끌 수 없어 답이 잘림(230/일뿐이라 제외). Gemma 4 도 생각을 끌 수 없지만 한도가 커서 크게 받고 잘라 씀 (12~25초)
   { id: 'gemma4', name: 'Gemini Gemma 4 26B', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemma-4-26b-a4b-it', daily: 6000, noSystem: true, maxTokens: 1800, timeout: 45e3 },   // 문서상 14,400 이나 보수적으로
   { id: 'openrouter', name: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'nvidia/nemotron-3-super-120b-a12b:free', daily: 45, extra: { models: ['nvidia/nemotron-3-super-120b-a12b:free', 'nvidia/nemotron-3.5-lightning:free', 'google/gemma-4-26b-a4b-it:free'], reasoning: { enabled: false } } },
-  { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'qwen-3.8-27b', daily: 700, extra: { reasoning_effort: 'none' } },
+  // Cerebras 는 2026-09 현재 무료 티어 없음(PayGo, 잔액 0 이면 402) → 크레딧을 넣을 때만 아래 줄을 살린다
+  // { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'qwen-3.8-27b', daily: 3000, extra: { reasoning_effort: 'none' } },
   { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000 },
 ];
-const failedAt = {};   // 제공자별 마지막 실패 시각 (10분간 건너뜀)
-const PROVIDER_COOLDOWN = 10 * 60e3;
+const failedAt = {};   // 제공자별 { at, until } — 실패 뒤 until 까지 건너뜀 (일시 오류 10분, 결제·플랜 미활성(402, 한도 0) 6시간)
+const PROVIDER_COOLDOWN = 10 * 60e3, PLAN_COOLDOWN = 6 * 3600e3;
+const paused = id => !!failedAt[id] && Date.now() < failedAt[id].until;
 const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODELS[0].nout);   // ≈ 24
 const DAILY_BUDGET = 9000, PER_IP_DAILY = 80;   // 턴당 최대 2회(심사+서술) → IP 당 하루 40턴
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
@@ -130,7 +132,8 @@ async function quota(env, ip) {
   const providers = PROVIDERS.map(p => {
     if (p.kind === 'cf') return { id: p.id, name: p.name, configured: !!env.AI, limit: Math.floor(DAILY_BUDGET / perCall), used: g?.requests ?? 0, remaining: remaining < MAX_NEURONS_PER_CALL ? 0 : Math.floor(remaining / perCall) };
     const u = usedBy[p.id] ?? 0;
-    return { id: p.id, name: p.name, configured: !!env[p.key], limit: p.daily, used: u, remaining: Math.max(0, p.daily - u) };
+    // 쿨다운 중(결제 미활성 등)이면 남은 횟수를 0 으로 보여 준다 — 활성화되면 쿨다운이 끝난 뒤 자동 합류
+    return { id: p.id, name: p.name, configured: !!env[p.key], limit: p.daily, used: u, remaining: paused(p.id) ? 0 : Math.max(0, p.daily - u), paused: paused(p.id) || undefined };
   });
   const active = providers.find(p => p.configured && p.remaining > 0);
   const estCalls = providers.reduce((n, p) => n + (p.configured ? p.remaining : 0), 0);
@@ -168,7 +171,7 @@ async function aiCall(env, ip, system, user, temperature) {
   if (q.ip.remaining <= 0) return { ok: false, reason: 'ip' };
   let tried = 0;
   for (const p of q.providers) {
-    if (!p.configured || p.remaining <= 0 || (failedAt[p.id] && Date.now() - failedAt[p.id] < PROVIDER_COOLDOWN)) continue;
+    if (!p.configured || p.remaining <= 0 || paused(p.id)) continue;
     await bump(env, q.day, ip, p.id, +1);
     try {
       const out = await ask(env, PROVIDERS.find(x => x.id === p.id), system, user, temperature);
@@ -177,7 +180,10 @@ async function aiCall(env, ip, system, user, temperature) {
     } catch (e) {
       await bump(env, q.day, ip, p.id, -1);
       // 지역 불가(Gemini, 송신 지점에 따라 간헐적)는 쿨다운 없이 다음 제공자로 — 다음 호출은 다른 지점에서 나가 성공할 수 있다
-      if (!/User location/i.test(e.message) && (p.id !== 'cf' || !/quota|limit|429/i.test(e.message))) failedAt[p.id] = Date.now();
+      if (!/User location/i.test(e.message) && (p.id !== 'cf' || !/quota|limit|429/i.test(e.message))) {
+        const plan = / 402 |payment_required|limit-req-minute: 0|"code":"1300"/i.test(e.message);   // 결제·플랜 문제 → 길게 쉼
+        failedAt[p.id] = { at: Date.now(), until: Date.now() + (plan ? PLAN_COOLDOWN : PROVIDER_COOLDOWN), why: e.message.slice(0, 120) };
+      }
       if (++tried >= 3) break;
     }
   }
