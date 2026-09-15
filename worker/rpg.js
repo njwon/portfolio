@@ -21,7 +21,8 @@
  *   POST /api/rpg/rooms                          { charId, token }            → { code, roomToken, state }
  *   POST /api/rpg/rooms/:code/join               { charId, token }
  *   GET  /api/rpg/rooms/:code?token=
- *   POST /api/rpg/rooms/:code/action             { token, type, text }        (둘 다 내면 판정 + 서술 1회)
+ *   POST /api/rpg/rooms/:code/start              { token }                    (방장, 2명 이상)
+ *   POST /api/rpg/rooms/:code/action             { token, type, text, target } | { token, skip: true }   (전원 제출 시 판정)
  */
 
 // 모델 후보 (앞에서부터 시도, 계정에서 막힌 모델(5018)이면 다음으로). 뉴런 = 달러 / 0.011 per 1k 뉴런
@@ -57,10 +58,11 @@ export async function handleRpg(request, env, path) {
   if (path === '/api/rpg/battles' && m === 'POST') return createBattle(body, env);
   if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})\/turn$/)) && m === 'POST') return battleTurn(mm[1], body, env, ip);
   if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env);
-  if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action))?$/))) {
+  if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start))?$/))) {
     const [, code, sub] = mm;
     if (!sub && m === 'GET') return getRoom(code, url.searchParams.get('token'), env);
     if (sub === 'join' && m === 'POST') return joinRoom(code, body, env);
+    if (sub === 'start' && m === 'POST') return startRoom(code, body, env);
     if (sub === 'action' && m === 'POST') return roomAction(code, body, env, ip);
   }
   return json({ error: 'Not Found' }, 404);
@@ -114,8 +116,9 @@ function lenientJson(text) {
   const nm = t.match(/"narration"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/);           // 2) 서술: 값을 통째로 회수
   if (nm) return { narration: nm[1].replace(/\\"/g, '"') };
   const out = {}; let any = false;                                          // 3) 심사: 필드별 회수
-  for (const k of ['p1', 'p2']) {
-    const seg = t.match(new RegExp('"' + k + '"\\s*:\\s*\\{([\\s\\S]*?)\\}\\s*(?:,\\s*"p2"|\\}\\s*$)'));
+  for (let i = 1; i <= 6; i++) {
+    const k = 'p' + i;
+    const seg = t.match(new RegExp('"' + k + '"\\s*:\\s*\\{([\\s\\S]*?)\\}\\s*(?:,\\s*"p' + (i + 1) + '"|\\}\\s*$)'));
     if (!seg) continue;
     const g = seg[1], f = re => (g.match(re) || [])[1];
     out[k] = { allowed: f(/"allowed"\s*:\s*(true|false)/) !== 'false', difficulty: f(/"difficulty"\s*:\s*"(\w+)"/), fit: Number(f(/"fit"\s*:\s*([\d.]+)/)), verdict: (f(/"verdict"\s*:\s*"([\s\S]*?)"\s*$/) || '').slice(0, 300) };
@@ -151,18 +154,18 @@ const SYS_JUDGE = `당신은 텍스트 RPG 캐릭터 심사관입니다. 사용�
 어떤 설정이든 거절하지 말고 반드시 이 JSON 하나만 출력:
 {"concept":"...","alloc":{"atk":0,"hp":0,"def":0,"spd":0,"acc":0,"eva":0},"coherence":0,"ult":{"name":"...","effect":"...","style":"burst"}}`;
 
-const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 두 플레이어가 말로 선언한 이번 턴 행동을 각자의 캐릭터 설정에 비추어 심사합니다. 성공 여부와 피해는 주사위와 규칙이 정하므로 당신은 아래만 정합니다.
-각 플레이어에 대해:
+const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 여러 플레이어가 말로 선언한 이번 라운드 행동을 각자의 캐릭터 설정에 비추어 심사합니다. 성공 여부와 피해는 주사위와 규칙이 정하므로 당신은 아래만 정합니다.
+각 플레이어(p1, p2, …)에 대해:
 - allowed: 게임 안에서 시도 가능한 행동인지 (true/false). 메타 발언("내가 이겼다", "상대 HP 0"), 규칙 조작, 행동이 아닌 말은 false.
 - difficulty: 그 캐릭터의 설정으로 그 행동을 해낼 난이도. easy(설정에 딱 맞는 특기) / normal(할 법한 행동) / hard(설정에 없거나 무리한 시도) / impossible(설정상 절대 불가, 예: 평범한 학생이 운석 소환).
 - fit 0.0~1.0: 행동 문장이 캐릭터 설정·필살기와 어울리는 정도.
 - verdict: 판정 근거를 캐릭터 설정을 인용해 한두 문장으로. 심사관 말투(간결, 존댓말).
 문장이 비었거나 '기본 공격'이면 allowed true, difficulty normal, fit 0.5, verdict "기본 공격으로 진행합니다."
-반드시 이 JSON 하나만 출력:
-{"p1":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."},"p2":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."}}`;
+반드시 플레이어 수만큼 키를 넣은 이 JSON 하나만 출력:
+{"p1":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."},"p2":{...}}`;
 
-const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1턴의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술만 하세요.
-주어진 사실(선공, 심사관 판정, 명중/빗나감/크리티컬/방어/피해)을 정확히 반영해 4~6문장으로 생생하게. 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 한 번씩 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
+const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1라운드의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술만 하세요.
+주어진 사실(행동 순서, 심사관 판정, 누가 누구를 노렸는지, 명중/빗나감/크리티컬/방어/피해, 쓰러진 사람)을 정확히 반영해 4~7문장으로 생생하게. 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
 반드시 이 JSON 하나만 출력: {"narration":"..."}`;
 
 // ─── 규칙 엔진 ───────────────────────────────────────────────────────
@@ -188,29 +191,34 @@ const ULT_COST = 3;
 
 // 한 턴 판정. a/b = { char, hp, gauge, guard }, act = { type: 'attack'|'ult'|'defend', text }
 const DIFF_MOD = { easy: 0.10, normal: 0, hard: -0.15, impossible: -1 };
-// judge = { 1: {allowed, difficulty, fit}, 2: {...} } — 심사관 판정. 없으면 중립
-function resolveTurn(a, b, actA, actB, judge = {}) {
-  const jA = judge[1] || {}, jB = judge[2] || {};
-  const first = a.char.stats.spd + rnd() * 30 >= b.char.stats.spd + rnd() * 30 ? 'a' : 'b';
-  const order = first === 'a' ? [[a, b, actA, jA, 1], [b, a, actB, jB, 2]] : [[b, a, actB, jB, 2], [a, b, actA, jA, 1]];
+const aliveSlots = players => Object.keys(players).map(Number).filter(k => players[k] && players[k].hp > 0);
+
+// 한 라운드 판정 (N명). players = { slot: {char, hp, gauge, guard} }, acts = { slot: {type, text, target} }, judge = { slot: {allowed, difficulty, fit} }
+// 대상(target)이 없거나 죽었으면 살아 있는 다른 사람 중 무작위. 행동 순서 = 속도 + 주사위.
+function resolveRound(players, acts, judge = {}) {
+  const slots = aliveSlots(players);
+  const order = slots.map(k => [k, players[k].char.stats.spd + rnd() * 30]).sort((x, y) => y[1] - x[1]).map(x => x[0]);
   const events = [];
-  // 방어 선언은 행동 순서와 무관하게 이번 턴 내내 유효
-  if (actA.type === 'defend') a.guard = true; if (actB.type === 'defend') b.guard = true;
-  for (const [me, foe, act, j, who] of order) {
-    if (me.hp <= 0) continue;
+  for (const k of slots) if ((acts[k] || {}).type === 'defend') players[k].guard = true;   // 방어 선언은 라운드 내내 유효
+  for (const k of order) {
+    const me = players[k]; if (me.hp <= 0) continue;
+    const act = acts[k] || { type: 'attack' }, j = judge[k] || {};
     const fit = num(j.fit, 0, 1, 0.5), diff = DIFF_MOD[j.difficulty] ?? 0, allowed = j.allowed !== false;
-    if (act.type === 'defend') { me.gauge = Math.min(ULT_COST, me.gauge + 2); events.push({ who, type: 'defend' }); continue; }
+    if (act.type === 'defend') { me.gauge = Math.min(ULT_COST, me.gauge + 2); events.push({ who: k, type: 'defend' }); continue; }
+    const others = aliveSlots(players).filter(x => x !== k);
+    if (!others.length) break;
+    const tk = others.includes(Number(act.target)) ? Number(act.target) : others[Math.floor(rnd() * others.length)];
+    const foe = players[tk];
     const isUlt = act.type === 'ult' && me.gauge >= ULT_COST;
-    if (act.type === 'ult' && !isUlt) events.push({ who, type: 'ult_fail' });   // 게이지 부족 → 기본 공격으로
+    if (act.type === 'ult' && !isUlt) events.push({ who: k, type: 'ult_fail' });
     const s = me.char.stats, t = foe.char.stats, style = ULT_STYLES[me.char.ult.style] || ULT_STYLES.burst;
     const acc = s.acc + (isUlt && style.accBonus ? style.accBonus : 0);
-    // 심사관 판정 반영: 불허(allowed=false) → 기본 공격 취급 + 난이도 hard, impossible → 자동 실패
-    const dmod = diff <= -1 ? -1 : (!allowed ? DIFF_MOD.hard : diff);   // 불가능 판정은 불허 여부와 무관하게 자동 실패
+    const dmod = diff <= -1 ? -1 : (!allowed ? DIFF_MOD.hard : diff);   // 불가능 → 자동 실패, 불허 → 기본 공격 + 어려움
     const chance = dmod <= -1 ? 0 : Math.min(0.95, Math.max(0.05, (acc - t.eva) / 100 * s.stability + dmod));
     const hit = rnd() < chance, crit = hit && rnd() < 0.1;
     let dmg = 0;
     if (hit) {
-      dmg = s.atk * (isUlt ? style.mult : 1) * (0.9 + rnd() * 0.2) * (crit ? 1.5 : 1) * (0.85 + fit * 0.3);   // 적합도 ±15%
+      dmg = s.atk * (isUlt ? style.mult : 1) * (0.9 + rnd() * 0.2) * (crit ? 1.5 : 1) * (0.85 + fit * 0.3);
       dmg *= 1 - t.def / 100; if (foe.guard) dmg *= 0.5;
       dmg = Math.max(1, Math.round(dmg));
       foe.hp = Math.max(0, foe.hp - dmg);
@@ -218,64 +226,61 @@ function resolveTurn(a, b, actA, actB, judge = {}) {
       if (isUlt && style.guard) me.guardNext = true;
     }
     if (isUlt) me.gauge -= ULT_COST; else me.gauge = Math.min(ULT_COST, me.gauge + 1);
-    events.push({ who, type: isUlt ? 'ult' : 'attack', hit, crit, dmg, chance: Math.round(chance * 100), guarded: hit && foe.guard, fit, difficulty: allowed ? (j.difficulty || 'normal') : 'denied' });
-    if (foe.hp <= 0) break;
+    events.push({ who: k, target: tk, type: isUlt ? 'ult' : 'attack', hit, crit, dmg, chance: Math.round(chance * 100), guarded: hit && foe.guard, fit, difficulty: allowed ? (j.difficulty || 'normal') : 'denied', killed: foe.hp <= 0 });
+    if (aliveSlots(players).length <= 1) break;
   }
-  a.guard = !!a.guardNext; b.guard = !!b.guardNext; a.guardNext = b.guardNext = false;
-  return { first, events };
+  for (const k of slots) { const p = players[k]; p.guard = !!p.guardNext; p.guardNext = false; }
+  return { order, events };
 }
+const DIFF_KO = { easy: '쉬움', normal: '보통', hard: '어려움', impossible: '불가', denied: '불허' };
 function factsText(names, events) {
   return events.map(e => {
     const n = names[e.who];
     if (e.type === 'defend') return `${n}: 방어 태세 (받는 피해 절반, 게이지 +2)`;
     if (e.type === 'ult_fail') return `${n}: 필살기를 쓰려 했으나 게이지 부족 → 기본 공격`;
-    const k = e.type === 'ult' ? '필살기' : '공격', d = { easy: '쉬움', normal: '보통', hard: '어려움', impossible: '불가', denied: '불허' }[e.difficulty] || '보통';
-    return e.hit ? `${n}: ${k} 명중(${e.chance}%, 난이도 ${d})${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (상대 방어로 절반)' : ''} → 피해 ${e.dmg}` : `${n}: ${k} 실패(명중률 ${e.chance}%, 난이도 ${d})`;
+    const k = e.type === 'ult' ? '필살기' : '공격', d = DIFF_KO[e.difficulty] || '보통';
+    return e.hit ? `${n} → ${names[e.target]}: ${k} 명중(${e.chance}%, 난이도 ${d})${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (상대 방어로 절반)' : ''} → 피해 ${e.dmg}${e.killed ? ' — ' + names[e.target] + ' 쓰러짐' : ''}` : `${n} → ${names[e.target]}: ${k} 실패(명중률 ${e.chance}%, 난이도 ${d})`;
   }).join('\n');
 }
 function templateNarration(names, events) {
   return factsText(names, events).replace(/\n/g, '<br>') + '<br>(게임 마스터의 목소리가 닿지 않아 사실만 기록합니다)';
 }
 
-// 한 턴 = 심사관(AI, 짧음) → 규칙 엔진 → 게임 마스터 서술(AI). 어느 AI 호출이든 실패/한도면 그 단계만 기본값으로 진행.
+// 한 라운드 = 심사관(AI, 짧음) → 규칙 엔진 → 게임 마스터 서술(AI). 어느 AI 호출이든 실패/한도면 그 단계만 기본값으로 진행.
 const actLabel = t => t === 'defend' ? '방어' : t === 'ult' ? '필살기' : '공격';
-function charLine(label, p, act) {
-  return `[${label}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult.name}: ${p.char.ult.effect}
-행동 종류: ${actLabel(act.type)} / 선언: "${act.text || '기본 공격'}"`;
+function charLine(k, p, act, names) {
+  const tgt = act.target && names[act.target] ? ` → 대상: ${names[act.target]}` : '';
+  return `[p${k}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult.name}: ${p.char.ult.effect}
+행동: ${actLabel(act.type)}${tgt} / 선언: "${act.text || '기본 공격'}"`;
 }
-async function runTurn(env, ip, a, b, actA, actB) {
-  const names = { 1: a.char.name, 2: b.char.name };
-  const judge = { 1: { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' }, 2: { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' } };
-  let judgedByAi = false, usedAi = false, quotaBlocked = null;
-  const needJudge = !!(actA.text || actB.text);                     // 둘 다 말이 없으면 심사 생략 (한도 절약)
+async function runRound(env, ip, players, acts) {
+  const names = {}; for (const k in players) if (players[k]) names[k] = players[k].char.name;
+  const slots = aliveSlots(players);
+  const judge = {}; for (const k of slots) judge[k] = { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
+  let usedAi = false, quotaBlocked = null;
+  const needJudge = slots.some(k => acts[k]?.text);
   if (needJudge) {
     const r = await reserve(env, ip);
     if (!r.ok) quotaBlocked = r.reason;
     else try {
-      const { parsed, usage, model } = await ask(env, SYS_JUDGE_ACTION, charLine('플레이어1', a, actA) + '\n\n' + charLine('플레이어2', b, actB), 0.2);
+      const user = slots.map(k => charLine(k, players[k], acts[k] || { type: 'attack' }, names)).join('\n\n');
+      const { parsed, usage, model } = await ask(env, SYS_JUDGE_ACTION, user, 0.2);
       await record(env, usage, model);
-      for (const k of [1, 2]) { const p = parsed?.['p' + k]; if (p) judge[k] = { allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: String(p.verdict || '').slice(0, 300) }; }
-      judgedByAi = !!parsed;
+      for (const k of slots) { const p = parsed?.['p' + k]; if (p) judge[k] = { allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: String(p.verdict || '').slice(0, 300) }; }
     } catch { await refund(env, ip); }
   }
-  const res = resolveTurn(a, b, actA, actB, judge);
+  const res = resolveRound(players, acts, judge);
   let narration = templateNarration(names, res.events);
   const r2 = await reserve(env, ip);
   if (!r2.ok) quotaBlocked = quotaBlocked || r2.reason;
   else try {
-    const user = `${charLine('플레이어1', a, actA)}
-심사관 판정: ${judge[1].allowed ? '' : '불허 — '}${judge[1].verdict || '기본 공격'}
-${charLine('플레이어2', b, actB)}
-심사관 판정: ${judge[2].allowed ? '' : '불허 — '}${judge[2].verdict || '기본 공격'}
-선공: ${res.first === 'a' ? a.char.name : b.char.name}
-[확정된 결과]
-${factsText(names, res.events)}
-남은 HP: ${a.char.name} ${a.hp}/${a.char.stats.hp}, ${b.char.name} ${b.hp}/${b.char.stats.hp}`;
+    const user = slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
+      + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
     const { parsed, usage, model } = await ask(env, SYS_NARRATE, user, 0.9);
     await record(env, usage, model);
-    if (parsed?.narration) { narration = String(parsed.narration).slice(0, 1200); usedAi = true; }
+    if (parsed?.narration) { narration = String(parsed.narration).slice(0, 1500); usedAi = true; }
   } catch { await refund(env, ip); }
-  return { events: res.events, first: res.first, judge, judgedByAi, narration, usedAi, quotaBlocked };
+  return { events: res.events, order: res.order, judge, narration, usedAi, quotaBlocked };
 }
 
 // ─── 캐릭터 ─────────────────────────────────────────────────────────
@@ -356,7 +361,7 @@ async function createBattle(body, env) {
   await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
   return json({ battle: st });
 }
-function parseAct(body) { return { type: ['attack', 'ult', 'defend'].includes(body.type) ? body.type : 'attack', text: clip(body.text, LEN.text) }; }
+function parseAct(body) { return { type: ['attack', 'ult', 'defend'].includes(body.type) ? body.type : 'attack', text: clip(body.text, LEN.text), target: Number(body.target) || null }; }
 
 async function battleTurn(id, body, env, ip) {
   const row = await env.DB.prepare('SELECT state, updated FROM rpg_battles WHERE id = ?').bind(id).first();
@@ -368,9 +373,9 @@ async function battleTurn(id, body, env, ip) {
   // 낙관적 잠금: 같은 턴을 두 번 처리하지 않게
   const lock = await env.DB.prepare('UPDATE rpg_battles SET updated = ? WHERE id = ? AND updated = ?').bind(Date.now(), id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
-  const actMe = parseAct(body), actFoe = enemyDecide(st.foe, st.me);
-  const t = await runTurn(env, ip, st.me, st.foe, actMe, actFoe);
-  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, first: t.first, events: t.events, narration: t.narration, ai: t.usedAi });
+  const actMe = { ...parseAct(body), target: 2 }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
+  const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe });
+  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
@@ -382,7 +387,10 @@ async function battleTurn(id, body, env, ip) {
   return json({ battle: st, quota: await quota(env, ip), quotaBlocked: t.quotaBlocked });
 }
 
-// ─── 온라인 대전 ────────────────────────────────────────────────────
+// ─── 온라인 대전 (2~6명) ─────────────────────────────────────────────
+// 방장이 '시작'을 누르면 진행. 라운드마다 살아 있는 전원이 행동(공격/필살기는 대상 선택)을 내면 판정.
+// 60초 넘게 안 내는 사람은 다른 플레이어가 건너뛸 수 있다(자동 방어). 마지막 생존자가 승리, 전멸이면 무승부.
+const ROOM_MAX = 6, SKIP_AFTER_MS = 60e3;
 const code6 = () => Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(rnd() * 32)]).join('');
 async function loadRoom(env, code) {
   const row = await env.DB.prepare('SELECT state, updated FROM rpg_rooms WHERE code = ?').bind(code).first();
@@ -393,17 +401,19 @@ async function saveRoom(env, code, s, v) {
   const r = await env.DB.prepare('UPDATE rpg_rooms SET state = ?, updated = ? WHERE code = ? AND updated = ?').bind(JSON.stringify(s), now, code, v).run();
   return r.meta.changes === 1 ? now : null;
 }
-const slotOf = (s, t) => s.tokens[1] === t ? 1 : s.tokens[2] === t ? 2 : 0;
+const slotOf = (s, t) => Number(Object.keys(s.tokens).find(k => s.tokens[k] === t)) || 0;
 function pub(s, slot) {
   const { tokens, ...rest } = s;
-  return { ...rest, you: slot, moves: { 1: !!s.moves[1], 2: !!s.moves[2], mine: s.moves[slot] || null } };
+  const moves = {}; for (const k in s.p) moves[k] = !!s.moves[k];
+  const firstAt = Math.min(...Object.values(s.moves).map(m => m.at || Infinity));
+  return { ...rest, you: slot, moves, myMove: s.moves[slot] || null, waitingSince: Number.isFinite(firstAt) ? firstAt : null, max: ROOM_MAX };
 }
 async function createRoom(body, env) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_rooms WHERE updated < ?').bind(Date.now() - ROOM_TTL).run();
   const code = code6(), rt = uid(), now = Date.now();
-  const s = { code, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, 2: null }, tokens: { 1: rt, 2: null }, round: 0, moves: {}, log: [], status: 'waiting', winner: null };
+  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false } }, tokens: { 1: rt }, round: 0, moves: {}, log: [], status: 'waiting', winner: null };
   await env.DB.prepare('INSERT INTO rpg_rooms (code, created, updated, state) VALUES (?, ?, ?, ?)').bind(code, now, now, JSON.stringify(s)).run();
   return json({ code, roomToken: rt, slot: 1, state: pub(s, 1) });
 }
@@ -412,12 +422,15 @@ async function joinRoom(code, body, env) {
   if (!c) return json({ error: 'forbidden' }, 403);
   const r = await loadRoom(env, code);
   if (!r) return json({ error: 'no_room' }, 404);
-  if (r.s.p[2]) return json({ error: 'full' }, 409);
-  if (r.s.p[1].char.id === c.id) return json({ error: 'self' }, 409);
-  const rt = uid();
-  r.s.p[2] = { char: c, hp: c.stats.hp, gauge: 0, guard: false }; r.s.tokens[2] = rt; r.s.status = 'playing'; r.s.round = 1;
-  if (!(await saveRoom(env, code, r.s, r.v))) return json({ error: 'retry' }, 409);
-  return json({ code, roomToken: rt, slot: 2, state: pub(r.s, 2) });
+  const s = r.s;
+  if (s.status !== 'waiting') return json({ error: 'started' }, 409);
+  const n = Object.keys(s.p).length;
+  if (n >= ROOM_MAX) return json({ error: 'full' }, 409);
+  if (Object.values(s.p).some(p => p.char.id === c.id)) return json({ error: 'self' }, 409);
+  const slot = n + 1, rt = uid();
+  s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false }; s.tokens[slot] = rt;
+  if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
+  return json({ code, roomToken: rt, slot, state: pub(s, slot) });
 }
 async function getRoom(code, t, env) {
   const r = await loadRoom(env, code);
@@ -425,29 +438,49 @@ async function getRoom(code, t, env) {
   const slot = slotOf(r.s, t);
   return slot ? json({ state: pub(r.s, slot) }) : json({ error: 'forbidden' }, 403);
 }
+async function startRoom(code, body, env) {
+  const r = await loadRoom(env, code);
+  if (!r) return json({ error: 'no_room' }, 404);
+  const s = r.s, slot = slotOf(s, body.token);
+  if (slot !== s.host) return json({ error: 'not_host' }, 403);
+  if (s.status !== 'waiting') return json({ state: pub(s, slot) });
+  if (Object.keys(s.p).length < 2) return json({ error: 'need_players' }, 409);
+  s.status = 'playing'; s.round = 1;
+  if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
+  return json({ state: pub(s, slot) });
+}
 async function roomAction(code, body, env, ip) {
   const r = await loadRoom(env, code);
   if (!r) return json({ error: 'no_room' }, 404);
   const s = r.s, slot = slotOf(s, body.token);
   if (!slot) return json({ error: 'forbidden' }, 403);
   if (s.status !== 'playing') return json({ state: pub(s, slot) });
-  if (s.moves[slot]) return json({ state: pub(s, slot) });
-  s.moves[slot] = parseAct(body);
-  const other = slot === 1 ? 2 : 1;
-  if (!s.moves[other]) {
+  const alive = aliveSlots(s.p);
+  if (body.skip) {
+    // 60초 넘게 안 낸 사람들을 자동 방어로 처리 (누구나 요청 가능)
+    const firstAt = Math.min(...Object.values(s.moves).map(m => m.at || Infinity));
+    if (!Number.isFinite(firstAt) || Date.now() - firstAt < SKIP_AFTER_MS) return json({ error: 'too_early', state: pub(s, slot) }, 409);
+    for (const k of alive) if (!s.moves[k]) s.moves[k] = { type: 'defend', text: '', target: null, at: Date.now(), skipped: true };
+  } else {
+    if (!alive.includes(slot)) return json({ error: 'dead', state: pub(s, slot) }, 409);
+    if (s.moves[slot]) return json({ state: pub(s, slot) });
+    s.moves[slot] = { ...parseAct(body), at: Date.now() };
+  }
+  if (alive.some(k => !s.moves[k])) {
     if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
     return json({ state: pub(s, slot) });
   }
-  // 둘 다 냈다 → 이 요청이 판정 (낙관적 잠금으로 한 번만)
+  // 전원 제출 → 이 요청이 판정 (낙관적 잠금으로 한 번만)
   s.busy = true;
   const v = await saveRoom(env, code, s, r.v);
   if (!v) return json({ error: 'retry' }, 409);
-  const t = await runTurn(env, ip, s.p[1], s.p[2], s.moves[1], s.moves[2]);
-  s.log.push({ round: s.round, acts: { ...s.moves }, judge: t.judge, first: t.first, events: t.events, narration: t.narration, ai: t.usedAi });
+  const t = await runRound(env, ip, s.p, s.moves);
+  s.log.push({ round: s.round, acts: { ...s.moves }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi });
   if (s.log.length > 40) s.log.shift();
-  if (s.p[1].hp <= 0 || s.p[2].hp <= 0) {
-    s.status = 'finished'; s.winner = s.p[1].hp <= 0 && s.p[2].hp <= 0 ? 0 : s.p[1].hp <= 0 ? 2 : 1;
-    for (const k of [1, 2]) { const c = s.p[k].char; if (s.winner === k) c.wins++; else if (s.winner) c.losses++; await saveChar(env, c); }
+  const left = aliveSlots(s.p);
+  if (left.length <= 1) {
+    s.status = 'finished'; s.winner = left[0] || 0;
+    for (const k in s.p) { const c = s.p[k].char; if (s.winner === Number(k)) c.wins++; else c.losses++; await saveChar(env, c); }
   } else s.round++;
   s.moves = {}; s.busy = false;
   await saveRoom(env, code, s, v);
