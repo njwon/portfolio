@@ -249,7 +249,8 @@ function lenientJson(text) {
   }
   let t = mt[0];
   try { return JSON.parse(t); } catch {}
-  t = t.replace(/\r?\n/g, '<br>').replace(new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + ']', 'g'), ' ');          // 1) 문자열 안 줄바꿈 → <br>
+  t = t.replace(/([:{,\[])\s*\r?\n\s*/g, '$1').replace(/\s*\r?\n\s*([}\]])/g, '$1')   // 구조상의 줄바꿈(키 뒤·괄호 앞)은 지우고
+    .replace(/\r?\n/g, '<br>').replace(new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + ']', 'g'), ' ');          // 1) 문자열 안 줄바꿈 → <br>
   try { return JSON.parse(t); } catch {}
   const nm = t.match(/"narration"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/);           // 2) 서술: 값을 통째로 회수
   if (nm) return { narration: nm[1].replace(/\\"/g, '"') };
