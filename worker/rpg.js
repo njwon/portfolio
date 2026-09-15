@@ -41,20 +41,29 @@ const MODELS = [
 let modelIdx = 0;
 const MAX_TOKENS = 380;
 // 무료 제공자 체인: 앞에서부터 남은 횟수가 있는 곳을 쓴다. 키는 워커 시크릿(wrangler secret put <key>) — 없으면 건너뜀.
-//   한도는 각사 무료 티어(2026-09 기준)보다 조금 낮게 잡아 429 를 피한다. 전부 소진되면 클라이언트가 크롬 내장 AI(Gemini Nano)로 이어간다.
-//   Gemini API 는 모델별로 일일 한도가 따로다(같은 키): gemma-3-27b 14,400 · flash-lite 1,000 · flash 250 → 세 항목으로 나눠 순서대로 소진.
-//   Gemma 는 system 역할을 받지 않아(400) 시스템 프롬프트를 user 메시지 앞에 합친다.
+//   2026-09-15 실제 키로 호출해 확인한 값(응답 헤더·오류) 기준. 한도는 모델별로 따로 계산되는 곳이 많아 모델 단위로 항목을 둔다.
+//   · Gemini API: 모델별 RPD 독립. 2.5-flash-lite 는 신규 계정 불가 → 3.5/3.1 flash-lite. Gemma 4 는 <thought> 를 끌 수 없어 max_tokens 크게 + 잘라냄(약 12초).
+//   · Groq: 모델별 1,000 RPD · 8,000 TPM (헤더 x-ratelimit-limit-requests 확인). llama 계열은 사라짐 → qwen3.8/3.6-27b, gpt-oss-120b/20b.
+//   · OpenRouter: 키당 무료 50 RPD (모델 무관). gemma :free 는 상류 429 잦음 → nemotron 우선, models 배열로 자동 폴백.
+//   · Cerebras: 결제 탭 활성화 전엔 402 · Mistral: 콘솔에서 무료 Experiment 플랜 켜기 전엔 429(limit 0) → 켜지면 자동 합류.
+//   · GitHub Models: 서비스 종료(brownout 410) → 제외.
+//   전부 소진되면 클라이언트가 크롬 내장 AI(Gemini Nano)로 이어간다.
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const PROVIDERS = [
   { id: 'cf', name: 'Workers AI', kind: 'cf' },
-  { id: 'gemma', name: 'Gemini (Gemma 3 27B)', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemma-3-27b-it', daily: 6000, noSystem: true },   // 문서상 14,400 이지만 일찍 429 나는 보고가 있어 보수적으로
-  { id: 'gemini', name: 'Gemini (Flash-Lite)', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-2.5-flash-lite', daily: 950 },
-  { id: 'gemini-flash', name: 'Gemini (Flash)', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-2.5-flash', daily: 230 },
-  { id: 'groq', name: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', daily: 950 },
-  { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'llama-3.3-70b', daily: 700 },
+  { id: 'gemini-lite35', name: 'Gemini 3.5 Flash-Lite', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-3.5-flash-lite', daily: 950 },
+  { id: 'gemini-lite31', name: 'Gemini 3.1 Flash-Lite', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-3.1-flash-lite', daily: 950, extra: { reasoning_effort: 'none' } },
+  { id: 'groq-qwen38', name: 'Groq Qwen3.8 27B', key: 'GROQ_API_KEY', url: GROQ_URL, model: 'qwen/qwen3.8-27b', daily: 950, extra: { reasoning_effort: 'none' } },
+  { id: 'groq-qwen36', name: 'Groq Qwen3.6 27B', key: 'GROQ_API_KEY', url: GROQ_URL, model: 'qwen/qwen3.6-27b', daily: 950, extra: { reasoning_effort: 'none' } },
+  { id: 'groq-oss120', name: 'Groq gpt-oss 120B', key: 'GROQ_API_KEY', url: GROQ_URL, model: 'openai/gpt-oss-120b', daily: 950, extra: { reasoning_effort: 'low' } },
+  { id: 'groq-oss20', name: 'Groq gpt-oss 20B', key: 'GROQ_API_KEY', url: GROQ_URL, model: 'openai/gpt-oss-20b', daily: 950, extra: { reasoning_effort: 'low' } },
+  { id: 'gemini-flash25', name: 'Gemini 2.5 Flash', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemini-2.5-flash', daily: 230, extra: { extra_body: { google: { thinking_config: { thinking_budget: 0 } } } } },
+  // gemini-3.5-flash 는 생각을 끌 수 없어 답이 잘림(230/일뿐이라 제외). Gemma 4 도 생각을 끌 수 없지만 한도가 커서 크게 받고 잘라 씀 (12~25초)
+  { id: 'gemma4', name: 'Gemini Gemma 4 26B', key: 'GEMINI_API_KEY', url: GEMINI_URL, model: 'gemma-4-26b-a4b-it', daily: 6000, noSystem: true, maxTokens: 1800, timeout: 45e3 },   // 문서상 14,400 이나 보수적으로
+  { id: 'openrouter', name: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'nvidia/nemotron-3-super-120b-a12b:free', daily: 45, extra: { models: ['nvidia/nemotron-3-super-120b-a12b:free', 'nvidia/nemotron-3.5-lightning:free', 'google/gemma-4-26b-a4b-it:free'], reasoning: { enabled: false } } },
+  { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'qwen-3.8-27b', daily: 700, extra: { reasoning_effort: 'none' } },
   { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000 },
-  { id: 'github', name: 'GitHub Models', key: 'GITHUB_MODELS_TOKEN', url: 'https://models.github.ai/inference/chat/completions', model: 'openai/gpt-4o-mini', daily: 140 },
-  { id: 'openrouter', name: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'google/gemma-3-27b-it:free', daily: 45 },
 ];
 const failedAt = {};   // 제공자별 마지막 실패 시각 (10분간 건너뜀)
 const PROVIDER_COOLDOWN = 10 * 60e3;
@@ -77,6 +86,14 @@ export async function handleRpg(request, env, path) {
   const body = m === 'POST' ? await request.json().catch(() => ({})) : {};
   let mm;
   if (path === '/api/rpg/quota' && m === 'GET') return json(await quota(env, ip));
+  if (path === '/api/rpg/aitest' && m === 'GET') {   // 운영자 점검: 특정 제공자로 서술 1회 (RPG_ADMIN_KEY 시크릿 필요, 한도에 포함)
+    if (!env.RPG_ADMIN_KEY || url.searchParams.get('key') !== env.RPG_ADMIN_KEY) return json({ error: 'forbidden' }, 403);
+    const pv = PROVIDERS.find(x => x.id === url.searchParams.get('provider'));
+    if (!pv) return json({ error: 'no_provider', ids: PROVIDERS.map(x => x.id) }, 404);
+    const t0 = Date.now();
+    try { const out = await ask(env, pv, SYS_NARRATE, '[p1] 노정원 (평범한 고등학생) — 설정: 유도를 한다\n행동: 공격 → 대상: 검사 / 선언: "업어치기"\n\n[확정된 결과]\n노정원 → 검사: 공격 명중(70%, 난이도 쉬움) → 피해 87\n남은 HP: 노정원 600/600, 검사 433/520', 0.9); return json({ ok: true, provider: pv.id, ms: Date.now() - t0, parsed: out.parsed, raw: out.raw, usage: out.usage }); }
+    catch (e) { return json({ ok: false, provider: pv.id, ms: Date.now() - t0, error: e.message }, 502); }
+  }
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, ip);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], url.searchParams.get('token'), env);
@@ -159,7 +176,8 @@ async function aiCall(env, ip, system, user, temperature) {
       return { ok: true, parsed: out.parsed, raw: out.raw, provider: p.id };
     } catch (e) {
       await bump(env, q.day, ip, p.id, -1);
-      if (p.id !== 'cf' || !/quota|limit|429/i.test(e.message)) failedAt[p.id] = Date.now();
+      // 지역 불가(Gemini, 송신 지점에 따라 간헐적)는 쿨다운 없이 다음 제공자로 — 다음 호출은 다른 지점에서 나가 성공할 수 있다
+      if (!/User location/i.test(e.message) && (p.id !== 'cf' || !/quota|limit|429/i.test(e.message))) failedAt[p.id] = Date.now();
       if (++tried >= 3) break;
     }
   }
@@ -189,25 +207,34 @@ function lenientJson(text) {
   return any ? out : null;
 }
 // 서술은 innerHTML 로 그려지므로 태그를 막고 <br> 만 허용 (모델 출력이든 클라이언트 로컬 AI 출력이든)
-const safeHtml = v => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500);
+const safeHtml = v => String(v || '').replace(/<\/?p>|<\/?div>|\n/g, '<br>').replace(/(<br>\s*){2,}/g, '<br>').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500);
 // 판정문에 JSON 조각("fit":0.9 …)이나 중괄호가 섞여 나오면 그 앞까지만 남긴다
 function cleanVerdict(v) {
   return String(v || '').replace(/\\"/g, '"').replace(/\s*[,{}]?\s*"?(allowed|difficulty|fit|verdict|p\d)"?\s*:[\s\S]*$/, '').replace(/[{}]/g, '').replace(/[\s,]+$/, '').replace(/"$/, m => (v.match(/"/g) || []).length % 2 ? '' : m).trim().slice(0, 300);
 }
 async function ask(env, provider, system, user, temperature) {
-  const maxTokens = system === SYS_JUDGE_ACTION ? 260 : MAX_TOKENS;
+  let maxTokens = system === SYS_JUDGE_ACTION ? 260 : MAX_TOKENS;
   if (provider.kind !== 'cf') {
+    if (provider.maxTokens) maxTokens = provider.maxTokens;   // 생각을 끌 수 없는 모델은 생각 + 답이 다 들어갈 만큼
     // OpenAI 호환 채팅 엔드포인트 (Groq · Gemini · Cerebras · Mistral · GitHub Models · OpenRouter 모두 같은 형식)
-    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 25e3);
+    for (let attempt = 0; ; attempt++) {
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), provider.timeout || 25e3);
     try {
-      const res = await fetch(provider.url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env[provider.key], ...(provider.id === 'openrouter' ? { 'HTTP-Referer': 'https://njw.kro.kr', 'X-Title': 'DREAM RPG' } : {}) },
-        body: JSON.stringify({ model: provider.model, messages: provider.noSystem ? [{ role: 'user', content: system + '\n\n---\n\n' + user }] : [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens, temperature }) });
-      if (!res.ok) throw new Error(provider.id + ' ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      const res = await fetch(provider.url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env[provider.key], 'User-Agent': 'dream-rpg/1.0 (+https://njw.kro.kr)', 'HTTP-Referer': 'https://njw.kro.kr', 'X-Title': 'DREAM RPG' },
+        body: JSON.stringify({ model: provider.model, messages: provider.noSystem ? [{ role: 'user', content: system + '\n\n---\n\n' + user }] : [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens, temperature, ...(provider.extra || {}) }) });
+      if (!res.ok) {
+        const msg = (await res.text()).slice(0, 200);
+        // Gemini 는 워커 요청의 송신 지역에 따라 간헐적으로 "User location is not supported" → 같은 요청을 바로 다시 (다른 경로로 나감)
+        if (res.status === 400 && /User location/i.test(msg) && attempt < 2) { clearTimeout(timer); continue; }
+        throw new Error(provider.id + ' ' + res.status + ' ' + msg);
+      }
       const data = await res.json();
       const text = data.choices?.[0]?.message?.content ?? '';
       if (!text) throw new Error(provider.id + ' empty');
-      return { parsed: lenientJson(text.replace(/<think>[\s\S]*?<\/think>/g, '')), usage: data.usage, model: provider, raw: text.slice(0, 400) };
+      const clean = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/<thought>[\s\S]*?<\/thought>/g, '').replace(/^[\s\S]*<\/thought>/, '');   // Gemma 4 · qwen 생각 블록 제거
+      return { parsed: lenientJson(clean), usage: data.usage, model: provider, raw: clean.slice(0, 400) };
     } finally { clearTimeout(timer); }
+    }
   }
   for (let i = modelIdx; i < MODELS.length; i++) {
     const model = MODELS[i];
