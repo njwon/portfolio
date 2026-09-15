@@ -241,8 +241,12 @@ async function aiCall(env, ip, system, user, temperature) {
 // ─── AI (심사·서술 전용) ─────────────────────────────────────────────
 // 모델이 낸 JSON 이 문자열 안의 따옴표·줄바꿈 때문에 깨지는 일이 잦다 → 관대하게 복구
 function lenientJson(text) {
-  const mt = text.match(/\{[\s\S]*\}/);
-  if (!mt) return null;
+  let mt = text.match(/\{[\s\S]*\}/);
+  if (!mt) {
+    // 닫는 괄호가 없음 = max_tokens 에 잘린 출력. 서술이면 잘린 채로라도 살린다
+    const i = text.indexOf('{'); if (i < 0) return null;
+    mt = [text.slice(i).replace(/[\s"]*$/, '') + '…"}'];
+  }
   let t = mt[0];
   try { return JSON.parse(t); } catch {}
   t = t.replace(/\r?\n/g, '<br>').replace(new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + ']', 'g'), ' ');          // 1) 문자열 안 줄바꿈 → <br>
