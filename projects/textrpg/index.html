@@ -12,6 +12,8 @@
     <meta property="og:description" content="AI 게임 마스터가 캐릭터를 심사하고 전투를 판정하는 텍스트 RPG. 온라인 2~6명 대전, API 키 없이 무료.">
     <meta property="og:url" content="https://njw.kro.kr/projects/textrpg/">
     <link rel="icon" href="../../img/favicon.png" />
+    <link rel="preload" href="font/DeathMohawk.subset.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preconnect" href="https://blog-api.njwon19.workers.dev">
     <style>
         @font-face {
             font-family: 'rock';
@@ -40,7 +42,17 @@
         .card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, .btn-row button { animation-name: boxflicker; }
         .main-container { width: min(920px, 94vw); margin: 0 auto; padding: 8px 0 60px; position: relative; filter: blur(0.6px); }
         ::-webkit-scrollbar { display: none; }
-        .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; background-image: url('https://media.tenor.com/xH_b0pwUaekAAAAM/white-noise-colourful.gif'); background-size: cover; filter: blur(2px); opacity: 0.03; }
+        /* 노이즈: 3MB tenor GIF + 전체화면 blur 대신 SVG feTurbulence 한 장(수백 바이트, 필터 없음). 보이는 정도(불투명도 3%)는 같다 */
+        .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.2 0 0 0 0 0.7 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 300px 300px; }
+        /* 모바일·터치 기기: 컨테이너 전체 blur(모든 프레임 재래스터) 제거, 깜빡임 10fps → 4fps. 모양은 유지하고 메인 스레드 부담만 줄인다 */
+        @media (hover: none), (max-width: 768px) {
+            .main-container { filter: none; }
+            .main-container *, input[type="text"], textarea, button { animation-duration: 0.5s; animation-timing-function: steps(2, jump-none); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .main-container *, input[type="text"], textarea, button, .noise { animation: none !important; }
+            .main-container { filter: none; }
+        }
         .title { text-align: center; letter-spacing: 4px; font-family: 'rock', sans-serif; font-size: min(18vw, 88px); margin: 8px 0 4px; }
         .screen { display: none; }
         .screen.active { display: block; }
