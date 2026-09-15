@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>자연선택 시뮬레이션 | 노정원 프로젝트</title>
-  <meta name="description" content="노정원이 만든 자연선택 시뮬레이터. 개체의 생존·번식·돌연변이를 브라우저에서 시각화합니다.">
+  <meta name="description" content="노정원이 만든 자연선택 시뮬레이터. 크기·감지 거리·공격성 형질의 유전과 선택, 안전지대의 수용 한계와 매·비둘기 자리 다툼을 브라우저에서 시각화합니다.">
   <meta name="author" content="노정원">
   <link rel="canonical" href="https://njw.kro.kr/projects/natural_selection/">
   <meta property="og:title" content="자연선택 시뮬레이션 | 노정원 프로젝트">
@@ -105,7 +105,12 @@
         <h2>안전지대</h2>
         <label class="switch"><input type="checkbox" id="safeOn" checked> 안전지대 사용 (안에서는 잡히지 않음)</label>
         <div class="row"><label for="safeRadius">반지름</label><input type="range" id="safeRadius" min="30" max="300" step="10" value="100"><output id="safeRadiusOut">100</output></div>
-        <p class="hint">안전지대는 화면에서 드래그해 옮길 수 있습니다.</p>
+        <label class="switch"><input type="checkbox" id="capacityOn" checked> 수용 한계 (면적 ÷ 몸 크기 — 클수록 자리를 많이 차지)</label>
+        <div class="row"><label for="fill">수용 밀도</label><input type="range" id="fill" min="0.1" max="1" step="0.05" value="0.35"><output id="fillOut">0.35</output></div>
+        <label class="switch"><input type="checkbox" id="contestOn" checked> 자리 다툼 (가득 차면 공격성에 따라 몸싸움 · 큰 쪽이 유리)</label>
+        <div class="row"><label for="fightCost">다툼 부상 사망률</label><input type="range" id="fightCost" min="0" max="0.2" step="0.01" value="0.03"><output id="fightCostOut">3%</output></div>
+        <label class="switch"><input type="checkbox" id="refugeFood" checked> 안전지대 안 먹이 부족 (번식 ×0.3 — 계속 숨어 있을 수 없음)</label>
+        <p class="hint">안전지대는 화면에서 드래그해 옮길 수 있습니다. 가운데 숫자는 사용 중인 자리 / 전체 자리(몸 넓이 단위).</p>
       </div>
 
       <div class="card">
@@ -126,7 +131,7 @@
         <label class="switch"><input type="checkbox" id="tradeoff" checked> 크기–속도 트레이드오프 (클수록 느림)</label>
         <label class="switch"><input type="checkbox" id="preyAI" checked> 도주 AI (포식자를 감지하면 피함)</label>
         <label class="switch"><input type="checkbox" id="senseCost" checked> 감지 비용 (감지 거리가 길수록 번식 ↓)</label>
-        <label class="switch"><input type="checkbox" id="showTrace"> 추적선·도주(주황)·피신(초록) 표시</label>
+        <label class="switch"><input type="checkbox" id="showTrace"> 추적선·도주(주황)·피신(초록)·다툼(보라) 표시</label>
       </div>
 
       <div class="card">
@@ -137,11 +142,13 @@
           <span class="k">평균 크기</span><b id="stMean">0</b>
           <span class="k">최소 / 최대</span><b id="stRange">0 / 0</b>
           <span class="k">평균 감지 거리</span><b id="stSense">0</b>
+          <span class="k">평균 공격성</span><b id="stAggr">0</b>
+          <span class="k">다툼 / 부상 사망</span><b id="stFights">0 / 0</b>
           <span class="k">경과</span><b id="stTime">0s</b>
           <span class="k">프레임</span><b id="stFrame">0</b>
         </div>
         <canvas id="chart" width="600" height="220" aria-label="평균 크기 변화 그래프"></canvas>
-        <div class="legend"><i style="background:var(--prey)"></i>평균 크기 <i style="background:#f2a93b"></i>평균 감지 거리 <i style="background:#999"></i>개체 수(상대)</div>
+        <div class="legend"><i style="background:var(--prey)"></i>평균 크기 <i style="background:#f2a93b"></i>평균 감지 거리 <i style="background:#c93cc9"></i>평균 공격성 <i style="background:#999"></i>개체 수(상대)</div>
       </div>
     </aside>
   </div>
@@ -150,7 +157,7 @@
     'use strict';
     // ── 설정값 (컨트롤 패널과 연결) ──────────────────────────────────
     const cfg = {
-      simSpeed: 1, safeOn: true, safeRadius: 100,
+      simSpeed: 1, safeOn: true, safeRadius: 100, capacityOn: true, fill: 0.35, contestOn: true, fightCost: 0.03, refugeFood: true,
       predCount: 8, predSize: 20, predSpeed: 8, predAI: true, predSense: 180,
       birthRate: 0.01, mutRate: 0.10, mutStrength: 0.30, maxPop: 1500, tradeoff: true, preyAI: true, senseCost: true, showTrace: false,
     };
@@ -164,18 +171,28 @@
     // 트레이드오프를 켜면 클수록 느려서, 포식자 크기에 따라 유리한 크기가 달라진다 — 그게 이 시뮬레이션의 핵심.
     // 유전 형질 두 가지: 크기(radius)와 감지 거리(sense). 둘 다 자식에게 물려주고 돌연변이로 흔들린다.
     // 감지 거리가 길수록 포식자를 일찍 보고 도망치지만(도주 AI), 감지 비용을 켜면 번식 확률이 그만큼 깎인다 → 무한정 커지지 않음.
+    // 세 번째 형질: 공격성(aggr 0~1) — 안전지대가 가득 찼을 때 자리를 두고 몸싸움을 걸 확률(매·비둘기 게임의 '매' 성향).
+    // 싸움은 큰 쪽이 유리하지만(체중 비례 승률) 진 쪽은 밖으로 밀려나고 부상(느려짐)·사망 위험이 있어, 공격성이 높을수록 좋은 게 아니다.
     class Prey {
-      constructor(x, y, radius, gen, sense = 80) {
-        this.x = x; this.y = y; this.radius = radius; this.gen = gen; this.sense = sense;
+      constructor(x, y, radius, gen, sense = 80, aggr = 0.3) {
+        this.x = x; this.y = y; this.radius = radius; this.gen = gen; this.sense = sense; this.aggr = aggr;
         this.angle = Math.random() * Math.PI * 2;
-        this.fleeing = false; this.sheltering = false;
+        this.fleeing = false; this.sheltering = false; this.fighting = 0; this.injured = 0; this.blocked = 0;
         this.alarm = 0;                                   // 포식자를 마지막으로 본 뒤 경계 상태로 남는 프레임 수 (기억)
       }
-      get speed() { return cfg.tradeoff ? 30 / Math.sqrt(this.radius + 4) : 6; }   // r=10 → 8, r=30 → 5, r=80 → 3.3
-      get birthChance() { return cfg.senseCost ? cfg.birthRate * Math.max(0.2, 1 - this.sense / 500) : cfg.birthRate; }
+      get speed() { const v = cfg.tradeoff ? 30 / Math.sqrt(this.radius + 4) : 6; return this.injured > 0 ? v * 0.55 : v; }   // r=10 → 8, r=30 → 5, r=80 → 3.3 / 부상 중엔 느림
+      get birthChance() {
+        let b = cfg.senseCost ? cfg.birthRate * Math.max(0.2, 1 - this.sense / 500) : cfg.birthRate;
+        if (cfg.refugeFood && this.inSafe) b *= 0.3;      // 안전지대엔 먹이가 적다 → 숨어만 있으면 번식에서 뒤처짐
+        return b;
+      }
+      get area() { return this.radius * this.radius; }     // 자리 단위 (몸 넓이 ∝ r²)
       get inSafe() { return cfg.safeOn && (this.x - safe.x) ** 2 + (this.y - safe.y) ** 2 < cfg.safeRadius * cfg.safeRadius; }
       step() {
         this.fleeing = false; this.sheltering = false;
+        if (this.injured > 0) this.injured--;
+        if (this.fighting > 0) { this.fighting--; return; }   // 몸싸움 중엔 그 자리에 멈춘다 (밖에 있는 쪽은 그동안 무방비)
+        const wasInSafeBefore = this.inSafe;
         let near = null;
         if (cfg.preyAI) {
           let nd = this.sense * this.sense;
@@ -206,6 +223,18 @@
         const v = this.speed * (this.fleeing ? 1.25 : this.sheltering ? 0.6 : 1);   // 도주 중엔 잠깐 힘을 내고, 피신 중엔 느긋하게
         this.x += Math.cos(this.angle) * v;
         this.y += Math.sin(this.angle) * v;
+        // 수용 한계: 밖에서 안으로 들어오려는데 자리가 없으면 가장자리에서 막힌다 → 자리 다툼(공격성) 또는 포기
+        if (cfg.safeOn && cfg.capacityOn && !wasInSafeBefore && this.inSafe && zone.used + this.area > zone.cap) {
+          const sx = this.x - safe.x, sy = this.y - safe.y, sd = Math.hypot(sx, sy) || 1, r = cfg.safeRadius + this.radius * 0.5 + 1;
+          this.x = safe.x + sx / sd * r; this.y = safe.y + sy / sd * r;     // 경계 바로 밖에 멈춤
+          this.blocked++;
+          if (cfg.contestOn && Math.random() < this.aggr) contest(this);     // 매 성향: 안쪽의 누군가에게 싸움을 건다
+          else if (this.blocked > 20 || Math.random() < 0.15) { this.angle = Math.atan2(sy, sx) + (Math.random() - 0.5) * 1.5; this.blocked = 0; }   // 비둘기 성향: 잠시 기다리다 다른 데로
+          this.sheltering = false; this.fleeing = !!near;
+        } else {
+          this.blocked = 0;
+          if (cfg.safeOn && cfg.capacityOn && !wasInSafeBefore && this.inSafe) zone.used += this.area;   // 같은 프레임에 여럿이 들어와도 한계를 넘지 않게 즉시 반영
+        }
         if (this.sheltering && !this.inSafe) {          // 피신 중에 가장자리를 넘었으면 다시 안으로
           const sx = this.x - safe.x, sy = this.y - safe.y, sd = Math.hypot(sx, sy) || 1, r = cfg.safeRadius - 1;
           this.x = safe.x + sx / sd * r; this.y = safe.y + sy / sd * r; this.angle = Math.atan2(-sy, -sx);
@@ -214,11 +243,35 @@
         if (this.y < this.radius || this.y > H - this.radius) { this.angle = -this.angle; this.y = clamp(this.y, this.radius, H - this.radius); }
       }
       reproduce() {
-        let r = this.radius, se = this.sense;
+        let r = this.radius, se = this.sense, ag = this.aggr;
         if (Math.random() < cfg.mutRate) r = clamp(r * Math.exp((Math.random() * 2 - 1) * cfg.mutStrength), 2, 120);
         if (Math.random() < cfg.mutRate) se = clamp(se * Math.exp((Math.random() * 2 - 1) * cfg.mutStrength), 10, 400);
-        return new Prey(this.x, this.y, r, this.gen + 1, se);
+        if (Math.random() < cfg.mutRate) ag = clamp(ag + (Math.random() * 2 - 1) * cfg.mutStrength * 0.5, 0, 1);
+        return new Prey(this.x, this.y, r, this.gen + 1, se, ag);
       }
+    }
+    // 안전지대 자리 다툼 (매–비둘기 게임): 도전자(밖)가 안쪽 개체 중 가장 가까운 하나에게 싸움을 건다.
+    //   승률 = 체중 비례 (r_c² / (r_c² + r_o²)) — 큰 쪽이 유리하지만 확률적. 이긴 쪽이 안, 진 쪽은 밖으로 밀려나고 부상(속도 ↓ 60프레임)·부상 사망 확률.
+    //   둘 다 몇 프레임 멈추므로 밖에 남는 쪽은 그동안 포식자에게 무방비 → 싸움 자체가 비용.
+    const zone = { used: 0, cap: 0, n: 0 };
+    let fights = 0, fightDeaths = 0;
+    function contest(c) {
+      let best = null, bd = Infinity;
+      for (const o of prey) { if (o === c || !o.inSafe || o.fighting) continue; const d = (o.x - c.x) ** 2 + (o.y - c.y) ** 2; if (d < bd) { bd = d; best = o; } }
+      if (!best || bd > (cfg.safeRadius * 0.6) ** 2) return;
+      fights++;
+      const pWin = c.area / (c.area + best.area);
+      const winner = Math.random() < pWin ? c : best, loser = winner === c ? best : c;
+      if (winner === c) { [c.x, best.x] = [best.x, c.x]; [c.y, best.y] = [best.y, c.y]; }   // 자리를 맞바꿈: 진 쪽이 밖으로
+      loser.injured = 60; loser.blocked = 0; loser.angle = Math.atan2(loser.y - safe.y, loser.x - safe.x) + (Math.random() - 0.5);
+      winner.fighting = 8; loser.fighting = 12; winner.fightMark = 10; loser.fightMark = 10;
+      if (Math.random() < cfg.fightCost) loser.dead = true;   // 부상 사망
+    }
+    function updateZone() {
+      zone.cap = cfg.capacityOn ? cfg.fill * cfg.safeRadius * cfg.safeRadius : Infinity;
+      let used = 0, n = 0;
+      if (cfg.safeOn) for (const p of prey) if (p.inSafe) { used += p.area; n++; }
+      zone.used = used; zone.n = n;
     }
     // 포식자: 추적 AI 를 켜면 감지 거리 안에서 가장 가까운(안전지대 밖의) 피식자를 향해 제한된 회전 속도로 방향을 튼다.
     // 목표가 없으면 살짝씩 방향을 바꾸며 배회. 끄면 옛 버전처럼 직진·반사만 한다.
@@ -270,7 +323,7 @@
     function reset() {
       prey = Array.from({ length: 25 }, () => new Prey(Math.random() * W, Math.random() * H, 10, 0));   // 추적 AI 포식자 앞에서 1마리는 금방 전멸하므로 25마리로 시작
       predators = Array.from({ length: cfg.predCount }, () => new Predator(Math.random() * W, Math.random() * H));
-      frame = 0; eaten = 0; history.length = 0; startedAt = performance.now(); pausedTotal = 0;
+      frame = 0; eaten = 0; fights = 0; fightDeaths = 0; history.length = 0; startedAt = performance.now(); pausedTotal = 0;
       if (paused) pausedAt = performance.now();
     }
     function syncPredatorCount() {
@@ -292,15 +345,27 @@
     function tick() {
       frame++;
       let grid = buildGrid();
+      updateZone();                                        // 안전지대 사용량 (이동 전 기준 — 이번 프레임에 들어오려는 개체는 이 값으로 판정)
       for (const q of predators) q.hunt(grid);             // 목표 선택(이동 전 위치 기준)
-      for (const p of prey) p.step();
+      for (const p of prey) { p.step(); if (p.fightMark > 0) p.fightMark--; }
+      if (prey.some(p => p.dead)) { const before = prey.length; prey = prey.filter(p => !p.dead); fightDeaths += before - prey.length; }
       for (const q of predators) q.step();
 
       // 번식 (최대 개체 수 넘지 않게)
       const room = cfg.maxPop - prey.length;
       if (room > 0) {
         const born = [];
-        for (const p of prey) { if (born.length >= room) break; if (Math.random() < p.birthChance) born.push(p.reproduce()); }
+        for (const p of prey) {
+          if (born.length >= room) break;
+          if (Math.random() >= p.birthChance) continue;
+          const c = p.reproduce();
+          // 안전지대 안에서 태어난 새끼도 자리를 차지한다: 자리가 없으면 경계 바로 밖에서 태어남 (수용 한계가 번식으로 뚫리지 않게)
+          if (cfg.safeOn && cfg.capacityOn && c.inSafe) {
+            if (zone.used + c.area > zone.cap) { const a = Math.atan2(c.y - safe.y, c.x - safe.x), r = cfg.safeRadius + c.radius + 2; c.x = clamp(safe.x + Math.cos(a) * r, c.radius, W - c.radius); c.y = clamp(safe.y + Math.sin(a) * r, c.radius, H - c.radius); }
+            else zone.used += c.area;
+          }
+          born.push(c);
+        }
         prey.push(...born);
       }
 
@@ -327,12 +392,13 @@
       if (prey.length === 0) prey.push(new Prey(Math.random() * W, Math.random() * H, 10, 0));
 
       if (frame % 6 === 0) {                              // 그래프 샘플 (10fps)
-        history.push({ mean: meanRadius(), sense: meanSense(), count: prey.length });
+        history.push({ mean: meanRadius(), sense: meanSense(), aggr: meanAggr(), count: prey.length });
         if (history.length > 600) history.shift();
       }
     }
     const meanRadius = () => prey.reduce((s, p) => s + p.radius, 0) / (prey.length || 1);
     const meanSense  = () => prey.reduce((s, p) => s + p.sense, 0) / (prey.length || 1);
+    const meanAggr   = () => prey.reduce((s, p) => s + p.aggr, 0) / (prey.length || 1);
 
     // ── 그리기 ─────────────────────────────────────────────────────
     function draw() {
@@ -345,7 +411,7 @@
       // 피식자: 크기에 따라 색을 살짝 바꿔(작음=하늘, 큼=남색) 분포가 한눈에 보이게
       for (const p of prey) {
         const t = clamp((p.radius - 4) / 60, 0, 1);
-        ctx.fillStyle = cfg.showTrace && p.fleeing ? '#f2a93b' : cfg.showTrace && p.sheltering ? '#2eaa5a' : `hsl(${215 - t * 20} ${70 - t * 20}% ${62 - t * 30}%)`;   // 도주 중 주황, 피신 중 초록
+        ctx.fillStyle = cfg.showTrace && p.fightMark > 0 ? '#c93cc9' : cfg.showTrace && p.fleeing ? '#f2a93b' : cfg.showTrace && p.sheltering ? '#2eaa5a' : `hsl(${215 - t * 20} ${70 - t * 20}% ${62 - t * 30}%)`;   // 다툼 보라, 도주 중 주황, 피신 중 초록
         ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
       }
       if (cfg.predAI && cfg.showTrace) {                    // 추적 중인 목표까지 얇은 선
@@ -354,6 +420,13 @@
       }
       ctx.fillStyle = '#d63a3a';
       for (const q of predators) { ctx.beginPath(); ctx.arc(q.x, q.y, cfg.predSize, 0, Math.PI * 2); ctx.fill(); }
+      if (cfg.safeOn && cfg.capacityOn) {                 // 안전지대 자리 표시: 마리 수 · 사용 중/전체 (몸 넓이 단위), 가득 차면 붉게 — 개체 위에 그린다
+        const full = zone.used >= zone.cap * 0.95, label = `${zone.n}마리 · ${Math.round(zone.used)}/${Math.round(zone.cap)}`;
+        ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const tw = ctx.measureText(label).width + 14, ly = safe.y - cfg.safeRadius - 12;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.roundRect(safe.x - tw / 2, ly - 10, tw, 20, 10); ctx.fill();
+        ctx.fillStyle = full ? '#d63a3a' : '#1e5a32'; ctx.fillText(label, safe.x, ly); ctx.textAlign = 'start';
+      }
     }
 
     // ── 통계·그래프 ────────────────────────────────────────────────
@@ -368,6 +441,7 @@
       $('stPrey').textContent = n; $('stEaten').textContent = eaten; $('stMean').textContent = mean.toFixed(1);
       $('stRange').textContent = n ? `${min.toFixed(1)} / ${max.toFixed(1)}` : '0 / 0';
       $('stSense').textContent = meanSense().toFixed(0);
+      $('stAggr').textContent = meanAggr().toFixed(2); $('stFights').textContent = `${fights} / ${fightDeaths}`;
       $('stTime').textContent = `${elapsed.toFixed(0)}s`; $('stFrame').textContent = frame;
       drawChart();
     }
@@ -383,11 +457,13 @@
       const maxSense = Math.max(100, ...history.map(s => s.sense)) * 1.1;
       cctx.strokeStyle = '#f2a93b'; cctx.beginPath();
       history.forEach((s, i) => { const y = h - pad - (s.sense / maxSense) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
+      cctx.strokeStyle = '#c93cc9'; cctx.beginPath();
+      history.forEach((s, i) => { const y = h - pad - (s.aggr || 0) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
       cctx.strokeStyle = '#2f6fd6'; cctx.beginPath();
       history.forEach((s, i) => { const y = h - pad - (s.mean / maxMean) * (h - pad * 2); i ? cctx.lineTo(x(i), y) : cctx.moveTo(x(i), y); }); cctx.stroke();
       cctx.fillStyle = '#6b6b66'; cctx.font = '12px sans-serif'; cctx.textBaseline = 'top';
       const last = history[history.length - 1];
-      cctx.fillText(`크기 ${last.mean.toFixed(1)} · 감지 ${last.sense.toFixed(0)}`, pad + 2, pad);
+      cctx.fillText(`크기 ${last.mean.toFixed(1)} · 감지 ${last.sense.toFixed(0)} · 공격성 ${(last.aggr || 0).toFixed(2)}`, pad + 2, pad);
     }
 
     // ── 루프 ───────────────────────────────────────────────────────
@@ -400,13 +476,13 @@
     }
 
     // ── 컨트롤 바인딩 ─────────────────────────────────────────────
-    const fmt = { simSpeed: v => `${v}×`, birthRate: v => `${(v * 100).toFixed(1)}%`, mutRate: v => `${Math.round(v * 100)}%`, mutStrength: v => (+v).toFixed(2) };
-    for (const id of ['simSpeed', 'safeRadius', 'predCount', 'predSize', 'predSpeed', 'predSense', 'birthRate', 'mutRate', 'mutStrength', 'maxPop']) {
+    const fmt = { simSpeed: v => `${v}×`, birthRate: v => `${(v * 100).toFixed(1)}%`, mutRate: v => `${Math.round(v * 100)}%`, mutStrength: v => (+v).toFixed(2), fill: v => (+v).toFixed(2), fightCost: v => `${Math.round(v * 100)}%` };
+    for (const id of ['simSpeed', 'safeRadius', 'fill', 'fightCost', 'predCount', 'predSize', 'predSpeed', 'predSense', 'birthRate', 'mutRate', 'mutStrength', 'maxPop']) {
       const el = $(id), out = $(id + 'Out');
       const apply = () => { cfg[id] = +el.value; out.textContent = (fmt[id] || (v => v))(el.value); if (id === 'predCount') syncPredatorCount(); if (id === 'maxPop' && prey.length > cfg.maxPop) prey.length = cfg.maxPop; };
       el.addEventListener('input', apply); apply();
     }
-    for (const id of ['safeOn', 'tradeoff', 'predAI', 'preyAI', 'senseCost', 'showTrace']) { const el = $(id); const apply = () => { cfg[id] = el.checked; }; el.addEventListener('change', apply); apply(); }
+    for (const id of ['safeOn', 'capacityOn', 'contestOn', 'refugeFood', 'tradeoff', 'predAI', 'preyAI', 'senseCost', 'showTrace']) { const el = $(id); const apply = () => { cfg[id] = el.checked; }; el.addEventListener('change', apply); apply(); }
 
     const setPaused = v => { paused = v; stage.classList.toggle('is-paused', v); $('btnPause').textContent = v ? '재개' : '일시정지'; if (v) pausedAt = performance.now(); else pausedTotal += performance.now() - pausedAt; };
     $('btnPause').addEventListener('click', () => setPaused(!paused));
