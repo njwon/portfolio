@@ -62,9 +62,9 @@
 <blockquote>
 <p>site:<em>.targetSystem.com - 특정 도메인의 사이트, 페이지들 검색<br>site:</em>.targetSystem.com inurl:app/kibana - 타겟 도메인 중 특정 경로를 가지고 있는 페이지들을 찾아낼 때<br>site:s3.amazonaws.com TargetName - 특정 회사의 Amazon S3 버킷을 찾아낼 때<br>site:*.targetSystem.com ext:txt password - 타겟 도메인 사이트에서 text 파일 중 password 단어 검색<br>inurl:/etc/passwd root:x:0:0:root:/root:/bin/bash - LFI 취약점 사이트 검색 (site: 연산 추가)<br>intitle:index of - 디렉토리 리스팅 취약점 검색 (site: 연산 추가)</p>
 </blockquote>
-<p>이러한 구글 해킹에 도움되는 예시들을 모아놓은 <a href="https://www.exploit-db.com/google-hacking-database">GHDB</a>라는 서비스가 존재하니 참고 바란다.</p>
+<p>이러한 구글 해킹에 도움되는 예시들을 모아놓은 <a href="https://www.exploit-db.com/google-hacking-database" target="_blank" rel="noopener">GHDB</a>라는 서비스가 존재하니 참고 바란다.</p>
 <h3>Spidering(Crawling)</h3>
-<p>Spidering(Crawling)이란 서비스 내에 존재하는 하이퍼 링크와 같은 노출되는 다른 공격 표면을 수집하는 과정을 뜻한다.<br>수동 탐색과 다르게 봇이 직접 탐색하므로 미처 발견하지 못했던 공격 표면을 발견할 수도 있다.<br>이러한 웹 스파이더링을 진행하는 툴 중에 <code>ZAP</code>이라는 툴이 존재한다.<br><a href="https://www.zaproxy.org/download/">여기</a>서 다운받을 수 있다.</p>
+<p>Spidering(Crawling)이란 서비스 내에 존재하는 하이퍼 링크와 같은 노출되는 다른 공격 표면을 수집하는 과정을 뜻한다.<br>수동 탐색과 다르게 봇이 직접 탐색하므로 미처 발견하지 못했던 공격 표면을 발견할 수도 있다.<br>이러한 웹 스파이더링을 진행하는 툴 중에 <code>ZAP</code>이라는 툴이 존재한다.<br><a href="https://www.zaproxy.org/download/" target="_blank" rel="noopener">여기</a>서 다운받을 수 있다.</p>
 <h3>S3 Bucket</h3>
 <p>S3(Simple Storage Service) Bucket이란 AWS 측에서 제공하는 클라우드 저장 서비스이다.<br>S3 Bucket을 단순히 관리 데이터를 저장하는 데이터베이스 서버로 쓰기도 하지만 여러가지 흥미로운 정보를 저장하는 백업 서버등으로 사용하는 경우도 있다. 이때 다른 숨겨진 서버나 로그, 크리덴셜과 같은 추가적인 정보를 발견할 가능성이 존재한다.<br>S3 버킷은 위에서 설명한 구글 도킹과 <code>GrayhatWarfare</code>, <code>Bucket Stream</code>이라는 툴로 찾을 수 있다.</p>
 <h4>S3 Bucket 구글 해킹</h4>
@@ -75,7 +75,7 @@
 <p>와 같은 방법을 사용할 수 있다.</p>
 <h4>S3 Bucket GrayhatWarfare</h4>
 <p><code>GrayhatWarfare</code>는 인터넷에 무단으로 노출된 퍼블릭 클라우드 스토리지의 파일들을 수집하여 검색할 수 있도록 지원하는 오픈소스 기반 OSINT(개방형 정보 수집) 보안 검색엔진이다.</p>
-<p><a href="https://grayhatwarfare.com/">여기</a>서 웹 서비스의 형태로 사용될 수 있으며 타겟 이름과 키워드등을 검색해 사용할 수 있다.</p>
+<p><a href="https://grayhatwarfare.com/" target="_blank" rel="noopener">여기</a>서 웹 서비스의 형태로 사용될 수 있으며 타겟 이름과 키워드등을 검색해 사용할 수 있다.</p>
 <h4>S3 Bucket Bucket Stream</h4>
 <p><code>Bucket Stream</code>은 <code>CT</code>를 기반으로 S3 Bucket을 찾아준다.</p>
 <blockquote>
@@ -84,14 +84,14 @@
 <h3>Github Recon</h3>
 <p>github에서 발견할 수 있는 정보들을 수집하는 과정을 Github Recon이라고 지칭한다.<br>git은 버전 관리 플랫폼인데 이를 개인이 아닌 다수가 사용할 수 있도록 하는 서비스가 바로 github이다.<br>보안 관리 상 github은 매우 중요한데 github에 개발자가 남겨 놓은 크리덴셜 외에도 하드 코딩된 민감한 정보가 존재할 수 있기도 하고 발견하지 못했던 취약점을 발견할 수도 있기 때문이다. git 특성상 커밋을 제거하더라도 기록이 남기 때문에 매우 치명적이라고 볼 수 있다.</p>
 <p>타겟 회사 이름, 프로젝트 이름, 개발자 이름(닉네임) 등을 검색하여 Github Repo를 찾아낼 수 있다. 찾아낸 뒤에는 Issues / Code Commits / Code History / Blame 현황을 조사하는 것이 중요하다. 이 부분에서 발생한 버그들과 버그를 패치한 과정을 볼 수 있기 때문이다.</p>
-<p>코드 내에서 취약점을 찾아내는 키워드는 key, secret, password, cred와 같고 <a href="https://github.com/streaak/keyhacks">여기</a>서 크리덴셜이 유효한지 확인할 수 있다.</p>
-<p>Github Recon도 위와 마찬가지로 자동화 도구들이 존재한다.<br>바로 <a href="https://github.com/michenriksen/gitrob">Gitrob</a>과 <a href="https://github.com/trufflesecurity/trufflehog">TruffleHog</a>이다.</p>
+<p>코드 내에서 취약점을 찾아내는 키워드는 key, secret, password, cred와 같고 <a href="https://github.com/streaak/keyhacks" target="_blank" rel="noopener">여기</a>서 크리덴셜이 유효한지 확인할 수 있다.</p>
+<p>Github Recon도 위와 마찬가지로 자동화 도구들이 존재한다.<br>바로 <a href="https://github.com/michenriksen/gitrob" target="_blank" rel="noopener">Gitrob</a>과 <a href="https://github.com/trufflesecurity/trufflehog" target="_blank" rel="noopener">TruffleHog</a>이다.</p>
 <p>이 도구들은 깃허브 토큰을 넣고 사용 가능하다.</p>
 <h3>Domain Enumeration</h3>
 <p>Domain Enumeration은 호스트 도메인을 이용해 하위 도메인을 찾는 과정이다.<br>이를 통해 공격 표면을 확장시킬 수 있고, 버그바운티를 진행할 시 공격 대상이 <code>*.example.com</code>일 때 진행한다.</p>
 <p>Domain Enumeration은 인증서의 SAN(Subject Alternative Name)을 조사하거나 amass라는 도구를 사용하여 진행할 수 있다.</p>
 <h4>Domain Enumeration SAN</h4>
-<p>SAN은 한개의 인증서로 여러 도메인을 등록할 수 있는 기능인데, Domain Enumeration도 S3 Bucket과 마찬가지로 <code>CT(Certificate Transparency)</code>를 조사함으로써 진행할 수 있다.<br>추천하는 서비스는 <a href="https://sslmate.com/ct_search_api/">여기</a>다.</p>
+<p>SAN은 한개의 인증서로 여러 도메인을 등록할 수 있는 기능인데, Domain Enumeration도 S3 Bucket과 마찬가지로 <code>CT(Certificate Transparency)</code>를 조사함으로써 진행할 수 있다.<br>추천하는 서비스는 <a href="https://sslmate.com/ct_search_api/" target="_blank" rel="noopener">여기</a>다.</p>
 <h4>Domain Enumeration amass</h4>
 <p>amass는 정보 수집 도구인데, amass의 enum 속성을 통해 Domain Enumeration을 진행할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/503789dc-dba8-4500-bd71-34b504f7253a/image.png" alt="[해킹] 타겟 정보 수집" width="578" height="224" loading="lazy" decoding="async"></p>
 <h2>마무리</h2>
@@ -119,15 +119,15 @@
 <p>SQLD 노랭이는 SQLD 뿐만 아니라 SQLP를 준비할 때에도 쓰이는 책이기 때문에 <b>난이도가 많이 어렵다.</b><br>책 안에 개념이 나와있는 것이 아닌, <b>문제 유형만 나와</b> 있기 때문에 비전공자가 이 책만으로 준비하는 것은 어렵다고 생각한다. 하지만 SQLD 노랭이는 자격증을 발급하고 주관하는 한국데이터산업진흥원에서 쓴 책이기 때문에 실제로 <b>시험에 몇 문제 정도가 이 책에서 등장</b>한다.</p>
 <p>나는 이 SQLD 노랭이 책 문제에 등장하는 개념을 <b>&quot;모두 이해하면&quot;</b> 어렵지 않게 자격증을 취득할 수 있다고 생각한다.</p>
 <p><b>몇 회독 이런 것은 중요하지 않다.</b> 만약 SQLD를 준비하는 중이라면 SQLD 노랭이를 구매해 <b>딥하게 이론을 파며 모두 이해해야 한다.</b></p>
-<p>나는 노랭이 약 2회독을 진행하였고, <b>SQLD 개념 PDF를 찾아 통으로 외웠다.</b>(<a href="https://bruders.tistory.com/173#tag3">PDF는 여기</a>) 그 후에 노랭이를 본격적으로 풀었다.</p>
+<p>나는 노랭이 약 2회독을 진행하였고, <b>SQLD 개념 PDF를 찾아 통으로 외웠다.</b>(<a href="https://bruders.tistory.com/173#tag3" target="_blank" rel="noopener">PDF는 여기</a>) 그 후에 노랭이를 본격적으로 풀었다.</p>
 <p>시간이 촉박해 밤을 많이 샜던거같다.</p>
 <p>중간중간 헷갈리거나 모르는 것은 <b>AI의 도움을 조금 <del>많이</del> 받았다.</b></p>
 <h3>후기</h3>
 <p>SQLD.. 내가 주니어라 모르는 것인지 모르겠지만 공부할 당시에 조금 어려웠던 기억이 있다. 조금 급하게 준비한 감도 없잖아 있어 그런것 같기도 하다. 그래도 많이 어려운 자격증은 아니니 <b>비전공자던 전공자던 모두 즐겁게 준비했으면 좋겠다.</b></p>
 <h3>공부할 때 참고했던 곳들</h3>
-<p><a href="https://bruders.tistory.com/173#tag3">해리누나님 블로그 요약 PDF: https://bruders.tistory.com/173#tag3</a></p>
-<p><a href="https://product.kyobobook.co.kr/detail/S000212021705">SQLD 노랭이: https://product.kyobobook.co.kr/detail/S000212021705</a></p>
-<p><a href="https://www.sqld.kr/">SQLD 문제은행: https://www.sqld.kr</a></p>
+<p><a href="https://bruders.tistory.com/173#tag3" target="_blank" rel="noopener">해리누나님 블로그 요약 PDF: https://bruders.tistory.com/173#tag3</a></p>
+<p><a href="https://product.kyobobook.co.kr/detail/S000212021705" target="_blank" rel="noopener">SQLD 노랭이: https://product.kyobobook.co.kr/detail/S000212021705</a></p>
+<p><a href="https://www.sqld.kr/" target="_blank" rel="noopener">SQLD 문제은행: https://www.sqld.kr</a></p>
 <p><del>AI는 돈이 없어 제미나이..</del></p>
 ]]></description>
       <author>njwon19@gmail.com (노정원)</author>
@@ -161,7 +161,7 @@
 <h4>포트</h4>
 <p>OSI 계층을 이해했다면 이제 포트 개념이 자연스럽게 연결된다. IP 주소가 건물의 주소라면, **포트(Port)**는 건물 안의 창구 번호다. 같은 서버에서 웹 서비스도 하고 이메일도 받고 SSH 접속도 받을 수 있는 것은 각 서비스가 서로 다른 포트를 점유하고 있기 때문이다.<br>포트의 번호는 0번부터 65535번까지 총 65536개가 있다. 이 중 0번부터 1023번까지는 **잘 알려진 포트(Well-known Port)**라고 하며, 각 번호에 유명한 서비스가 등록되어 있다. <b>22번은 SSH, 80번은 HTTP, 443번은 HTTPS</b>가 대표적이다. 이 대역의 포트에 서비스를 실행하려면 관리자 권한이 필요하기 때문에, 클라이언트 입장에서는 이 포트에서 동작하는 서비스를 어느 정도 신뢰할 수 있다.<br>서비스 포트를 표기할 때는 프로토콜을 함께 적기도 한다.<br><b>TCP/80이라고 하면 80번 포트에서 TCP 방식으로 서비스가 동작한다는 뜻</b>이다. TCP로 동작하는 서비스에 UDP 클라이언트가 접근하면 데이터가 교환되지 않기 때문에, 프로토콜과 포트 번호를 함께 확인하는 것이 중요하다.</p>
 <h4>DNS</h4>
-<p>브라우저에 <a href="https://example.com%EC%9D%84">https://example.com을</a> 입력하면 실제로는 어딘가의 서버 IP 주소로 요청이 가야 한다. 그런데 컴퓨터는 example.com 같은 문자로 된 주소를 이해하지 못한다. 숫자로 된 IP 주소만 알기 때문이다. 이 중간 다리 역할을 하는 것이 **DNS(Domain Name System)**다.<br><b>DNS는 도메인 이름을 IP 주소로 변환하는 분산 데이터베이스 시스템으로, 인터넷의 전화번호부</b>라고 생각하면 된다. 브라우저가 example.com을 입력받으면 먼저 DNS 서버에 &quot;이 도메인의 IP 주소가 뭐야?&quot;라고 물어보고, DNS가 123.456.78.9 같은 IP를 돌려주면 그제야 실제 서버로 요청을 보낸다.<br>서버를 직접 운영할 때는 도메인을 구매한 뒤 DNS 레코드를 직접 설정해야 한다. <b>A 레코드는 도메인을 IPv4 주소로 연결하고, CNAME 레코드는 도메인을 다른 도메인으로 연결</b>한다. <b>MX 레코드는 이메일 서버를 지정하고, TXT 레코드는 도메인 소유권 인증이나 SPF 설정</b> 등에 사용된다. DNS 설정 변경 후 전 세계 DNS 서버에 전파되기까지 수 분에서 최대 48시간이 걸릴 수 있는데, 이를 **DNS 전파(DNS Propagation)**라고 한다.</p>
+<p>브라우저에 <a href="https://example.com을" target="_blank" rel="noopener">https://example.com을</a> 입력하면 실제로는 어딘가의 서버 IP 주소로 요청이 가야 한다. 그런데 컴퓨터는 example.com 같은 문자로 된 주소를 이해하지 못한다. 숫자로 된 IP 주소만 알기 때문이다. 이 중간 다리 역할을 하는 것이 **DNS(Domain Name System)**다.<br><b>DNS는 도메인 이름을 IP 주소로 변환하는 분산 데이터베이스 시스템으로, 인터넷의 전화번호부</b>라고 생각하면 된다. 브라우저가 example.com을 입력받으면 먼저 DNS 서버에 &quot;이 도메인의 IP 주소가 뭐야?&quot;라고 물어보고, DNS가 123.456.78.9 같은 IP를 돌려주면 그제야 실제 서버로 요청을 보낸다.<br>서버를 직접 운영할 때는 도메인을 구매한 뒤 DNS 레코드를 직접 설정해야 한다. <b>A 레코드는 도메인을 IPv4 주소로 연결하고, CNAME 레코드는 도메인을 다른 도메인으로 연결</b>한다. <b>MX 레코드는 이메일 서버를 지정하고, TXT 레코드는 도메인 소유권 인증이나 SPF 설정</b> 등에 사용된다. DNS 설정 변경 후 전 세계 DNS 서버에 전파되기까지 수 분에서 최대 48시간이 걸릴 수 있는데, 이를 **DNS 전파(DNS Propagation)**라고 한다.</p>
 <h4>서버를 구성하며 만나게 되는 네트워크 개념들</h4>
 <h5>IP 주소와 CIDR 표기법</h5>
 <p>IP 주소는 네트워크 상에서 장치를 식별하는 고유한 주소로, IPv4는 192.168.0.1처럼 0~255 사이의 숫자 네 개를 점으로 구분한 형태다. 공인 IP는 인터넷에서 유일하게 식별 가능한 주소이고, 사설 IP는 내부 네트워크에서만 사용하는 주소다. 192.168.x.x, 10.x.x.x, 172.16.x.x ~ 172.31.x.x 대역이 사설 IP로 예약되어 있다.<br>네트워크 범위를 표현할 때는 CIDR 표기법을 사용한다. 192.168.0.0/24처럼 IP 주소 뒤에 슬래시와 숫자를 붙이는 방식으로, 뒤의 숫자는 네트워크 부분의 비트 수를 의미한다. /24면 사용 가능한 IP가 256개(실제로는 254개)라는 뜻이다.</p>
@@ -175,7 +175,7 @@
 <h5>로드밸런서와 리버스 프록시</h5>
 <p>서버를 여러 대로 늘려 트래픽을 나눠 받는 수평 확장(Scale Out) 구조에서 트래픽을 균등하게 분산시켜 주는 장치가 **로드밸런서(Load Balancer)**다. 헬스체크로 응답하지 않는 서버를 자동으로 제외하고, <b>HTTPS 인증서를 앞단에서 처리하는 SSL 종료 역할도 담당</b>한다.<br>**리버스 프록시(Reverse Proxy)**는 클라이언트의 요청을 대신 받아 내부 서버로 전달하는 서버다. Nginx가 대표적으로 사용된다. <b>내부 서버의 존재를 숨기고, SSL 처리, 캐싱, 요청 필터링을 한 곳에서 처리할 수 있다는 장점</b>이 있다.</p>
 <h5>데이터가 전송되는 실제 흐름</h5>
-<p>브라우저에서 <a href="https://example.com%EC%9D%84">https://example.com을</a> 입력하면, DNS가 도메인을 로드밸런서의 공인 IP로 변환한다.<br>↓<br>로드밸런서는 HTTPS 요청을 받아 SSL을 종료하고 내부 웹 서버들에게 트래픽을 분산한다.<br>↓<br>7계층에서 HTTP 요청이 만들어지고,<br>↓<br>6계층에서 TLS 암호화가 적용되고,<br>↓<br>4계층에서 TCP 세그먼트로 분할되고,<br>↓<br>3계층에서 IP 경로가 결정되고,<br>↓<br>2계층에서 MAC 주소 기반 프레임이 만들어지고,<br>↓<br>1계층에서 전기 신호로 변환되어 케이블을 타고 흐른다. </p>
+<p>브라우저에서 <a href="https://example.com을" target="_blank" rel="noopener">https://example.com을</a> 입력하면, DNS가 도메인을 로드밸런서의 공인 IP로 변환한다.<br>↓<br>로드밸런서는 HTTPS 요청을 받아 SSL을 종료하고 내부 웹 서버들에게 트래픽을 분산한다.<br>↓<br>7계층에서 HTTP 요청이 만들어지고,<br>↓<br>6계층에서 TLS 암호화가 적용되고,<br>↓<br>4계층에서 TCP 세그먼트로 분할되고,<br>↓<br>3계층에서 IP 경로가 결정되고,<br>↓<br>2계층에서 MAC 주소 기반 프레임이 만들어지고,<br>↓<br>1계층에서 전기 신호로 변환되어 케이블을 타고 흐른다. </p>
 <p>수신 측은 반대 방향으로 올라오며 해석한다.<br>이 과정을 **캡슐화(Encapsulation)**와 **역캡슐화(Decapsulation)**라고 한다.</p>
 <h5>TCP/IP 모델과의 관계</h5>
 <p>실제 인터넷은 OSI 7계층이 아닌 TCP/IP 4계층 모델을 기반으로 동작한다.<br>OSI의 5, 6, 7계층을 하나의 응용 계층으로, 1, 2계층을 네트워크 접근 계층으로 합쳐 총 4개의 계층으로 단순화한 구조다.<br>OSI 7계층을 배우는 이유는 실제로 그대로 구현하기 위해서가 아니라, 네트워크 통신의 각 단계를 개념적으로 분리해서 이해하기 위해서다.</p>
@@ -293,7 +293,7 @@ USE Dreamhack;
 <p>마이크로서비스란, 소프트웨어가 잘 정의된 API를 통해 통신하는 <b>소규모의 독립적인 서비스로 구성되어 있는 경우의 소프트웨어 개발을 위한 아키텍처.</b></p>
 </blockquote>
 <h2>SSRF</h2>
-<p>이처럼 서비스 간 HTTP 통신이 이뤄질 때 요청 내에 이용자의 입력값이 포함될 수 있다. 이용자의 입력값으로 포함되면 개발자가 의도하지 않은 요청이 전송될 수 있다. **Server-side Request Forgery(SSRF)**는 웹 서비스의 요청을 변조하는 취약점으로, 브라우저가 변조된 요청을 보내는 <b><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">CSRF</a>와는 다르게 웹 서비스의 권한으로 변조된 요청을 보낼 수 있다.</b></p>
+<p>이처럼 서비스 간 HTTP 통신이 이뤄질 때 요청 내에 이용자의 입력값이 포함될 수 있다. 이용자의 입력값으로 포함되면 개발자가 의도하지 않은 요청이 전송될 수 있다. **Server-side Request Forgery(SSRF)**는 웹 서비스의 요청을 변조하는 취약점으로, 브라우저가 변조된 요청을 보내는 <b><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0" target="_blank" rel="noopener">CSRF</a>와는 다르게 웹 서비스의 권한으로 변조된 요청을 보낼 수 있다.</b></p>
 <p><img src="https://velog.velcdn.com/images/njw/post/700d4e3d-3bdb-4d1a-a484-c78b6574378f/image.png" alt="[보안] SSRF 부셔보기!" width="1280" height="720" loading="lazy" decoding="async"></p>
 <p>최근의 대다수 서비스들은 마이크로서비스로 구조를 많이 바꾸고, 새롭게 개발하는 추세이기 때문에 <b>SSRF 취약점의 파급력이 더욱 높아지고 있다.</b></p>
 <p>백오피스와 같은 기능을 사용하는 웹 서비스들은 관리자만 기능을 사용할 수 있어야 하기 때문에 <b>내부망만 접속가능하도록 구성한다.</b></p>
@@ -330,7 +330,7 @@ def request_info<span class="hljs-punctuation">(</span><span class="hljs-punctua
     
     
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;127.0.0.1&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p>위 경로에 접속하면 image_downloader에서는 <a href="http://127.0.0.1:8000/request_info">http://127.0.0.1:8000/request_info</a> URL에 HTTP 요청을 보내고 응답을 반환한다. 반환한 값을 확인해보면 브라우저로 request_info 엔드포인트에 접속했을 때와 다르게 <b>브라우저 정보가 python-requests/<LIBRARY_VERSION>인 것을 확인할 수 있다.</b></p>
+<p>위 경로에 접속하면 image_downloader에서는 <a href="http://127.0.0.1:8000/request_info" target="_blank" rel="noopener">http://127.0.0.1:8000/request_info</a> URL에 HTTP 요청을 보내고 응답을 반환한다. 반환한 값을 확인해보면 브라우저로 request_info 엔드포인트에 접속했을 때와 다르게 <b>브라우저 정보가 python-requests/<LIBRARY_VERSION>인 것을 확인할 수 있다.</b></p>
 <p><code>http://127.0.0.1:8000/image_downloader?image_url=http://127.0.0.1:8000/request_info</code></p>
 <p>접속한 브라우저 정보로 <b>python-requests가 출력된 이유는 웹 서비스에서 HTTP 요청을 보냈기 때문이다.</b> 이처럼 이용자가 웹 서비스에서 사용하는 마이크로서비스의 API 주소를 알아내고, image_url에 주소를 전달하면 <b>외부에서 직접 접근할 수 없는 마이크로서비스의 기능을 임의로 사용할 수 있다.</b></p>
 <h3>웹 서비스의 요청 URL에 이용자의 입력값이 포함되는 경우</h3>
@@ -352,7 +352,7 @@ def user_search<span class="hljs-punctuation">(</span><span class="hljs-punctuat
     response = requests.get<span class="hljs-punctuation">(</span>f<span class="hljs-string">&quot;{INTERNAL_API}/user/search?user_name={user_name}&amp;user_type={user_type}&quot;</span><span class="hljs-punctuation">)</span></code></pre>
 <p><b>웹 서비스가 요청하는 URL에 이용자의 입력값이 포함되면 요청을 변조할 수 있다.</b> 이용자의 입력값 중 URL의 구성 요소 문자를 삽입하면 API 경로를 조작할 수 있다. 예를 들어, 예시 코드의 <code>user_info</code> 함수에서 <code>user_idx</code>에 <code>../search</code>를 입력할 경우 웹 서비스는 다음과 같은 URL에 요청을 보낸다.</p>
 <pre><code class="hljs language-dts"><span class="hljs-symbol">http:</span><span class="hljs-comment">//api.internal/search</span></code></pre>
-<p><code>..</code>는 상위 경로로 이동하기 위한 구분자로, 해당 문자로 요청을 보내는 경로를 조작할 수 있다. <b>해당 취약점은 경로를 변조한다는 의미에서 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#path-traversal">Path Traversal</a>이라고 불린다.</b></p>
+<p><code>..</code>는 상위 경로로 이동하기 위한 구분자로, 해당 문자로 요청을 보내는 경로를 조작할 수 있다. <b>해당 취약점은 경로를 변조한다는 의미에서 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#path-traversal" target="_blank" rel="noopener">Path Traversal</a>이라고 불린다.</b></p>
 <p>이 외에도, <code>#</code> 문자를 입력해 경로를 조작할 수 있다. 예를 들어, <code>user_search</code> 함수에서 <code>user_name</code>에 <code>secret&amp;user_type=private#</code>를 입력할 경우 웹 서비스는 다음과 같은 URL에 요청을 보낸다.</p>
 <pre><code class="hljs language-ruby"><span class="hljs-symbol">http:</span>/<span class="hljs-regexp">/api.internal/search</span>?user_name=secret&amp;user_type=<span class="hljs-keyword">private</span><span class="hljs-comment">#&amp;user_type=public</span></code></pre>
 <p><b><code>#</code> 문자는 Fragment Identifier 구분자로, 뒤에 붙는 문자열은 API 경로에서 생략된다. 따라서 해당 URL은 실제로 아래와 같은 URL을 나타낸다.</b></p>
@@ -518,7 +518,7 @@ https:<span class="hljs-regexp">//</span>vulnerable-web.dreamhack.io<span class=
 
 https:<span class="hljs-regexp">//</span>vulnerable-web.dreamhack.io/images.php?fn=<span class="hljs-number">6</span>ed0dd02806fa89e233b84f4.png</code></pre>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/38/">command-injection-1</a> 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/38/" target="_blank" rel="noopener">command-injection-1</a> 문제를 풀이해 보았다.</p>
 <p><b>index.php</b></p>
 <pre><code class="hljs language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">html</span>&gt;</span>
 <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
@@ -683,7 +683,7 @@ https:<span class="hljs-regexp">//</span>vulnerable-web.dreamhack.io/images.php?
       <description><![CDATA[<p>다양한 웹 애플리케이션 제작용 언어는 <b>시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원</b>한다. 각 언어별 시스템 함수로는 <b>PHP의 system</b>, <b>Node JS의 child_process</b>, <b>파이썬의 os.system</b>이 있다. 이러한 함수는 전달된 인자를 <b>셸 프로그램에 전달해 명령어를 실행</b>한다. 예를 들어, <code>system(&quot;cat /etc/passwd&quot;)</code>를 호출하면, 셸 프로그램으로 <code>cat /etc/passwd</code>를 실행한 것과 같다.</p>
 <p>시스템 함수를 사용하면 이미 설치된 소프트웨어들을 쉽게 이용할 수 있다는 장점이 있다. 그러나 함수의 인자를 셸의 명령어로 전달한다는 점에서 치명적인 취약점으로 이어지기도 한다.</p>
 <h2>Command Injection</h2>
-<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">인젝션(Injection)</a>은 악의적인 데이터를 프로그램에 입력하여 이를 시스템 명령어, 코드, 데이터베이스 쿼리 등으로 실행되게 하는 기법을 말한다. 이 중, <b>이용자의 입력을 시스템 명령어로 실행하게 하는 취약점을 Command Injection</b>이라고 부른다.</p>
+<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0" target="_blank" rel="noopener">인젝션(Injection)</a>은 악의적인 데이터를 프로그램에 입력하여 이를 시스템 명령어, 코드, 데이터베이스 쿼리 등으로 실행되게 하는 기법을 말한다. 이 중, <b>이용자의 입력을 시스템 명령어로 실행하게 하는 취약점을 Command Injection</b>이라고 부른다.</p>
 <p><b>Command Injection은 명령어를 실행하는 함수에 이용자가 임의의 인자를 전달할 수 있을 때 발생</b>한다. 앞서 서술한 시스템 함수를 사용하면 이용자의 입력을 소프트웨어의 인자로 전달할 수 있다. 파이썬으로 개발된 웹 애플리케이션에서 입력한 **임의 IP에 ping을 전송하고 싶다면 os.system(“ping [user-input]”)**을, **임의 파일을 읽고 싶다면 os.system(“cat [user-input]”)**등의 형태로 시스템 함수를 사용할 수 있다.</p>
 <p>그러나 이러한 함수를 사용할 때, <b>이용자의 입력을 제대로 검사하지 않으면 임의 명령어가 실행될 수도 있다.</b> 이는 리눅스 <b>셸 프로그램이 지원하는 다양한 메타 문자 때문이다.</b> 시스템 함수는 셸 프로그램에 명령어를 전달하여 실행하는데, 셸 프로그램은 다양한 메타 문자를 지원한다.</p>
 <pre><code class="hljs language-dns">`` - 명령어 치환
@@ -733,7 +733,7 @@ $ echo id | /bin/sh
 uid=<span class="hljs-number">1001</span><span class="hljs-punctuation">(</span>theori<span class="hljs-punctuation">)</span> gid=<span class="hljs-number">1001</span><span class="hljs-punctuation">(</span>theori<span class="hljs-punctuation">)</span> groups=<span class="hljs-number">1001</span><span class="hljs-punctuation">(</span>theori<span class="hljs-punctuation">)</span></code></pre>
 <p><b>&amp;&amp;, ;, |</b> 등을 사용하면 <b>여러 개의 명령어를 연속으로 실행</b>시킬 수 있다. 따라서 <b>공격자는 메타 문자를 통해 임의 명령어를 실행하여 셸을 획득할 수 있다.</b></p>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/44">command-injection-1</a> 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/44" target="_blank" rel="noopener">command-injection-1</a> 문제를 풀이해 보았다.</p>
 <p><b>app.py</b></p>
 <pre><code class="hljs language-dart">#!/usr/bin/env python3
 <span class="hljs-keyword">import</span> subprocess
@@ -795,7 +795,7 @@ def <span class="hljs-title function_">ping</span>():
       <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0/</guid>
       <pubDate>Mon, 27 Apr 2026 01:13:25 GMT</pubDate>
       <description><![CDATA[<p>**인젝션 (Injection)**은 주입이라는 뜻을 지닌 영단어로써 <b>이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점</b>을 의미한다.</p>
-<p><a href="https://velog.io/@njw/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94">SQL 인젝션을 공부하기 전, DB에 대해 공부해야 한다.</a></p>
+<p><a href="https://velog.io/@njw/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94" target="_blank" rel="noopener">SQL 인젝션을 공부하기 전, DB에 대해 공부해야 한다.</a></p>
 <h2>SQL Injection</h2>
 <blockquote>
 <p>SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에서 사용하는 쿼리를 임의로 조작해 데이터베이스의 정보를 획득하는 서버 사이드 공격 취약점.</p>
@@ -1081,7 +1081,7 @@ def <span class="hljs-title function_">ping</span>():
     ==&gt; <span class="hljs-literal">True</span></code></pre>
 <p>substr() 함수를 이용해 <b>비밀번호 첫 번째 바이트가 &#39;B&#39;인지 비교</b>하고, <b>반환 결과를 통해 비밀번호의 첫 번째 바이트는 &#39;B&#39;가 아님을 알 수 있다.</b> 이후 두 번째와 세 번째 쿼리의 반환 결과를 통해 <b>첫 번째 바이트가 &#39;P&#39;, 두 번째 바이트가 &#39;a&#39;인 것을 알아낼 수 있다.</b> 이와 같은 방법으로 <b>관리자 계정의 비밀번호를 알아낼 수 있다.</b></p>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/24">simple_sqli</a> 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/24" target="_blank" rel="noopener">simple_sqli</a> 문제를 풀이해 보았다.</p>
 <pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template, g
 import sqlite3
@@ -1256,7 +1256,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
 <blockquote>
 <p>CSRF란, 인증된 사용자가 자신의 의지와 무관하게 공격자가 의도한 행동(비밀번호 변경, 송금, 삭제 등)을 웹 애플리케이션에서 수행하게 만드는 취약점</p>
 </blockquote>
-<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="1698" height="844" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
+<p>사용자의 <b>신원 정보가 포함되어있는 쿠키(세션, JWT)는 일종의 서명과 같은 역할</b>을 한다.<br>**CSRF(Cross Site Request Forgery, 교차 사이트 요청 위조)**는 이러한 권한이 주어진 사용자를 이용해 <b>사용자를 속여 의도치 않은 요청에 동의</b>하도록 만드는 공격이다.<br><img src="https://velog.velcdn.com/images/njw/post/d2c83f95-65fe-4222-b4d8-9ce816a023e5/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="1698" height="844" loading="lazy" decoding="async"><br>이미지를 보자. 이미지에선 공격자가 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#%EB%B0%A9%EC%8B%9D" target="_blank" rel="noopener">Stored XSS 취약점</a>을 이용해 CSRF 공격 스크립트가 포함된 게시물을 등록하고 이를 이용자가 볼 수 있도록 하고 있다. 이용자는 CSRF 스크립트가 포함된 게시물을 열람하여 <b>스스로 웹 사이트에게 요청을 보내 공격자가 의도한대로 작업이 이루어지는 것</b>을 알 수 있다.</p>
 <h3>방식</h3>
 <p>CSRF 공격에 성공하기 위해서는 <b>공격자가 작성한 악성 스크립트를 이용자가 실행</b>해야 한다. 이는 공격자가 이용자에게 메일을 보내거나 게시판에 글을 작성해 이용자가 이를 조회하도록 유도하는 방법이 있다. 심지어는 공격자가 직접 자신의 사이트를 만들어 그곳에서 악성 스크립트를 작성할 수도 있다. 여기서 말하는 <b>악성 스크립트는 HTTP 요청을 보내는 코드</b>를 뜻한다.</p>
 <h4>XSS와의 차이점?</h4>
@@ -1270,7 +1270,7 @@ app.run<span class="hljs-punctuation">(</span>host=&#x27;<span class="hljs-numbe
 <p>CSRF 공격의 목적은 요청을 실행시키는 것 자체이다. <b>공격자는 응답을 굳이 읽지 않아도 된다.</b> <code>&lt;form&gt;</code> 태그를 이용한 POST 요청이나 <code>&lt;img&gt;</code> 태그를 이용한 GET 요청처럼 단순한 방식으로도 <b>송금이나 설정 변경은 충분히 가능</b>하다.</p>
 <p>하지만 여기서 <b>공격자가 단순히 요청을 보내는 것을 넘어,</b> 서버의 응답 데이터를 가로채거나(예: 계좌 잔액 조회, 개인정보 탈취), application/json 같은 커스텀 형식으로 정교한 요청을 보내려는 순간, 브라우저라는 문지기가 막는다. 바로 <b>SOP 정책</b> 때문이다.</p>
 <p><b>흔히 CORS 에러라고 불리우는 에러 사진</b><br><img src="https://velog.velcdn.com/images/njw/post/3f77ae0a-c745-4635-9b87-ac899194e9e9/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="868" height="295" loading="lazy" decoding="async"></p>
-<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#sop-%EC%A0%95%EC%B1%85">여기서</a> <b>SOP는 Same Origin인 서비스들끼리만 리소스를 공유</b>할 수 있다고 했다.<br>그렇다면 <code>&lt;img&gt;</code> 태그들 같은 것들은 어떻게 작동할까? 분명히 Cross Origin인 리소스를 태그에 담을 수 있지 않은가. 사실 <b>SOP는 Cross Origin끼리의 교환에서 모든 리소스를 막는 것이 아니다.</b> 위에서 서술한 <code>&lt;img&gt;</code> 태그와 같은 이미지 말고도 <code>&lt;style&gt;</code>, <code>&lt;script&gt;</code> 등의 태그의 리소스 교환을 막지 않는다.<br>위 경우들 외에도 Cross Origin인 웹 서비스들끼리 데이터를 처리해야 하는 경우가 있다. 이때 <b>자원을 공유하기 위해 사용하는 방법</b>을 <b>CORS</b>라고 명칭한다.</p>
+<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-XSS-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#sop-%EC%A0%95%EC%B1%85" target="_blank" rel="noopener">여기서</a> <b>SOP는 Same Origin인 서비스들끼리만 리소스를 공유</b>할 수 있다고 했다.<br>그렇다면 <code>&lt;img&gt;</code> 태그들 같은 것들은 어떻게 작동할까? 분명히 Cross Origin인 리소스를 태그에 담을 수 있지 않은가. 사실 <b>SOP는 Cross Origin끼리의 교환에서 모든 리소스를 막는 것이 아니다.</b> 위에서 서술한 <code>&lt;img&gt;</code> 태그와 같은 이미지 말고도 <code>&lt;style&gt;</code>, <code>&lt;script&gt;</code> 등의 태그의 리소스 교환을 막지 않는다.<br>위 경우들 외에도 Cross Origin인 웹 서비스들끼리 데이터를 처리해야 하는 경우가 있다. 이때 <b>자원을 공유하기 위해 사용하는 방법</b>을 <b>CORS</b>라고 명칭한다.</p>
 <p><b>CORS(Cross-Origin Resource Sharing, 교차 출처 리소스 공유)는 HTTP 헤더에 기반하여 Cross Origin 간에 리소스를 공유</b>하는 방법이다.<br>발신측에서 CORS 헤더를 설정해 요청하면, 수신측에서 헤더를 구분해 정해진 규칙에 맞게 데이터를 가져갈 수 있도록 설정한다.<br><b>웹 리소스 요청 코드</b></p>
 <pre><code class="hljs language-dart"><span class="hljs-comment">/*
     XMLHttpRequest 객체를 생성합니다. 
@@ -1314,7 +1314,7 @@ xhr.<span class="hljs-title function_">send</span>(<span class="hljs-string">&qu
 <span class="hljs-keyword">location</span>.href = <span class="hljs-string">&#x27;http://bank.com/sendmoney?to=njwon&amp;amount=100&#x27;</span>;
 <span class="hljs-keyword">location</span>.replace(<span class="hljs-string">&#x27;http://bank.com/sendmoney?to=njwon&amp;amount=100&#x27;</span>);</code></pre>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/26">csrf-1</a> 워게임 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/26" target="_blank" rel="noopener">csrf-1</a> 워게임 문제를 풀이해 보았다.</p>
 <pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template
 from selenium import webdriver
@@ -1418,7 +1418,7 @@ def admin_notice_flag<span class="hljs-punctuation">(</span><span class="hljs-pu
 
 
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;0.0.0.0&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="359" height="76" loading="lazy" decoding="async"></p>
+<p><a href="https://dreamhack.io/wargame/challenges/28" target="_blank" rel="noopener">xss-1</a>와 마찬가지로 <b>FLAG 변수에 플래그</b>가 담기는 것을 알 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/d56bbe1a-302f-484a-9b1f-eaf6b81b6d82/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="359" height="76" loading="lazy" decoding="async"></p>
 <p>/vuln 엔드포인트에서는 파라미터를 모두 소문자로 변환해 &quot;frame&quot;, &quot;script&quot;, &quot;on&quot; 이 세 키워드를 모두 &quot;*&quot;로 치환하고 반환해 <b>XSS 공격이 불가능</b>하다는 것을 확인할 수 있다.<br><img src="https://velog.velcdn.com/images/njw/post/2eca434a-563a-40ca-8b32-38de67e66f09/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="603" height="204" loading="lazy" decoding="async"></p>
 <p>이 부분에서 /flag 엔드포인트에 POST 메서드로 요청이 오면 check_csrf에 <b>사용자의 요청값과 플래그를 포함해 넘긴다.</b><br><img src="https://velog.velcdn.com/images/njw/post/9392bd84-d67f-4d11-951e-7bf3e1eebeb0/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="566" height="201" loading="lazy" decoding="async"></p>
 <p>check_csrf는 동적으로 URL을 만들어 서버에서 chrome 드라이버를 통해 <code>127.0.0.1</code> 자기 자신을 의미하는 <b>루프백 주소에 쿠키를 만들고 동적으로 만든 URL을 열어본다는 것을 알 수 있다.</b><br><img src="https://velog.velcdn.com/images/njw/post/26d71bf4-a9ce-4f72-9ab2-3e30223e5c34/image.png" alt="[보안] CSRF 부셔보고 CORS 알아보기!" width="590" height="632" loading="lazy" decoding="async"></p>
@@ -1444,7 +1444,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <blockquote>
 <p>XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점</p>
 </blockquote>
-<p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
+<p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D" target="_blank" rel="noopener">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
 <h3>방식</h3>
 <p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="820" height="489" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
 <p>평범한 이용자들은 단순히 개발자의 의도대로 자연어로 이루어진 글을 게시할 뿐이겠지만, 여기서 공격자가 <b>인터널 자바스크립트  <code>&lt;script&gt;&lt;/script&gt;</code>를 포함한 글을 게시하면 그 글을 열어본 유저에게는 클라이언트 사이드 스크립트</b>가 로드되어 실행될 것이다.</p>
@@ -1485,9 +1485,9 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <p><b>Reflected XSS</b> 기법을 이용하는 방법중엔 대표적으로 게시판 서비스에서 작성된 게시물을 조회하기 위한 검색창에서 스크립트를 포함해 검색하는 방식이 있다. 이용자가 게시물을 검색하면 서버에서는 검색 결과를 이용자에게 반환한다. 일부 서비스에서는 검색 결과를 응답에 포함하는데, <b>검색 문자열에 악성 스크립트가 포함되어 있다면 Reflected XSS</b>가 발생할 수 있다.</p>
 <p>쉽게 말해서 커뮤니티의 글은 <b>DB에 담겨오니 Stored XSS</b>이고,<br>검색을 할 경우 URL에 포함되어 전송되고 <b>DB에 담기지 않고 서버에서 반환되어 오니 Reflected XSS</b>이다.</p>
 <h4>SOP 정책</h4>
-<p>위에서 <b>Universal XSS는 SOP 정책을 우회하는 XSS</b>라고 서술한 바 있다.<br><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">브라우저는 인증 정보로 사용될 수 있는 쿠키를 브라우저 내부에 보관한다.</a> 그리고 <b>이용자가 웹 서비스에 접속할 때, 브라우저는 해당 웹 서비스에서 사용하는 인증 정보인 쿠키를 HTTP 요청에 포함시켜 전달</b>한다. 이와 같은 특징은 사이트에 직접 접속하는 것에만 한정되지 않는다. 브라우저는 웹 리소스를 통해 간접적으로 <b>타 사이트에 접근</b>할 때도 인증 정보인 <b>쿠키를 함께 전송</b>하는 특징을 가지고 있다.</p>
+<p>위에서 <b>Universal XSS는 SOP 정책을 우회하는 XSS</b>라고 서술한 바 있다.<br><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D" target="_blank" rel="noopener">브라우저는 인증 정보로 사용될 수 있는 쿠키를 브라우저 내부에 보관한다.</a> 그리고 <b>이용자가 웹 서비스에 접속할 때, 브라우저는 해당 웹 서비스에서 사용하는 인증 정보인 쿠키를 HTTP 요청에 포함시켜 전달</b>한다. 이와 같은 특징은 사이트에 직접 접속하는 것에만 한정되지 않는다. 브라우저는 웹 리소스를 통해 간접적으로 <b>타 사이트에 접근</b>할 때도 인증 정보인 <b>쿠키를 함께 전송</b>하는 특징을 가지고 있다.</p>
 <p>이 특징 때문에 <b>악의적인 페이지가 클라이언트의 권한을 이용해 대상 사이트에 HTTP 요청을 보내고, HTTP 응답 정보를 획득 하는 코드</b>를 <b>실행</b>할 수 있다. 이는 정보 유출과 같은 보안 위협이 생길 수 있는 요소가 된다. 따라서, 클라이언트 입장에서는 가져온 데이터를 <b>악의적인 페이지에서 읽을 수 없도록 해야 하고 해당 웹서비스에서만 읽을 수 있도록 해야한다.</b> 이것이 바로 **SOP(동일 출처 정책, Same Origin Policy)**이라고 불리우는 보안 메커니즘이다.</p>
-<p>SOP는 URL의 구성요소 중 프로토콜(스키마)과 호스트와 포트를 확인한다.<br><a href="https://njwon.com:31240">https://njwon.com:31240</a><br>(프로토콜(스키마))  (호스트)  (포트)<br>이 중 하나라도 쿠키를 발급한 웹 서비스와 다르다면 <b>Cross Origin</b>으로 판별하고 아니라면 <b>Same Origin</b>으로 판별한다.</p>
+<p>SOP는 URL의 구성요소 중 프로토콜(스키마)과 호스트와 포트를 확인한다.<br><a href="https://njwon.com:31240" target="_blank" rel="noopener">https://njwon.com:31240</a><br>(프로토콜(스키마))  (호스트)  (포트)<br>이 중 하나라도 쿠키를 발급한 웹 서비스와 다르다면 <b>Cross Origin</b>으로 판별하고 아니라면 <b>Same Origin</b>으로 판별한다.</p>
 <p>SOP는 <b>Same Origin일 때만 정보를 읽도록 한다.</b></p>
 <h3>XSS 페이로드</h3>
 <p>XSS는 다음과 같은 형태로 존재할 수 있다.<br><b><div style="text-align: center"> 쿠키 및 세션 탈취 공격 코드 </div></b></p>
@@ -1516,7 +1516,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
     <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">open</span>(<span class="hljs-string">&quot;http://hacker.dreamhack.io/&quot;</span>)
 </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a> 워게임 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/28" target="_blank" rel="noopener">xss-1</a> 워게임 문제를 풀이해 보았다.</p>
 <pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template
 from selenium import webdriver
@@ -1631,12 +1631,12 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 </blockquote>
 <p>이 같은 IP는 숫자로만 이루어져 있고 길이가 무척 길어 사람이 외우기 힘든 구조였다.</p>
 <p>이를 개선시키고자 나온것이 <b>DNS</b>이다.</p>
-<p>**DNS(Domain Name System)**는 <b>호스트의 도메인네임 (<a href="http://www.example.com)%EC%9D%84">www.example.com)을</a> 네트워크주소(192.168.1.0)로 변환</b>하거나, 그 반대의 역할을 수행하는 시스템이다.</p>
+<p>**DNS(Domain Name System)**는 <b>호스트의 도메인네임 (<a href="http://www.example.com)을" target="_blank" rel="noopener">www.example.com)을</a> 네트워크주소(192.168.1.0)로 변환</b>하거나, 그 반대의 역할을 수행하는 시스템이다.</p>
 <p>naver.com , google.com 모두 DNS을 가진 DN(Domain Name)이라고 할 수 있다.</p>
 <p>DNS는 클라이언트가 DNS 서버에 접속하고 IP 주소를 얻기 위해 <b>질의를 보내는 것으로 시작하고 DNS 서버는 IP 주소를 반환</b>한다.<br>클라이언트는 IP 주소를 받으면 이를 이용해 웹서버에 접속한다.</p>
 <p><img src="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png" alt="[보안] DNS와 DNS 터널링" width="900" height="680" loading="lazy" decoding="async"></p>
-<p>이때 표면적으로는 <a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 담당하고 있는 DNS 서버에 바로 쿼리를 날리는 것처럼 보인다.</p>
-<p>하지만 도메인 자체가 전 세계에 너무 많기에 조금 다른 <b>계층 방식</b>으로 동작한다.<br><a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 예시로 들어보겠다.</p>
+<p>이때 표면적으로는 <a href="http://www.example.com를" target="_blank" rel="noopener">www.example.com를</a> 담당하고 있는 DNS 서버에 바로 쿼리를 날리는 것처럼 보인다.</p>
+<p>하지만 도메인 자체가 전 세계에 너무 많기에 조금 다른 <b>계층 방식</b>으로 동작한다.<br><a href="http://www.example.com를" target="_blank" rel="noopener">www.example.com를</a> 예시로 들어보겠다.</p>
 <h3>DNS 구조</h3>
 <ol>
 <li>브라우저와 OS 모두 접속했던 사이트에 대한 <b>DNS 기록과 매핑되는 IP 캐시</b>를 가지고 있다. 이곳을 제일 먼저 확인한다.</li>
@@ -1674,7 +1674,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <p>이러한 키 분배의 난제와 상대방 신원 확인의 불확실성을 해결하기 위해 등장한 혁신적인 체계가 바로 <b>PKI</b>이다.</p>
 <p>**PKI(Public Key Infrastructure)**란, 디지털 인증서와 비대칭키 암호화를 사용하여 디지털 정보의 기밀성, 무결성, 인증, 부인 방지를 보장하는 보안 인프라이다. </p>
 <blockquote>
-<p>비대칭키 암호화란, 간단하게 암호화와 복호화에 쓰이는 키가 다른 암호화 알고리즘이다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTPS-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0#%EB%B9%84%EB%8C%80%EC%B9%AD%ED%82%A4">자세한 건 이전 글 참고</a></p>
+<p>비대칭키 암호화란, 간단하게 암호화와 복호화에 쓰이는 키가 다른 암호화 알고리즘이다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTPS-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0#%EB%B9%84%EB%8C%80%EC%B9%AD%ED%82%A4" target="_blank" rel="noopener">자세한 건 이전 글 참고</a></p>
 </blockquote>
 <h3>구조</h3>
 <p>PKI는 크게 <b>등록자</b>와 <b>이용자,</b> <b>CA</b>와 <b>RA,</b> <b>VA</b>로 이루어진다.</p>
@@ -1692,7 +1692,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <p>루트 CA 아래에는 <b>중간 CA(Intermediate CA)</b> 가 있다. 루트 CA가 직접 모든 인증서를 발급하면 루트 CA의 개인키 노출 위험이 너무 높아지기 때문에, <b>실제 발급은 중간 CA를 통해 이루어진다.</b> 루트 CA는 중간 CA를 신뢰한다고 서명해주고, 중간 CA가 최종 사용자에게 인증서를 발급하는 구조다.</p>
 <p>결국 신뢰의 흐름은 이렇게 된다.<br><b>루트 CA → 중간 CA → 등록자 인증서</b><br>(브라우저가 신뢰)  (루트가 서명)  (중간 CA가 서명)<br>우리가 어떤 사이트에 접속했을 때 브라우저가 자물쇠 아이콘을 보여주는 것은, 이 <b>신뢰 체인을 끝까지 검증해서 루트 CA까지 연결이 닿았다는 의미다.</b></p>
 <h2>TLS와 HTTPS</h2>
-<p><b>TLS(Transport Layer Security)는 PKI를 이용하는 프로토콜</b>이다.<br>이름에 Transport가 들어가는 만큼 전송 계층과 밀접한 관련이 있으며 전송 계층의 TLS 프로토콜을 기반으로 동작한다.<br>각설하고 TLS의 통신 과정을 HTTPS와 연관지어 서술해보겠다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#https">HTTPS는 여기서!</a><br>HTTPS 프로토콜을 사용하기 위해 <b>클라이언트(웹 서버)는 PKI 인증서를 발급받아야 한다.</b></p>
+<p><b>TLS(Transport Layer Security)는 PKI를 이용하는 프로토콜</b>이다.<br>이름에 Transport가 들어가는 만큼 전송 계층과 밀접한 관련이 있으며 전송 계층의 TLS 프로토콜을 기반으로 동작한다.<br>각설하고 TLS의 통신 과정을 HTTPS와 연관지어 서술해보겠다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#https" target="_blank" rel="noopener">HTTPS는 여기서!</a><br>HTTPS 프로토콜을 사용하기 위해 <b>클라이언트(웹 서버)는 PKI 인증서를 발급받아야 한다.</b></p>
 <h3>PKI 인증서 발급</h3>
 <p>이 과정은 <b>클라이언트(웹 서버)의 공개키와 개인키의 생성</b>으로 시작된다.</p>
 <ol>
@@ -1786,7 +1786,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
       <guid isPermaLink="true">https://njw.kro.kr/blog/posts/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D/</guid>
       <pubDate>Wed, 22 Apr 2026 03:33:53 GMT</pubDate>
       <description><![CDATA[<h2>인증은 왜 할까?</h2>
-<p><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#http%EC%9D%98-%ED%8A%B9%EC%A7%95">여기</a>에 서술한대로 <b>HTTP는 Stateless</b>하다.<br>로그인을 해도 기억하지 못하기 때문에 이를 보완하는 <b>다양한 인증 방식</b>이 등장했다.<br>순서대로 알아보자.</p>
+<p><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#http%EC%9D%98-%ED%8A%B9%EC%A7%95" target="_blank" rel="noopener">여기</a>에 서술한대로 <b>HTTP는 Stateless</b>하다.<br>로그인을 해도 기억하지 못하기 때문에 이를 보완하는 <b>다양한 인증 방식</b>이 등장했다.<br>순서대로 알아보자.</p>
 <h2>웹의 인증</h2>
 <h3>기본 인증</h3>
 <p><b>기본 인증은 HTTP header를 사용하는 인증 방법</b> 중에 하나이다.<br>단순하게 생각해보자.<br>우리가 로그인을 할 때 최소한으로 필요한 것은 ID와 이를 보조하는 Password이다.<br>기본 인증은 이러한 정보를 최소한으로 이용한다.</p>
@@ -1913,7 +1913,7 @@ app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&qu
 <h3>호스팅 워크플로우</h3>
 <p>클라이언트가 호스트 요청과 도커 이미지를 전달하면 Public 서브넷(웹 서버)를 통과해 Private 서브넷(웹 어플리케이션 서버) 측에서 도커 이미지를 전달해 Private 서브넷(호스팅 지원용)에서 받아 카타 컨테이너를 만들고 다시 Private 서브넷(웹 어플리케이션 서버) 측 에서 생성된 컨테이너 ID를 DB에 요청 사용자 식별 정보, API 서비스 식별 정보와 함께 저장한다.</p>
 <p>또한 각각에 컨테이너에 팔코(Falco) pdig가 붙어있어 모든 작업의 로그를 감시하고 수집한다. 이를 카타 에이전트에게 전달하면 카타 에이전트는 vsock를 통해 전달하면 엔드포인트 단에서 대기하고 있는 팔코 프로세스가 이를 해석해 WARNING 이상의 로그만 container.ID와 함께 AI 서버로 전송한다.</p>
-<p><a href="https://github.com/falcosecurity/pdig?tab=readme-ov-file">pdig 깃허브</a></p>
+<p><a href="https://github.com/falcosecurity/pdig?tab=readme-ov-file" target="_blank" rel="noopener">pdig 깃허브</a></p>
 <p>AI 서버는 컨테이너의 위험점수를 측정해 컨테이너를 즉시 차단하고 종료한 후 로깅하는 로직을 생각했다.</p>
 <p><del><b>+이 기능은 구현하기 매우 복잡해 현 프로젝트에선 제외되었고, 나중에 개인 프로젝트로 다뤄볼 생각이다.</b></del></p>
 <h3>프론트엔드</h3>
@@ -2117,7 +2117,7 @@ app.delete<span class="hljs-punctuation">(</span>&#x27;/user&#x27;, <span class=
 <p>/(아무문자열) =&gt; (아무문자열)에 대한 요청 감지.<br>(예: /about, /random.text)</p>
 </blockquote>
 <h4>문자열 패턴</h4>
-<p>Express.js에서는 <b>문자열 패턴을 기반으로 한 경로</b>를 지정할 수 있다.<br>아래에 각각의 고유 문자열 패턴이 서술되어 있다.<br>또한 <a href="https://www.npmjs.com/package/path-to-regexp">여기</a>에서 모든 고유 문자열 패턴의 가능성을 확인할 수 있다.</p>
+<p>Express.js에서는 <b>문자열 패턴을 기반으로 한 경로</b>를 지정할 수 있다.<br>아래에 각각의 고유 문자열 패턴이 서술되어 있다.<br>또한 <a href="https://www.npmjs.com/package/path-to-regexp" target="_blank" rel="noopener">여기</a>에서 모든 고유 문자열 패턴의 가능성을 확인할 수 있다.</p>
 <blockquote>
 <p>ab?cd =&gt; &quot;?&quot; 앞 문자가 있건, 없건 이와 관계없이 감지.<br>(예: /acd, /abcd)</p>
 </blockquote>
@@ -2131,7 +2131,7 @@ app.delete<span class="hljs-punctuation">(</span>&#x27;/user&#x27;, <span class=
 <p>ab(cd)?e =&gt; &quot;(cd)&quot;를 통해 한 그룹으로 묶고 &quot;?&quot;를 통해 (cd)가 있건 없건 이와 관계없이 감지.<br>(예: /abe, /abcde)</p>
 </blockquote>
 <h4>정규 표현식</h4>
-<p>Express.js에서는 또한 <b>정규 표현식을 기반으로 한 경로</b>를 설정할 수 있다.<br>아래에 몇가지 정규표현식 예시가 서술되어 있다.<br>자세한 가이드는 <a href="https://developer.mozilla.org/docs/Web/JavaScript/Guide/Regular_expressions">여기</a>에서 확인 가능하다.</p>
+<p>Express.js에서는 또한 <b>정규 표현식을 기반으로 한 경로</b>를 설정할 수 있다.<br>아래에 몇가지 정규표현식 예시가 서술되어 있다.<br>자세한 가이드는 <a href="https://developer.mozilla.org/docs/Web/JavaScript/Guide/Regular_expressions" target="_blank" rel="noopener">여기</a>에서 확인 가능하다.</p>
 <blockquote>
 <p>/a/ =&gt; &quot;a&quot;라는 글자가 단 하나라도 포함된 모든 항목을 감지.<br>(예: /a, /dwasdwd, /dwa, /2a)</p>
 </blockquote>
@@ -2279,7 +2279,7 @@ app.listen<span class="hljs-punctuation">(</span>port, <span class="hljs-punctua
   console.log<span class="hljs-punctuation">(</span>`Example app listening on port ${port}`<span class="hljs-punctuation">)</span>
 }<span class="hljs-punctuation">)</span></code></pre>
 <p>코드 작성이 완료되면 node index.js 명령어를 실행해 서버가 열리는 것을 확인할 수 있다.</p>
-<p>더 자세한 설명은 <a href="https://expressjs.com/starter/installing.html">여기</a>에서 확인 가능하다.</p>
+<p>더 자세한 설명은 <a href="https://expressjs.com/starter/installing.html" target="_blank" rel="noopener">여기</a>에서 확인 가능하다.</p>
 <h4>Express.js gen으로 애플리케이션 생성하기</h4>
 <p>express를 매번 설치하고 세팅해야하면 무척 힘들것이다.<br>그래서 express에선 generator를 제공한다.<br>&#39;npm install -g express-generator&#39; 명령어로 express-generator을 설치한다.<br>&#39;express&#39; 명령어를 통해 프로젝트를 생성할 수 있다.</p>
 <p>사용법은 다음과 같다.</p>
@@ -2522,7 +2522,7 @@ PS&gt; <span class="hljs-variable">$env</span>:DEBUG=<span class="hljs-string">&
 <h4>URI, URL, URN</h4>
 <p>웹에서 자원을 가리키는 방식에는 세 가지 개념이 있다. 관계부터 이해하면 쉽다. **URI(Uniform Resource Identifier)**는 가장 큰 개념으로, 자원을 식별하는 모든 방법을 통칭한다. **URL(Uniform Resource Locator)**과 **URN(Uniform Resource Name)**은 그 하위 개념으로, <b>URI = URL + URN</b>이 성립한다.<br>사람을 찾는 상황에 비유하면 이해하기 쉽다. <b>URL은 &quot;서울시 강남구 역삼동 123번지&quot;처럼 위치를 알려주는 방식</b>이다. <b>URN은 &quot;주민번호 900101-1234567&quot;처럼 고유한 이름으로 식별하는 방식</b>이다. 이 번호를 지도 앱에 쳐봤자 집이 나오지는 않는다.<br>사실상 99% URL을 의미하면서 URI라는 용어를 쓴다. <b>REST API에서 &quot;자원 식별자&quot;라는 의미를 강조하기 위해 URI라고 많이 부르는 것</b>이고, 일반 대화에서는 URL이라고 해도 전혀 문제없다.</p>
 <h4>웹 리소스</h4>
-<p><b>웹 리소스</b>란, <b>웹에 갖춰진 정보 자산</b>을 의미한다. 웹 브라우저의 주소창에 <a href="http://njw.kro.kr/index.html">http://njw.kro.kr/index.html</a> 주소를 입력해보자. 이는 <b>njw.kro.kr</b>에 존재하는 <b>/index.html</b> 경로의 리소스를 가져오라는 의미이다. 모든 웹 리소스는 고유의 **Uniform Resource Identifier (URI)**를 가지며, 이를 이용하여 식별된다. 웹의 프론트엔드를 구성하는 대표적인 웹 리소스들은 다음과 같다.</p>
+<p><b>웹 리소스</b>란, <b>웹에 갖춰진 정보 자산</b>을 의미한다. 웹 브라우저의 주소창에 <a href="http://njw.kro.kr/index.html" target="_blank" rel="noopener">http://njw.kro.kr/index.html</a> 주소를 입력해보자. 이는 <b>njw.kro.kr</b>에 존재하는 <b>/index.html</b> 경로의 리소스를 가져오라는 의미이다. 모든 웹 리소스는 고유의 **Uniform Resource Identifier (URI)**를 가지며, 이를 이용하여 식별된다. 웹의 프론트엔드를 구성하는 대표적인 웹 리소스들은 다음과 같다.</p>
 <p><b>1. Hyper Text Markup Language (HTML)</b><br>웹 문서의 뼈와 살을 담당한다. 태그와 속성을 통한 구조화된 문서 작성을 지원한다.</p>
 <p><b>2. Cascading Style Sheets (CSS)</b><br>웹 문서의 생김새를 지정한다. 웹 리소스들의 시각화 방법을 기재한 스타일 시트이다. 글자의 색깔이나 모양, 배경 색상, 이미지의 크기나 위치 등을 CSS로 지정할 수 있다. 브라우저는 이를 참고하여 웹 문서를 시각화한다.</p>
 <p><b>3. JavaScript (JS)</b><br>웹 문서의 동작을 정의한다. 이용자가 버튼을 클릭했을 때, 어떻게 반응할지, 이용자가 데이터를 입력하면 어디로 전송할지 등을 JS로 구현할 수 있다. JS는 이용자의 브라우저에서 실행되는데, 클라이언트가 실행하는 코드라고 하여 Client-Side Script라고도 부른다.</p>

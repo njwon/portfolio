@@ -89,7 +89,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 <blockquote>
 <p>XSS란, 공격자가 웹 리소스에 악성 스크립트를 삽입해 이용자의 웹 브라우저에서 해당 스크립트를 실행하는 웹 취약점</p>
 </blockquote>
-<p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
+<p>**XSS(Cross-Site Scripting)**는 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D" target="_blank" rel="noopener">여기서</a> 볼 수 있는 <b>쿠키와 세션 방식을 악용</b>할 수 있는 <b>클라이언트 사이드 취약점</b>이다. </p>
 <h3>방식</h3>
 <p>하나 예시를 들어보자.<br><img src="https://velog.velcdn.com/images/njw/post/3f1b55b4-166e-416c-b059-bdff05b0150e/image.png" alt="[보안] XSS 부셔보고 SOP 알아보기!" width="820" height="489" loading="lazy" decoding="async"><br>사람들에게 글을 쓰고 볼 수 있는 기능을 제공하는 커뮤니티 웹 서비스가 있다고 생각해보자.</p>
 <p>평범한 이용자들은 단순히 개발자의 의도대로 자연어로 이루어진 글을 게시할 뿐이겠지만, 여기서 공격자가 <b>인터널 자바스크립트  <code>&lt;script&gt;&lt;/script&gt;</code>를 포함한 글을 게시하면 그 글을 열어본 유저에게는 클라이언트 사이드 스크립트</b>가 로드되어 실행될 것이다.</p>
@@ -130,9 +130,9 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 <p><b>Reflected XSS</b> 기법을 이용하는 방법중엔 대표적으로 게시판 서비스에서 작성된 게시물을 조회하기 위한 검색창에서 스크립트를 포함해 검색하는 방식이 있다. 이용자가 게시물을 검색하면 서버에서는 검색 결과를 이용자에게 반환한다. 일부 서비스에서는 검색 결과를 응답에 포함하는데, <b>검색 문자열에 악성 스크립트가 포함되어 있다면 Reflected XSS</b>가 발생할 수 있다.</p>
 <p>쉽게 말해서 커뮤니티의 글은 <b>DB에 담겨오니 Stored XSS</b>이고,<br>검색을 할 경우 URL에 포함되어 전송되고 <b>DB에 담기지 않고 서버에서 반환되어 오니 Reflected XSS</b>이다.</p>
 <h4>SOP 정책</h4>
-<p>위에서 <b>Universal XSS는 SOP 정책을 우회하는 XSS</b>라고 서술한 바 있다.<br><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D">브라우저는 인증 정보로 사용될 수 있는 쿠키를 브라우저 내부에 보관한다.</a> 그리고 <b>이용자가 웹 서비스에 접속할 때, 브라우저는 해당 웹 서비스에서 사용하는 인증 정보인 쿠키를 HTTP 요청에 포함시켜 전달</b>한다. 이와 같은 특징은 사이트에 직접 접속하는 것에만 한정되지 않는다. 브라우저는 웹 리소스를 통해 간접적으로 <b>타 사이트에 접근</b>할 때도 인증 정보인 <b>쿠키를 함께 전송</b>하는 특징을 가지고 있다.</p>
+<p>위에서 <b>Universal XSS는 SOP 정책을 우회하는 XSS</b>라고 서술한 바 있다.<br><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-%EC%9B%B9%EC%9D%98-%EC%9D%B8%EC%A6%9D-%EB%B0%A9%EC%8B%9D" target="_blank" rel="noopener">브라우저는 인증 정보로 사용될 수 있는 쿠키를 브라우저 내부에 보관한다.</a> 그리고 <b>이용자가 웹 서비스에 접속할 때, 브라우저는 해당 웹 서비스에서 사용하는 인증 정보인 쿠키를 HTTP 요청에 포함시켜 전달</b>한다. 이와 같은 특징은 사이트에 직접 접속하는 것에만 한정되지 않는다. 브라우저는 웹 리소스를 통해 간접적으로 <b>타 사이트에 접근</b>할 때도 인증 정보인 <b>쿠키를 함께 전송</b>하는 특징을 가지고 있다.</p>
 <p>이 특징 때문에 <b>악의적인 페이지가 클라이언트의 권한을 이용해 대상 사이트에 HTTP 요청을 보내고, HTTP 응답 정보를 획득 하는 코드</b>를 <b>실행</b>할 수 있다. 이는 정보 유출과 같은 보안 위협이 생길 수 있는 요소가 된다. 따라서, 클라이언트 입장에서는 가져온 데이터를 <b>악의적인 페이지에서 읽을 수 없도록 해야 하고 해당 웹서비스에서만 읽을 수 있도록 해야한다.</b> 이것이 바로 **SOP(동일 출처 정책, Same Origin Policy)**이라고 불리우는 보안 메커니즘이다.</p>
-<p>SOP는 URL의 구성요소 중 프로토콜(스키마)과 호스트와 포트를 확인한다.<br><a href="https://njwon.com:31240">https://njwon.com:31240</a><br>(프로토콜(스키마))  (호스트)  (포트)<br>이 중 하나라도 쿠키를 발급한 웹 서비스와 다르다면 <b>Cross Origin</b>으로 판별하고 아니라면 <b>Same Origin</b>으로 판별한다.</p>
+<p>SOP는 URL의 구성요소 중 프로토콜(스키마)과 호스트와 포트를 확인한다.<br><a href="https://njwon.com:31240" target="_blank" rel="noopener">https://njwon.com:31240</a><br>(프로토콜(스키마))  (호스트)  (포트)<br>이 중 하나라도 쿠키를 발급한 웹 서비스와 다르다면 <b>Cross Origin</b>으로 판별하고 아니라면 <b>Same Origin</b>으로 판별한다.</p>
 <p>SOP는 <b>Same Origin일 때만 정보를 읽도록 한다.</b></p>
 <h3>XSS 페이로드</h3>
 <p>XSS는 다음과 같은 형태로 존재할 수 있다.<br><b><div style="text-align: center"> 쿠키 및 세션 탈취 공격 코드 </div></b></p>
@@ -161,7 +161,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
     <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">open</span>(<span class="hljs-string">&quot;http://hacker.dreamhack.io/&quot;</span>)
 </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span></code></pre>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/28">xss-1</a> 워게임 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/28" target="_blank" rel="noopener">xss-1</a> 워게임 문제를 풀이해 보았다.</p>
 <pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template
 from selenium import webdriver

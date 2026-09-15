@@ -93,12 +93,12 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 </blockquote>
 <p>이 같은 IP는 숫자로만 이루어져 있고 길이가 무척 길어 사람이 외우기 힘든 구조였다.</p>
 <p>이를 개선시키고자 나온것이 <b>DNS</b>이다.</p>
-<p>**DNS(Domain Name System)**는 <b>호스트의 도메인네임 (<a href="http://www.example.com)%EC%9D%84">www.example.com)을</a> 네트워크주소(192.168.1.0)로 변환</b>하거나, 그 반대의 역할을 수행하는 시스템이다.</p>
+<p>**DNS(Domain Name System)**는 <b>호스트의 도메인네임 (<a href="http://www.example.com)을" target="_blank" rel="noopener">www.example.com)을</a> 네트워크주소(192.168.1.0)로 변환</b>하거나, 그 반대의 역할을 수행하는 시스템이다.</p>
 <p>naver.com , google.com 모두 DNS을 가진 DN(Domain Name)이라고 할 수 있다.</p>
 <p>DNS는 클라이언트가 DNS 서버에 접속하고 IP 주소를 얻기 위해 <b>질의를 보내는 것으로 시작하고 DNS 서버는 IP 주소를 반환</b>한다.<br>클라이언트는 IP 주소를 받으면 이를 이용해 웹서버에 접속한다.</p>
 <p><img src="https://velog.velcdn.com/images/njw/post/3284ecd7-c38b-4194-b0ba-7e2bd4b3d869/image.png" alt="[보안] DNS와 DNS 터널링" width="900" height="680" loading="lazy" decoding="async"></p>
-<p>이때 표면적으로는 <a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 담당하고 있는 DNS 서버에 바로 쿼리를 날리는 것처럼 보인다.</p>
-<p>하지만 도메인 자체가 전 세계에 너무 많기에 조금 다른 <b>계층 방식</b>으로 동작한다.<br><a href="http://www.example.com%EB%A5%BC">www.example.com를</a> 예시로 들어보겠다.</p>
+<p>이때 표면적으로는 <a href="http://www.example.com를" target="_blank" rel="noopener">www.example.com를</a> 담당하고 있는 DNS 서버에 바로 쿼리를 날리는 것처럼 보인다.</p>
+<p>하지만 도메인 자체가 전 세계에 너무 많기에 조금 다른 <b>계층 방식</b>으로 동작한다.<br><a href="http://www.example.com를" target="_blank" rel="noopener">www.example.com를</a> 예시로 들어보겠다.</p>
 <h3>DNS 구조</h3>
 <ol>
 <li>브라우저와 OS 모두 접속했던 사이트에 대한 <b>DNS 기록과 매핑되는 IP 캐시</b>를 가지고 있다. 이곳을 제일 먼저 확인한다.</li>

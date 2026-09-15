@@ -91,7 +91,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 <p>이러한 키 분배의 난제와 상대방 신원 확인의 불확실성을 해결하기 위해 등장한 혁신적인 체계가 바로 <b>PKI</b>이다.</p>
 <p>**PKI(Public Key Infrastructure)**란, 디지털 인증서와 비대칭키 암호화를 사용하여 디지털 정보의 기밀성, 무결성, 인증, 부인 방지를 보장하는 보안 인프라이다. </p>
 <blockquote>
-<p>비대칭키 암호화란, 간단하게 암호화와 복호화에 쓰이는 키가 다른 암호화 알고리즘이다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTPS-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0#%EB%B9%84%EB%8C%80%EC%B9%AD%ED%82%A4">자세한 건 이전 글 참고</a></p>
+<p>비대칭키 암호화란, 간단하게 암호화와 복호화에 쓰이는 키가 다른 암호화 알고리즘이다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTPS-%EC%95%94%ED%98%B8%ED%95%99-%EA%B8%B0%EC%B4%88-%EB%B6%80%EC%88%98%EA%B8%B0#%EB%B9%84%EB%8C%80%EC%B9%AD%ED%82%A4" target="_blank" rel="noopener">자세한 건 이전 글 참고</a></p>
 </blockquote>
 <h3>구조</h3>
 <p>PKI는 크게 <b>등록자</b>와 <b>이용자,</b> <b>CA</b>와 <b>RA,</b> <b>VA</b>로 이루어진다.</p>
@@ -109,7 +109,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 <p>루트 CA 아래에는 <b>중간 CA(Intermediate CA)</b> 가 있다. 루트 CA가 직접 모든 인증서를 발급하면 루트 CA의 개인키 노출 위험이 너무 높아지기 때문에, <b>실제 발급은 중간 CA를 통해 이루어진다.</b> 루트 CA는 중간 CA를 신뢰한다고 서명해주고, 중간 CA가 최종 사용자에게 인증서를 발급하는 구조다.</p>
 <p>결국 신뢰의 흐름은 이렇게 된다.<br><b>루트 CA → 중간 CA → 등록자 인증서</b><br>(브라우저가 신뢰)  (루트가 서명)  (중간 CA가 서명)<br>우리가 어떤 사이트에 접속했을 때 브라우저가 자물쇠 아이콘을 보여주는 것은, 이 <b>신뢰 체인을 끝까지 검증해서 루트 CA까지 연결이 닿았다는 의미다.</b></p>
 <h2>TLS와 HTTPS</h2>
-<p><b>TLS(Transport Layer Security)는 PKI를 이용하는 프로토콜</b>이다.<br>이름에 Transport가 들어가는 만큼 전송 계층과 밀접한 관련이 있으며 전송 계층의 TLS 프로토콜을 기반으로 동작한다.<br>각설하고 TLS의 통신 과정을 HTTPS와 연관지어 서술해보겠다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#https">HTTPS는 여기서!</a><br>HTTPS 프로토콜을 사용하기 위해 <b>클라이언트(웹 서버)는 PKI 인증서를 발급받아야 한다.</b></p>
+<p><b>TLS(Transport Layer Security)는 PKI를 이용하는 프로토콜</b>이다.<br>이름에 Transport가 들어가는 만큼 전송 계층과 밀접한 관련이 있으며 전송 계층의 TLS 프로토콜을 기반으로 동작한다.<br>각설하고 TLS의 통신 과정을 HTTPS와 연관지어 서술해보겠다.<br><a href="https://velog.io/@njw/%EA%B8%B0%EC%B4%88-HTTP-HTTPS-%EB%B6%80%EC%88%98%EA%B8%B0-%EB%B0%8F-%ED%94%84%EB%A1%9C%ED%86%A0%EC%BD%9C-%ED%83%90%EC%83%89#https" target="_blank" rel="noopener">HTTPS는 여기서!</a><br>HTTPS 프로토콜을 사용하기 위해 <b>클라이언트(웹 서버)는 PKI 인증서를 발급받아야 한다.</b></p>
 <h3>PKI 인증서 발급</h3>
 <p>이 과정은 <b>클라이언트(웹 서버)의 공개키와 개인키의 생성</b>으로 시작된다.</p>
 <ol>

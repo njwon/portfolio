@@ -59,6 +59,12 @@ marked.use({
       const cls = out.language ? ` class="hljs language-${esc(out.language)}"` : ' class="hljs"';
       return `<pre><code${cls}>${out.value}</code></pre>\n`;
     },
+    // 본문의 외부 링크는 새 탭 + noopener (한 페이지 구조가 아니라 필수는 아니지만 사이트 전체 규칙에 맞춤)
+    link(href, title, text) {
+      const ext = /^https?:\/\//.test(href) && !href.startsWith(SITE);
+      const t = title ? ` title="${esc(title)}"` : '';
+      return `<a href="${esc(href)}"${t}${ext ? ' target="_blank" rel="noopener"' : ''}>${text}</a>`;
+    },
     image(href, title, text) {
       const alt = text || currentTitle;
       const t = title ? ` title="${esc(title)}"` : '';

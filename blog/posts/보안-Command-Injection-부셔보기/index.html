@@ -88,7 +88,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 <p>다양한 웹 애플리케이션 제작용 언어는 <b>시스템에 내장되어있는 프로그램들을 호출할 수 있는 함수를 지원</b>한다. 각 언어별 시스템 함수로는 <b>PHP의 system</b>, <b>Node JS의 child_process</b>, <b>파이썬의 os.system</b>이 있다. 이러한 함수는 전달된 인자를 <b>셸 프로그램에 전달해 명령어를 실행</b>한다. 예를 들어, <code>system(&quot;cat /etc/passwd&quot;)</code>를 호출하면, 셸 프로그램으로 <code>cat /etc/passwd</code>를 실행한 것과 같다.</p>
 <p>시스템 함수를 사용하면 이미 설치된 소프트웨어들을 쉽게 이용할 수 있다는 장점이 있다. 그러나 함수의 인자를 셸의 명령어로 전달한다는 점에서 치명적인 취약점으로 이어지기도 한다.</p>
 <h2>Command Injection</h2>
-<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">인젝션(Injection)</a>은 악의적인 데이터를 프로그램에 입력하여 이를 시스템 명령어, 코드, 데이터베이스 쿼리 등으로 실행되게 하는 기법을 말한다. 이 중, <b>이용자의 입력을 시스템 명령어로 실행하게 하는 취약점을 Command Injection</b>이라고 부른다.</p>
+<p><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-SQL-Injection-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0" target="_blank" rel="noopener">인젝션(Injection)</a>은 악의적인 데이터를 프로그램에 입력하여 이를 시스템 명령어, 코드, 데이터베이스 쿼리 등으로 실행되게 하는 기법을 말한다. 이 중, <b>이용자의 입력을 시스템 명령어로 실행하게 하는 취약점을 Command Injection</b>이라고 부른다.</p>
 <p><b>Command Injection은 명령어를 실행하는 함수에 이용자가 임의의 인자를 전달할 수 있을 때 발생</b>한다. 앞서 서술한 시스템 함수를 사용하면 이용자의 입력을 소프트웨어의 인자로 전달할 수 있다. 파이썬으로 개발된 웹 애플리케이션에서 입력한 **임의 IP에 ping을 전송하고 싶다면 os.system(“ping [user-input]”)**을, **임의 파일을 읽고 싶다면 os.system(“cat [user-input]”)**등의 형태로 시스템 함수를 사용할 수 있다.</p>
 <p>그러나 이러한 함수를 사용할 때, <b>이용자의 입력을 제대로 검사하지 않으면 임의 명령어가 실행될 수도 있다.</b> 이는 리눅스 <b>셸 프로그램이 지원하는 다양한 메타 문자 때문이다.</b> 시스템 함수는 셸 프로그램에 명령어를 전달하여 실행하는데, 셸 프로그램은 다양한 메타 문자를 지원한다.</p>
 <pre><code class="hljs language-dns">`` - 명령어 치환
@@ -138,7 +138,7 @@ $ echo id | /bin/sh
 uid=<span class="hljs-number">1001</span><span class="hljs-punctuation">(</span>theori<span class="hljs-punctuation">)</span> gid=<span class="hljs-number">1001</span><span class="hljs-punctuation">(</span>theori<span class="hljs-punctuation">)</span> groups=<span class="hljs-number">1001</span><span class="hljs-punctuation">(</span>theori<span class="hljs-punctuation">)</span></code></pre>
 <p><b>&amp;&amp;, ;, |</b> 등을 사용하면 <b>여러 개의 명령어를 연속으로 실행</b>시킬 수 있다. 따라서 <b>공격자는 메타 문자를 통해 임의 명령어를 실행하여 셸을 획득할 수 있다.</b></p>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/44">command-injection-1</a> 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/44" target="_blank" rel="noopener">command-injection-1</a> 문제를 풀이해 보았다.</p>
 <p><b>app.py</b></p>
 <pre><code class="hljs language-dart">#!/usr/bin/env python3
 <span class="hljs-keyword">import</span> subprocess

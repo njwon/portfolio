@@ -90,7 +90,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
 <p>마이크로서비스란, 소프트웨어가 잘 정의된 API를 통해 통신하는 <b>소규모의 독립적인 서비스로 구성되어 있는 경우의 소프트웨어 개발을 위한 아키텍처.</b></p>
 </blockquote>
 <h2>SSRF</h2>
-<p>이처럼 서비스 간 HTTP 통신이 이뤄질 때 요청 내에 이용자의 입력값이 포함될 수 있다. 이용자의 입력값으로 포함되면 개발자가 의도하지 않은 요청이 전송될 수 있다. **Server-side Request Forgery(SSRF)**는 웹 서비스의 요청을 변조하는 취약점으로, 브라우저가 변조된 요청을 보내는 <b><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0">CSRF</a>와는 다르게 웹 서비스의 권한으로 변조된 요청을 보낼 수 있다.</b></p>
+<p>이처럼 서비스 간 HTTP 통신이 이뤄질 때 요청 내에 이용자의 입력값이 포함될 수 있다. 이용자의 입력값으로 포함되면 개발자가 의도하지 않은 요청이 전송될 수 있다. **Server-side Request Forgery(SSRF)**는 웹 서비스의 요청을 변조하는 취약점으로, 브라우저가 변조된 요청을 보내는 <b><a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-CSRF-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0%EC%99%80-CORS-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0" target="_blank" rel="noopener">CSRF</a>와는 다르게 웹 서비스의 권한으로 변조된 요청을 보낼 수 있다.</b></p>
 <p><img src="https://velog.velcdn.com/images/njw/post/700d4e3d-3bdb-4d1a-a484-c78b6574378f/image.png" alt="[보안] SSRF 부셔보기!" width="1280" height="720" loading="lazy" decoding="async"></p>
 <p>최근의 대다수 서비스들은 마이크로서비스로 구조를 많이 바꾸고, 새롭게 개발하는 추세이기 때문에 <b>SSRF 취약점의 파급력이 더욱 높아지고 있다.</b></p>
 <p>백오피스와 같은 기능을 사용하는 웹 서비스들은 관리자만 기능을 사용할 수 있어야 하기 때문에 <b>내부망만 접속가능하도록 구성한다.</b></p>
@@ -127,7 +127,7 @@ def request_info<span class="hljs-punctuation">(</span><span class="hljs-punctua
     
     
 app.run<span class="hljs-punctuation">(</span>host=<span class="hljs-string">&quot;127.0.0.1&quot;</span>, port=<span class="hljs-number">8000</span><span class="hljs-punctuation">)</span></code></pre>
-<p>위 경로에 접속하면 image_downloader에서는 <a href="http://127.0.0.1:8000/request_info">http://127.0.0.1:8000/request_info</a> URL에 HTTP 요청을 보내고 응답을 반환한다. 반환한 값을 확인해보면 브라우저로 request_info 엔드포인트에 접속했을 때와 다르게 <b>브라우저 정보가 python-requests/<LIBRARY_VERSION>인 것을 확인할 수 있다.</b></p>
+<p>위 경로에 접속하면 image_downloader에서는 <a href="http://127.0.0.1:8000/request_info" target="_blank" rel="noopener">http://127.0.0.1:8000/request_info</a> URL에 HTTP 요청을 보내고 응답을 반환한다. 반환한 값을 확인해보면 브라우저로 request_info 엔드포인트에 접속했을 때와 다르게 <b>브라우저 정보가 python-requests/<LIBRARY_VERSION>인 것을 확인할 수 있다.</b></p>
 <p><code>http://127.0.0.1:8000/image_downloader?image_url=http://127.0.0.1:8000/request_info</code></p>
 <p>접속한 브라우저 정보로 <b>python-requests가 출력된 이유는 웹 서비스에서 HTTP 요청을 보냈기 때문이다.</b> 이처럼 이용자가 웹 서비스에서 사용하는 마이크로서비스의 API 주소를 알아내고, image_url에 주소를 전달하면 <b>외부에서 직접 접근할 수 없는 마이크로서비스의 기능을 임의로 사용할 수 있다.</b></p>
 <h3>웹 서비스의 요청 URL에 이용자의 입력값이 포함되는 경우</h3>
@@ -149,7 +149,7 @@ def user_search<span class="hljs-punctuation">(</span><span class="hljs-punctuat
     response = requests.get<span class="hljs-punctuation">(</span>f<span class="hljs-string">&quot;{INTERNAL_API}/user/search?user_name={user_name}&amp;user_type={user_type}&quot;</span><span class="hljs-punctuation">)</span></code></pre>
 <p><b>웹 서비스가 요청하는 URL에 이용자의 입력값이 포함되면 요청을 변조할 수 있다.</b> 이용자의 입력값 중 URL의 구성 요소 문자를 삽입하면 API 경로를 조작할 수 있다. 예를 들어, 예시 코드의 <code>user_info</code> 함수에서 <code>user_idx</code>에 <code>../search</code>를 입력할 경우 웹 서비스는 다음과 같은 URL에 요청을 보낸다.</p>
 <pre><code class="hljs language-dts"><span class="hljs-symbol">http:</span><span class="hljs-comment">//api.internal/search</span></code></pre>
-<p><code>..</code>는 상위 경로로 이동하기 위한 구분자로, 해당 문자로 요청을 보내는 경로를 조작할 수 있다. <b>해당 취약점은 경로를 변조한다는 의미에서 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#path-traversal">Path Traversal</a>이라고 불린다.</b></p>
+<p><code>..</code>는 상위 경로로 이동하기 위한 구분자로, 해당 문자로 요청을 보내는 경로를 조작할 수 있다. <b>해당 취약점은 경로를 변조한다는 의미에서 <a href="https://velog.io/@njw/%EB%B3%B4%EC%95%88-File-Vulnerability-%EB%B6%80%EC%85%94%EB%B3%B4%EA%B8%B0#path-traversal" target="_blank" rel="noopener">Path Traversal</a>이라고 불린다.</b></p>
 <p>이 외에도, <code>#</code> 문자를 입력해 경로를 조작할 수 있다. 예를 들어, <code>user_search</code> 함수에서 <code>user_name</code>에 <code>secret&amp;user_type=private#</code>를 입력할 경우 웹 서비스는 다음과 같은 URL에 요청을 보낸다.</p>
 <pre><code class="hljs language-ruby"><span class="hljs-symbol">http:</span>/<span class="hljs-regexp">/api.internal/search</span>?user_name=secret&amp;user_type=<span class="hljs-keyword">private</span><span class="hljs-comment">#&amp;user_type=public</span></code></pre>
 <p><b><code>#</code> 문자는 Fragment Identifier 구분자로, 뒤에 붙는 문자열은 API 경로에서 생략된다. 따라서 해당 URL은 실제로 아래와 같은 URL을 나타낸다.</b></p>

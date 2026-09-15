@@ -86,7 +86,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
             <div class="post-thumbnail-wrap"><img class="post-thumbnail" src="https://velog.velcdn.com/images/njw/post/538c7fe6-a811-4c5e-8154-2bc4acdd23e6/image.png" alt="[보안] SQL Injection 부셔보기! 썸네일" width="485" height="77" fetchpriority="high"></div>
             <div class="post-body markdown-body">
 <p>**인젝션 (Injection)**은 주입이라는 뜻을 지닌 영단어로써 <b>이용자의 입력값이 애플리케이션의 처리 과정에서 구조나 문법적인 데이터로 해석되어 발생하는 취약점</b>을 의미한다.</p>
-<p><a href="https://velog.io/@njw/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94">SQL 인젝션을 공부하기 전, DB에 대해 공부해야 한다.</a></p>
+<p><a href="https://velog.io/@njw/%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4-%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4%EC%99%80-%EC%95%94%ED%98%B8%ED%99%94" target="_blank" rel="noopener">SQL 인젝션을 공부하기 전, DB에 대해 공부해야 한다.</a></p>
 <h2>SQL Injection</h2>
 <blockquote>
 <p>SQL Injection이란, 인젝션 공격의 한 종류로써, DBMS에서 사용하는 쿼리를 임의로 조작해 데이터베이스의 정보를 획득하는 서버 사이드 공격 취약점.</p>
@@ -372,7 +372,7 @@ pre code.hljs{display:block;overflow-x:auto;padding:1em}code.hljs{padding:3px 5p
     ==&gt; <span class="hljs-literal">True</span></code></pre>
 <p>substr() 함수를 이용해 <b>비밀번호 첫 번째 바이트가 &#39;B&#39;인지 비교</b>하고, <b>반환 결과를 통해 비밀번호의 첫 번째 바이트는 &#39;B&#39;가 아님을 알 수 있다.</b> 이후 두 번째와 세 번째 쿼리의 반환 결과를 통해 <b>첫 번째 바이트가 &#39;P&#39;, 두 번째 바이트가 &#39;a&#39;인 것을 알아낼 수 있다.</b> 이와 같은 방법으로 <b>관리자 계정의 비밀번호를 알아낼 수 있다.</b></p>
 <h3>wargame 풀이</h3>
-<p><a href="https://dreamhack.io/wargame/challenges/24">simple_sqli</a> 문제를 풀이해 보았다.</p>
+<p><a href="https://dreamhack.io/wargame/challenges/24" target="_blank" rel="noopener">simple_sqli</a> 문제를 풀이해 보았다.</p>
 <pre><code class="hljs language-dns">#!/usr/bin/python3
 from flask import Flask, request, render_template, g
 import sqlite3
