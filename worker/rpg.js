@@ -241,6 +241,43 @@ async function aiCall(env, ip, system, user, temperature) {
   return { ok: false, reason: tried ? 'failed' : 'exhausted' };
 }
 
+// ─── 검열 (이용 정책) ─────────────────────────────────────────────
+// 플레이어가 쓴 글(캐릭터 이름·설정, 행동 선언, 로컬 AI 서술)을 AI 제공자에게 보내기 전에 거른다.
+//   1) 규칙: 미성년 성적 묘사·노골적 성행위·욕설/혐오·자해 조장·실존 인물 성적 대상화는 즉시 차단 (API 호출 없음)
+//   2) Mistral Moderation API(mistral-moderation-latest, 무료 플랜 100 RPM): 성적·혐오·자해·위험/범죄 정보·개인정보 점수로 판정
+//   전투 게임이므로 '폭력'(violence_and_threats)은 차단 사유가 아니다. Mistral 을 못 쓰면 규칙만으로 진행
+const POLICY_RULES = [
+  [/(초등|중학|고등|미성년|어린|아동|소녀|소년|학생|로리|쇼타)[^\n]{0,24}(성관계|성행위|섹스|강간|벗기|나체|알몸|자위|야한|음란|가슴|성기)/, 'minor_sexual'],
+  [/(성관계|성행위|섹스|강간|윤간|자위|음란물|포르노|성기|정액|보지|자지|딸딸이|ㅅㅅ|야동)/, 'sexual'],
+  [/(씨발|시발|씹|병신|좆|니미|느금|개새끼|개년|창녀|걸레|장애인새끼|흑형|짱깨|쪽바리|틀딱|한남|김치녀)/, 'hate'],
+  [/(자살|자해|목을 매|손목을 그)[^\n]{0,12}(하고 싶|방법|해라|해버려|추천|권유)/, 'selfharm'],
+  [/\b(rape|porn|creampie|hentai|loli|shota|nigg\w*|faggot|kike|chink)\b/i, 'sexual_or_hate'],
+];
+const POLICY_LIMIT = { sexual: 0.5, hate_and_discrimination: 0.5, selfharm: 0.5, dangerous_and_criminal_content: 0.85, pii: 0.8 };
+const POLICY_KO = { minor_sexual: '미성년자 성적 묘사', sexual: '노골적 성적 내용', hate: '욕설·혐오 표현', selfharm: '자해·자살 조장', sexual_or_hate: '성적·혐오 표현', hate_and_discrimination: '혐오·차별 표현', dangerous_and_criminal_content: '위험·범죄 정보', pii: '개인정보' };
+const modCache = new Map();
+async function moderate(env, text) {
+  const t = String(text || '').trim();
+  if (!t) return { ok: true };
+  if (modCache.has(t)) return modCache.get(t);
+  let res = { ok: true };
+  for (const [re, why] of POLICY_RULES) if (re.test(t)) { res = { ok: false, reason: why, label: POLICY_KO[why], src: 'rule' }; break; }
+  if (res.ok && env.MISTRAL_API_KEY && !paused('mistral-mod')) {
+    try {
+      const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 8e3);
+      const r = await fetch('https://api.mistral.ai/v1/moderations', { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env.MISTRAL_API_KEY, 'User-Agent': 'dream-rpg/1.0' }, body: JSON.stringify({ model: 'mistral-moderation-latest', input: [t] }) });
+      clearTimeout(timer);
+      if (r.ok) {
+        const sc = (await r.json()).results?.[0]?.category_scores || {};
+        for (const [cat, lim] of Object.entries(POLICY_LIMIT)) if ((sc[cat] ?? 0) >= lim) { res = { ok: false, reason: cat, label: POLICY_KO[cat], src: 'mistral', score: Math.round(sc[cat] * 100) / 100 }; break; }
+      } else if (r.status === 429 || r.status === 402) failedAt['mistral-mod'] = { at: Date.now(), until: Date.now() + PROVIDER_COOLDOWN, why: 'moderation ' + r.status };
+    } catch { /* 검열 API 실패 → 규칙 결과로 진행 */ }
+  }
+  if (modCache.size > 500) modCache.delete(modCache.keys().next().value);
+  modCache.set(t, res);
+  return res;
+}
+
 // ─── AI (심사·서술 전용) ─────────────────────────────────────────────
 // 모델이 낸 JSON 이 문자열 안의 따옴표·줄바꿈 때문에 깨지는 일이 잦다 → 관대하게 복구
 function lenientJson(text) {
@@ -336,11 +373,12 @@ const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 여러 
 - fit 0.0~1.0: 행동 문장이 캐릭터 설정·필살기와 어울리는 정도.
 - verdict: 판정 근거를 캐릭터 설정을 인용해 한두 문장으로. 심사관 말투(간결, 존댓말).
 문장이 비었거나 '기본 공격'이면 allowed true, difficulty normal, fit 0.5, verdict "기본 공격으로 진행합니다."
+성적 내용·혐오 표현·실존 인물 비방이 담긴 선언은 allowed false 로 기각합니다.
 반드시 플레이어 수만큼 키를 넣은 이 JSON 하나만 출력:
 {"p1":{"allowed":true,"difficulty":"normal","fit":0.5,"verdict":"..."},"p2":{...}}`;
 
 const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1라운드의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술만 하세요.
-주어진 사실(행동 순서, 심사관 판정, 누가 누구를 노렸는지, 명중/빗나감/크리티컬/방어/피해, 쓰러진 사람)을 정확히 반영해 4~7문장으로 생생하게. 현재 라운드 번호와 직전 라운드 요약이 주어지면 그 흐름을 이어서 서술하세요(2라운드 이후엔 전투 시작 장면을 다시 쓰지 말 것). 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요.
+주어진 사실(행동 순서, 심사관 판정, 누가 누구를 노렸는지, 명중/빗나감/크리티컬/방어/피해, 쓰러진 사람)을 정확히 반영해 4~7문장으로 생생하게. 현재 라운드 번호와 직전 라운드 요약이 주어지면 그 흐름을 이어서 서술하세요(2라운드 이후엔 전투 시작 장면을 다시 쓰지 말 것). 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요. 성적 묘사·혐오 표현·실존 인물 비방은 쓰지 않습니다(전투 묘사는 만화 수준으로).
 반드시 이 JSON 하나만 출력: {"narration":"..."}`;
 
 // ─── 규칙 엔진 ───────────────────────────────────────────────────────
@@ -455,18 +493,20 @@ function charLine(k, p, act, names) {
 async function runRound(env, ip, players, acts, ctx = {}) {
   const names = {}; for (const k in players) if (players[k]) names[k] = players[k].char.name;
   const slots = aliveSlots(players);
-  const judge = {}; for (const k of slots) judge[k] = { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
+  const judge = {}; for (const k of slots) judge[k] = acts[k]?.policy
+    ? { allowed: false, difficulty: 'hard', fit: 0.3, verdict: `선언이 이용 정책(${acts[k].policy})에 어긋나 심사하지 않습니다. 기본 공격으로 처리합니다.`, policy: true }
+    : { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
   let usedAi = false, quotaBlocked = null, provider = null;
   const clampJudge = p => ({ allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: cleanVerdict(p.verdict) });
   const needJudge = slots.some(k => acts[k]?.text);
   if (needJudge) {
     const user = slots.map(k => charLine(k, players[k], acts[k] || { type: 'attack' }, names)).join('\n\n');
     const r = await aiCall(env, ip, SYS_JUDGE_ACTION, user, 0.2);
-    if (r.ok) { provider = r.provider; for (const k of slots) { const p = r.parsed?.['p' + k]; if (p) judge[k] = clampJudge(p); } }
+    if (r.ok) { provider = r.provider; for (const k of slots) { const p = r.parsed?.['p' + k]; if (p && !judge[k].policy) judge[k] = clampJudge(p); } }
     else {
       quotaBlocked = r.reason;
       // 서버 AI 가 없으면 각 플레이어가 자기 크롬 내장 AI 로 심사해 보낸 결과를 쓴다 (수치는 규칙 엔진이 정하므로 영향 범위는 난이도·적합도뿐)
-      for (const k of slots) if (acts[k]?.local && typeof acts[k].local === 'object') judge[k] = { ...clampJudge(acts[k].local), src: 'local' };
+      for (const k of slots) if (acts[k]?.local && typeof acts[k].local === 'object' && !judge[k].policy) judge[k] = { ...clampJudge(acts[k].local), src: 'local' };
     }
   }
   const res = resolveRound(players, acts, judge);
@@ -481,8 +521,9 @@ async function runRound(env, ip, players, acts, ctx = {}) {
   return { events: res.events, order: res.order, judge, narration, usedAi, provider, quotaBlocked, narrateUser: usedAi ? undefined : narrateUser };
 }
 // 클라이언트 로컬 AI 서술을 로그에 채움 (서버 서술이 없던 항목만, 먼저 온 것이 이김)
-function fillNarration(entry, narration) {
+async function fillNarration(entry, narration, env) {
   if (!entry || entry.ai) return false;
+  if (!(await moderate(env, narration)).ok) return false;
   entry.narration = safeHtml(narration); entry.ai = 'local'; delete entry.narrateUser;
   return true;
 }
@@ -491,7 +532,7 @@ async function narrateBattle(id, body, env) {
   if (!row) return json({ error: 'no_battle' }, 404);
   const st = JSON.parse(row.state);
   if (!(await loadChar(env, st.charId, body.token))) return json({ error: 'forbidden' }, 403);
-  const ok = fillNarration(st.log.find(l => l.turn === Number(body.turn)), body.narration);
+  const ok = await fillNarration(st.log.find(l => l.turn === Number(body.turn)), body.narration, env);
   if (ok) await env.DB.prepare('UPDATE rpg_battles SET state = ? WHERE id = ?').bind(JSON.stringify(st), id).run();
   return json({ ok });
 }
@@ -500,7 +541,7 @@ async function narrateRoom(code, body, env) {
     const r = await loadRoom(env, code);
     if (!r) return json({ error: 'no_room' }, 404);
     if (!slotOf(r.s, body.token)) return json({ error: 'forbidden' }, 403);
-    const ok = fillNarration(r.s.log.find(l => l.round === Number(body.round)), body.narration);
+    const ok = await fillNarration(r.s.log.find(l => l.round === Number(body.round)), body.narration, env);
     if (!ok) return json({ ok: false });
     if (await saveRoom(env, code, r.s, r.v)) return json({ ok: true });
   }
@@ -519,6 +560,8 @@ async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET jso
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
+  const mod = await moderate(env, name + '\n' + setting);
+  if (!mod.ok) return json({ error: 'policy', reason: mod.reason, label: mod.label }, 400);
   const r = await aiCall(env, ip, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2);
   let parsed, judgedBy = r.provider;
   if (r.ok) parsed = r.parsed;
@@ -592,6 +635,12 @@ async function createBattle(body, env) {
   return json({ battle: st });
 }
 function parseAct(body) { return { type: ['attack', 'ult', 'defend'].includes(body.type) ? body.type : 'attack', text: clip(body.text, LEN.text), target: Number(body.target) || null }; }
+// 선언문 검열: 위반이면 문장을 지우고(AI 에 안 보냄) policy 표시만 남긴다 → 심사관이 기각, 기본 공격으로 진행
+async function parseActSafe(body, env) {
+  const a = parseAct(body);
+  if (a.text) { const m = await moderate(env, a.text); if (!m.ok) { a.text = ''; a.policy = m.label; delete body.local; } }
+  return a;
+}
 
 async function getBattle(id, token, env) {
   const row = await env.DB.prepare('SELECT state, updated FROM rpg_battles WHERE id = ?').bind(id).first();
@@ -618,7 +667,7 @@ async function battleTurn(id, body, env, ip) {
   // 낙관적 잠금: 같은 턴을 두 번 처리하지 않게
   const lock = await env.DB.prepare('UPDATE rpg_battles SET updated = ? WHERE id = ? AND updated = ?').bind(Date.now(), id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
-  const actMe = { ...parseAct(body), target: 2, local: body.local }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
+  const actMe = { ...await parseActSafe(body, env), target: 2, local: body.local }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
   const prevLog = st.log[st.log.length - 1];
   const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '' });
   delete actMe.local;
@@ -737,7 +786,7 @@ async function roomAction(code, body, env, ip) {
   } else {
     if (!alive.includes(slot)) return json({ error: 'dead', state: pub(s, slot) }, 409);
     if (s.moves[slot]) return json({ state: pub(s, slot) });
-    s.moves[slot] = { ...parseAct(body), at: Date.now(), local: body.local && typeof body.local === 'object' ? body.local : undefined }; s.p[slot].afk = 0;
+    s.moves[slot] = { ...await parseActSafe(body, env), at: Date.now(), local: body.local && typeof body.local === 'object' ? body.local : undefined }; s.p[slot].afk = 0;
   }
   return settleRoom(env, ip, code, s, r.v, slot);
 }
