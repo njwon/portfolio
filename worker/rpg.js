@@ -34,7 +34,7 @@ const MODELS = [
 let modelIdx = 0;
 const MAX_TOKENS = 380;
 const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODELS[0].nout);   // ≈ 24
-const DAILY_BUDGET = 9000, PER_IP_DAILY = 40;
+const DAILY_BUDGET = 9000, PER_IP_DAILY = 80;   // 턴당 최대 2회(심사+서술) → IP 당 하루 40턴
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
 
@@ -103,6 +103,26 @@ async function refund(env, ip) {
 }
 
 // ─── AI (심사·서술 전용) ─────────────────────────────────────────────
+// 모델이 낸 JSON 이 문자열 안의 따옴표·줄바꿈 때문에 깨지는 일이 잦다 → 관대하게 복구
+function lenientJson(text) {
+  const mt = text.match(/\{[\s\S]*\}/);
+  if (!mt) return null;
+  let t = mt[0];
+  try { return JSON.parse(t); } catch {}
+  t = t.replace(/\r?\n/g, '<br>').replace(new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + ']', 'g'), ' ');          // 1) 문자열 안 줄바꿈 → <br>
+  try { return JSON.parse(t); } catch {}
+  const nm = t.match(/"narration"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/);           // 2) 서술: 값을 통째로 회수
+  if (nm) return { narration: nm[1].replace(/\\"/g, '"') };
+  const out = {}; let any = false;                                          // 3) 심사: 필드별 회수
+  for (const k of ['p1', 'p2']) {
+    const seg = t.match(new RegExp('"' + k + '"\\s*:\\s*\\{([\\s\\S]*?)\\}\\s*(?:,\\s*"p2"|\\}\\s*$)'));
+    if (!seg) continue;
+    const g = seg[1], f = re => (g.match(re) || [])[1];
+    out[k] = { allowed: f(/"allowed"\s*:\s*(true|false)/) !== 'false', difficulty: f(/"difficulty"\s*:\s*"(\w+)"/), fit: Number(f(/"fit"\s*:\s*([\d.]+)/)), verdict: (f(/"verdict"\s*:\s*"([\s\S]*?)"\s*$/) || '').slice(0, 300) };
+    any = true;
+  }
+  return any ? out : null;
+}
 async function ask(env, system, user, temperature) {
   for (let i = modelIdx; i < MODELS.length; i++) {
     const model = MODELS[i];
@@ -113,9 +133,8 @@ async function ask(env, system, user, temperature) {
       // 모델마다 응답 형태가 다르다: { response } | OpenAI 호환 { choices:[{message:{content}}] } | { output_text }
       const text = typeof res === 'string' ? res
         : (res.response ?? res.choices?.[0]?.message?.content ?? res.output_text ?? res.result?.response ?? '');
-      const mt = text.replace(/<think>[\s\S]*?<\/think>/g, '').match(/\{[\s\S]*\}/);
-      let parsed = null; if (mt) { try { parsed = JSON.parse(mt[0]); } catch {} }
-      return { parsed, usage: res?.usage, model, raw: (text || JSON.stringify({ t: typeof res, keys: res && typeof res === 'object' ? Object.keys(res) : null, s: JSON.stringify(res.choices?.[0]).slice(0, 500), u: JSON.stringify(res.usage) })).slice(0, 900) };
+      const parsed = lenientJson(text.replace(/<think>[\s\S]*?<\/think>/g, ''));
+      return { parsed, usage: res?.usage, model, raw: text.slice(0, 400) };
     } catch (e) {
       if (/5018|not allowed|No such model|not found/i.test(e.message) && i + 1 < MODELS.length) continue;   // 이 계정에서 막힌 모델 → 다음 후보
       throw e;
