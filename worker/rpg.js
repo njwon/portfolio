@@ -13,11 +13,13 @@
  *   호출 전 '오늘 누적 + 최악 추정치 > 예산' 이면 429, 호출 후 usage 로 실제 누적. IP 별 하루 횟수 제한.
  *
  * 라우트:
- *   GET  /api/rpg/quota
+ *   GET  /api/rpg/quota                          → 제공자별 남은 횟수 · exhausted (전부 소진 시 클라이언트가 크롬 내장 AI 로 대체)
+ *   GET  /api/rpg/prompts                        → 클라이언트 로컬 AI 가 쓸 시스템 프롬프트 (서버와 동일)
  *   POST /api/rpg/chars                          { name, setting }            → { char, token }
  *   GET  /api/rpg/chars/:id?token=
  *   POST /api/rpg/battles                        { charId, token }            → { battle }   (AI 상대, 호출 없음)
- *   POST /api/rpg/battles/:id/turn               { token, type, text }        → { battle }   (규칙 엔진 + 서술 1회)
+ *   POST /api/rpg/battles/:id/turn               { token, type, text, local? } → { battle }  (규칙 엔진 + 서술 1회; local = 서버 AI 소진 시 클라이언트 심사 결과)
+ *   POST /api/rpg/battles/:id/narrate            { token, turn, narration }   (서버 서술이 없던 턴에 클라이언트 로컬 AI 서술을 채움)
  *   GET  /api/rpg/battles/:id?token=             (재접속)
  *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 전투 삭제, 패배 아님)
  *   POST /api/rpg/rooms                          { charId, token }            → { code, roomToken, state }
@@ -25,6 +27,7 @@
  *   GET  /api/rpg/rooms/:code?token=
  *   POST /api/rpg/rooms/:code/start              { token }                    (방장, 2명 이상)
  *   POST /api/rpg/rooms/:code/action             { token, type, text, target } | { token, skip: true }   (전원 제출 시 판정, 60초 미제출은 건너뛰기, 3연속이면 기권)
+ *   POST /api/rpg/rooms/:code/narrate            { token, round, narration }  (위와 같음, 방 전원에게 공유)
  *   POST /api/rpg/rooms/:code/leave              { token }                    (대기 중: 자리 비움·방장 승계 / 진행 중: 기권 / 마지막 사람이면 방 삭제)
  */
 
@@ -37,6 +40,19 @@ const MODELS = [
 ];
 let modelIdx = 0;
 const MAX_TOKENS = 380;
+// 무료 제공자 체인: 앞에서부터 남은 횟수가 있는 곳을 쓴다. 키는 워커 시크릿(wrangler secret put <key>) — 없으면 건너뜀.
+//   한도는 각사 무료 티어(2026-09 기준)보다 조금 낮게 잡아 429 를 피한다. 전부 소진되면 클라이언트가 크롬 내장 AI(Gemini Nano)로 이어간다.
+const PROVIDERS = [
+  { id: 'cf', name: 'Workers AI', kind: 'cf' },
+  { id: 'groq', name: 'Groq', key: 'GROQ_API_KEY', url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', daily: 950 },
+  { id: 'gemini', name: 'Gemini', key: 'GEMINI_API_KEY', url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', model: 'gemini-2.5-flash-lite', daily: 950 },
+  { id: 'cerebras', name: 'Cerebras', key: 'CEREBRAS_API_KEY', url: 'https://api.cerebras.ai/v1/chat/completions', model: 'llama-3.3-70b', daily: 700 },
+  { id: 'mistral', name: 'Mistral', key: 'MISTRAL_API_KEY', url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', daily: 3000 },
+  { id: 'github', name: 'GitHub Models', key: 'GITHUB_MODELS_TOKEN', url: 'https://models.github.ai/inference/chat/completions', model: 'openai/gpt-4o-mini', daily: 140 },
+  { id: 'openrouter', name: 'OpenRouter', key: 'OPENROUTER_API_KEY', url: 'https://openrouter.ai/api/v1/chat/completions', model: 'google/gemma-3-27b-it:free', daily: 45 },
+];
+const failedAt = {};   // 제공자별 마지막 실패 시각 (10분간 건너뜀)
+const PROVIDER_COOLDOWN = 10 * 60e3;
 const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODELS[0].nout);   // ≈ 24
 const DAILY_BUDGET = 9000, PER_IP_DAILY = 80;   // 턴당 최대 2회(심사+서술) → IP 당 하루 40턴
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
@@ -56,62 +72,93 @@ export async function handleRpg(request, env, path) {
   const body = m === 'POST' ? await request.json().catch(() => ({})) : {};
   let mm;
   if (path === '/api/rpg/quota' && m === 'GET') return json(await quota(env, ip));
+  if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, ip);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], url.searchParams.get('token'), env);
   if (path === '/api/rpg/battles' && m === 'POST') return createBattle(body, env);
-  if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave))?$/))) {
+  if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave|narrate))?$/))) {
     const [, id, sub] = mm;
     if (!sub && m === 'GET') return getBattle(id, url.searchParams.get('token'), env);
     if (sub === 'turn' && m === 'POST') return battleTurn(id, body, env, ip);
     if (sub === 'leave' && m === 'POST') return leaveBattle(id, body, env);
+    if (sub === 'narrate' && m === 'POST') return narrateBattle(id, body, env);
   }
   if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env);
-  if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave))?$/))) {
+  if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave|narrate))?$/))) {
     const [, code, sub] = mm;
     if (!sub && m === 'GET') return getRoom(code, url.searchParams.get('token'), env);
     if (sub === 'join' && m === 'POST') return joinRoom(code, body, env);
     if (sub === 'start' && m === 'POST') return startRoom(code, body, env);
     if (sub === 'action' && m === 'POST') return roomAction(code, body, env, ip);
     if (sub === 'leave' && m === 'POST') return leaveRoom(code, body, env, ip);
+    if (sub === 'narrate' && m === 'POST') return narrateRoom(code, body, env);
   }
   return json({ error: 'Not Found' }, 404);
 }
 
-// ─── 한도 ───────────────────────────────────────────────────────────
+// ─── 한도 (제공자별 일일 카운터 + IP 카운터) ────────────────────────
 async function quota(env, ip) {
   const day = today();
   const g = await env.DB.prepare('SELECT neurons, requests FROM rpg_quota WHERE day = ?').bind(day).first();
   const i = await env.DB.prepare('SELECT requests FROM rpg_ip WHERE day = ? AND ip = ?').bind(day, ip).first();
+  const pr = await env.DB.prepare('SELECT provider, requests FROM rpg_provider WHERE day = ?').bind(day).all();
+  const usedBy = {}; for (const r of (pr?.results || [])) usedBy[r.provider] = r.requests;
   const used = g?.neurons ?? 0, remaining = Math.max(0, DAILY_BUDGET - used);
   const perCall = (g?.requests ?? 0) >= 20 && used > 0 ? Math.max(6, used / g.requests) : MAX_NEURONS_PER_CALL;   // 실측 평균 (요청 20건 이상부터)
+  const providers = PROVIDERS.map(p => {
+    if (p.kind === 'cf') return { id: p.id, name: p.name, configured: !!env.AI, limit: Math.floor(DAILY_BUDGET / perCall), used: g?.requests ?? 0, remaining: remaining < MAX_NEURONS_PER_CALL ? 0 : Math.floor(remaining / perCall) };
+    const u = usedBy[p.id] ?? 0;
+    return { id: p.id, name: p.name, configured: !!env[p.key], limit: p.daily, used: u, remaining: Math.max(0, p.daily - u) };
+  });
+  const active = providers.find(p => p.configured && p.remaining > 0);
+  const estCalls = providers.reduce((n, p) => n + (p.configured ? p.remaining : 0), 0);
+  const capacity = providers.reduce((n, p) => n + (p.configured ? p.limit : 0), 0);
   return {
     day, resetsAt: Date.parse(day + 'T00:00:00Z') + 86400e3,
-    global: { budget: DAILY_BUDGET, used: Math.round(used), remaining: Math.round(remaining), estCalls: Math.floor(remaining / perCall), perCall: Math.round(perCall * 10) / 10, requests: g?.requests ?? 0 },
+    global: { budget: DAILY_BUDGET, used: Math.round(used), remaining: Math.round(remaining), estCalls, capacity, perCall: Math.round(perCall * 10) / 10, requests: g?.requests ?? 0 },
     ip: { limit: PER_IP_DAILY, used: i?.requests ?? 0, remaining: Math.max(0, PER_IP_DAILY - (i?.requests ?? 0)) },
+    providers, active: active?.id || null, exhausted: estCalls <= 0,
   };
 }
-async function reserve(env, ip) {
-  const q = await quota(env, ip);
-  if (q.ip.remaining <= 0) return { ok: false, reason: 'ip', q };
-  if (q.global.remaining < MAX_NEURONS_PER_CALL) return { ok: false, reason: 'global', q };
-  await env.DB.batch([
-    env.DB.prepare('INSERT INTO rpg_quota (day, neurons, requests) VALUES (?, 0, 1) ON CONFLICT(day) DO UPDATE SET requests = requests + 1').bind(q.day),
-    env.DB.prepare('INSERT INTO rpg_ip (day, ip, requests) VALUES (?, ?, 1) ON CONFLICT(day, ip) DO UPDATE SET requests = requests + 1').bind(q.day, ip),
-  ]);
-  return { ok: true, q };
+// 카운터 증감 (delta = +1 예약 / -1 환불). Workers AI 는 rpg_quota, 나머지는 rpg_provider. IP 는 공통
+async function bump(env, day, ip, providerId, delta) {
+  const stmts = [];
+  if (providerId === 'cf') stmts.push(delta > 0
+    ? env.DB.prepare('INSERT INTO rpg_quota (day, neurons, requests) VALUES (?, 0, 1) ON CONFLICT(day) DO UPDATE SET requests = requests + 1').bind(day)
+    : env.DB.prepare('UPDATE rpg_quota SET requests = MAX(0, requests - 1) WHERE day = ?').bind(day));
+  else stmts.push(delta > 0
+    ? env.DB.prepare('INSERT INTO rpg_provider (day, provider, requests) VALUES (?, ?, 1) ON CONFLICT(day, provider) DO UPDATE SET requests = requests + 1').bind(day, providerId)
+    : env.DB.prepare('UPDATE rpg_provider SET requests = MAX(0, requests - 1) WHERE day = ? AND provider = ?').bind(day, providerId));
+  stmts.push(delta > 0
+    ? env.DB.prepare('INSERT INTO rpg_ip (day, ip, requests) VALUES (?, ?, 1) ON CONFLICT(day, ip) DO UPDATE SET requests = requests + 1').bind(day, ip)
+    : env.DB.prepare('UPDATE rpg_ip SET requests = MAX(0, requests - 1) WHERE day = ? AND ip = ?').bind(day, ip));
+  await env.DB.batch(stmts);
 }
 async function record(env, usage, model) {
   const inTok = usage?.prompt_tokens ?? 1200, outTok = usage?.completion_tokens ?? MAX_TOKENS;
   const neurons = Number.isFinite(usage?.neurons) ? usage.neurons : inTok * model.nin + outTok * model.nout;   // Workers AI 가 뉴런을 직접 주면 그 값
   await env.DB.prepare('UPDATE rpg_quota SET neurons = neurons + ? WHERE day = ?').bind(neurons, today()).run();
 }
-// AI 호출이 실패하면 예약했던 횟수를 돌려준다 (한도를 헛되이 쓰지 않게)
-async function refund(env, ip) {
-  const day = today();
-  await env.DB.batch([
-    env.DB.prepare('UPDATE rpg_quota SET requests = MAX(0, requests - 1) WHERE day = ?').bind(day),
-    env.DB.prepare('UPDATE rpg_ip SET requests = MAX(0, requests - 1) WHERE day = ? AND ip = ?').bind(day, ip),
-  ]);
+// AI 호출 한 번: IP 한도 확인 → 남은 제공자 순서대로 예약·호출, 실패하면 환불하고 다음 제공자 (최대 3곳)
+//   → { ok, parsed, raw, provider } | { ok: false, reason: 'ip' | 'exhausted' | 'failed' }
+async function aiCall(env, ip, system, user, temperature) {
+  const q = await quota(env, ip);
+  if (q.ip.remaining <= 0) return { ok: false, reason: 'ip' };
+  let tried = 0;
+  for (const p of q.providers) {
+    if (!p.configured || p.remaining <= 0 || (failedAt[p.id] && Date.now() - failedAt[p.id] < PROVIDER_COOLDOWN)) continue;
+    await bump(env, q.day, ip, p.id, +1);
+    try {
+      const out = await ask(env, PROVIDERS.find(x => x.id === p.id), system, user, temperature);
+      if (p.id === 'cf') await record(env, out.usage, out.model);
+      return { ok: true, parsed: out.parsed, raw: out.raw, provider: p.id };
+    } catch (e) {
+      await bump(env, q.day, ip, p.id, -1);
+      if (p.id !== 'cf' || !/quota|limit|429/i.test(e.message)) failedAt[p.id] = Date.now();
+      if (++tried >= 3) break;
+    }
+  }
+  return { ok: false, reason: tried ? 'failed' : 'exhausted' };
 }
 
 // ─── AI (심사·서술 전용) ─────────────────────────────────────────────
@@ -136,16 +183,32 @@ function lenientJson(text) {
   }
   return any ? out : null;
 }
+// 서술은 innerHTML 로 그려지므로 태그를 막고 <br> 만 허용 (모델 출력이든 클라이언트 로컬 AI 출력이든)
+const safeHtml = v => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500);
 // 판정문에 JSON 조각("fit":0.9 …)이나 중괄호가 섞여 나오면 그 앞까지만 남긴다
 function cleanVerdict(v) {
-  return String(v || '').replace(/\\"/g, '"').replace(/\s*[,{}]?\s*"?(allowed|difficulty|fit|verdict|p\d)"?\s*:[\s\S]*$/, '').replace(/[{}]/g, '').replace(/["'\s,]+$/, '').trim().slice(0, 300);
+  return String(v || '').replace(/\\"/g, '"').replace(/\s*[,{}]?\s*"?(allowed|difficulty|fit|verdict|p\d)"?\s*:[\s\S]*$/, '').replace(/[{}]/g, '').replace(/[\s,]+$/, '').replace(/"$/, m => (v.match(/"/g) || []).length % 2 ? '' : m).trim().slice(0, 300);
 }
-async function ask(env, system, user, temperature) {
+async function ask(env, provider, system, user, temperature) {
+  const maxTokens = system === SYS_JUDGE_ACTION ? 260 : MAX_TOKENS;
+  if (provider.kind !== 'cf') {
+    // OpenAI 호환 채팅 엔드포인트 (Groq · Gemini · Cerebras · Mistral · GitHub Models · OpenRouter 모두 같은 형식)
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 25e3);
+    try {
+      const res = await fetch(provider.url, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + env[provider.key], ...(provider.id === 'openrouter' ? { 'HTTP-Referer': 'https://njw.kro.kr', 'X-Title': 'DREAM RPG' } : {}) },
+        body: JSON.stringify({ model: provider.model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens, temperature }) });
+      if (!res.ok) throw new Error(provider.id + ' ' + res.status + ' ' + (await res.text()).slice(0, 200));
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content ?? '';
+      if (!text) throw new Error(provider.id + ' empty');
+      return { parsed: lenientJson(text.replace(/<think>[\s\S]*?<\/think>/g, '')), usage: data.usage, model: provider, raw: text.slice(0, 400) };
+    } finally { clearTimeout(timer); }
+  }
   for (let i = modelIdx; i < MODELS.length; i++) {
     const model = MODELS[i];
     try {
       // gemma-4 는 기본이 '생각(reasoning_content)' 모드라 max_tokens 를 생각에 다 쓰고 답이 비어 나온다 → 생각 끄기 요청
-      const res = await env.AI.run(model.name, { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: system === SYS_JUDGE_ACTION ? 260 : MAX_TOKENS, temperature, enable_thinking: false, reasoning: { effort: 'none' }, chat_template_kwargs: { enable_thinking: false } });
+      const res = await env.AI.run(model.name, { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens, temperature, enable_thinking: false, reasoning: { effort: 'none' }, chat_template_kwargs: { enable_thinking: false } });
       modelIdx = i;
       // 모델마다 응답 형태가 다르다: { response } | OpenAI 호환 { choices:[{message:{content}}] } | { output_text }
       const text = typeof res === 'string' ? res
@@ -271,30 +334,54 @@ async function runRound(env, ip, players, acts) {
   const names = {}; for (const k in players) if (players[k]) names[k] = players[k].char.name;
   const slots = aliveSlots(players);
   const judge = {}; for (const k of slots) judge[k] = { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
-  let usedAi = false, quotaBlocked = null;
+  let usedAi = false, quotaBlocked = null, provider = null;
+  const clampJudge = p => ({ allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: cleanVerdict(p.verdict) });
   const needJudge = slots.some(k => acts[k]?.text);
   if (needJudge) {
-    const r = await reserve(env, ip);
-    if (!r.ok) quotaBlocked = r.reason;
-    else try {
-      const user = slots.map(k => charLine(k, players[k], acts[k] || { type: 'attack' }, names)).join('\n\n');
-      const { parsed, usage, model } = await ask(env, SYS_JUDGE_ACTION, user, 0.2);
-      await record(env, usage, model);
-      for (const k of slots) { const p = parsed?.['p' + k]; if (p) judge[k] = { allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: cleanVerdict(p.verdict) }; }
-    } catch { await refund(env, ip); }
+    const user = slots.map(k => charLine(k, players[k], acts[k] || { type: 'attack' }, names)).join('\n\n');
+    const r = await aiCall(env, ip, SYS_JUDGE_ACTION, user, 0.2);
+    if (r.ok) { provider = r.provider; for (const k of slots) { const p = r.parsed?.['p' + k]; if (p) judge[k] = clampJudge(p); } }
+    else {
+      quotaBlocked = r.reason;
+      // 서버 AI 가 없으면 각 플레이어가 자기 크롬 내장 AI 로 심사해 보낸 결과를 쓴다 (수치는 규칙 엔진이 정하므로 영향 범위는 난이도·적합도뿐)
+      for (const k of slots) if (acts[k]?.local && typeof acts[k].local === 'object') judge[k] = { ...clampJudge(acts[k].local), src: 'local' };
+    }
   }
   const res = resolveRound(players, acts, judge);
   let narration = templateNarration(names, res.events);
-  const r2 = await reserve(env, ip);
-  if (!r2.ok) quotaBlocked = quotaBlocked || r2.reason;
-  else try {
-    const user = slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
-      + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
-    const { parsed, usage, model } = await ask(env, SYS_NARRATE, user, 0.9);
-    await record(env, usage, model);
-    if (parsed?.narration) { narration = String(parsed.narration).slice(0, 1500); usedAi = true; }
-  } catch { await refund(env, ip); }
-  return { events: res.events, order: res.order, judge, narration, usedAi, quotaBlocked };
+  const narrateUser = slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
+    + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
+  const r2 = await aiCall(env, ip, SYS_NARRATE, narrateUser, 0.9);
+  if (r2.ok) { provider = provider || r2.provider; if (r2.parsed?.narration) { narration = safeHtml(r2.parsed.narration); usedAi = true; } }
+  else quotaBlocked = quotaBlocked || r2.reason;
+  // 서술을 못 얻었으면 클라이언트 로컬 AI 가 이어받을 수 있게 프롬프트를 남긴다 (서술이 채워지면 제거)
+  return { events: res.events, order: res.order, judge, narration, usedAi, provider, quotaBlocked, narrateUser: usedAi ? undefined : narrateUser };
+}
+// 클라이언트 로컬 AI 서술을 로그에 채움 (서버 서술이 없던 항목만, 먼저 온 것이 이김)
+function fillNarration(entry, narration) {
+  if (!entry || entry.ai) return false;
+  entry.narration = safeHtml(narration); entry.ai = 'local'; delete entry.narrateUser;
+  return true;
+}
+async function narrateBattle(id, body, env) {
+  const row = await env.DB.prepare('SELECT state FROM rpg_battles WHERE id = ?').bind(id).first();
+  if (!row) return json({ error: 'no_battle' }, 404);
+  const st = JSON.parse(row.state);
+  if (!(await loadChar(env, st.charId, body.token))) return json({ error: 'forbidden' }, 403);
+  const ok = fillNarration(st.log.find(l => l.turn === Number(body.turn)), body.narration);
+  if (ok) await env.DB.prepare('UPDATE rpg_battles SET state = ? WHERE id = ?').bind(JSON.stringify(st), id).run();
+  return json({ ok });
+}
+async function narrateRoom(code, body, env) {
+  for (let i = 0; i < 3; i++) {
+    const r = await loadRoom(env, code);
+    if (!r) return json({ error: 'no_room' }, 404);
+    if (!slotOf(r.s, body.token)) return json({ error: 'forbidden' }, 403);
+    const ok = fillNarration(r.s.log.find(l => l.round === Number(body.round)), body.narration);
+    if (!ok) return json({ ok: false });
+    if (await saveRoom(env, code, r.s, r.v)) return json({ ok: true });
+  }
+  return json({ error: 'retry' }, 409);
 }
 
 // ─── 캐릭터 ─────────────────────────────────────────────────────────
@@ -309,16 +396,17 @@ async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET jso
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
-  const r = await reserve(env, ip);
-  if (!r.ok) return json({ error: 'quota', reason: r.reason, quota: r.q }, 429);
-  let parsed, usage, model, raw;
-  try { ({ parsed, usage, model, raw } = await ask(env, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2)); await record(env, usage, model); }
-  catch (e) { await refund(env, ip); return json({ error: 'ai_failed', message: e.message, quota: await quota(env, ip) }, 502); }
+  const r = await aiCall(env, ip, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2);
+  let parsed, judgedBy = r.provider;
+  if (r.ok) parsed = r.parsed;
+  else if (body.local && typeof body.local === 'object') { parsed = body.local; judgedBy = 'local'; }   // 서버 AI 소진 → 클라이언트 크롬 내장 AI 의 심사 결과 (buildStats 가 예산·범위를 강제)
+  else if (r.reason === 'failed') return json({ error: 'ai_failed', quota: await quota(env, ip) }, 502);
+  else return json({ error: 'quota', reason: r.reason, quota: await quota(env, ip) }, 429);
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
   const c = {
-    id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: !parsed.fallback,
+    id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
     stats: buildStats(parsed.alloc, parsed.coherence),
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
@@ -402,9 +490,10 @@ async function battleTurn(id, body, env, ip) {
   // 낙관적 잠금: 같은 턴을 두 번 처리하지 않게
   const lock = await env.DB.prepare('UPDATE rpg_battles SET updated = ? WHERE id = ? AND updated = ?').bind(Date.now(), id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
-  const actMe = { ...parseAct(body), target: 2 }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
+  const actMe = { ...parseAct(body), target: 2, local: body.local }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
   const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe });
-  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi });
+  delete actMe.local;
+  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
@@ -498,7 +587,7 @@ async function roomAction(code, body, env, ip) {
   } else {
     if (!alive.includes(slot)) return json({ error: 'dead', state: pub(s, slot) }, 409);
     if (s.moves[slot]) return json({ state: pub(s, slot) });
-    s.moves[slot] = { ...parseAct(body), at: Date.now() }; s.p[slot].afk = 0;
+    s.moves[slot] = { ...parseAct(body), at: Date.now(), local: body.local && typeof body.local === 'object' ? body.local : undefined }; s.p[slot].afk = 0;
   }
   return settleRoom(env, ip, code, s, r.v, slot);
 }
@@ -517,7 +606,8 @@ async function settleRoom(env, ip, code, s, v, slot) {
   let quotaBlocked = null;
   if (alive.length > 1) {
     const t = await runRound(env, ip, s.p, s.moves);
-    s.log.push({ round: s.round, acts: { ...s.moves }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi });
+    const acts = {}; for (const k in s.moves) { const { local, ...a } = s.moves[k]; acts[k] = a; }
+    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser });
     if (s.log.length > 40) s.log.shift();
     quotaBlocked = t.quotaBlocked;
   }

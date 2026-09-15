@@ -57,3 +57,10 @@ CREATE TABLE IF NOT EXISTS rpg_battles (
   updated INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_rpg_battles_updated ON rpg_battles(updated);
+-- DREAM RPG: 외부 무료 AI 제공자(Groq · Gemini · Cerebras · Mistral · GitHub Models · OpenRouter)별 일일 호출 수
+CREATE TABLE IF NOT EXISTS rpg_provider (
+  day      TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  requests INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, provider)
+);

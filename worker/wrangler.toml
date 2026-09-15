@@ -12,6 +12,10 @@ binding = "DB"
 database_name = "blog-db"
 database_id = "1f3222d0-0343-429c-af67-f771a39b5f2d"
 
-# DREAM RPG: Workers AI (Gemma 3 12B). 무료 하루 10,000 뉴런 안에서만 쓰도록 rpg.js 가 강제
+# DREAM RPG: Workers AI (Gemma 4). 무료 하루 10,000 뉴런 안에서만 쓰도록 rpg.js 가 강제.
+# 소진되면 아래 무료 API 로 순서대로 넘어간다 — 키는 시크릿으로: cd worker && npx wrangler secret put <이름>
+#   GROQ_API_KEY (console.groq.com) · GEMINI_API_KEY (aistudio.google.com) · CEREBRAS_API_KEY (cloud.cerebras.ai)
+#   MISTRAL_API_KEY (console.mistral.ai) · GITHUB_MODELS_TOKEN (github.com PAT, models:read) · OPENROUTER_API_KEY (openrouter.ai)
+# 전부 소진되면 클라이언트가 데스크톱 크롬 내장 AI(Gemini Nano, Prompt API)로 이어간다.
 [ai]
 binding = "AI"

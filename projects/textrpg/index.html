@@ -95,6 +95,7 @@
         .plist .badge { position: absolute; top: 8px; right: 10px; font-size: 11px; opacity: .8; }
         .plist .c1 { border-color: #75fa69; } .plist .c2 { border-color: #ea36af; } .plist .c3 { border-color: #69c9fa; }
         .plist .c4 { border-color: #fae069; } .plist .c5 { border-color: #c98cff; } .plist .c6 { border-color: #ff9c6b; }
+        button.mini { padding: .3rem .7rem; font-size: 13px; }
         .targets { display: flex; gap: 8px; flex-wrap: wrap; }
         .targets button { flex: 1 1 120px; padding: .55rem .6rem; font-size: .95rem; background: transparent; color: #eee; border: 0.5px dashed #eee; }
         .targets button.on { background: #eee; color: #1d1d1d; border-style: solid; }
@@ -135,7 +136,7 @@
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
             <p class="status" id="createStatus"></p>
-            <p class="hint">AI 심사관(Gemma 4 · Cloudflare Workers AI)이 설정을 읽어 성향과 일관성을 매기고, 서버가 <b>모든 캐릭터에 같은 예산</b>으로 능력치를 정합니다. 전투는 말로 선언 → AI 심사관이 허용·난이도 판정 → 규칙 엔진(주사위)이 결과 → 게임 마스터가 서술합니다. API 키 없이 하루 무료 한도 안에서 플레이합니다.</p>
+            <p class="hint">AI 심사관(Gemma 4 · Cloudflare Workers AI)이 설정을 읽어 성향과 일관성을 매기고, 서버가 <b>모든 캐릭터에 같은 예산</b>으로 능력치를 정합니다. 전투는 말로 선언 → AI 심사관이 허용·난이도 판정 → 규칙 엔진(주사위)이 결과 → 게임 마스터가 서술합니다. API 키 없이 무료 한도(Workers AI → Groq → Gemini 등 무료 API 순서)로 플레이하고, 전부 소진되면 데스크톱 크롬의 내장 AI(Gemini Nano)가 이어받습니다.</p>
         </section>
 
         <!-- 2. 홈 -->
@@ -221,16 +222,83 @@
     function applyQuota(q) {
         if (!q) return;
         quotaState = q;
-        const pct = Math.round(q.global.remaining / q.global.budget * 100);
+        const cap = q.global.capacity || q.global.budget, pct = Math.round(Math.min(1, q.global.estCalls / cap) * 100);
         $('quotaBar').style.width = pct + '%';
         const calls = Math.min(q.global.estCalls, q.ip.remaining);
-        $('quotaText').textContent = `전체 ${pct}% 남음 · 약 ${q.global.estCalls}회 (≈ ${Math.floor(q.global.estCalls / 2)}라운드)`;
-        $('quotaIp').textContent = `내 몫 ${q.ip.remaining}/${q.ip.limit}회 (UTC 자정 = 한국 09:00 초기화)`;
+        const active = (q.providers || []).find(p => p.id === q.active);
+        $('quotaText').textContent = `약 ${q.global.estCalls}회 남음 (≈ ${Math.floor(q.global.estCalls / 2)}라운드)` + (active ? ` · 지금 ${active.name} ${active.remaining}/${active.limit}` : '');
+        $('quotaIp').textContent = `내 몫 ${q.ip.remaining}/${q.ip.limit}회 (한국 09:00 초기화)`;
         $('quota').classList.toggle('low', calls <= 5);
-        if (calls <= 0) $('quotaText').innerHTML = '<span class="warn">오늘 무료 한도 소진 — 캐릭터 생성·AI 서술 불가 (판정은 계속됨)</span>';
-        $('btnCreate').disabled = calls <= 0;
+        if (calls <= 0) {
+            // 서버 쪽 무료 AI(Workers AI → Groq → Gemini → …)가 전부 소진됐거나 내 몫이 끝남 → 데스크톱 크롬이면 내장 AI(Gemini Nano)로 이어간다
+            const why = q.global.estCalls <= 0 ? '서버 무료 AI 전부 소진' : '오늘 내 몫 소진';
+            $('quotaText').innerHTML = nano.ready ? `<span class="warn">${why}</span> → 내 크롬 내장 AI(Gemini Nano)로 진행 중 <span class="hint">(심사·서술을 이 컴퓨터에서 계산)</span>`
+                : nano.state === 'downloadable' ? `<span class="warn">${why}</span> — <button type="button" id="btnNano" class="mini">크롬 내장 AI 설치하고 계속하기 <span class="hint">(약 4GB · 데스크톱 크롬 138+)</span></button>`
+                : nano.state === 'downloading' ? `<span class="warn">${why}</span> — 크롬 내장 AI 내려받는 중… 잠시 뒤 새로고침`
+                : `<span class="warn">${why} — 캐릭터 생성·AI 서술 불가 (판정은 계속됨)</span> <span class="hint">데스크톱 크롬(138+, 여유 공간 22GB)이면 내장 AI로 계속할 수 있습니다</span>`;
+            if ($('btnNano')) $('btnNano').addEventListener('click', nanoInstall);
+        }
+        $('btnCreate').disabled = calls <= 0 && !nano.ready;
     }
-    const aiAvailable = () => !quotaState || (quotaState.global.estCalls > 0 && quotaState.ip.remaining > 0);
+    const aiAvailable = () => !quotaState || (quotaState.global.estCalls > 0 && quotaState.ip.remaining > 0) || nano.ready;
+
+    // ── 크롬 내장 AI (Prompt API · Gemini Nano) — 서버 무료 한도가 전부 소진됐을 때 이 컴퓨터에서 심사·서술 ──
+    //   Chrome 138+ 데스크톱 전용(Android·iOS 불가). 숫자(명중·피해)는 여전히 서버 규칙 엔진이 정하므로 로컬 AI 는 난이도·적합도·서술만 맡는다.
+    const nano = { state: 'unsupported', ready: false, prompts: null };
+    async function nanoCheck() {
+        if (typeof LanguageModel === 'undefined') { nano.state = 'unsupported'; nano.ready = false; return; }
+        try { nano.state = await LanguageModel.availability({ expectedInputs: [{ type: 'text', languages: ['ko'] }], expectedOutputs: [{ type: 'text', languages: ['ko'] }] }); }
+        catch { try { nano.state = await LanguageModel.availability(); } catch { nano.state = 'unsupported'; } }
+        nano.ready = nano.state === 'available';
+    }
+    async function nanoInstall() {   // 사용자 클릭(제스처)이 있어야 내려받기가 시작된다
+        const btn = $('btnNano'); if (btn) { btn.disabled = true; btn.textContent = '내려받는 중… 0%'; }
+        try {
+            const sess = await LanguageModel.create({ monitor(m) { m.addEventListener('downloadprogress', e => { if ($('btnNano')) $('btnNano').textContent = `내려받는 중… ${Math.round(e.loaded * 100)}%`; }); } });
+            sess.destroy(); await nanoCheck(); applyQuota(quotaState);
+        } catch (e) { $('quotaText').innerHTML = `<span class="warn">내장 AI 설치 실패: ${esc(e.message)}</span>`; }
+    }
+    const localMode = () => nano.ready && !!quotaState && (quotaState.exhausted || quotaState.ip.remaining <= 0);
+    async function nanoAsk(system, user) {
+        const sess = await LanguageModel.create({ initialPrompts: [{ role: 'system', content: system }] });
+        try { return await sess.prompt(user); } finally { sess.destroy(); }
+    }
+    function looseJson(t) {
+        const m = String(t || '').match(/\{[\s\S]*\}/); if (!m) return null;
+        try { return JSON.parse(m[0]); } catch {}
+        try { return JSON.parse(m[0].replace(/\r?\n/g, '<br>')); } catch {}
+        const n = m[0].match(/"narration"\s*:\s*"([\s\S]*?)"\s*\}?\s*$/); return n ? { narration: n[1] } : null;
+    }
+    async function prompts() { if (!nano.prompts) nano.prompts = await api('/api/rpg/prompts'); return nano.prompts; }
+    const actLabel = t => t === 'defend' ? '방어' : t === 'ult' ? '필살기' : '공격';
+    // 내 행동 하나를 심사 (서버 프롬프트와 같은 형식, p1 만)
+    async function nanoJudgeAction(c, type, text, targetName) {
+        try {
+            const P = await prompts();
+            const user = `[p1] ${c.name} (${c.fiction}) — 설정: ${c.info} / 필살기 ${c.ult.name}: ${c.ult.effect}\n행동: ${actLabel(type)}${targetName ? ' → 대상: ' + targetName : ''} / 선언: "${text || '기본 공격'}"`;
+            const r = looseJson(await nanoAsk(P.judgeAction, user));
+            return r?.p1 || null;
+        } catch { return null; }
+    }
+    async function nanoJudgeChar(name, setting) {
+        try { const P = await prompts(); return looseJson(await nanoAsk(P.judgeChar, `이름: ${name}\n설정: ${setting}`)); } catch { return null; }
+    }
+    // 서버가 서술을 못 붙인 라운드(entry.narrateUser 가 있음)를 이 컴퓨터에서 서술하고, 서버 로그에도 채워 넣어 모두가 같은 글을 본다
+    const narrating = new Set();
+    async function narrateLocally(entry, key, postPath, body) {
+        if (!nano.ready || entry.ai || !entry.narrateUser || narrating.has(key)) return;
+        narrating.add(key);
+        const bubble = document.getElementById('gm-' + key);
+        if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(내 크롬 AI가 서술 중…)</span>';
+        try {
+            const P = await prompts(); const r = looseJson(await nanoAsk(P.narrate, entry.narrateUser));
+            if (!r?.narration) throw new Error('empty');
+            entry.narration = esc(r.narration).replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500); entry.ai = 'local'; delete entry.narrateUser;
+            if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(크롬 내장 AI 서술)</span>';
+            api(postPath, { ...body, narration: entry.narration }).catch(() => {});
+        } catch { if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(AI 서술 없음)</span>'; }
+        finally { narrating.delete(key); }
+    }
     async function refreshQuota() { try { applyQuota(await (await fetch(API + '/api/rpg/quota')).json()); } catch { $('quotaText').textContent = '서버 연결 실패'; } }
     async function api(path, body) {
         const wait = MIN_INTERVAL_MS - (Date.now() - lastCall);
@@ -277,7 +345,11 @@
         if (!name || !setting) return $('createStatus').textContent = '이름과 설정을 모두 입력하세요.';
         if (!aiAvailable()) return $('createStatus').textContent = errMsg(new Error('quota'));
         $('btnCreate').disabled = true; $('btnCreate').textContent = '심사관이 읽는 중…'; $('createStatus').textContent = '';
-        try { const d = await api('/api/rpg/chars', { name, setting }); me = d.char; myToken = d.token; saveMe(); goHome(); }
+        try {
+            let local = null;
+            if (localMode()) { $('btnCreate').textContent = '내 크롬 AI가 읽는 중…'; local = await nanoJudgeChar(name, setting); }
+            const d = await api('/api/rpg/chars', { name, setting, local }); me = d.char; myToken = d.token; saveMe(); goHome();
+        }
         catch (e) { $('createStatus').textContent = errMsg(e); }
         finally { $('btnCreate').textContent = '몽상 시작!'; applyQuota(quotaState); }
     });
@@ -306,12 +378,13 @@
             out += msg('p' + k, esc(names[k]), `<b>${kind}</b>${tgt} ${act.text ? '“' + esc(act.text) + '”' : act.type === 'defend' ? '' : '<span class="hint">기본 공격</span>'}${act.skipped ? ' <span class="hint">(시간 초과 → 자동 방어)</span>' : ''}`);
             if (j && act.type !== 'defend' && (act.text || j.verdict)) {
                 const d = j.allowed === false ? 'denied' : (j.difficulty || 'normal');
-                out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span> ${esc(j.verdict || '')}`);
+                out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''} ${esc(j.verdict || '')}`);
             }
         }
         const order = entry.order || (entry.first ? [entry.first === 'a' ? 1 : 2, entry.first === 'a' ? 2 : 1] : []);
         out += msg('dice', '주사위', `순서 ${order.map(k => esc(names[k])).join(' → ')}<br>${eventsHtml(names, entry.events)}`);
-        out += msg('gm', '게임 마스터', entry.narration + (entry.ai ? '' : ' <span class="hint">(AI 서술 없음)</span>'));
+        const key = label.replace(/\s+/g, '');
+        out += `<div class="msg gm"><span class="who">게임 마스터</span><div class="bubble" id="gm-${key}">${entry.narration}${entry.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : entry.ai ? '' : ' <span class="hint">(AI 서술 없음)</span>'}</div></div>`;
         return out;
     }
 
@@ -347,12 +420,15 @@
     }
     async function turn(type) {
         if (busy || !battle) return; busy = true; renderBattle();
-        $('bStatus').textContent = aiAvailable() ? '주사위를 굴리고 게임 마스터가 서술 중…' : '주사위를 굴리는 중… (오늘 AI 서술 한도 소진)';
+        $('bStatus').textContent = localMode() ? '내 크롬 AI가 심사하고 주사위를 굴리는 중…' : aiAvailable() ? '주사위를 굴리고 게임 마스터가 서술 중…' : '주사위를 굴리는 중… (오늘 AI 한도 소진)';
         try {
-            const d = await api(`/api/rpg/battles/${battle.id}/turn`, { token: myToken, type, text: $('bAction').value.trim() });
+            const text = $('bAction').value.trim();
+            const local = localMode() && text ? await nanoJudgeAction(battle.me.char, type, text, battle.foe.char.name) : null;
+            const d = await api(`/api/rpg/battles/${battle.id}/turn`, { token: myToken, type, text, local });
             battle = d.battle; const last = battle.log[battle.log.length - 1];
             logLine($('bLog'), roundHtml(`턴 ${last.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, last));
-            $('bAction').value = ''; $('bStatus').textContent = d.quotaBlocked ? '오늘 AI 서술 한도가 소진돼 사실만 기록됩니다.' : '';
+            $('bAction').value = ''; $('bStatus').textContent = d.quotaBlocked && !nano.ready ? '오늘 AI 한도가 소진돼 사실만 기록됩니다.' : '';
+            narrateLocally(last, `턴${last.turn}`, `/api/rpg/battles/${battle.id}/narrate`, { token: myToken, turn: last.turn });
             if (battle.status === 'finished') endBattle();
         } catch (e) {
             $('bStatus').textContent = errMsg(e);
@@ -448,6 +524,11 @@
         // 로그
         const names = namesOf(s);
         while (renderedRounds < s.log.length) { const r = s.log[renderedRounds++]; logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r)); }
+        for (const r of s.log) {
+            const key = `라운드${r.round}`, bubble = document.getElementById('gm-' + key);
+            if (r.ai && bubble && !narrating.has(key) && !bubble.innerHTML.startsWith(r.narration)) bubble.innerHTML = r.narration + (r.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : '');   // 다른 플레이어의 크롬 AI 가 채운 서술
+            else if (!r.ai && r.narrateUser) narrateLocally(r, key, `/api/rpg/rooms/${room.code}/narrate`, { token: room.token, round: r.round });
+        }
         // 상태줄 + 건너뛰기
         const missing = alive.filter(k => !s.moves[k]);
         const overdue = playing && s.waitingSince && Date.now() - s.waitingSince > 60000 && missing.length > 0;
@@ -467,7 +548,12 @@
     async function oAct(type) {
         if (!room) return;
         for (const id of ['btnOAttack', 'btnODefend', 'btnOUlt']) $(id).disabled = true;
-        try { const d = await api(`/api/rpg/rooms/${room.code}/action`, { token: room.token, type, target, text: $('oAction').value.trim() }); room.state = d.state; $('oAction').value = ''; renderRoom(); if (d.quotaBlocked) $('oStatus').textContent = '오늘 AI 한도가 소진돼 사실만 기록됩니다.'; }
+        try {
+            const text = $('oAction').value.trim();
+            if (localMode() && text) $('oStatus').textContent = '내 크롬 AI가 심사 중…';
+            const local = localMode() && text ? await nanoJudgeAction(room.state.p[room.slot].char, type, text, target && room.state.p[target] ? room.state.p[target].char.name : '') : null;
+            const d = await api(`/api/rpg/rooms/${room.code}/action`, { token: room.token, type, target, text, local }); room.state = d.state; $('oAction').value = ''; renderRoom(); if (d.quotaBlocked && !nano.ready) $('oStatus').textContent = '오늘 AI 한도가 소진돼 사실만 기록됩니다.';
+        }
         catch (e) { if (e.message === 'no_room') return roomGone(errMsg(e)); renderRoom(); if (e.message !== 'dead') $('oStatus').textContent = errMsg(e); }
     }
     $('oTargets').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b || b.disabled) return; target = target === Number(b.dataset.t) ? null : Number(b.dataset.t); renderRoom(); });
@@ -499,7 +585,7 @@
     }
 
     // ── 시작 ─────────────────────────────────────────────────────────
-    (async () => { await refreshQuota(); await loadMe(); if (me && !(await resumeSession())) goHome(); setInterval(refreshQuota, 60000); })();
+    (async () => { await nanoCheck(); await refreshQuota(); await loadMe(); if (me && !(await resumeSession())) goHome(); setInterval(refreshQuota, 60000); })();
     </script>
 </body>
 
