@@ -131,7 +131,7 @@
                 <input type="text" id="char-name" maxlength="20" placeholder="예) 홍길동">
             </div>
             <div class="div-group">
-                <label for="char-setting">캐릭터 설정 <span class="hint">(200자 · 앞뒤가 맞고 한계가 분명할수록 기술이 안정적으로 발동합니다. "뭐든 다 한다"는 불안정)</span></label>
+                <label for="char-setting">캐릭터 설정 <span class="hint">(200자 · 앞뒤가 맞고 한계가 분명할수록 기술이 안정적으로 발동합니다. 강한 능력은 대가·약점까지 구체적으로 써야 위력 등급이 올라갑니다)</span></label>
                 <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 복싱를 배워 잽을 날릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
@@ -332,7 +332,7 @@
         try { const s = JSON.parse(localStorage.getItem('dreamrpg.v2')); if (!s) return; const d = await api(`/api/rpg/chars/${s.id}?token=${s.token}`); me = d.char; myToken = s.token; }
         catch { localStorage.removeItem('dreamrpg.v2'); }
     }
-    function statLine(c) { const s = c.stats; return `HP ${s.hp} · ATK ${s.atk} · 방어 ${s.def}% · 속도 ${s.spd} · 명중 ${s.acc} · 회피 ${s.eva} · 안정성 ${Math.round(s.stability * 100)}%`; }
+    function statLine(c) { const s = c.stats; return `${s.tier ? `위력 <b>${esc(s.tier)}</b>${s.power !== undefined ? ` ${s.power}` : ''}${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} · ` : ''}HP ${s.hp} · ATK ${s.atk} · 방어 ${s.def}% · 속도 ${s.spd} · 명중 ${s.acc} · 회피 ${s.eva} · 안정성 ${Math.round(s.stability * 100)}%`; }
     function gaugeHtml(g) { return '게이지 ' + '■'.repeat(g) + '□'.repeat(ULT_COST - g); }
     function cardHtml(p, isEnemy, extra = '') {
         const c = p.char, pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100)));
@@ -341,7 +341,7 @@
             <div class="meta">HP ${p.hp}/${c.stats.hp} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · 🛡 방어 중' : ''}<br>${statLine(c)}<br>필살기 <b>${esc(c.ult.name)}</b> — ${esc(c.ult.effect)}${extra}</div>`;
     }
     function goHome() {
-        $('homeCard').innerHTML = cardHtml({ char: me, hp: me.stats.hp, gauge: 0 }, false, `<br><span class="hint">${esc(me.info)}</span><br><span class="hint">전적 ${me.wins}승 ${me.losses}패 · 일관성 ${me.stats.coherence}</span>`);
+        $('homeCard').innerHTML = cardHtml({ char: me, hp: me.stats.hp, gauge: 0 }, false, `<br><span class="hint">${esc(me.info)}</span>${me.powerReason ? `<br><span class="hint">심사관: ${esc(me.powerReason)}</span>` : ''}${me.luck?.table ? `<br><span class="hint">등급 주사위 (심사 위력 ${me.luck.judged}): ${me.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(me.luck.tier)}</b>${me.luck.moved === 'up' ? ' ⬆ 상승!' : me.luck.moved === 'down' ? ' ⬇ 하락' : ''}</span>` : ''}<br><span class="hint">전적 ${me.wins}승 ${me.losses}패 · 일관성 ${me.stats.coherence}</span>`);
         show('s-home');
     }
     $('btnCreate').addEventListener('click', async () => {

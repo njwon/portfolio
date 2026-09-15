@@ -322,8 +322,12 @@ const SYS_JUDGE = `당신은 텍스트 RPG 캐릭터 심사관입니다. 사용�
 2) alloc: 이 캐릭터의 성향을 6개 항목에 합계 100으로 배분. atk(공격) hp(체력) def(방어) spd(속도) acc(명중) eva(회피). 설정에 근거해서만.
 3) coherence 0~100: 설정의 내적 일관성. 앞뒤가 맞고 한계·약점이 분명하면 높음(80~100). 짧거나 막연하면 중간(40~60). "무엇이든 다 한다", 모순, 근거 없는 전능은 낮음(5~25). 현실적/비현실적 여부와 무관. 낮은 점수는 거절 사유가 아니라 그냥 점수입니다.
 4) ult: 필살기 하나. name(짧게), effect(한 문장), style 은 burst(한 방)·precise(명중 위주)·drain(피해+회복)·shield(피해+다음 턴 방어) 중 하나. 설정이 짧으면 설정에서 자연스럽게 유추해 만드세요(고양이 → 할퀴기).
+5) power 0~100: 설정이 근거하는 위력 등급. 엄격하게: 낮게 주기는 쉽고 높게 주기는 어렵습니다.
+   0~30 평범한 존재(학생·직장인·동물·일반인, 기본값 20) / 31~50 훈련된 전문가·격투가·무기 숙련자·평범한 마법 견습 / 51~70 초인(명확한 초능력·마법·만화 주인공급, 능력이 구체적이고 한계가 적혀 있을 때만)
+   71~85 전설(도시 하나를 뒤흔들 급, 신화의 영웅. 능력·대가·약점이 모두 구체적일 때만) / 86~100 신급·개념적 존재(설정이 길고 구체적이며 명확한 제약·대가가 있을 때만. 극히 드묾)
+   "최강" "무적" "뭐든 다 한다" "우주를 파괴" 같은 주장만으로는 절대 올리지 마세요 — 근거 없는 과장은 30 이하 + coherence 낮게. 화려한 수식어보다 구체성·한계·대가가 근거입니다. powerReason 에 한 문장으로 근거.
 어떤 설정이든 거절하지 말고 반드시 이 JSON 하나만 출력:
-{"concept":"...","alloc":{"atk":0,"hp":0,"def":0,"spd":0,"acc":0,"eva":0},"coherence":0,"ult":{"name":"...","effect":"...","style":"burst"}}`;
+{"concept":"...","alloc":{"atk":0,"hp":0,"def":0,"spd":0,"acc":0,"eva":0},"coherence":0,"power":20,"powerReason":"...","ult":{"name":"...","effect":"...","style":"burst"}}`;
 
 const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 여러 플레이어가 말로 선언한 이번 라운드 행동을 각자의 캐릭터 설정에 비추어 심사합니다. 성공 여부와 피해는 주사위와 규칙이 정하므로 당신은 아래만 정합니다.
 각 플레이어(p1, p2, …)에 대해:
@@ -342,20 +346,43 @@ const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1
 // ─── 규칙 엔진 ───────────────────────────────────────────────────────
 // 동일 예산: 모든 캐릭터는 alloc(합 100)을 같은 공식으로 스탯화한다. 설정이 아무리 세도 예산은 같다.
 const ULT_STYLES = { burst: { mult: 2.4 }, precise: { mult: 1.6, accBonus: 25 }, drain: { mult: 1.5, heal: 0.5 }, shield: { mult: 1.4, guard: true } };
-function buildStats(alloc, coherence, tier = 1) {
+// 위력 등급 → 예산 배율. 비대칭: 30 이하는 완만하게 깎이고(0.6~1.0), 30 위는 제곱 곡선이라 높은 점수일수록 배율이 급히 커진다(최대 3.0).
+//   코드에서도 상한을 건다: 일관성이 낮으면(막연한 전능) 위력을 45 로 자르고, 클라이언트 로컬 AI 심사면 50 으로 자른다 → AI 가 후해도 서버가 막음
+function powerMult(power) { return power <= 30 ? 0.6 + power / 30 * 0.4 : 1 + Math.pow((power - 30) / 70, 2) * 2; }
+const POWER_TIER = p => p <= 30 ? '평범' : p <= 50 ? '숙련' : p <= 70 ? '초인' : p <= 85 ? '전설' : '신화';
+// 등급 주사위: 심사관이 매긴 위력 P 를 중심으로 등급을 확률적으로 뽑는다.
+//   세게 묘사할수록(P 높음) 높은 등급이 나올 확률이 커지고, 약하게 묘사하면 낮은 등급이 대부분.
+//   위쪽 등급 가중치는 ×0.35, 아래쪽은 ×1.5 → 올라가기가 내려가기보다 어렵다. 결과와 확률표를 모두 돌려줘 플레이어에게 보여 준다
+const TIERS = [['평범', 0, 30], ['숙련', 31, 50], ['초인', 51, 70], ['전설', 71, 85], ['신화', 86, 100]];
+function rollTier(P) {
+  const w = TIERS.map(([, lo, hi]) => { const c = (lo + hi) / 2, base = Math.exp(-0.5 * Math.pow((c - P) / 14, 2)); return base * (lo > P ? 0.35 : hi < P ? 1.5 : 1); });
+  const sum = w.reduce((a, b) => a + b, 0), probs = w.map(x => x / sum);
+  let r = rnd(), idx = probs.length - 1;
+  for (let i = 0; i < probs.length; i++) { r -= probs[i]; if (r <= 0) { idx = i; break; } }
+  const [name, lo, hi] = TIERS[idx];
+  let power;
+  if (P >= lo && P <= hi) power = P + Math.round((rnd() - 0.5) * 8);                         // 같은 등급: 소폭 흔들림
+  else if (lo > P) power = lo + Math.round(rnd() * (hi - lo) * 0.5);                          // 올라감: 그 등급의 아래쪽 절반
+  else power = hi - Math.round(rnd() * (hi - lo) * 0.5);                                      // 내려감: 그 등급의 위쪽 절반
+  power = Math.max(lo, Math.min(hi, power));
+  return { judged: P, power, tier: name, table: TIERS.map(([n], i) => ({ tier: n, p: Math.round(probs[i] * 100) })), moved: lo > P ? 'up' : hi < P ? 'down' : 'same' };
+}
+function buildStats(alloc, coherence, tier = 1, power = 20, jitter = false) {
   const a = {}; let sum = 0;
   for (const k of ['atk', 'hp', 'def', 'spd', 'acc', 'eva']) { a[k] = num(alloc?.[k], 0, 100, 16.6); sum += a[k]; }
-  for (const k in a) a[k] = a[k] / (sum || 1) * 100;                // 합 100 으로 정규화 (AI 가 대충 줘도 예산 고정)
+  for (const k in a) a[k] = a[k] / (sum || 1) * 100;                // 합 100 으로 정규화 (성향 배분은 예산 안에서)
   const c = num(coherence, 0, 100, 50);
+  const pw = Math.round(num(power, 0, 100, 20)), m = powerMult(pw) * tier;
+  const j = () => jitter ? 0.92 + rnd() * 0.16 : 1;                 // 항목별 ±8% 흔들림 (플레이어 캐릭터만)
   return {
-    hp: Math.round((400 + a.hp * 8) * tier),                         // 400 ~ 1200
-    atk: Math.round((40 + a.atk * 1.6) * tier),                      // 40 ~ 200
-    def: Math.round(a.def * 0.4),                                    // 피해 감소 % 0 ~ 40
+    hp: Math.round((400 + a.hp * 8) * m * j()),                      // 기본 400 ~ 1200 × 배율
+    atk: Math.round((40 + a.atk * 1.6) * m * j()),                   // 기본 40 ~ 200 × 배율
+    def: Math.min(60, Math.round(a.def * 0.4 + Math.max(0, m - 1) * 8)),   // 피해 감소 % (강할수록 조금 더)
     spd: Math.round(a.spd),                                          // 선공 판정
     acc: Math.round(60 + a.acc * 0.35),                              // 60 ~ 95
-    eva: Math.round(a.eva * 0.3),                                    // 0 ~ 30
+    eva: Math.min(45, Math.round(a.eva * 0.3 + Math.max(0, m - 1) * 5)),
     stability: Math.round((0.55 + c / 100 * 0.45) * 100) / 100,      // 일관성 → 기술 발동 안정성 0.55 ~ 1.0 (명중률 계수)
-    coherence: c,
+    coherence: c, power: pw, tier: POWER_TIER(pw), mult: Math.round(m * 100) / 100,
   };
 }
 const ULT_COST = 3;
@@ -499,9 +526,11 @@ async function createChar(body, env, ip) {
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
+  const luck = rollTier(Math.round(num(parsed.power, 0, 100, 20)));
   const c = {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
-    stats: buildStats(parsed.alloc, parsed.coherence),
+    stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, num(parsed.coherence, 0, 100, 50) < 60 ? 45 : 100, judgedBy === 'local' ? 50 : 100), true),
+    powerReason: clip(parsed.powerReason, 120), luck,
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
   };
@@ -530,16 +559,19 @@ const ENEMIES = [
   ['유우타 오코츠', '특급 주술사', { atk: 25, hp: 20, def: 10, spd: 15, acc: 15, eva: 15 }, 75, ['리카 소환', '리카의 힘으로 큰 피해와 회복', 'drain'], '사랑과 저주를 안고 싸우는 주술사.', 1.4],
   ['고죠 사토루', '천상천하 유아독존', { atk: 25, hp: 15, def: 20, spd: 15, acc: 15, eva: 10 }, 60, ['무량공처', '영역 전개로 상대를 무력화', 'shield'], '최강의 주술사. 무한으로 접촉을 막지만 오만하다.', 1.8],
 ];
-function makeEnemy(i) {
+function makeEnemy(i, scale = 1) {
   const [name, fiction, alloc, coherence, ult, info, tier] = ENEMIES[i];
-  return { id: 'enemy-' + i, name, fiction, info, stats: buildStats(alloc, coherence, tier), ult: { name: ult[0], effect: ult[1], style: ult[2] }, tier };
+  const e = { id: 'enemy-' + i, name, fiction, info, stats: buildStats(alloc, coherence, tier * scale), ult: { name: ult[0], effect: ult[1], style: ult[2] }, tier };
+  e.stats.tier = tier >= 1.4 ? '전설' : tier >= 1.1 ? '초인' : tier >= 1 ? '숙련' : '평범';   // 표시용 등급은 원래 강적 등급대로
+  return e;
 }
 function pickEnemy(c) {
   const rec = c.wins - c.losses;                                     // 이기고 있으면 강적이 더 자주
   const weights = ENEMIES.map(e => { const t = e[6]; return 1 / (1 + Math.abs(t - (1 + Math.max(0, Math.min(3, rec)) * 0.25)) * 3); });
   let r = rnd() * weights.reduce((s, w) => s + w, 0);
-  for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) return makeEnemy(i); }
-  return makeEnemy(0);
+  const scale = Math.sqrt(c.stats.mult || 1);                       // 강한 캐릭터에겐 상대도 조금 강하게 (배율의 제곱근 → 여전히 압도적)
+  for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) return makeEnemy(i, scale); }
+  return makeEnemy(0, scale);
 }
 // 상대 AI: 게이지 차면 필살기(HP 낮을수록 더 자주), 내 HP 가 낮고 상대 게이지가 차 있으면 가끔 방어
 function enemyDecide(e, me) {
