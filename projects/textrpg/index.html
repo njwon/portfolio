@@ -115,6 +115,8 @@
         /* 계정 줄 (Google 로그인) */
         .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin: -6px 0 12px; font-size: 13px; min-height: 32px; }
         .account img { width: 26px; height: 26px; border-radius: 50%; }
+        /* 로그인 버튼 옆 안내 문구는 깜빡이지 않게 고정 (읽기 쉽게) */
+        #accountHint, #accountHint > span, #accountHint > b { animation: none !important; text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69; }
         .account select { background: transparent; color: #eee; border: 0.5px dashed #eee; border-radius: 4px; padding: 4px 6px; font: inherit; font-size: 13px; max-width: 60vw; }
         .account select option { background: #1d1d1d; }
         .account .gbtn { display: inline-flex; align-items: center; gap: 6px; }
