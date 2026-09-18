@@ -791,7 +791,8 @@ async function updateChar(env, id, fn, fallback = null) {
 // 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
 function applyReward(c, rw) {
   c.stats.hp = Math.min(6000, c.stats.hp + rw.hp); c.stats.atk = Math.min(800, c.stats.atk + rw.atk);
-  if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);
+  for (const k in (rw.stats || {})) c.stats[k] = Math.min(STAT_CAP[k], (c.stats[k] || 0) + rw.stats[k]);
+  if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);   // 옛 형식 호환
 }
 // 판정·턴 진행 중 표시: busy 는 시작 시각. 워커가 도중에 죽어 표시가 남았으면 BUSY_STALE_MS 뒤엔 무시한다 (옛 형식 true 도 무시)
 const BUSY_STALE_MS = 90e3, sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -901,12 +902,13 @@ async function getBattle(id, token, env) {
   return json({ battle: st });
 }
 // 승리 보상: 기본 HP +(10~30) · ATK +(1~4) 에 내 배율(mult)·상대 등급·자동 생사결 여부를 곱하고, 10% 로 부가 능력치(방어/명중/회피) 보너스, 5% 로 대성공(2배)
+// 승리 보상: HP·ATK 는 매번, 방어·속도·명중·회피는 각각 35% 확률로 +1(대성공이면 +2). 상한: 방어 60% · 속도 120 · 명중 99 · 회피 50
+const STAT_CAP = { def: 60, spd: 120, acc: 99, eva: 50 }, STAT_KO = { def: '방어', spd: '속도', acc: '명중', eva: '회피' };
 function rollReward(c, foe, mode) {
   const mult = (c.stats.mult || 1), ft = (TIER_IDX[foe.stats?.tier] ?? 1), scale = mult * (1 + ft * 0.25) * (mode === 'auto' ? 1.3 : 1);
-  let hp = Math.round((10 + rnd() * 20) * scale), atk = Math.round((1 + rnd() * 3) * scale);
-  const r = { hp, atk, tags: [] };
-  if (rnd() < 0.05) { r.hp *= 2; r.atk *= 2; r.tags.push('대성공'); }
-  if (rnd() < 0.10) { const opts = [['def', 1, 60], ['acc', 1, 99], ['eva', 1, 50]]; const [stat, amount, max] = opts[Math.floor(rnd() * opts.length)]; r.bonus = { stat, amount, max }; r.tags.push({ def: '방어 +1%', acc: '명중 +1', eva: '회피 +1' }[stat]); }
+  const r = { hp: Math.round((10 + rnd() * 20) * scale), atk: Math.round((1 + rnd() * 3) * scale), stats: {}, tags: [] };
+  const big = rnd() < 0.05; if (big) { r.hp *= 2; r.atk *= 2; r.tags.push('대성공'); }
+  for (const k of ['def', 'spd', 'acc', 'eva']) if (rnd() < 0.35 + (big ? 0.3 : 0)) { r.stats[k] = big ? 2 : 1; r.tags.push(`${STAT_KO[k]} +${r.stats[k]}${k === 'def' ? '%' : ''}`); }
   return r;
 }
 // 도망: 성공 확률 = 내 속도·회피가 상대보다 높을수록 ↑, 등급이 높을수록 ↓(체면·추격). 실패하면 패배로 기록되고 HP·ATK 를 조금 잃는다(등급이 높을수록 잃는 양이 큼)

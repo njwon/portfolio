@@ -400,7 +400,19 @@
         try { const d = await api(`/api/rpg/chars/${s.id}`, null, { 'X-Token': s.token }); me = d.char; myToken = s.token; }
         catch (e) { if (e.message !== 'net') lsDel(key); }
     }
-    function statLine(c) { const s = c.stats; return `${s.tier ? `위력 <b>${esc(s.tier)}</b>${s.power !== undefined ? ` ${s.power}` : ''}${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} · ` : ''}HP ${s.hp} · ATK ${s.atk} · 방어 ${s.def}% · 속도 ${s.spd} · 명중 ${s.acc} · 회피 ${s.eva} · 안정성 ${Math.round(s.stability * 100)}%`; }
+    // 수치 설명(마우스 올리면 표시). 승리할 때마다 HP·ATK 는 반드시, 방어·속도·명중·회피는 각각 35% 확률로 오른다
+    const STAT_TIP = {
+        tier: '위력 등급: 심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴린 등급. 배율(×)만큼 HP·ATK 예산이 커짐',
+        hp: 'HP: 체력. 0이 되면 패배. 승리마다 +10~30×배율 (상한 6000)',
+        atk: 'ATK: 공격력. 피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%) — 크리티컬 1.5배, 상대 방어 태세면 절반. 승리마다 +1~4×배율 (상한 800)',
+        def: '방어: 받는 피해를 이 비율만큼 줄임 (상한 60%). 승리 시 35% 확률로 +1%',
+        spd: '속도: 라운드 행동 순서 = 속도 + 주사위(0~30). 높을수록 먼저 움직이고, 도망 성공 확률도 오름 (상한 120)',
+        acc: '명중: 명중 확률 = (명중 − 상대 회피) ÷ 100 × 안정성 + 난이도 보정(쉬움 +10% / 어려움 −15% / 불가 0%). 5~95%로 제한 (상한 99)',
+        eva: '회피: 상대의 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐 (상한 50)',
+        stability: '안정성: 설정의 일관성(0~100)에서 온 명중률 계수 0.55~1.0. "뭐든 다 한다" 같은 막연한 설정은 낮아 기술이 자주 빗나감',
+    };
+    const tip = (k, html) => `<span title="${esc(STAT_TIP[k])}">${html}</span>`;
+    function statLine(c) { const s = c.stats; return `${s.tier ? tip('tier', `위력 <b>${esc(s.tier)}</b>${s.power !== undefined ? ` ${s.power}` : ''}${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''}`) + ' · ' : ''}${tip('hp', `HP ${s.hp}`)} · ${tip('atk', `ATK ${s.atk}`)} · ${tip('def', `방어 ${s.def}%`)} · ${tip('spd', `속도 ${s.spd}`)} · ${tip('acc', `명중 ${s.acc}`)} · ${tip('eva', `회피 ${s.eva}`)} · ${tip('stability', `안정성 ${Math.round(s.stability * 100)}%`)}`; }
     function gaugeHtml(g) { return '게이지 ' + '■'.repeat(g) + '□'.repeat(ULT_COST - g); }
     function cardHtml(p, isEnemy, extra = '') {
         const c = p.char, pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100)));
