@@ -115,8 +115,6 @@
         /* 계정 줄 (Google 로그인) */
         .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin: -6px 0 12px; font-size: 13px; min-height: 32px; }
         .account img { width: 26px; height: 26px; border-radius: 50%; }
-        /* 로그인 버튼 옆 안내 문구는 깜빡이지 않게 고정 (읽기 쉽게) */
-        #accountHint, #accountHint > span, #accountHint > b { animation: none !important; text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69; }
         .account select { background: transparent; color: #eee; border: 0.5px dashed #eee; border-radius: 4px; padding: 4px 6px; font: inherit; font-size: 13px; max-width: 60vw; }
         .account select option { background: #1d1d1d; }
         .account .gbtn { display: inline-flex; align-items: center; gap: 6px; }
@@ -730,7 +728,7 @@
         if (v === '__guest') {   // 손님 캐릭터를 계정에 추가하고 그걸로 전환
             const g = readSlot(GUEST);
             try { await api(`/api/rpg/chars/${g.id}/link`, { token: g.token, session: gSession }); await refreshAcctChars(); await pickAccountChar(acctChars.find(c => c.id === g.id) || acctChars[0]); }
-            catch (err) { if (err.message === 'owned') { guestOwnedElsewhere = true; renderAccount(); } else $('accountHint').textContent = errMsg(err); }
+            catch (err) { if (err.message === 'owned') { guestOwnedElsewhere = true; renderAccount(); } else alert(errMsg(err)); }
             return;
         }
         const c = acctChars.find(x => x.id === v); if (c) await pickAccountChar(c);
@@ -756,7 +754,7 @@
             const d = await api('/api/rpg/auth/google', { credential: resp.credential, access_token: resp.access_token, charId: guest?.id, token: guest?.token });
             gSession = d.session; gUser = d.user; acctChars = d.chars || []; localStorage.setItem(GSESS, gSession);
             await enterAccount(); refreshLeaderboard(true); refreshQuota();
-        } catch (e) { $('accountHint').textContent = '로그인 실패: ' + errMsg(e); }
+        } catch (e) { alert('로그인 실패: ' + errMsg(e)); }
     }
     // 계정 캐릭터 선택: 이전에 고른 것 → 최근 것 → 없으면 손님 캐릭터 그대로(있으면) / 만들기 화면
     async function enterAccount() {
@@ -774,8 +772,8 @@
         // 사이트 스타일 버튼 → OAuth2 token client 팝업(접근 토큰) → 서버가 tokeninfo·userinfo 로 검증. (GIS 기본 버튼은 모양을 못 바꿔서 쓰지 않음)
         let tokenClient = null;
         $('btnGoogle').addEventListener('click', () => {
-            if (!window.google?.accounts?.oauth2) return $('accountHint').textContent = 'Google 스크립트를 아직 불러오지 못했습니다. 잠시 뒤 다시 눌러주세요.';
-            tokenClient ||= google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: 'openid email profile', callback: r => { if (r.access_token) onGoogleCredential({ access_token: r.access_token }); else $('accountHint').textContent = '로그인이 취소됐습니다.'; }, error_callback: e => { $('accountHint').textContent = '로그인 실패: ' + (e?.type || ''); } });
+            if (!window.google?.accounts?.oauth2) return alert('Google 스크립트를 아직 불러오지 못했습니다. 잠시 뒤 다시 눌러주세요.');
+            tokenClient ||= google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: 'openid email profile', callback: r => { if (r.access_token) onGoogleCredential({ access_token: r.access_token }); ; }, error_callback: e => { if (e?.type !== 'popup_closed') alert('로그인 실패: ' + (e?.type || '')); } });
             tokenClient.requestAccessToken();
         });
         return false;
