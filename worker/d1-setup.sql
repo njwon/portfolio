@@ -98,3 +98,16 @@ CREATE TABLE IF NOT EXISTS rpg_device (
 );
 CREATE INDEX IF NOT EXISTS idx_rpg_device_ip ON rpg_device(ip, created);
 ALTER TABLE rpg_chars ADD COLUMN updated INTEGER;
+-- DREAM RPG: 자동 생사결 참가 플래그 + 결과 기록
+ALTER TABLE rpg_chars ADD COLUMN auto INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS rpg_auto_log (
+  id      TEXT PRIMARY KEY,
+  a_id    TEXT NOT NULL, a_name TEXT,
+  b_id    TEXT NOT NULL, b_name TEXT,
+  winner  TEXT,
+  rounds  INTEGER,
+  mode    TEXT,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rpg_auto_a ON rpg_auto_log(a_id, created);
+CREATE INDEX IF NOT EXISTS idx_rpg_auto_b ON rpg_auto_log(b_id, created);

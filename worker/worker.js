@@ -9,7 +9,7 @@
  *   DB              - blog-db
  */
 
-import { handleRpg } from './rpg.js';
+import { handleRpg, runAutoBattles } from './rpg.js';
 
 const VELOG_API = 'https://v2.velog.io/graphql';
 
@@ -20,6 +20,8 @@ const CORS_HEADERS = {
 };
 
 export default {
+  // cron(매시간): DREAM RPG 자동 생사결 — 참가자끼리 서버가 붙인다 (AI 호출 없음)
+  async scheduled(event, env, ctx) { ctx.waitUntil(runAutoBattles(env).catch(e => console.error('auto battles', e))); },
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS_HEADERS });

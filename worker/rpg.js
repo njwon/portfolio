@@ -27,7 +27,10 @@
  *   POST /api/rpg/battles/:id/turn               { token, type, text, local? } → { battle }  (규칙 엔진 + 서술 1회; local = 서버 AI 소진 시 클라이언트 심사 결과)
  *   POST /api/rpg/battles/:id/narrate            { token, turn, narration }   (서버 서술이 없던 턴에 클라이언트 로컬 AI 서술을 채움)
  *   GET  /api/rpg/battles/:id?token=             (재접속)
- *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 전투 삭제, 패배 아님)
+ *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 속도·회피·등급으로 실패 확률 → 실패하면 능력치 손실 + 패배)
+ *   POST /api/rpg/battles                        { charId, token, mode: 'auto' } → 자동 생사결에 참가한 다른 플레이어 캐릭터(AI 조종)와 전투
+ *   POST /api/rpg/chars/:id/auto                 { token, on }                (자동 생사결 참가 on/off — 꺼져 있는 동안 서버가 매시간 참가자끼리 붙임)
+ *   GET  /api/rpg/auto?charId=                   → { on, participants, recent: [...] } 부재 중 자동 생사결 결과
  *   POST /api/rpg/rooms                          { charId, token }            → { code, roomToken, state }
  *   POST /api/rpg/match                          { charId, token }            → 랜덤 대전: 기다리는 공개 방이 있으면 들어가 바로 시작, 없으면 공개 방을 만들고 대기
  *   POST /api/rpg/rooms/:code/join               { charId, token }            (같은 캐릭터가 다시 오면 기존 자리로 재접속)
@@ -153,6 +156,8 @@ export async function handleRpg(request, env, path) {
   if (path === '/api/rpg/me' && m === 'GET') return me(env, url.searchParams.get('session'));
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/auto$/)) && m === 'POST') return setAuto(mm[1], body, env);
+  if (path === '/api/rpg/auto' && m === 'GET') return autoInfo(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
   const qtok = request.headers.get('X-Token') || url.searchParams.get('token');   // 토큰은 헤더로 (쿼리는 로그에 남으므로 호환용)
@@ -309,6 +314,58 @@ async function aiCall(env, ip, system, user, temperature) {
   return { ok: false, reason: tried ? 'failed' : 'exhausted' };
 }
 
+// ─── 자동 생사결 ─────────────────────────────────────────────────
+// 캐릭터에 auto 를 켜 두면: ① 매시간(cron) 서버가 참가자끼리 무작위로 짝지어 규칙 엔진만으로(AI 없음) 싸우게 하고 결과를 남긴다
+//   ② 온라인인 사람은 '자동 생사결 상대' 메뉴로 참가자 중 한 명(AI 조종)과 실시간 전투를 한다. 승리는 순위 승점에 PvE 와 PvP 사이(2점)로 반영
+async function setAuto(id, body, env) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  c.auto = !!body.on;
+  await env.DB.prepare('UPDATE rpg_chars SET json = ?, auto = ? WHERE id = ?').bind(JSON.stringify(c), c.auto ? 1 : 0, id).run();
+  return json({ ok: true, auto: c.auto });
+}
+async function autoInfo(env, charId) {
+  const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_chars WHERE auto = 1').first();
+  let recent = [], on = false;
+  if (charId) {
+    const r = await env.DB.prepare('SELECT a_id, a_name, b_id, b_name, winner, rounds, mode, created FROM rpg_auto_log WHERE a_id = ? OR b_id = ? ORDER BY created DESC LIMIT 8').bind(charId, charId).all();
+    recent = (r?.results || []).map(x => ({ me: x.a_id === charId ? x.a_name : x.b_name, foe: x.a_id === charId ? x.b_name : x.a_name, won: x.winner === charId, draw: !x.winner, rounds: x.rounds, mode: x.mode, at: x.created }));
+    const row = await env.DB.prepare('SELECT auto FROM rpg_chars WHERE id = ?').bind(charId).first(); on = !!row?.auto;
+  }
+  return json({ on, participants: n?.n ?? 0, recent });
+}
+async function recordAutoResult(env, st, c) {
+  await env.DB.prepare('INSERT INTO rpg_auto_log (id, a_id, a_name, b_id, b_name, winner, rounds, mode, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(uid(), c.id, c.name, st.foeId, st.foe.char.name, st.winner === 1 ? c.id : st.foeId, st.turn, 'online', Date.now()).run();
+  // 상대(AI 조종)도 전적에 반영
+  const row = await env.DB.prepare('SELECT json FROM rpg_chars WHERE id = ?').bind(st.foeId).first();
+  if (row) { const f = JSON.parse(row.json); if (st.winner === 1) { f.losses++; f.autoLosses = (f.autoLosses || 0) + 1; } else { f.wins++; f.autoWins = (f.autoWins || 0) + 1; f.pvpWins = (f.pvpWins || 0) + 0.5; } await saveChar(env, f); }
+}
+// cron: 참가자 최대 30명을 섞어 짝지어 최대 40라운드 자동 전투 (템플릿 서술만, AI 호출 없음)
+export async function runAutoBattles(env) {
+  const r = await env.DB.prepare('SELECT id, json FROM rpg_chars WHERE auto = 1 ORDER BY RANDOM() LIMIT 30').all();
+  const list = (r?.results || []).map(x => ({ id: x.id, c: JSON.parse(x.json) }));
+  let played = 0;
+  for (let i = 0; i + 1 < list.length; i += 2) {
+    const A = list[i], B = list[i + 1];
+    const players = { 1: { char: A.c, hp: A.c.stats.hp, gauge: 0, guard: false }, 2: { char: B.c, hp: B.c.stats.hp, gauge: 0, guard: false } };
+    let round = 0;
+    while (round < 40 && players[1].hp > 0 && players[2].hp > 0) { round++; resolveRound(players, { 1: { ...enemyDecide(players[1], players[2]), target: 2 }, 2: { ...enemyDecide(players[2], players[1]), target: 1 } }, {}); }
+    const winner = players[1].hp > 0 && players[2].hp <= 0 ? A : players[2].hp > 0 && players[1].hp <= 0 ? B : null;
+    for (const X of [A, B]) {
+      if (!winner) continue;
+      if (X === winner) { X.c.wins++; X.c.autoWins = (X.c.autoWins || 0) + 1; X.c.pvpWins = (X.c.pvpWins || 0) + 0.5; const rw = rollReward(X.c, (X === A ? B : A).c, 'auto'); X.c.stats.hp = Math.min(6000, X.c.stats.hp + rw.hp); X.c.stats.atk = Math.min(800, X.c.stats.atk + rw.atk); }
+      else { X.c.losses++; X.c.autoLosses = (X.c.autoLosses || 0) + 1; }
+      await saveChar(env, X.c);
+    }
+    await env.DB.prepare('INSERT INTO rpg_auto_log (id, a_id, a_name, b_id, b_name, winner, rounds, mode, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(uid(), A.id, A.c.name, B.id, B.c.name, winner ? winner.id : null, round, 'offline', Date.now()).run();
+    played++;
+  }
+  await env.DB.prepare('DELETE FROM rpg_auto_log WHERE created < ?').bind(Date.now() - 30 * 86400e3).run();
+  return played;
+}
+
 // ─── 순위표 · Google 로그인 ────────────────────────────────────────
 let lbCache = { at: 0, rows: [] };
 async function leaderboard(env, charId) {
@@ -340,11 +397,17 @@ async function userInfo(env, sub) {
 // Google Identity Services 가 준 ID 토큰을 구글 tokeninfo 로 검증 (서명·만료 확인은 구글이 함) → aud 가 우리 클라이언트 ID 인지 확인
 async function authGoogle(body, env) {
   if (!env.GOOGLE_CLIENT_ID) return json({ error: 'auth_disabled' }, 503);   // 클라이언트 ID 없이는 aud 를 검증할 수 없으므로 로그인 자체를 막는다
-  const cred = String(body.credential || '');
-  if (!cred) return json({ error: 'bad_request' }, 400);
+  const cred = String(body.credential || ''), at = String(body.access_token || '');
+  if (!cred && !at) return json({ error: 'bad_request' }, 400);
   let info;
-  try { const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred)); if (!r.ok) return json({ error: 'bad_token' }, 401); info = await r.json(); }
-  catch { return json({ error: 'ai_failed' }, 502); }
+  try {
+    if (cred) { const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred)); if (!r.ok) return json({ error: 'bad_token' }, 401); info = await r.json(); }
+    else {   // 맞춤 버튼(OAuth2 token client)이 준 접근 토큰: tokeninfo 로 aud·sub 확인 → userinfo 로 이름·사진
+      const r = await fetch('https://oauth2.googleapis.com/tokeninfo?access_token=' + encodeURIComponent(at)); if (!r.ok) return json({ error: 'bad_token' }, 401); info = await r.json();
+      const u = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + at } }); if (u.ok) { const ui = await u.json(); info = { ...info, sub: ui.sub || info.sub, email: ui.email || info.email, name: ui.name, picture: ui.picture, email_verified: String(ui.email_verified ?? info.email_verified ?? 'true') }; }
+      if (info.expires_in !== undefined && Number(info.expires_in) <= 0) return json({ error: 'bad_token' }, 401);
+    }
+  } catch { return json({ error: 'ai_failed' }, 502); }
   if (info.aud !== env.GOOGLE_CLIENT_ID) return json({ error: 'bad_aud' }, 401);
   if (!info.sub || (info.exp && Number(info.exp) * 1000 < Date.now())) return json({ error: 'bad_token' }, 401);
   const now = Date.now();
@@ -705,7 +768,7 @@ async function loadChar(env, id, token) {
   return JSON.parse(row.json);
 }
 // 승점 = PvE 승 1점 + PvP 승 3점 (순위표). 컬럼에 같이 써서 정렬 쿼리가 JSON 을 열지 않게 한다
-const scoreOf = c => (c.wins || 0) + (c.pvpWins || 0) * 2;
+const scoreOf = c => Math.round((c.wins || 0) + (c.pvpWins || 0) * 2);   // 자동 생사결 승 = pvpWins 0.5 → 총 2점
 async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, Date.now(), c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
 
 async function createChar(body, env, ip) {
@@ -783,8 +846,13 @@ async function createBattle(body, env) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_battles WHERE updated < ?').bind(Date.now() - BATTLE_TTL).run();
-  const foe = pickEnemy(c);
-  const st = { id: uid(), charId: c.id, me: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null };
+  let foe, mode = body.mode === 'auto' ? 'auto' : 'pve', foeId = null;
+  if (mode === 'auto') {
+    const row = await env.DB.prepare('SELECT id, json FROM rpg_chars WHERE auto = 1 AND id != ? ORDER BY RANDOM() LIMIT 1').bind(c.id).first();
+    if (!row) return json({ error: 'no_auto' }, 404);
+    foe = JSON.parse(row.json); foeId = row.id; foe.tier = 1;
+  } else foe = pickEnemy(c);
+  const st = { id: uid(), charId: c.id, mode, foeId, me: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null };
   await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
   return json({ battle: st });
 }
@@ -803,13 +871,44 @@ async function getBattle(id, token, env) {
   if (!(await loadChar(env, st.charId, token))) return json({ error: 'forbidden' }, 403);
   return json({ battle: st });
 }
+// 승리 보상: 기본 HP +(10~30) · ATK +(1~4) 에 내 배율(mult)·상대 등급·자동 생사결 여부를 곱하고, 10% 로 부가 능력치(방어/명중/회피) 보너스, 5% 로 대성공(2배)
+function rollReward(c, foe, mode) {
+  const mult = (c.stats.mult || 1), ft = (TIER_IDX[foe.stats?.tier] ?? 1), scale = mult * (1 + ft * 0.25) * (mode === 'auto' ? 1.3 : 1);
+  let hp = Math.round((10 + rnd() * 20) * scale), atk = Math.round((1 + rnd() * 3) * scale);
+  const r = { hp, atk, tags: [] };
+  if (rnd() < 0.05) { r.hp *= 2; r.atk *= 2; r.tags.push('대성공'); }
+  if (rnd() < 0.10) { const opts = [['def', 1, 60], ['acc', 1, 99], ['eva', 1, 50]]; const [stat, amount, max] = opts[Math.floor(rnd() * opts.length)]; r.bonus = { stat, amount, max }; r.tags.push({ def: '방어 +1%', acc: '명중 +1', eva: '회피 +1' }[stat]); }
+  return r;
+}
+// 도망: 성공 확률 = 내 속도·회피가 상대보다 높을수록 ↑, 등급이 높을수록 ↓(체면·추격). 실패하면 패배로 기록되고 HP·ATK 를 조금 잃는다(등급이 높을수록 잃는 양이 큼)
+const TIER_IDX = { '평범': 0, '숙련': 1, '초인': 2, '전설': 3, '신화': 4 };
+function escapeRoll(me, foe) {
+  const t = TIER_IDX[me.char.stats.tier] ?? 0, ft = TIER_IDX[foe.char.stats.tier] ?? 1;
+  const p = 0.75 + (me.char.stats.spd - foe.char.stats.spd) / 120 + me.char.stats.eva / 200 - t * 0.06 + (ft - t) * 0.04 - (me.hp < me.char.stats.hp * 0.3 ? 0.1 : 0);
+  const chance = Math.min(0.95, Math.max(0.2, p));
+  const ok = rnd() < chance;
+  if (ok) return { ok, chance: Math.round(chance * 100) };
+  const sev = 1 + t * 0.6;                                                 // 등급별 손실 배율 (평범 1 → 신화 3.4)
+  const hp = Math.round(me.char.stats.hp * (0.02 + rnd() * 0.04) * sev), atk = Math.round(me.char.stats.atk * (0.01 + rnd() * 0.03) * sev);
+  return { ok, chance: Math.round(chance * 100), penalty: { hp, atk } };
+}
 async function leaveBattle(id, body, env) {
   const row = await env.DB.prepare('SELECT state FROM rpg_battles WHERE id = ?').bind(id).first();
-  if (!row) return json({ ok: true });
+  if (!row) return json({ ok: true, escaped: true });
   const st = JSON.parse(row.state);
-  if (!(await loadChar(env, st.charId, body.token))) return json({ error: 'forbidden' }, 403);
+  const c = await loadChar(env, st.charId, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  let result = { ok: true, escaped: true };
+  if (st.status === 'playing' && st.log.length) {                         // 한 턴이라도 싸운 뒤의 도망만 판정 (시작 직후엔 자유)
+    const r = escapeRoll(st.me, st.foe);
+    if (!r.ok) {
+      c.losses++; c.stats.hp = Math.max(200, c.stats.hp - r.penalty.hp); c.stats.atk = Math.max(20, c.stats.atk - r.penalty.atk);
+      await saveChar(env, c);
+      result = { ok: true, escaped: false, chance: r.chance, penalty: r.penalty, char: c, message: `도망치다 ${st.foe.char.name}에게 붙잡혔다! 패배 기록 · HP 최대치 -${r.penalty.hp} · ATK -${r.penalty.atk}` };
+    } else result = { ok: true, escaped: true, chance: r.chance, message: `${st.foe.char.name}을(를) 따돌리고 도망쳤다. (성공 확률 ${r.chance}%)` };
+  }
   await env.DB.prepare('DELETE FROM rpg_battles WHERE id = ?').bind(id).run();
-  return json({ ok: true });
+  return json(result);
 }
 async function battleTurn(id, body, env, ip) {
   const row = await env.DB.prepare('SELECT state, updated FROM rpg_battles WHERE id = ?').bind(id).first();
@@ -829,9 +928,15 @@ async function battleTurn(id, body, env, ip) {
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
-    if (st.winner === 1) { c.wins++; c.stats.hp += 20; c.stats.atk += 3; }   // 승리 성장 (소폭)
-    else c.losses++;
+    if (st.winner === 1) {
+      c.wins++;
+      st.reward = rollReward(c, st.foe.char, st.mode);
+      c.stats.hp = Math.min(6000, c.stats.hp + st.reward.hp); c.stats.atk = Math.min(800, c.stats.atk + st.reward.atk);
+      if (st.reward.bonus) c.stats[st.reward.bonus.stat] = Math.min(st.reward.bonus.max, c.stats[st.reward.bonus.stat] + st.reward.bonus.amount);
+      if (st.mode === 'auto') { c.autoWins = (c.autoWins || 0) + 1; c.pvpWins = (c.pvpWins || 0) + 0.5; }
+    } else { c.losses++; if (st.mode === 'auto') c.autoLosses = (c.autoLosses || 0) + 1; }
     await saveChar(env, c); st.me.char = c;
+    if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, c);
   } else st.turn++;
   await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ?').bind(JSON.stringify(st), Date.now(), id).run();
   return json({ battle: st, quota: pubQuota(await quota(env, ip)), quotaBlocked: t.quotaBlocked });

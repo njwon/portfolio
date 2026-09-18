@@ -21,3 +21,7 @@ database_id = "1f3222d0-0343-429c-af67-f771a39b5f2d"
 # 전부 소진되면 클라이언트가 데스크톱 크롬 내장 AI(Gemini Nano, Prompt API)로 이어간다.
 [ai]
 binding = "AI"
+
+# DREAM RPG 자동 생사결: 매시간 참가자끼리 자동 전투
+[triggers]
+crons = ["0 * * * *"]
