@@ -16,7 +16,7 @@ const VELOG_API = 'https://v2.velog.io/graphql';
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Device, X-Session',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Device, X-Session, X-Token',
 };
 
 export default {
