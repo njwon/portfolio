@@ -98,10 +98,28 @@ const num = (v, lo, hi, d = 0) => { const n = Number(v); return Number.isFinite(
 const rnd = () => Math.random();
 const uid = () => crypto.randomUUID();
 
+const MAX_BODY = 64 * 1024;
+const rl = new Map();   // ip|group → [timestamps]
+function rateLimited(ip, group, limit, windowMs = 60e3) {
+  const k = ip + '|' + group, now = Date.now(), arr = (rl.get(k) || []).filter(t => now - t < windowMs);
+  if (arr.length >= limit) { rl.set(k, arr); return true; }
+  arr.push(now); rl.set(k, arr); if (rl.size > 5000) rl.delete(rl.keys().next().value);
+  return false;
+}
 export async function handleRpg(request, env, path) {
   const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
   const url = new URL(request.url), m = request.method;
-  const body = m === 'POST' ? await request.json().catch(() => ({})) : {};
+  let body = {};
+  if (m === 'POST') {
+    if (Number(request.headers.get('content-length') || 0) > MAX_BODY) return json({ error: 'too_large' }, 413);
+    const raw = await request.text().catch(() => '');
+    if (raw.length > MAX_BODY) return json({ error: 'too_large' }, 413);
+    try { body = JSON.parse(raw || '{}'); } catch { body = {}; }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) body = {};   // null·배열 본문으로 TypeError 나지 않게
+    // 쓰기 요청 속도 제한 (분당): 생성·방·로그인은 빡빡하게, 턴·행동은 넉넉하게
+    const group = /\/chars$/.test(path) ? ['create', 12] : /\/(rooms|match)$/.test(path) ? ['room', 20] : /\/auth\//.test(path) ? ['auth', 10] : ['act', 150];
+    if (rateLimited(ip, group[0], group[1])) return json({ error: 'rate', retryAfter: 60 }, 429);
+  }
   let mm;
   if (path === '/api/rpg/quota' && m === 'GET') return json(pubQuota(await quota(env, ip)));
   if (path === '/api/rpg/aitest' && m === 'GET') {   // 운영자 점검: 특정 제공자로 서술 1회 (RPG_ADMIN_KEY 시크릿 필요, 한도에 포함)
@@ -293,11 +311,16 @@ async function authGoogle(body, env) {
   const now = Date.now();
   await env.DB.prepare('INSERT INTO rpg_users (sub, email, name, picture, created, last) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture, last = excluded.last')
     .bind(info.sub, info.email || null, clip(info.name || info.email || '플레이어', 40), info.picture || null, now, now).run();
+  if (info.email_verified === 'false') return json({ error: 'bad_token' }, 401);
   const session = uid();
-  await env.DB.prepare('INSERT INTO rpg_sessions (token, sub, created) VALUES (?, ?, ?)').bind(session, info.sub, now).run();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM rpg_sessions WHERE created < ?').bind(now - 90 * 86400e3),   // 만료 세션 정리
+    env.DB.prepare('INSERT INTO rpg_sessions (token, sub, created) VALUES (?, ?, ?)').bind(session, info.sub, now),
+  ]);
   // 최초 로그인(계정에 캐릭터가 없음)이면 지금 쓰던 손님 캐릭터가 계정 캐릭터가 된다. 이미 캐릭터가 있으면 손님 캐릭터는 그대로 두고(로그아웃하면 다시 씀) 계정 캐릭터로 전환
   const existing = await userChars(env, info.sub);
   if (!existing.length && body.charId && body.token) { const c = await loadChar(env, body.charId, body.token); if (c) await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ? AND user_sub IS NULL').bind(info.sub, c.id).run(); }   // 이미 다른 계정 것이면 안 가져감
+  lbCache.at = 0;   // 순위표 소유자 이름 갱신
   return json({ session, user: await userInfo(env, info.sub), chars: await userChars(env, info.sub), firstLogin: !existing.length });
 }
 // 계정 캐릭터 삭제 (본인 세션 + 캐릭터 토큰 둘 다 맞아야)
@@ -321,7 +344,7 @@ async function linkChar(id, body, env) {
   if (!sub || !c) return json({ error: 'forbidden' }, 403);
   const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(id).first();
   if (row?.user_sub && row.user_sub !== sub) return json({ error: 'owned' }, 409);   // 다른 계정의 캐릭터는 못 가져감
-  await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(sub, id).run();
+  await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(sub, id).run(); lbCache.at = 0;
   return json({ ok: true });
 }
 
@@ -788,6 +811,7 @@ async function saveRoom(env, code, s, v) {
 const slotOf = (s, t) => Number(Object.keys(s.tokens).find(k => s.tokens[k] === t)) || 0;
 function pub(s, slot) {
   const { tokens, ...rest } = s;
+  rest.log = s.log.map((l, i) => i < s.log.length - 2 && l.narrateUser ? { ...l, narrateUser: undefined } : l);   // 최근 2라운드만 로컬 서술 프롬프트 포함 (폴링 응답 크기)
   const moves = {}; for (const k in s.p) moves[k] = !!s.moves[k];
   const firstAt = Math.min(...Object.values(s.moves).map(m => m.at || Infinity));
   return { ...rest, you: slot, moves, myMove: s.moves[slot] || null, waitingSince: Number.isFinite(firstAt) ? firstAt : null, max: ROOM_MAX };
