@@ -114,6 +114,8 @@
         /* 계정 줄 (Google 로그인) */
         .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin: -6px 0 12px; font-size: 13px; min-height: 32px; }
         .account img { width: 26px; height: 26px; border-radius: 50%; }
+        .account select { background: transparent; color: #eee; border: 0.5px dashed #eee; border-radius: 4px; padding: 4px 6px; font: inherit; font-size: 13px; max-width: 60vw; }
+        .account select option { background: #1d1d1d; }
         .account .gsi { min-height: 32px; }
         /* 순위표 */
         .lb { border: 0.5px dashed #eee; border-radius: 4px; padding: 10px 12px; margin: 14px 0 0; animation-name: boxflicker; }
@@ -353,7 +355,7 @@
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? localStorage.setItem(SESS, JSON.stringify(v)) : localStorage.removeItem(SESS);
@@ -361,10 +363,16 @@
 
     // ── 캐릭터 (서버 권위: id + token 만 보관) ──────────────────────────
     let me = null, myToken = null;
-    const saveMe = () => localStorage.setItem('dreamrpg.v2', JSON.stringify({ id: me.id, token: myToken }));
-    async function loadMe() {
-        try { const s = JSON.parse(localStorage.getItem('dreamrpg.v2')); if (!s) return; const d = await api(`/api/rpg/chars/${s.id}?token=${s.token}`); me = d.char; myToken = s.token; }
-        catch { localStorage.removeItem('dreamrpg.v2'); }
+    // 캐릭터 슬롯: 손님(GUEST, 로그인 전) / 계정(ACCT, 로그인 중 선택한 계정 캐릭터). 로그인하면 계정 슬롯, 로그아웃하면 손님 슬롯이 다시 나온다
+    const GUEST = 'dreamrpg.v2', ACCT = 'dreamrpg.acct';
+    const readSlot = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+    const curSlot = () => gUser ? ACCT : GUEST;
+    const saveMe = () => localStorage.setItem(curSlot(), JSON.stringify({ id: me.id, token: myToken }));
+    async function loadMe(key = curSlot()) {
+        const s = readSlot(key); me = null; myToken = null;
+        if (!s) return;
+        try { const d = await api(`/api/rpg/chars/${s.id}?token=${s.token}`); me = d.char; myToken = s.token; }
+        catch (e) { if (e.message !== 'net') localStorage.removeItem(key); }
     }
     function statLine(c) { const s = c.stats; return `${s.tier ? `위력 <b>${esc(s.tier)}</b>${s.power !== undefined ? ` ${s.power}` : ''}${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} · ` : ''}HP ${s.hp} · ATK ${s.atk} · 방어 ${s.def}% · 속도 ${s.spd} · 명중 ${s.acc} · 회피 ${s.eva} · 안정성 ${Math.round(s.stability * 100)}%`; }
     function gaugeHtml(g) { return '게이지 ' + '■'.repeat(g) + '□'.repeat(ULT_COST - g); }
@@ -386,12 +394,23 @@
         try {
             let local = null;
             if (localMode()) { $('btnCreate').textContent = '내 크롬 AI가 읽는 중…'; local = await nanoJudgeChar(name, setting); }
-            const d = await api('/api/rpg/chars', { name, setting, local, session: gSession }); me = d.char; myToken = d.token; saveMe(); goHome(); refreshLeaderboard(true);
+            const d = await api('/api/rpg/chars', { name, setting, local, session: gSession }); me = d.char; myToken = d.token; saveMe();
+            if (gUser) { try { await refreshAcctChars(); } catch {} renderAccount(); }
+            goHome(); refreshLeaderboard(true);
         }
         catch (e) { $('createStatus').textContent = errMsg(e); }
         finally { $('btnCreate').textContent = '몽상 시작!'; applyQuota(quotaState); }
     });
-    $('btnWake').addEventListener('click', () => { if (!confirm('캐릭터와 진행 중인 전투가 모두 사라집니다. 초기화할까요?')) return; localStorage.removeItem('dreamrpg.v2'); saveSess(null); location.reload(); });
+    $('btnWake').addEventListener('click', async () => {
+        if (gUser && acctChars.some(c => c.id === me.id)) {   // 로그인 중 + 계정 캐릭터: 삭제하고 다음 캐릭터로 (없으면 새로 만들기)
+            if (!confirm(`계정에서 '${me.name}' 캐릭터를 삭제할까요? (되돌릴 수 없음)`)) return;
+            try { await api(`/api/rpg/chars/${me.id}/delete`, { token: myToken, session: gSession }); } catch (e) { return alert(errMsg(e)); }
+            localStorage.removeItem(ACCT); saveSess(null); acctChars = acctChars.filter(c => c.id !== me.id);
+            if (acctChars.length) await pickAccountChar(acctChars[0]); else { me = null; myToken = null; show('s-create'); }
+            renderAccount(); return;
+        }
+        if (!confirm('캐릭터와 진행 중인 전투가 모두 사라집니다. 초기화할까요?')) return; localStorage.removeItem(GUEST); saveSess(null); location.reload();
+    });
 
     // ── 전투 로그 렌더 (공통) ────────────────────────────────────────
     function logLine(el, html) { const d = document.createElement('div'); d.innerHTML = html; el.appendChild(d); el.scrollTop = el.scrollHeight; }
@@ -482,7 +501,7 @@
         const b = battle; battle = null; saveSess(null); goHome();
         if (b) api(`/api/rpg/battles/${b.id}/leave`, { token: myToken }).catch(() => {});
     });
-    $('btnBattleBack').addEventListener('click', () => { const lost = battle && battle.winner === 2; battle = null; saveSess(null); if (lost) { localStorage.removeItem('dreamrpg.v2'); location.reload(); } else goHome(); });
+    $('btnBattleBack').addEventListener('click', () => { const lost = battle && battle.winner === 2; battle = null; saveSess(null); if (lost) { localStorage.removeItem(curSlot()); if (gUser) localStorage.removeItem(ACCT); location.reload(); } else goHome(); });
 
     // ── 온라인 대전 (2~6명) ──────────────────────────────────────────
     // 모든 플레이어에게 같은 판이 보이도록 서버 state 하나로 그린다 (슬롯 순서 고정, '나' 표시만 다름)
@@ -648,40 +667,79 @@
     const GOOGLE_CLIENT_ID = '';   // Google Cloud Console → OAuth 클라이언트 ID(웹). 비어 있으면 로그인 버튼 대신 안내만
     const GSESS = 'dreamrpg.google';
     let gUser = null, gSession = localStorage.getItem(GSESS) || null;
+    let acctChars = [], guestOwnedElsewhere = false;   // 로그인한 계정의 캐릭터 목록 (최근 순) / 손님 캐릭터가 다른 계정 소유라 추가 불가
     function renderAccount() {
         const hint = $('accountHint');
-        if (gUser) hint.innerHTML = `${gUser.picture ? `<img src="${esc(gUser.picture)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(gUser.name)}</b> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
-        else hint.innerHTML = GOOGLE_CLIENT_ID ? '<span class="hint">로그인하면 캐릭터가 계정에 저장돼 다른 기기에서도 이어 하고, 순위표에 이름이 붙습니다.</span>' : '<span class="hint">Google 로그인 준비 중</span>';
+        if (gUser) {
+            const guest = readSlot(GUEST), guestLinked = guest && (acctChars.some(c => c.id === guest.id) || guestOwnedElsewhere);
+            const opts = acctChars.map(c => `<option value="${c.id}"${me && c.id === me.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.tier || '')} ${c.wins}승 ${c.losses}패</option>`).join('')
+                + (guest && !guestLinked ? `<option value="__guest">손님 캐릭터를 계정에 추가</option>` : '') + `<option value="__new">+ 새 캐릭터 만들기</option>`;
+            hint.innerHTML = `${gUser.picture ? `<img src="${esc(gUser.picture)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(gUser.name)}</b> <select id="charPick" title="캐릭터 교체">${opts}</select> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
+            $('charPick').addEventListener('change', onPickChange);
+            $('btnLogout').addEventListener('click', logout);
+        } else {
+            hint.innerHTML = GOOGLE_CLIENT_ID ? '<span class="hint">로그인하면 캐릭터가 계정에 저장돼 다른 기기에서도 이어 하고, 순위표에 이름이 붙습니다.</span>' : '<span class="hint">Google 로그인 준비 중</span>';
+        }
         $('gsiBtn').style.display = gUser || !GOOGLE_CLIENT_ID ? 'none' : '';
-        if ($('btnLogout')) $('btnLogout').addEventListener('click', async () => { const t = gSession; gSession = null; gUser = null; localStorage.removeItem(GSESS); renderAccount(); if (t) api('/api/rpg/auth/logout', { session: t }).catch(() => {}); });
+        if (me) $('btnWake').textContent = gUser && acctChars.some(c => c.id === me.id) ? '이 캐릭터 삭제 (계정)' : '일어나기 (초기화)';
     }
+    async function onPickChange(e) {
+        const v = e.target.value;
+        if (v === '__new') { $('char-name').value = ''; $('char-setting').value = ''; show('s-create'); $('createStatus').textContent = '새 캐릭터는 계정에 추가되고, 기존 캐릭터는 그대로 남습니다.'; return; }
+        if (v === '__guest') {   // 손님 캐릭터를 계정에 추가하고 그걸로 전환
+            const g = readSlot(GUEST);
+            try { await api(`/api/rpg/chars/${g.id}/link`, { token: g.token, session: gSession }); await refreshAcctChars(); await pickAccountChar(acctChars.find(c => c.id === g.id) || acctChars[0]); }
+            catch (err) { if (err.message === 'owned') { guestOwnedElsewhere = true; renderAccount(); } else $('accountHint').textContent = errMsg(err); }
+            return;
+        }
+        const c = acctChars.find(x => x.id === v); if (c) await pickAccountChar(c);
+    }
+    async function pickAccountChar(c) {
+        if (room) await leaveRoom(); battle = null; saveSess(null);
+        localStorage.setItem(ACCT, JSON.stringify({ id: c.id, token: c.token }));
+        await loadMe(ACCT); if (me) goHome(); else show('s-create');
+        renderAccount(); refreshLeaderboard(true);
+    }
+    async function refreshAcctChars() { const d = await api('/api/rpg/me?session=' + encodeURIComponent(gSession)); gUser = d.user; acctChars = d.chars || []; }
+    async function logout() {
+        const t = gSession; gSession = null; gUser = null; acctChars = []; localStorage.removeItem(GSESS);
+        if (t) api('/api/rpg/auth/logout', { session: t }).catch(() => {});
+        if (room) await leaveRoom(); battle = null; saveSess(null);
+        await loadMe(GUEST);                                   // 로그인 전에 쓰던 손님 캐릭터로 복귀
+        renderAccount(); if (me) goHome(); else show('s-create'); refreshLeaderboard(true);
+    }
+    // 로그인 직후: 계정에 캐릭터가 없으면(최초 로그인) 지금 손님 캐릭터가 계정 캐릭터가 된다(서버가 연결). 있으면 계정 캐릭터로 전환하고 손님 캐릭터는 그대로 둔다
     async function onGoogleCredential(resp) {
         try {
-            const d = await api('/api/rpg/auth/google', { credential: resp.credential, charId: me?.id, token: myToken });
-            gSession = d.session; gUser = d.user; localStorage.setItem(GSESS, gSession);
-            await adoptAccountChars(d.chars); renderAccount(); refreshLeaderboard(true);
+            const guest = readSlot(GUEST);
+            const d = await api('/api/rpg/auth/google', { credential: resp.credential, charId: guest?.id, token: guest?.token });
+            gSession = d.session; gUser = d.user; acctChars = d.chars || []; localStorage.setItem(GSESS, gSession);
+            await enterAccount(); refreshLeaderboard(true);
         } catch (e) { $('accountHint').textContent = '로그인 실패: ' + errMsg(e); }
     }
-    // 계정에 묶인 캐릭터가 있고 지금 캐릭터가 없으면 가장 최근 것을 이어서 쓴다
-    async function adoptAccountChars(chars) {
-        if (me || !chars?.length) return;
-        const c = chars[0]; localStorage.setItem('dreamrpg.v2', JSON.stringify({ id: c.id, token: c.token }));
-        await loadMe(); if (me) goHome();
+    // 계정 캐릭터 선택: 이전에 고른 것 → 최근 것 → 없으면 손님 캐릭터 그대로(있으면) / 만들기 화면
+    async function enterAccount() {
+        const prev = readSlot(ACCT), pick = acctChars.find(c => prev && c.id === prev.id) || acctChars[0];
+        if (pick) { localStorage.setItem(ACCT, JSON.stringify({ id: pick.id, token: pick.token })); await loadMe(ACCT); }
+        else { localStorage.removeItem(ACCT); await loadMe(GUEST); }
+        renderAccount();
+        if (me) { if (!(await resumeSession())) goHome(); } else show('s-create');
     }
     async function initGoogle() {
-        if (gSession) { try { const d = await api('/api/rpg/me?session=' + encodeURIComponent(gSession)); gUser = d.user; await adoptAccountChars(d.chars); if (me && myToken) api(`/api/rpg/chars/${me.id}/link`, { token: myToken, session: gSession }).catch(() => {}); } catch { gSession = null; localStorage.removeItem(GSESS); } }
+        if (gSession) { try { await refreshAcctChars(); } catch (e) { if (e.message !== 'net') { gSession = null; localStorage.removeItem(GSESS); } } }
+        if (gUser) { await enterAccount(); return true; }
         renderAccount();
-        if (!GOOGLE_CLIENT_ID || gUser) return;
+        if (!GOOGLE_CLIENT_ID) return false;
         const tryInit = () => {
             if (!window.google?.accounts?.id) return setTimeout(tryInit, 300);
             google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential, auto_select: false, ux_mode: 'popup' });
             google.accounts.id.renderButton($('gsiBtn'), { theme: 'filled_black', size: 'medium', text: 'signin_with', shape: 'pill', locale: 'ko' });
         };
-        tryInit();
+        tryInit(); return false;
     }
 
     // ── 시작 ─────────────────────────────────────────────────────────
-    (async () => { await nanoCheck(); await refreshQuota(); await loadMe(); await initGoogle(); if (me && !(await resumeSession())) goHome(); refreshLeaderboard(true); setInterval(refreshQuota, 60000); setInterval(() => refreshLeaderboard(), 30000); })();
+    (async () => { await nanoCheck(); await refreshQuota(); const viaAccount = await initGoogle(); if (!viaAccount) { await loadMe(GUEST); if (me && !(await resumeSession())) goHome(); } renderAccount(); refreshLeaderboard(true); setInterval(refreshQuota, 60000); setInterval(() => refreshLeaderboard(), 30000); })();
     </script>
 </body>
 

@@ -19,6 +19,7 @@
  *   GET  /api/rpg/me?session=                    → { user, chars }   (다른 기기에서 캐릭터 복구)
  *   POST /api/rpg/auth/logout                    { session }
  *   POST /api/rpg/chars/:id/link                 { token, session }  (기존 캐릭터를 로그인 계정에 연결)
+ *   POST /api/rpg/chars/:id/delete               { token, session }  (계정 캐릭터 삭제)
  *   GET  /api/rpg/prompts                        → 클라이언트 로컬 AI 가 쓸 시스템 프롬프트 (서버와 동일)
  *   POST /api/rpg/chars                          { name, setting }            → { char, token }
  *   GET  /api/rpg/chars/:id?token=
@@ -116,6 +117,7 @@ export async function handleRpg(request, env, path) {
   if (path === '/api/rpg/auth/logout' && m === 'POST') { await env.DB.prepare('DELETE FROM rpg_sessions WHERE token = ?').bind(String(body.session || '')).run(); return json({ ok: true }); }
   if (path === '/api/rpg/me' && m === 'GET') return me(env, url.searchParams.get('session'));
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, ip);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], url.searchParams.get('token'), env);
@@ -293,8 +295,20 @@ async function authGoogle(body, env) {
     .bind(info.sub, info.email || null, clip(info.name || info.email || '플레이어', 40), info.picture || null, now, now).run();
   const session = uid();
   await env.DB.prepare('INSERT INTO rpg_sessions (token, sub, created) VALUES (?, ?, ?)').bind(session, info.sub, now).run();
-  if (body.charId && body.token) { const c = await loadChar(env, body.charId, body.token); if (c) await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(info.sub, c.id).run(); }   // 지금 쓰던 캐릭터를 계정에 연결
-  return json({ session, user: await userInfo(env, info.sub), chars: await userChars(env, info.sub) });
+  // 최초 로그인(계정에 캐릭터가 없음)이면 지금 쓰던 손님 캐릭터가 계정 캐릭터가 된다. 이미 캐릭터가 있으면 손님 캐릭터는 그대로 두고(로그아웃하면 다시 씀) 계정 캐릭터로 전환
+  const existing = await userChars(env, info.sub);
+  if (!existing.length && body.charId && body.token) { const c = await loadChar(env, body.charId, body.token); if (c) await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ? AND user_sub IS NULL').bind(info.sub, c.id).run(); }   // 이미 다른 계정 것이면 안 가져감
+  return json({ session, user: await userInfo(env, info.sub), chars: await userChars(env, info.sub), firstLogin: !existing.length });
+}
+// 계정 캐릭터 삭제 (본인 세션 + 캐릭터 토큰 둘 다 맞아야)
+async function deleteChar(id, body, env) {
+  const sub = await sessionUser(env, body.session);
+  const c = await loadChar(env, id, body.token);
+  if (!sub || !c) return json({ error: 'forbidden' }, 403);
+  const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(id).first();
+  if (row?.user_sub !== sub) return json({ error: 'forbidden' }, 403);
+  await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ?').bind(id).run(); lbCache.at = 0;
+  return json({ ok: true });
 }
 async function me(env, session) {
   const sub = await sessionUser(env, session);
@@ -305,6 +319,8 @@ async function linkChar(id, body, env) {
   const sub = await sessionUser(env, body.session);
   const c = await loadChar(env, id, body.token);
   if (!sub || !c) return json({ error: 'forbidden' }, 403);
+  const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(id).first();
+  if (row?.user_sub && row.user_sub !== sub) return json({ error: 'owned' }, 409);   // 다른 계정의 캐릭터는 못 가져감
   await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(sub, id).run();
   return json({ ok: true });
 }
