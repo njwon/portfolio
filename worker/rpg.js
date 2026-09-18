@@ -370,8 +370,8 @@ export async function runAutoBattles(env) {
 let lbCache = { at: 0, rows: [] };
 async function leaderboard(env, charId) {
   if (Date.now() - lbCache.at > 20e3) {
-    const r = await env.DB.prepare('SELECT c.id, c.name, c.score, c.json, u.name AS owner, u.picture FROM rpg_chars c LEFT JOIN rpg_users u ON u.sub = c.user_sub WHERE c.score > 0 ORDER BY c.score DESC, c.created ASC LIMIT 20').all();
-    lbCache = { at: Date.now(), rows: (r?.results || []).map((row, i) => { const c = JSON.parse(row.json); return { rank: i + 1, id: row.id, name: c.name, owner: row.owner || null, picture: row.picture || null, score: row.score, tier: c.stats?.tier || null, fiction: c.fiction, wins: c.wins || 0, losses: c.losses || 0, pvpWins: c.pvpWins || 0 }; }) };
+    const r = await env.DB.prepare('SELECT c.id, c.name, c.score, c.json, u.name AS owner FROM rpg_chars c LEFT JOIN rpg_users u ON u.sub = c.user_sub WHERE c.score > 0 ORDER BY c.score DESC, c.created ASC LIMIT 20').all();
+    lbCache = { at: Date.now(), rows: (r?.results || []).map((row, i) => { const c = JSON.parse(row.json); return { rank: i + 1, id: row.id, name: c.name, owner: row.owner || null, score: row.score, tier: c.stats?.tier || null, fiction: c.fiction, wins: c.wins || 0, losses: c.losses || 0, pvpWins: c.pvpWins || 0 }; }) };
   }
   let mine = null;
   if (charId) {
@@ -392,7 +392,7 @@ async function userChars(env, sub) {
 }
 async function userInfo(env, sub) {
   const u = await env.DB.prepare('SELECT sub, email, name, picture FROM rpg_users WHERE sub = ?').bind(sub).first();
-  return u ? { name: u.name, picture: u.picture, email: u.email } : null;
+  return u ? { name: u.name, email: u.email } : null;
 }
 // Google Identity Services 가 준 ID 토큰을 구글 tokeninfo 로 검증 (서명·만료 확인은 구글이 함) → aud 가 우리 클라이언트 ID 인지 확인
 async function authGoogle(body, env) {
@@ -412,7 +412,7 @@ async function authGoogle(body, env) {
   if (!info.sub || (info.exp && Number(info.exp) * 1000 < Date.now())) return json({ error: 'bad_token' }, 401);
   const now = Date.now();
   await env.DB.prepare('INSERT INTO rpg_users (sub, email, name, picture, created, last) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture, last = excluded.last')
-    .bind(info.sub, info.email || null, clip(info.name || info.email || '플레이어', 40), info.picture || null, now, now).run();
+    .bind(info.sub, info.email || null, clip(info.name || info.email || '플레이어', 40), null, now, now).run();   // 프로필 사진은 저장하지 않음
   if (info.email_verified === 'false') return json({ error: 'bad_token' }, 401);
   const session = uid();
   await env.DB.batch([

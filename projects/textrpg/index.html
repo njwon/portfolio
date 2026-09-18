@@ -694,7 +694,7 @@
     }
     function renderLeaderboard() {
         const d = lbData; if (!d) return;
-        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name">${r.picture ? `<img src="${esc(r.picture)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(r.name)}</b>${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint">${esc(r.tier || '')} ${esc(r.fiction || '')}</td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
+        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name"><b>${esc(r.name)}</b>${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint">${esc(r.tier || '')} ${esc(r.fiction || '')}</td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
         const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${d.mine.rank}</b>위 / ${d.total}명 · 승점 ${d.mine.score}` : '내 순위 — 첫 승리 후 집계') : '';
         const html = `<h3><span>순위표</span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
         document.querySelectorAll('[data-lb]').forEach(el => { el.innerHTML = html; });
@@ -713,7 +713,7 @@
             const guest = readSlot(GUEST), guestLinked = guest && (acctChars.some(c => c.id === guest.id) || guestOwnedElsewhere);
             const opts = acctChars.map(c => `<option value="${c.id}"${me && c.id === me.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.tier || '')} ${c.wins}승 ${c.losses}패</option>`).join('')
                 + (guest && !guestLinked ? `<option value="__guest">손님 캐릭터를 계정에 추가</option>` : '') + `<option value="__new">+ 새 캐릭터 만들기</option>`;
-            hint.innerHTML = `${gUser.picture ? `<img src="${esc(gUser.picture)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(gUser.name)}</b> <select id="charPick" title="캐릭터 교체">${opts}</select> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
+            hint.innerHTML = `<b>${esc(gUser.name)}</b> <select id="charPick" title="캐릭터 교체">${opts}</select> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
             $('charPick').addEventListener('change', onPickChange);
             $('btnLogout').addEventListener('click', logout);
         } else {
