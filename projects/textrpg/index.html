@@ -192,6 +192,13 @@
                 <button id="btnOnline">온라인 대전</button>
                 <button id="btnWake" class="ghost">일어나기 (초기화)</button>
             </div>
+            <div class="card" id="refineCard">
+                <h3>설정 보강 <span class="hint" id="refineHint"></span></h3>
+                <p class="hint" style="margin:4px 0">개연성은 <b>설정에 맞게 선언</b>할수록 조금씩 오르고(적합 80%↑·쉬움/보통 +0.3%p, 불허·불가 −0.5%p), 여기서 설정에 문장을 덧붙이면 심사관이 <b>일관성만 다시 심사</b>합니다(위력 등급은 그대로). 한계·약점·대가를 구체적으로 적으면 오르고, 모순을 더하면 내려갑니다. 5승마다 1회, 첫 번째는 무료.</p>
+                <div class="div-group" style="margin-bottom:8px"><input type="text" id="refineText" maxlength="100" placeholder="예) 왼팔에 낡은 부상이 있어 큰 기술 뒤엔 한 턴 쉬어야 한다"></div>
+                <div class="btn-row" style="margin-top:0"><button id="btnRefine">심사 받기</button></div>
+                <p class="hint" id="refineResult"></p>
+            </div>
             <div class="card" id="autoCard">
                 <h3>자동 생사결 <span class="hint" id="autoCount"></span></h3>
                 <label class="hint" style="display:block;margin:4px 0"><input type="checkbox" id="autoOn"> 참가 — 접속하지 않은 동안에도 서버가 매시간 참가자끼리 붙여 전적·보상이 쌓입니다 (AI 서술 없음, 규칙 엔진만). 접속 중인 사람은 위 메뉴로 참가자와 실시간 전투를 할 수 있습니다.</label>
@@ -382,7 +389,7 @@
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', max_tier: '신화는 최고 등급이라 환생할 수 없습니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 5승마다 1회입니다.', max_tier: '신화는 최고 등급이라 환생할 수 없습니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
@@ -428,7 +435,7 @@
         $('rebirthRow').style.display = ready ? '' : 'none';
         if (ready) $('btnRebirth').textContent = maxTier ? '최고 등급 — 환생 불가' : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
         $('btnRebirth').disabled = maxTier;
-        show('s-home'); refreshLeaderboard(); refreshAuto();
+        show('s-home'); refreshLeaderboard(); refreshAuto(); refreshRefine();
     }
     // 등급별 성장 상한 (서버와 같은 표). HP·ATK 둘 다 상한이면 환생 가능
     const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 } };
@@ -504,7 +511,7 @@
             out += msg('p' + k, esc(names[k]), `<b>${kind}</b>${tgt} ${act.text ? '“' + esc(act.text) + '”' : act.policy ? `<span class="hint">(이용 정책 위반 — ${esc(act.policy)} — 으로 가려짐)</span>` : act.type === 'defend' ? '' : '<span class="hint">기본 공격</span>'}${act.skipped ? ' <span class="hint">(시간 초과 → 자동 방어)</span>' : ''}`);
             if (j && act.type !== 'defend' && (act.text || j.verdict)) {
                 const d = j.policy || j.allowed === false ? 'denied' : (j.difficulty in DIFF_KO ? j.difficulty : 'normal');
-                out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''} ${esc(j.verdict || '')}`);
+                out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''}${entry.plaus?.[k] ? `<span class="tag ${entry.plaus[k] > 0 ? 'easy' : 'deny'}">개연성 ${entry.plaus[k] > 0 ? '+' : ''}${Math.round(entry.plaus[k] * 1000) / 10}%p</span>` : ''} ${esc(j.verdict || '')}`);
             }
         }
         const order = entry.order || (entry.first ? [entry.first === 'a' ? 1 : 2, entry.first === 'a' ? 2 : 1] : []);
@@ -534,6 +541,24 @@
     $('btnBattle').addEventListener('click', () => startBattle('pve'));
     $('btnAutoFight').addEventListener('click', () => startBattle('auto'));
     // 자동 생사결: 참가 토글 + 부재 중 결과
+    // 설정 보강
+    function refreshRefine() {
+        if (!me) return;
+        const used = me.refineCount || 0, need = used * 5, ok = (me.wins || 0) >= need;
+        $('refineHint').textContent = ok ? `사용 가능 (${used}회 사용)` : `다음 심사까지 ${need - me.wins}승 더 (${me.wins}/${need})`;
+        $('btnRefine').disabled = !ok || !aiAvailable();
+        $('refineResult').textContent = '';
+    }
+    $('btnRefine').addEventListener('click', async () => {
+        const text = $('refineText').value.trim(); if (!text) return;
+        $('btnRefine').disabled = true; $('refineResult').textContent = '심사관이 읽는 중…';
+        try {
+            const d = await api(`/api/rpg/chars/${me.id}/refine`, { token: myToken, text });
+            me = d.char; saveMe(); $('refineText').value = '';
+            const dp = Math.round((d.after - d.before) * 1000) / 10;
+            goHome(); $('refineResult').textContent = `일관성 ${d.coherence} → 개연성 ${Math.round(d.after * 100)}% (${dp >= 0 ? '+' : ''}${dp}%p) — ${d.reason}`;
+        } catch (e) { $('refineResult').textContent = errMsg(e); refreshRefine(); }
+    });
     async function refreshAuto() {
         if (!me) return;
         try {

@@ -29,6 +29,7 @@
  *   GET  /api/rpg/battles/:id?token=             (재접속)
  *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 속도·회피·등급으로 실패 확률 → 실패하면 능력치 손실 + 패배)
  *   POST /api/rpg/battles                        { charId, token, mode: 'auto' } → 자동 생사결에 참가한 다른 플레이어 캐릭터(AI 조종)와 전투
+ *   POST /api/rpg/chars/:id/refine               { token, text }              (설정 보강 100자 → 일관성 재심사 → 개연성 갱신. 5승마다 1회)
  *   POST /api/rpg/chars/:id/rebirth              { token }                    (HP·ATK 가 등급 상한이면 환생 → 다음 등급)
  *   POST /api/rpg/chars/:id/auto                 { token, on }                (자동 생사결 참가 on/off — 꺼져 있는 동안 서버가 매시간 참가자끼리 붙임)
  *   GET  /api/rpg/auto?charId=                   → { on, participants, recent: [...] } 부재 중 자동 생사결 결과
@@ -159,6 +160,7 @@ export async function handleRpg(request, env, path) {
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/auto$/)) && m === 'POST') return setAuto(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/rebirth$/)) && m === 'POST') return rebirthChar(mm[1], body, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/refine$/)) && m === 'POST') return refineChar(mm[1], body, env, who);
   if (path === '/api/rpg/auto' && m === 'GET') return autoInfo(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
@@ -791,6 +793,52 @@ async function updateChar(env, id, fn, fallback = null) {
   fn(c); await saveChar(env, c); return c;
 }
 // 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
+// 개연성(stability): 선언으로 쌓인다 — 적합도 ≥ 0.8 이고 쉬움/보통 판정이면 +0.3%p, 불허·불가면 −0.5%p. 등급별 상한, 하한은 0.55 + 환생 횟수 × 0.03
+const PLAUS_CAP = { '평범': 0.85, '숙련': 0.90, '초인': 0.95, '전설': 0.98, '신화': 1.0 };
+const plausFloor = c => 0.55 + (c.rebirths || 0) * 0.03;
+const plausCap = c => PLAUS_CAP[c.stats?.tier] ?? 1.0;
+// 상한은 '성장'에만 적용: 생성 때 이미 상한보다 높았던 값은 깎지 않는다 (상한 = max(등급 상한, 현재값))
+const clampPlaus = (c, v) => { const cur = c.stats?.stability ?? 0.75; return Math.round(Math.min(Math.max(plausCap(c), cur), Math.max(plausFloor(c), v)) * 1000) / 1000; };
+function plausDelta(act, j) {
+  if (!act?.text || !j) return 0;
+  if (j.policy || j.allowed === false || j.difficulty === 'impossible') return -0.005;
+  if ((j.fit ?? 0) >= 0.8 && (j.difficulty === 'easy' || j.difficulty === 'normal')) return 0.003;
+  return 0;
+}
+// 한 라운드 뒤: 선언한 플레이어 캐릭터의 개연성을 갱신 (방 상태 안의 사본과 DB 둘 다). 돌려주는 값 = { slot: delta }
+async function applyPlaus(env, players, acts, judge, slots) {
+  const out = {};
+  for (const k of slots) {
+    const d = plausDelta(acts[k], judge[k]); if (!d) continue;
+    const c = players[k]?.char; if (!c || String(c.id).startsWith('enemy-')) continue;
+    const nv = clampPlaus(c, (c.stats.stability ?? 0.75) + d);
+    if (nv === c.stats.stability) continue;
+    c.stats.stability = nv; out[k] = d;
+    await updateChar(env, c.id, x => { x.stats.stability = clampPlaus(x, (x.stats.stability ?? 0.75) + d); });
+  }
+  return out;
+}
+// 설정 보강: 기존 설정 뒤에 100자를 덧붙이고 심사관이 일관성만 다시 매긴다(위력 등급은 그대로). 5승마다 1회(첫 번째는 무료)
+const SYS_COHERENCE = `당신은 텍스트 RPG 캐릭터 심사관입니다. 캐릭터 설정의 내적 일관성만 평가합니다. 앞뒤가 맞고 능력의 한계·약점·대가가 구체적이면 높음(80~100), 짧거나 막연하면 중간(40~60), "무엇이든 다 한다"·모순·근거 없는 전능은 낮음(5~25). 덧붙인 문장이 기존 설정과 모순되면 낮춥니다. 반드시 이 JSON 하나만 출력: {"coherence":0,"reason":"한 문장"}`;
+async function refineChar(id, body, env, ip) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  const text = clip(body.text, 100);
+  if (!text) return json({ error: 'bad_request' }, 400);
+  const used = c.refineCount || 0;
+  if ((c.wins || 0) < used * 5) return json({ error: 'refine_cooldown', needWins: used * 5 }, 409);
+  const mod = await moderate(env, text);
+  if (!mod.ok) return json({ error: 'policy', reason: mod.reason, label: mod.label }, 400);
+  const info = clip(c.info + ' ' + text, 400);
+  const r = await aiCall(env, ip, SYS_COHERENCE, `이름: ${c.name}\n설정: ${info}`, 0.2);
+  if (!r.ok) return json({ error: r.reason === 'failed' ? 'ai_failed' : 'quota', reason: r.reason }, r.reason === 'failed' ? 502 : 429);
+  const coh = Math.round(num(r.parsed?.coherence, 0, 100, c.stats.coherence)), reason = cleanVerdict(r.parsed?.reason).slice(0, 200);
+  const before = c.stats.stability;
+  // 설정 재심사는 생성 때처럼 등급 상한 없이(하한만)
+  const out = await updateChar(env, c.id, x => { x.info = info; x.stats.coherence = coh; x.stats.stability = Math.round(Math.min(1, Math.max(plausFloor(x), 0.55 + coh / 100 * 0.45)) * 1000) / 1000; x.refineCount = (x.refineCount || 0) + 1; x.refineLog = [...(x.refineLog || []), { text, coherence: coh, reason, at: Date.now() }].slice(-10); });
+  return json({ ok: true, char: publicChar(out), coherence: coh, reason, before, after: out.stats.stability, quota: pubQuota(await quota(env, ip)) });
+}
+
 // 등급별 성장 상한. HP·ATK 가 둘 다 상한에 닿으면 '환생' 가능 → 다음 등급의 기본 능력치로 다시 시작(환생 횟수만큼 +10% 영구 보너스)
 const TIER_CAPS = {
   '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 },
@@ -820,6 +868,7 @@ async function rebirthChar(id, body, env) {
   const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
   const fresh = buildStats(alloc, c.stats.coherence, 1, lo + 2);
   for (const k of ['hp', 'atk']) fresh[k] = Math.round(fresh[k] * bonus);
+  fresh.stability = Math.round(Math.min(PLAUS_CAP[name], Math.max(0.55 + n * 0.03, Math.max(fresh.stability, c.stats.stability || 0))) * 1000) / 1000;   // 개연성은 유지하되 환생 횟수만큼 하한 상승
   for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
   const prevTier = c.stats.tier;
   await updateChar(env, c.id, x => { x.stats = fresh; x.alloc = alloc; x.rebirths = n; x.rebirthReady = false; x.rebirthLog = [...(x.rebirthLog || []), { from: prevTier, to: name, at: Date.now() }].slice(-10); });
@@ -1003,7 +1052,8 @@ async function battleTurn(id, body, env, ip) {
   const prevLog = st.log[st.log.length - 1];
   const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '' });
   delete actMe.local;
-  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser });
+  const plaus = await applyPlaus(env, { 1: st.me }, { 1: actMe }, t.judge, [1]);
+  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, plaus });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
@@ -1153,7 +1203,8 @@ async function settleRoom(env, ip, code, s, v, slot) {
     const payers = aliveSlots(s.p).map(k => s.who?.[k]).filter(Boolean);   // 살아 있는 참가자 전원이 1/N 씩 (몫 주인을 모르는 옛 방이면 판정 요청자)
     const t = await runRound(env, payers.length ? payers : ip, s.p, s.moves, { round: s.round, prev: prevLog ? factsText(nm, prevLog.events).replace(/\n/g, ' / ') : '' });
     const acts = {}; for (const k in s.moves) { const { local, ...a } = s.moves[k]; acts[k] = a; }
-    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, resolver: slot });
+    const plaus = await applyPlaus(env, s.p, acts, t.judge, Object.keys(acts).map(Number));
+    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, resolver: slot, plaus });
     if (s.log.length > 40) s.log.shift();
     quotaBlocked = t.quotaBlocked;
   }
