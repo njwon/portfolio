@@ -27,7 +27,11 @@
             margin: 0; min-height: 100vh; background: #1d1d1d; color: #eee;
             font-family: 'Pretendard', 'Segoe UI', Tahoma, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
             overflow-x: hidden;
+            word-break: keep-all; overflow-wrap: anywhere;   /* 한글은 단어 단위로 줄바꿈("(계정)" 이 "(계 / 정)" 으로 안 갈라짐), 띄어쓰기 없는 긴 선언문은 넘치지 않게 강제 줄바꿈 */
         }
+        /* 키보드 포커스: 기본 파란 링 대신 테마색 */
+        :focus-visible { outline: 2px solid #75fa69; outline-offset: 2px; }
+        input[type="checkbox"] { accent-color: #eee; }
         .main-container * {
             animation-duration: 0.1s; animation-iteration-count: infinite; animation-name: textflicker; animation-direction: alternate;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
@@ -42,7 +46,7 @@
         }
         /* 테두리가 있는 모든 요소에 상자 깜빡임(box-shadow) — 글자 깜빡임은 .main-container * 로 전부 적용됨 */
         /* 모든 버튼(구글 로그인·로그아웃·만들기 포함)에 상자 깜빡임 — .main-container * 규칙이 button 규칙보다 우선이라 여기서 다시 지정 */
-        .card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, .main-container button, .main-container textarea, .hint kbd { animation-name: boxflicker; }
+        .card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, .main-container button, .main-container textarea, .hint kbd, .account select { animation-name: boxflicker; }
         .main-container { width: min(920px, 94vw); margin: 0 auto; padding: 8px 0 60px; position: relative; filter: blur(0.6px); }
         ::-webkit-scrollbar { display: none; }
         /* 노이즈: 3MB tenor GIF + 전체화면 blur 대신 SVG feTurbulence 한 장(수백 바이트, 필터 없음). 보이는 정도(불투명도 3%)는 같다 */
@@ -72,9 +76,9 @@
             transition: background-color 0.3s; animation-name: boxflicker; animation-duration: 0.1s; animation-iteration-count: infinite; animation-direction: alternate;
         }
         button:hover { background-color: #9b9b9b; }
-        button:disabled { background-color: #6a6a6a; color: #333; cursor: not-allowed; }
+        button:disabled { background-color: #555; color: #ccc; cursor: not-allowed; }   /* 대비 5.5:1 (전엔 #333/#6a6a6a ≈ 2.2:1 로 안 읽혔음) */
         button.ghost { background: transparent; color: #eee; border: 0.5px dashed #eee; }
-        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 18px 0 14px; }
         .btn-row button { flex: 1 1 140px; }
         .full { width: 100%; }
 
@@ -96,10 +100,12 @@
         @media (max-width: 640px) { .vs { grid-template-columns: 1fr; } }
 
         .log { border: 0.5px dashed #eee; border-radius: 4px; padding: 14px; line-height: 1.7; white-space: pre-wrap; margin: 12px 0; max-height: 46vh; overflow-y: auto; }
+        .log:empty { display: none; }   /* 대기 중인 방: 빈 점선 상자를 그리지 않음 */
         .log .round { opacity: .7; font-size: 12px; margin-top: 14px; text-align: center; }
         .log .dice { font-size: 13px; opacity: .85; }
         .msg { display: flex; gap: 8px; margin: 6px 0; align-items: flex-start; }
-        .msg .who { flex: none; font-size: 11px; opacity: .75; min-width: 64px; padding-top: 6px; text-align: right; }
+        .msg .who { flex: none; font-size: 11px; opacity: .75; min-width: 64px; max-width: 30%; padding-top: 6px; text-align: right; }
+        @media (max-width: 480px) { .msg .who { min-width: 48px; } }
         .msg .bubble { border: 0.5px dashed #eee; border-radius: 10px; padding: 6px 10px; max-width: 100%; }
         .msg.p1 .bubble { border-color: #75fa69; } .msg.p2 .bubble { border-color: #ea36af; } .msg.p3 .bubble { border-color: #69c9fa; }
         .msg.p4 .bubble { border-color: #fae069; } .msg.p5 .bubble { border-color: #c98cff; } .msg.p6 .bubble { border-color: #ff9c6b; }
@@ -107,8 +113,8 @@
         .plist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 12px; }
         .plist .card { margin: 0; position: relative; }
         .plist .card.me { border-style: solid; }
-        .plist .card.dead { opacity: .45; }
-        .plist .badge { position: absolute; top: 8px; right: 10px; font-size: 11px; opacity: .8; }
+        .plist .card.dead { opacity: .6; }   /* .45 는 탈락한 내 카드 글자가 안 읽혔음 */
+        .plist .badge { display: block; text-align: right; font-size: 11px; opacity: .8; margin: -4px 0 2px; min-height: 1em; }   /* 절대 위치면 긴 이름과 겹쳤음 */
         .plist .c1 { border-color: #75fa69; } .plist .c2 { border-color: #ea36af; } .plist .c3 { border-color: #69c9fa; }
         .plist .c4 { border-color: #fae069; } .plist .c5 { border-color: #c98cff; } .plist .c6 { border-color: #ff9c6b; }
         button.mini { padding: .3rem .7rem; font-size: 13px; }
@@ -124,7 +130,8 @@
         .lb table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .lb td, .lb th { padding: 3px 6px; text-align: left; white-space: nowrap; }
         .lb th { font-weight: normal; opacity: .6; font-size: 11px; }
-        .lb td.n { text-align: right; opacity: .8; } .lb td.name { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; }
+        .lb td.n { text-align: right; opacity: .8; } .lb td.name, .lb td.tier { white-space: normal; } .lb td.name { max-width: 44vw; } .lb td.tier { min-width: 3.2em; }   /* 이름·등급 칸은 줄바꿈 허용 (nowrap 이면 좁은 화면에서 표가 상자 밖으로 넘침) */
+        @media (max-width: 480px) { .lb .fic { display: none; } }   /* 폰에서는 설정 한 줄 요약을 숨기고 등급만 */
         .lb tr.me td { background: #333; }
         .lb img { width: 16px; height: 16px; border-radius: 50%; vertical-align: -3px; margin-right: 4px; }
         .targets { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -169,6 +176,7 @@
                 <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 복싱를 배워 잽을 날릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
+            <div class="btn-row" id="createBackRow" style="display:none"><button id="btnCreateBack" class="ghost">돌아가기 (지금 캐릭터 그대로)</button></div>
             <p class="status" id="createStatus"></p>
             <div class="lb" data-lb></div>
             <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)을 매기고, 서버가 등급에 따라 예산을 정합니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다.</p>
@@ -257,7 +265,7 @@
     const MIN_INTERVAL_MS = 2000;                // 클라이언트 단 연타 방지
     const $ = id => document.getElementById(id);
     const screens = ['s-create', 's-home', 's-battle', 's-lobby', 's-online'];
-    const show = id => screens.forEach(s => $(s).classList.toggle('active', s === id));
+    const show = id => { screens.forEach(s => $(s).classList.toggle('active', s === id)); if (id === 's-create') $('createBackRow').style.display = me ? '' : 'none'; };
     const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const ULT_COST = 3;
 
@@ -348,7 +356,13 @@
         } catch { if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(AI 서술 없음)</span>'; }
         finally { narrating.delete(key); }
     }
-    const deviceId = () => { let d = localStorage.getItem('dreamrpg.device'); if (!d) { d = crypto.randomUUID(); localStorage.setItem('dreamrpg.device', d); } return d; };
+    // localStorage 는 시크릿 모드·저장소 차단 환경에서 던질 수 있어 전부 감싼다 (막히면 그 탭 안에서만 기억)
+    const mem = {};
+    const lsGet = k => { try { return localStorage.getItem(k); } catch { return mem[k] ?? null; } };
+    const lsSet = (k, v) => { mem[k] = v; try { localStorage.setItem(k, v); } catch {} };
+    const lsDel = k => { delete mem[k]; try { localStorage.removeItem(k); } catch {} };
+    const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : r & 3 | 8).toString(16); });   // http 비보안 문맥엔 randomUUID 가 없음
+    const deviceId = () => { let d = lsGet('dreamrpg.device'); if (!d) { d = uuid(); lsSet('dreamrpg.device', d); } return d; };
     async function refreshQuota() { try { applyQuota(await api('/api/rpg/quota')); } catch { $('quotaText').textContent = '서버 연결 실패'; } }
     async function api(path, body, extraHdr) {
         const wait = MIN_INTERVAL_MS - (Date.now() - lastCall);
@@ -362,7 +376,7 @@
         const data = await res.json().catch(() => ({}));
         if (data.quota) applyQuota(data.quota);
         if (!res.ok) {
-            if (data.error === 'retry' && !body?._retried) { await new Promise(r => setTimeout(r, 800)); return api(path, { ...body, _retried: true }); }   // 동시 처리 충돌은 한 번 자동 재시도
+            if (data.error === 'retry' && body && !body._retried) { await new Promise(r => setTimeout(r, 800)); return api(path, { ...body, _retried: true }, extraHdr); }   // 동시 처리 충돌은 한 번 자동 재시도 (POST 만 — GET 을 POST 로 바꿔 재시도하지 않음)
             const e = new Error(data.error || 'server'); e.data = data; throw e;
         }
         return data;
@@ -370,21 +384,21 @@
     const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
-    const saveSess = v => v ? localStorage.setItem(SESS, JSON.stringify(v)) : localStorage.removeItem(SESS);
-    const loadSess = () => { try { return JSON.parse(localStorage.getItem(SESS)); } catch { return null; } };
+    const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
+    const loadSess = () => { try { return JSON.parse(lsGet(SESS)); } catch { return null; } };
 
     // ── 캐릭터 (서버 권위: id + token 만 보관) ──────────────────────────
     let me = null, myToken = null;
     // 캐릭터 슬롯: 손님(GUEST, 로그인 전) / 계정(ACCT, 로그인 중 선택한 계정 캐릭터). 로그인하면 계정 슬롯, 로그아웃하면 손님 슬롯이 다시 나온다
     const GUEST = 'dreamrpg.v2', ACCT = 'dreamrpg.acct';
-    const readSlot = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+    const readSlot = k => { try { return JSON.parse(lsGet(k)); } catch { return null; } };
     const curSlot = () => gUser ? ACCT : GUEST;
-    const saveMe = () => localStorage.setItem(curSlot(), JSON.stringify({ id: me.id, token: myToken }));
+    const saveMe = () => lsSet(curSlot(), JSON.stringify({ id: me.id, token: myToken }));
     async function loadMe(key = curSlot()) {
         const s = readSlot(key); me = null; myToken = null;
         if (!s) return;
         try { const d = await api(`/api/rpg/chars/${s.id}`, null, { 'X-Token': s.token }); me = d.char; myToken = s.token; }
-        catch (e) { if (e.message !== 'net') localStorage.removeItem(key); }
+        catch (e) { if (e.message !== 'net') lsDel(key); }
     }
     function statLine(c) { const s = c.stats; return `${s.tier ? `위력 <b>${esc(s.tier)}</b>${s.power !== undefined ? ` ${s.power}` : ''}${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} · ` : ''}HP ${s.hp} · ATK ${s.atk} · 방어 ${s.def}% · 속도 ${s.spd} · 명중 ${s.acc} · 회피 ${s.eva} · 안정성 ${Math.round(s.stability * 100)}%`; }
     function gaugeHtml(g) { return '게이지 ' + '■'.repeat(g) + '□'.repeat(ULT_COST - g); }
@@ -411,17 +425,24 @@
             goHome(); refreshLeaderboard(true);
         }
         catch (e) { $('createStatus').textContent = errMsg(e); }
-        finally { $('btnCreate').textContent = '몽상 시작!'; applyQuota(quotaState); }
+        finally { $('btnCreate').textContent = '몽상 시작!'; $('btnCreate').disabled = false; applyQuota(quotaState); }   // quotaState 가 없으면 applyQuota 가 바로 돌아가므로 여기서 먼저 푼다
     });
+    // 계정에서 '+ 새 캐릭터 만들기'를 골랐다가 그만둘 때 (캐릭터가 있을 때만 보임)
+    $('btnCreateBack').addEventListener('click', () => { $('createStatus').textContent = ''; renderAccount(); if (me) goHome(); });
+    // Enter 로도 진행: 이름 → 설정칸, 방 코드 → 참가, 전투·대전 선언 → 공격
+    $('char-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('char-setting').focus(); } });
+    $('roomCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('btnRoomJoin').click(); } });
+    $('bAction').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); if (!$('btnAttack').disabled) turn('attack'); } });
+    $('oAction').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); if (!$('btnOAttack').disabled && $('btnOAttack').style.display !== 'none') oAct('attack'); } });
     $('btnWake').addEventListener('click', async () => {
         if (gUser && acctChars.some(c => c.id === me.id)) {   // 로그인 중 + 계정 캐릭터: 삭제하고 다음 캐릭터로 (없으면 새로 만들기)
             if (!confirm(`계정에서 '${me.name}' 캐릭터를 삭제할까요? (되돌릴 수 없음)`)) return;
             try { await api(`/api/rpg/chars/${me.id}/delete`, { token: myToken, session: gSession }); } catch (e) { return alert(errMsg(e)); }
-            localStorage.removeItem(ACCT); saveSess(null); acctChars = acctChars.filter(c => c.id !== me.id);
+            lsDel(ACCT); saveSess(null); acctChars = acctChars.filter(c => c.id !== me.id);
             if (acctChars.length) await pickAccountChar(acctChars[0]); else { me = null; myToken = null; show('s-create'); }
             renderAccount(); return;
         }
-        if (!confirm('캐릭터와 진행 중인 전투가 모두 사라집니다. 초기화할까요?')) return; localStorage.removeItem(GUEST); saveSess(null); location.reload();
+        if (!confirm('캐릭터와 진행 중인 전투가 모두 사라집니다. 초기화할까요?')) return; lsDel(GUEST); saveSess(null); location.reload();
     });
 
     // ── 전투 로그 렌더 (공통) ────────────────────────────────────────
@@ -446,7 +467,7 @@
             const tgt = act.type !== 'defend' && act.target && names[act.target] ? ` <span class="hint">→ ${esc(names[act.target])}</span>` : '';
             out += msg('p' + k, esc(names[k]), `<b>${kind}</b>${tgt} ${act.text ? '“' + esc(act.text) + '”' : act.policy ? `<span class="hint">(이용 정책 위반 — ${esc(act.policy)} — 으로 가려짐)</span>` : act.type === 'defend' ? '' : '<span class="hint">기본 공격</span>'}${act.skipped ? ' <span class="hint">(시간 초과 → 자동 방어)</span>' : ''}`);
             if (j && act.type !== 'defend' && (act.text || j.verdict)) {
-                const d = j.policy ? 'denied' : j.allowed === false ? 'denied' : (j.difficulty || 'normal');
+                const d = j.policy || j.allowed === false ? 'denied' : (j.difficulty in DIFF_KO ? j.difficulty : 'normal');
                 out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''} ${esc(j.verdict || '')}`);
             }
         }
@@ -462,14 +483,17 @@
     function renderBattle() {
         $('bMe').innerHTML = cardHtml(battle.me, false); $('bFoe').innerHTML = cardHtml(battle.foe, true);
         $('ultLeft').textContent = battle.me.gauge >= ULT_COST ? '준비됨' : `${battle.me.gauge}/${ULT_COST}`;
-        $('btnUlt').disabled = busy || battle.me.gauge < ULT_COST; $('btnAttack').disabled = $('btnDefend').disabled = busy;
+        $('btnUlt').disabled = busy || battle.me.gauge < ULT_COST; $('btnAttack').disabled = $('btnDefend').disabled = $('btnRun').disabled = busy;
     }
+    let starting = false;   // 홈 버튼 연타로 전투·방이 두 개 생기지 않게
+    const HOME_BTNS = ['btnBattle', 'btnAutoFight', 'btnOnline', 'btnWake'];
     async function startBattle(mode) {
-        $('bStatus').textContent = '상대를 찾는 중…';
+        if (starting || !me) return; starting = true; HOME_BTNS.forEach(id => $(id).disabled = true);
         try {
             const d = await api('/api/rpg/battles', { charId: me.id, token: myToken, mode });
             enterBattle(d.battle);
-        } catch (e) { $('bStatus').textContent = errMsg(e); alert(errMsg(e)); }
+        } catch (e) { alert(errMsg(e)); }
+        finally { starting = false; HOME_BTNS.forEach(id => $(id).disabled = false); }
     }
     $('btnBattle').addEventListener('click', () => startBattle('pve'));
     $('btnAutoFight').addEventListener('click', () => startBattle('auto'));
@@ -488,8 +512,8 @@
         catch (err) { e.target.checked = !e.target.checked; alert(errMsg(err)); }
     });
     function enterBattle(b) {
-        battle = b; saveSess({ battle: b.id });
-        $('bLog').innerHTML = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
+        battle = b; busy = false; saveSess({ battle: b.id });
+        $('bLog').innerHTML = ''; $('bAction').value = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
         logLine($('bLog'), `<b>${esc(battle.foe.char.name)}</b>(${esc(battle.foe.char.fiction)})이(가) 나타났다!${battle.mode === 'auto' ? ' <span class="hint">— 자동 생사결 참가자의 캐릭터 (AI 조종)</span>' : ''}<br><span class="hint">${esc(battle.foe.char.info)}</span>`);
         for (const l of battle.log) logLine($('bLog'), roundHtml(`턴 ${l.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, l));   // 재접속이면 지난 턴 복원
         if (battle.log.length) logLine($('bLog'), '<span class="hint">— 이어서 진행합니다 —</span>');
@@ -505,22 +529,25 @@
         $('bEnd').style.display = '';
     }
     async function turn(type) {
-        if (busy || !battle) return; busy = true; renderBattle();
+        if (busy || !battle || battle.status !== 'playing') return; busy = true; renderBattle();
         $('bStatus').textContent = localMode() ? '내 크롬 AI가 심사하고 주사위를 굴리는 중…' : aiAvailable() ? '주사위를 굴리고 게임 마스터가 서술 중…' : '주사위를 굴리는 중… (오늘 AI 한도 소진)';
+        const b = battle; let cur = b;
         try {
             const text = $('bAction').value.trim();
             const local = localMode() && text ? await nanoJudgeAction(battle.me.char, type, text, battle.foe.char.name) : null;
-            const d = await api(`/api/rpg/battles/${battle.id}/turn`, { token: myToken, type, text, local });
-            battle = d.battle; const last = battle.log[battle.log.length - 1];
+            const d = await api(`/api/rpg/battles/${b.id}/turn`, { token: myToken, type, text, local });
+            if (battle !== b) return;   // 기다리는 사이 캐릭터 교체·로그아웃으로 전투를 버렸으면 무시
+            battle = cur = d.battle; const last = battle.log[battle.log.length - 1];
             logLine($('bLog'), roundHtml(`턴 ${last.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, last));
             $('bAction').value = ''; $('bStatus').textContent = d.quotaBlocked && !nano.ready ? '오늘 AI 한도가 소진돼 사실만 기록됩니다.' : '';
             narrateLocally(last, `턴${last.turn}`, `/api/rpg/battles/${battle.id}/narrate`, { token: myToken, turn: last.turn });
             if (battle.status === 'finished') { endBattle(); refreshLeaderboard(true); }
         } catch (e) {
+            if (battle !== b) return;
             $('bStatus').textContent = errMsg(e);
             if (e.message === 'no_battle' || e.message === 'forbidden') { saveSess(null); $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bEnd').style.display = ''; }   // 만료 → 돌아가기만 남김
         }
-        finally { busy = false; if (battle) renderBattle(); }
+        finally { if (battle === b || battle === cur) { busy = false; if (battle) renderBattle(); } }   // 버린 전투의 늦은 응답은 새 전투의 잠금을 건드리지 않음 (enterBattle 이 busy 를 초기화)
     }
     $('btnAttack').addEventListener('click', () => turn('attack'));
     $('btnDefend').addEventListener('click', () => turn('defend'));
@@ -540,32 +567,32 @@
         } catch { goHome(); }
         finally { for (const id of ['btnAttack', 'btnDefend', 'btnUlt', 'btnRun']) $(id).disabled = false; }
     });
-    $('btnBattleBack').addEventListener('click', () => { const lost = battle && battle.winner === 2; battle = null; saveSess(null); if (lost) { localStorage.removeItem(curSlot()); if (gUser) localStorage.removeItem(ACCT); location.reload(); } else goHome(); });
+    $('btnBattleBack').addEventListener('click', () => { const lost = battle && battle.winner === 2; battle = null; saveSess(null); if (lost) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); } else goHome(); });
 
     // ── 온라인 대전 (2~6명) ──────────────────────────────────────────
     // 모든 플레이어에게 같은 판이 보이도록 서버 state 하나로 그린다 (슬롯 순서 고정, '나' 표시만 다름)
-    let room = null, pollTimer = null, renderedRounds = 0, target = null;
+    let room = null, pollTimer = null, renderedRounds = 0, target = null;   // renderedRounds: 로그에 그린 마지막 라운드 번호
     $('btnOnline').addEventListener('click', () => { $('lobbyStatus').textContent = ''; show('s-lobby'); });
     $('btnLobbyBack').addEventListener('click', goHome);
-    $('btnRoomCreate').addEventListener('click', async () => {
-        $('lobbyStatus').textContent = '방 만드는 중…';
-        try { enterRoom(await api('/api/rpg/rooms', { charId: me.id, token: myToken })); } catch (e) { $('lobbyStatus').textContent = errMsg(e); }
-    });
-    $('btnMatch').addEventListener('click', async () => {
-        $('lobbyStatus').textContent = '상대를 찾는 중…';
-        try { enterRoom(await api('/api/rpg/match', { charId: me.id, token: myToken })); } catch (e) { $('lobbyStatus').textContent = errMsg(e); }
-    });
-    $('btnRoomJoin').addEventListener('click', async () => {
+    // 로비 요청 하나씩만 (연타로 방이 두 개 생기지 않게)
+    const LOBBY_BTNS = ['btnMatch', 'btnRoomCreate', 'btnRoomJoin', 'btnLobbyBack'];
+    async function lobbyCall(status, fn) {
+        if (starting || !me) return; starting = true; LOBBY_BTNS.forEach(id => $(id).disabled = true); $('lobbyStatus').textContent = status;
+        try { enterRoom(await fn()); $('lobbyStatus').textContent = ''; } catch (e) { $('lobbyStatus').textContent = errMsg(e); }
+        finally { starting = false; LOBBY_BTNS.forEach(id => $(id).disabled = false); }
+    }
+    $('btnRoomCreate').addEventListener('click', () => lobbyCall('방 만드는 중…', () => api('/api/rpg/rooms', { charId: me.id, token: myToken })));
+    $('btnMatch').addEventListener('click', () => lobbyCall('상대를 찾는 중…', () => api('/api/rpg/match', { charId: me.id, token: myToken })));
+    $('btnRoomJoin').addEventListener('click', () => {
         const code = $('roomCodeInput').value.trim().toUpperCase();
         if (code.length !== 6) return $('lobbyStatus').textContent = '6자리 코드를 입력하세요.';
-        $('lobbyStatus').textContent = '참가 중…';
-        try { enterRoom(await api(`/api/rpg/rooms/${code}/join`, { charId: me.id, token: myToken })); }
-        catch (e) { $('lobbyStatus').textContent = errMsg(e); }
+        lobbyCall('참가 중…', () => api(`/api/rpg/rooms/${code}/join`, { charId: me.id, token: myToken }));
     });
     function enterRoom(d) {
-        room = { code: d.code, token: d.roomToken, slot: d.slot, state: d.state }; renderedRounds = 0; target = null; pollFails = 0;
+        room = { code: d.code, token: d.roomToken, slot: d.slot, state: d.state }; renderedRounds = 0; target = null; pollFails = 0; acting = false; roomSeq++;
         saveSess({ room: { code: d.code, token: d.roomToken, slot: d.slot } });
-        $('roomCode').textContent = d.state.public ? '랜덤 대전' : d.code; $('oLog').innerHTML = ''; $('oResult').style.display = 'none'; $('oStatus').textContent = '';
+        $('roomCode').textContent = d.state.public ? '랜덤 대전' : d.code; $('oLog').innerHTML = ''; $('oAction').value = ''; $('oResult').style.display = 'none'; $('oStatus').textContent = '';
+        ['oTargetGroup', 'oActionGroup', 'oBtns'].forEach(id => $(id).style.display = ''); $('btnOLeave').style.display = ''; $('btnOSkip').disabled = false;
         show('s-online'); renderRoom(); startPoll();
         if (d.rejoined) $('oStatus').textContent += ' · 다시 접속했습니다.';
     }
@@ -577,20 +604,28 @@
         ['btnOAttack', 'btnODefend', 'btnOUlt', 'btnOSkip'].forEach(id => $(id).style.display = 'none');
     }
     async function leaveRoom() {
-        const r = room; if (!r) return;
+        const r = room; if (!r) return true;
         const playing = r.state.status === 'playing' && r.state.p[r.slot]?.hp > 0;
-        if (playing && !confirm('진행 중인 대전에서 나가면 기권(패배)으로 처리됩니다. 나갈까요?')) return;
-        stopPoll(); room = null; saveSess(null);
+        if (playing && !confirm('진행 중인 대전에서 나가면 기권(패배)으로 처리됩니다. 나갈까요?')) return false;
+        stopPoll(); room = null; roomSeq++; saveSess(null); $('btnOLeave').disabled = true;
         try { await api(`/api/rpg/rooms/${r.code}/leave`, { token: r.token }); } catch {}
-        await loadMe(); goHome();
+        finally { $('btnOLeave').disabled = false; }
+        await loadMe();   // 전적·보상이 반영된 캐릭터 다시 읽기
+        if (me) goHome(); else show('s-create');
+        return true;
     }
     function startPoll() { stopPoll(); pollTimer = setInterval(poll, 3000); }
     function stopPoll() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
-    let pollFails = 0, polling = false;
+    let pollFails = 0, polling = false, acting = false, roomSeq = 0;   // roomSeq: 방 상태를 바꾸는 내 요청(행동·시작·건너뛰기·입장·나가기)마다 +1
     async function poll() {
         if (!room || polling) return; polling = true;
-        try { const d = await api(`/api/rpg/rooms/${room.code}`, null, { 'X-Token': room.token }); room.state = d.state; pollFails = 0; renderRoom(); }
-        catch (e) {
+        const r = room, seq = roomSeq;
+        try {
+            const d = await api(`/api/rpg/rooms/${r.code}`, null, { 'X-Token': r.token });
+            if (room !== r || seq !== roomSeq) return;   // 그 사이 나갔거나 내 행동 응답이 더 새 상태를 그렸음
+            room.state = d.state; pollFails = 0; renderRoom();
+        } catch (e) {
+            if (room !== r) return;
             if (e.message === 'no_room') roomGone('방이 사라졌습니다 (모두 나갔거나 3시간 만료).');
             else if (e.message === 'forbidden') roomGone('이 방의 자리가 사라졌습니다.');
             else if (++pollFails >= 2) $('oStatus').textContent = `연결이 끊겼습니다 — 다시 시도 중… (${pollFails})`;
@@ -600,6 +635,7 @@
     const namesOf = s => Object.fromEntries(slotsOf(s).map(k => [k, s.p[k].char.name]));
     function renderRoom() {
         const s = room.state, my = room.slot, mine = s.p[my], slots = slotsOf(s), alive = slots.filter(k => s.p[k].hp > 0);
+        if (!mine) return roomGone('이 방의 자리가 사라졌습니다.');
         const playing = s.status === 'playing', waiting = s.status === 'waiting';
         // 플레이어 판 (모두에게 같은 순서)
         $('oPlayers').innerHTML = slots.map(k => {
@@ -607,8 +643,8 @@
             return `<div class="card c${k}${k === my ? ' me' : ''}${p.hp <= 0 ? ' dead' : ''}"><span class="badge">${tags}</span>${cardHtml(p, k !== my)}</div>`;
         }).join('');
         $('oHostRow').style.display = waiting && my === s.host && !s.public ? '' : 'none';
-        $('btnOStart').disabled = slots.length < 2;
-        const submitted = !!s.myMove, iAmAlive = mine.hp > 0, canAct = playing && iAmAlive && !submitted;
+        $('btnOStart').disabled = slots.length < 2 || acting;
+        const submitted = !!s.myMove, iAmAlive = mine.hp > 0, canAct = playing && iAmAlive && !submitted && !acting;   // acting: 내 행동이 서버로 가는 동안 폴링이 버튼을 다시 열지 않게
         // 대상 선택 (살아 있는 다른 플레이어)
         const foes = alive.filter(k => k !== my);
         if (target && !foes.includes(target)) target = null;
@@ -623,7 +659,7 @@
         ['btnOAttack', 'btnODefend', 'btnOUlt'].forEach(id => $(id).style.display = playing && iAmAlive ? '' : 'none');
         // 로그
         const names = namesOf(s);
-        while (renderedRounds < s.log.length) { const r = s.log[renderedRounds++]; logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r)); }
+        for (const r of s.log) if (r.round > renderedRounds) { logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r)); renderedRounds = r.round; }   // 라운드 번호 기준 (서버가 로그를 40개로 자르므로 개수 기준이면 41라운드부터 안 그려짐)
         for (const r of s.log) {
             const key = `라운드${r.round}`, bubble = document.getElementById('gm-' + key);
             if (r.ai && bubble && !narrating.has(key) && !bubble.innerHTML.startsWith(r.narration)) bubble.innerHTML = r.narration + (r.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : '');   // 다른 플레이어의 크롬 AI 가 채운 서술
@@ -636,9 +672,10 @@
         if (waiting && s.public) $('oStatus').textContent = '랜덤 상대를 찾는 중… 다른 사람이 랜덤 대전을 누르면 바로 시작됩니다 (나가기로 취소)';
         else if (waiting) $('oStatus').textContent = my === s.host ? `${slots.length}명 입장 · 코드를 알려주고 2명 이상 모이면 시작을 누르세요 (최대 ${s.max || 6}명)` : `${slots.length}명 입장 · 방장이 시작하기를 기다리는 중…`;
         else if (s.status === 'finished') {
-            stopPoll(); $('oResult').style.display = '';
-            saveSess(null); refreshLeaderboard(true);
-            $('oResult').innerHTML = (s.winner === 0 ? '모두 쓰러졌다… 무승부' : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(s.p[s.winner].char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
+            stopPoll(); $('oResult').style.display = ''; $('oBtns').style.display = 'none';   // 결과 상자의 돌아가기만 남김 (나가기와 중복이었음)
+            if (!room.done) { room.done = true; saveSess(null); refreshLeaderboard(true); }
+            const winner = s.p[s.winner];
+            $('oResult').innerHTML = (s.winner === 0 || !winner ? '모두 쓰러졌다… 무승부' : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(winner.char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
             $('btnOBack').addEventListener('click', leaveRoom);
             $('oStatus').textContent = '';
         } else if (!iAmAlive) $('oStatus').textContent = `${mine.left ? '기권했습니다' : '쓰러졌습니다'}. 남은 ${alive.length}명의 싸움을 지켜보는 중… (라운드 ${s.round})`;
@@ -647,31 +684,33 @@
         else $('oStatus').textContent = `라운드 ${s.round} — 대상을 고르고 행동을 선언하세요` + (alive.length - missing.length > 0 ? ` (${alive.length - missing.length}/${alive.length}명 제출)` : '');
     }
     async function oAct(type) {
-        if (!room) return;
+        if (!room || acting) return;
+        const r = room; acting = true; roomSeq++;
         for (const id of ['btnOAttack', 'btnODefend', 'btnOUlt']) $(id).disabled = true;
         try {
             const text = $('oAction').value.trim();
             if (localMode() && text) $('oStatus').textContent = '내 크롬 AI가 심사 중…';
-            const local = localMode() && text ? await nanoJudgeAction(room.state.p[room.slot].char, type, text, target && room.state.p[target] ? room.state.p[target].char.name : '') : null;
-            const d = await api(`/api/rpg/rooms/${room.code}/action`, { token: room.token, type, target, text, local }); room.state = d.state; $('oAction').value = ''; renderRoom(); if (d.quotaBlocked && !nano.ready) $('oStatus').textContent = '오늘 AI 한도가 소진돼 사실만 기록됩니다.';
+            const local = localMode() && text ? await nanoJudgeAction(r.state.p[r.slot].char, type, text, target && r.state.p[target] ? r.state.p[target].char.name : '') : null;
+            const d = await api(`/api/rpg/rooms/${r.code}/action`, { token: r.token, type, target, text, local });
+            if (room !== r) return;
+            acting = false; room.state = d.state; $('oAction').value = ''; renderRoom(); if (d.quotaBlocked && !nano.ready) $('oStatus').textContent = '오늘 AI 한도가 소진돼 사실만 기록됩니다.';
         }
-        catch (e) { if (e.message === 'no_room') return roomGone(errMsg(e)); renderRoom(); if (e.message !== 'dead') $('oStatus').textContent = errMsg(e); }
+        catch (e) { if (room !== r) return; acting = false; if (e.message === 'no_room') return roomGone(errMsg(e)); renderRoom(); if (e.message !== 'dead') $('oStatus').textContent = errMsg(e); }
+        finally { if (room === r) acting = false; }
     }
     $('oTargets').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b || b.disabled) return; target = target === Number(b.dataset.t) ? null : Number(b.dataset.t); renderRoom(); });
     $('btnOAttack').addEventListener('click', () => oAct('attack'));
     $('btnODefend').addEventListener('click', () => oAct('defend'));
     $('btnOUlt').addEventListener('click', () => oAct('ult'));
-    $('btnOStart').addEventListener('click', async () => {
-        $('btnOStart').disabled = true;
-        try { const d = await api(`/api/rpg/rooms/${room.code}/start`, { token: room.token }); room.state = d.state; renderRoom(); }
-        catch (e) { $('oStatus').textContent = errMsg(e); $('btnOStart').disabled = false; }
-    });
-    $('btnOSkip').addEventListener('click', async () => {
-        $('btnOSkip').disabled = true;
-        try { const d = await api(`/api/rpg/rooms/${room.code}/action`, { token: room.token, skip: true }); room.state = d.state; renderRoom(); }
-        catch (e) { $('oStatus').textContent = errMsg(e); }
-        finally { $('btnOSkip').disabled = false; }
-    });
+    // 시작·건너뛰기도 같은 규칙: 보내는 동안 잠그고(acting → 폴링이 버튼을 다시 열지 않음), 응답이 왔을 때 아직 그 방인지 확인
+    async function roomCall(btn, sub, body) {
+        const r = room; if (!r || acting) return; acting = true; roomSeq++; $(btn).disabled = true;
+        try { const d = await api(`/api/rpg/rooms/${r.code}${sub}`, { token: r.token, ...body }); if (room !== r) return; acting = false; room.state = d.state; renderRoom(); }
+        catch (e) { if (room !== r) return; acting = false; if (e.message === 'no_room') return roomGone(errMsg(e)); renderRoom(); $('oStatus').textContent = errMsg(e); }
+        finally { if (room === r) { acting = false; $(btn).disabled = false; } }
+    }
+    $('btnOStart').addEventListener('click', () => roomCall('btnOStart', '/start', {}));
+    $('btnOSkip').addEventListener('click', () => roomCall('btnOSkip', '/action', { skip: true }));
     $('btnOLeave').addEventListener('click', leaveRoom);
     document.addEventListener('visibilitychange', () => { if (room && !document.hidden) poll(); });
     window.addEventListener('online', () => { if (room) poll(); });
@@ -694,7 +733,7 @@
     }
     function renderLeaderboard() {
         const d = lbData; if (!d) return;
-        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name"><b>${esc(r.name)}</b>${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint">${esc(r.tier || '')} ${esc(r.fiction || '')}</td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
+        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name"><b>${esc(r.name)}</b>${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint tier">${esc(r.tier || '')} <span class="fic">${esc(r.fiction || '')}</span></td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
         const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${d.mine.rank}</b>위 / ${d.total}명 · 승점 ${d.mine.score}` : '내 순위 — 첫 승리 후 집계') : '';
         const html = `<h3><span>순위표</span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
         document.querySelectorAll('[data-lb]').forEach(el => { el.innerHTML = html; });
@@ -705,13 +744,13 @@
     //   로그인하면 다른 기기에서도 캐릭터를 불러올 수 있고, 순위표에 구글 이름·사진이 붙는다. 로그인 없이도 플레이는 그대로 가능.
     const GOOGLE_CLIENT_ID = '939056708712-28dab6qo5k2ep1ss75ciukjskuss0ndv.apps.googleusercontent.com';   // Google Cloud Console(getapi) → OAuth 클라이언트 ID(웹). 비어 있으면 로그인 버튼 대신 안내만
     const GSESS = 'dreamrpg.google';
-    let gUser = null, gSession = localStorage.getItem(GSESS) || null;
+    let gUser = null, gSession = lsGet(GSESS) || null;
     let acctChars = [], guestOwnedElsewhere = false;   // 로그인한 계정의 캐릭터 목록 (최근 순) / 손님 캐릭터가 다른 계정 소유라 추가 불가
     function renderAccount() {
         const hint = $('accountHint');
         if (gUser) {
             const guest = readSlot(GUEST), guestLinked = guest && (acctChars.some(c => c.id === guest.id) || guestOwnedElsewhere);
-            const opts = acctChars.map(c => `<option value="${c.id}"${me && c.id === me.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.tier || '')} ${c.wins}승 ${c.losses}패</option>`).join('')
+            const opts = acctChars.map(c => `<option value="${esc(c.id)}"${me && c.id === me.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.tier || '')} ${c.wins}승 ${c.losses}패</option>`).join('')
                 + (guest && !guestLinked ? `<option value="__guest">손님 캐릭터를 계정에 추가</option>` : '') + `<option value="__new">+ 새 캐릭터 만들기</option>`;
             hint.innerHTML = `<b>${esc(gUser.name)}</b> <select id="charPick" title="캐릭터 교체">${opts}</select> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
             $('charPick').addEventListener('change', onPickChange);
@@ -722,50 +761,61 @@
         $('btnGoogle').style.display = gUser || !GOOGLE_CLIENT_ID ? 'none' : '';
         if (me) $('btnWake').textContent = gUser && acctChars.some(c => c.id === me.id) ? '이 캐릭터 삭제 (계정)' : '일어나기 (초기화)';
     }
+    // 방·전투를 두고 캐릭터를 바꾸거나 로그인·로그아웃할 때: 방은 나가기(기권 확인, 취소하면 false), 전투는 버림(세션만 지움 — 서버 전투는 6시간 뒤 만료)
+    async function dropPlay() {
+        if (room && !(await leaveRoom())) return false;
+        if (battle && battle.status === 'playing' && !confirm('진행 중인 전투는 여기서 끊깁니다. 계속할까요?')) return false;
+        battle = null; busy = false; saveSess(null); return true;
+    }
     async function onPickChange(e) {
         const v = e.target.value;
-        if (v === '__new') { $('char-name').value = ''; $('char-setting').value = ''; show('s-create'); $('createStatus').textContent = '새 캐릭터는 계정에 추가되고, 기존 캐릭터는 그대로 남습니다.'; return; }
+        if (me && v === me.id) return;
+        if (v === '__new') {
+            if (!(await dropPlay())) return renderAccount();   // 취소 → 드롭다운을 지금 캐릭터로 되돌림
+            $('char-name').value = ''; $('char-setting').value = ''; show('s-create'); $('createStatus').textContent = '새 캐릭터는 계정에 추가되고, 기존 캐릭터는 그대로 남습니다.'; return;
+        }
         if (v === '__guest') {   // 손님 캐릭터를 계정에 추가하고 그걸로 전환
             const g = readSlot(GUEST);
             try { await api(`/api/rpg/chars/${g.id}/link`, { token: g.token, session: gSession }); await refreshAcctChars(); await pickAccountChar(acctChars.find(c => c.id === g.id) || acctChars[0]); }
             catch (err) { if (err.message === 'owned') { guestOwnedElsewhere = true; renderAccount(); } else alert(errMsg(err)); }
             return;
         }
-        const c = acctChars.find(x => x.id === v); if (c) await pickAccountChar(c);
+        const c = acctChars.find(x => x.id === v); if (c) { if (!(await pickAccountChar(c))) renderAccount(); }
     }
     async function pickAccountChar(c) {
-        if (room) await leaveRoom(); battle = null; saveSess(null);
-        localStorage.setItem(ACCT, JSON.stringify({ id: c.id, token: c.token }));
+        if (!(await dropPlay())) return false;
+        lsSet(ACCT, JSON.stringify({ id: c.id, token: c.token }));
         await loadMe(ACCT); if (me) goHome(); else show('s-create');
-        renderAccount(); refreshLeaderboard(true);
+        renderAccount(); refreshLeaderboard(true); return true;
     }
     async function refreshAcctChars() { const d = await api('/api/rpg/me?session=' + encodeURIComponent(gSession)); gUser = d.user; acctChars = d.chars || []; }
     async function logout() {
-        const t = gSession; gSession = null; gUser = null; acctChars = []; localStorage.removeItem(GSESS);
+        if (!(await dropPlay())) return;                       // 방 나가기를 취소하면 로그아웃도 취소
+        const t = gSession; gSession = null; gUser = null; acctChars = []; lsDel(GSESS);
         if (t) api('/api/rpg/auth/logout', { session: t }).catch(() => {});
-        if (room) await leaveRoom(); battle = null; saveSess(null);
         await loadMe(GUEST);                                   // 로그인 전에 쓰던 손님 캐릭터로 복귀
-        renderAccount(); if (me) goHome(); else show('s-create'); refreshLeaderboard(true); refreshQuota();
+        renderAccount(); $('createStatus').textContent = ''; if (me) goHome(); else show('s-create'); refreshLeaderboard(true); refreshQuota();
     }
     // 로그인 직후: 계정에 캐릭터가 없으면(최초 로그인) 지금 손님 캐릭터가 계정 캐릭터가 된다(서버가 연결). 있으면 계정 캐릭터로 전환하고 손님 캐릭터는 그대로 둔다
     async function onGoogleCredential(resp) {
+        if (!(await dropPlay())) return;                       // 손님 캐릭터로 하던 방·전투는 계정 캐릭터로 이어갈 수 없어 먼저 정리
         try {
             const guest = readSlot(GUEST);
             const d = await api('/api/rpg/auth/google', { credential: resp.credential, access_token: resp.access_token, charId: guest?.id, token: guest?.token });
-            gSession = d.session; gUser = d.user; acctChars = d.chars || []; localStorage.setItem(GSESS, gSession);
+            gSession = d.session; gUser = d.user; acctChars = d.chars || []; lsSet(GSESS, gSession);
             await enterAccount(); refreshLeaderboard(true); refreshQuota();
         } catch (e) { alert('로그인 실패: ' + errMsg(e)); }
     }
     // 계정 캐릭터 선택: 이전에 고른 것 → 최근 것 → 없으면 손님 캐릭터 그대로(있으면) / 만들기 화면
     async function enterAccount() {
         const prev = readSlot(ACCT), pick = acctChars.find(c => prev && c.id === prev.id) || acctChars[0];
-        if (pick) { localStorage.setItem(ACCT, JSON.stringify({ id: pick.id, token: pick.token })); await loadMe(ACCT); }
-        else { localStorage.removeItem(ACCT); await loadMe(GUEST); }
+        if (pick) { lsSet(ACCT, JSON.stringify({ id: pick.id, token: pick.token })); await loadMe(ACCT); }
+        else { lsDel(ACCT); await loadMe(GUEST); }
         renderAccount();
         if (me) { if (!(await resumeSession())) goHome(); } else show('s-create');
     }
     async function initGoogle() {
-        if (gSession) { try { await refreshAcctChars(); } catch (e) { if (e.message !== 'net') { gSession = null; localStorage.removeItem(GSESS); } } }
+        if (gSession) { try { await refreshAcctChars(); } catch (e) { if (e.message !== 'net') { gSession = null; lsDel(GSESS); } } }
         if (gUser) { await enterAccount(); return true; }
         renderAccount();
         if (!GOOGLE_CLIENT_ID) return false;
@@ -774,6 +824,7 @@
         $('btnGoogle').addEventListener('click', () => {
             if (!window.google?.accounts?.oauth2) return alert('Google 스크립트를 아직 불러오지 못했습니다. 잠시 뒤 다시 눌러주세요.');
             tokenClient ||= google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: 'openid email profile', callback: r => { if (r.access_token) onGoogleCredential({ access_token: r.access_token }); ; }, error_callback: e => { if (e?.type !== 'popup_closed') alert('로그인 실패: ' + (e?.type || '')); } });
+            $('btnGoogle').disabled = true; setTimeout(() => $('btnGoogle').disabled = false, 3000);   // 팝업이 뜨는 동안 연타 방지
             tokenClient.requestAccessToken();
         });
         return false;
