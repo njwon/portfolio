@@ -638,7 +638,7 @@ function buildStats(alloc, coherence, tier = 1, power = 20, jitter = false) {
     spd: Math.round(a.spd),                                          // 선공 판정
     acc: Math.round(60 + a.acc * 0.35),                              // 60 ~ 95
     eva: Math.min(45, Math.round(a.eva * 0.3 + Math.max(0, m - 1) * 5)),
-    stability: Math.round((0.55 + c / 100 * 0.45) * 100) / 100,      // 일관성 → 기술 발동 안정성 0.55 ~ 1.0 (명중률 계수)
+    stability: Math.round((0.55 + c / 100 * 0.45) * 100) / 100,      // 일관성 → 개연성 0.55 ~ 1.0 (명중률 계수, 화면 표기 '개연성')
     coherence: c, power: pw, tier: POWER_TIER(pw), mult: Math.round(m * 100) / 100,
   };
 }
