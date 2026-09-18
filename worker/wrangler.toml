@@ -5,7 +5,7 @@ compatibility_date = "2024-09-23"
 [vars]
 VELOG_USERNAME = "njw"
 # DREAM RPG Google 로그인: OAuth 클라이언트 ID(웹). 비어 있으면 aud 검사를 건너뜀 — 발급 후 여기와 projects/textrpg/index.html 의 GOOGLE_CLIENT_ID 에 같이 넣는다
-GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "939056708712-28dab6qo5k2ep1ss75ciukjskuss0ndv.apps.googleusercontent.com"
 
 # SYNC_SECRET 은 Cloudflare Dashboard > Workers > Settings > Variables 에서 설정하세요
 

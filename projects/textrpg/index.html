@@ -668,7 +668,7 @@
     // ── Google 로그인 (OAuth2 / OpenID Connect via Google Identity Services) ──────────────────────
     //   흐름: GIS 버튼 → ID 토큰(JWT) → 서버가 구글 tokeninfo 로 검증하고 세션 발급 → 캐릭터를 계정에 연결.
     //   로그인하면 다른 기기에서도 캐릭터를 불러올 수 있고, 순위표에 구글 이름·사진이 붙는다. 로그인 없이도 플레이는 그대로 가능.
-    const GOOGLE_CLIENT_ID = '';   // Google Cloud Console → OAuth 클라이언트 ID(웹). 비어 있으면 로그인 버튼 대신 안내만
+    const GOOGLE_CLIENT_ID = '939056708712-28dab6qo5k2ep1ss75ciukjskuss0ndv.apps.googleusercontent.com';   // Google Cloud Console(getapi) → OAuth 클라이언트 ID(웹). 비어 있으면 로그인 버튼 대신 안내만
     const GSESS = 'dreamrpg.google';
     let gUser = null, gSession = localStorage.getItem(GSESS) || null;
     let acctChars = [], guestOwnedElsewhere = false;   // 로그인한 계정의 캐릭터 목록 (최근 순) / 손님 캐릭터가 다른 계정 소유라 추가 불가
