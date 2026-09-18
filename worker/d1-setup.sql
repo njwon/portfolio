@@ -90,3 +90,11 @@ ALTER TABLE rpg_chars ADD COLUMN score INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE rpg_chars ADD COLUMN name TEXT;
 CREATE INDEX IF NOT EXISTS idx_rpg_chars_score ON rpg_chars(score);
 CREATE INDEX IF NOT EXISTS idx_rpg_chars_user ON rpg_chars(user_sub);
+-- DREAM RPG: 비로그인 개인 몫의 주체가 되는 기기 ID (IP 당 하루 5개까지 인정)
+CREATE TABLE IF NOT EXISTS rpg_device (
+  device  TEXT PRIMARY KEY,
+  ip      TEXT NOT NULL,
+  created INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rpg_device_ip ON rpg_device(ip, created);
+ALTER TABLE rpg_chars ADD COLUMN updated INTEGER;

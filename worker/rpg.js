@@ -83,14 +83,14 @@ const MAX_NEURONS_PER_CALL = Math.ceil(1500 * MODELS[0].nin + MAX_TOKENS * MODEL
 const DAILY_BUDGET = 9000;
 // 사용자(IP)별 몫: 전체 무료 용량을 '최근 24시간 활동 IP 수'(하한 USERS_MIN)로 나눠 배분하고, 제공자별 초기화 시각에 맞춰 충전한다.
 //   · Workers AI·OpenRouter: UTC 자정(한국 09:00)에 하루 몫 충전   · Gemini: 태평양 자정(한국 16~17시)에 충전
-//   이용자 수는 최근 24시간에 AI 를 호출한 IP 수(하한 1). 혼자면 상한(IP_CAP_MAX)까지, 늘어나면 자동으로 나뉜다
+//   이용자 수는 최근 24시간에 AI 를 호출한 주체(계정·기기·IP) 수(하한 1). 혼자면 상한(IP_CAP_MAX)까지, 늘어나면 자동으로 나뉜다
 //   · Groq·Mistral: 토큰 버킷(1 요청/86.4초/모델)이라 시간에 비례해 계속 충전
 //   버킷 상한 = 하루 몫(IP_CAP_MIN~IP_CAP_MAX). 새 IP 는 상한만큼 갖고 시작.
 const USERS_MIN = 1, IP_CAP_MIN = 20, IP_CAP_MAX = 1200;   // 이용자 수 = 최근 24시간에 실제로 AI 를 호출한 IP 수 (본인 포함)
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Device, X-Session, X-Token' };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
 const today = () => new Date().toISOString().slice(0, 10);
 const clip = (s, n) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, n);
@@ -99,6 +99,20 @@ const rnd = () => Math.random();
 const uid = () => crypto.randomUUID();
 
 const MAX_BODY = 64 * 1024;
+const DEV_PER_IP = 5, DEV_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function identity(env, request, ip, body) {
+  const session = request.headers.get('X-Session') || body.session;
+  if (session) { const sub = await sessionUser(env, session); if (sub) return 'acct:' + sub; }
+  const dev = String(request.headers.get('X-Device') || body.device || '');
+  if (DEV_ID_RE.test(dev)) {
+    const now = Date.now();
+    const known = await env.DB.prepare('SELECT ip FROM rpg_device WHERE device = ?').bind(dev).first();
+    if (known) return 'dev:' + dev;
+    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_device WHERE ip = ? AND created > ?').bind(ip, now - 86400e3).first();
+    if ((n?.n ?? 0) < DEV_PER_IP) { await env.DB.prepare('INSERT OR IGNORE INTO rpg_device (device, ip, created) VALUES (?, ?, ?)').bind(dev, ip, now).run(); return 'dev:' + dev; }
+  }
+  return 'ip:' + ip;   // 기기 ID 없음(옛 클라이언트·봇) 또는 한 IP 에서 기기 ID 남발 → IP 공용 몫
+}
 const rl = new Map();   // ip|group → [timestamps]
 function rateLimited(ip, group, limit, windowMs = 60e3) {
   const k = ip + '|' + group, now = Date.now(), arr = (rl.get(k) || []).filter(t => now - t < windowMs);
@@ -120,8 +134,11 @@ export async function handleRpg(request, env, path) {
     const group = /\/chars$/.test(path) ? ['create', 12] : /\/(rooms|match)$/.test(path) ? ['room', 20] : /\/auth\//.test(path) ? ['auth', 10] : ['act', 150];
     if (rateLimited(ip, group[0], group[1])) return json({ error: 'rate', retryAfter: 60 }, 429);
   }
+  // 개인 몫의 주인: 로그인했으면 계정(sub) → 아니면 브라우저가 만든 기기 ID → 그것도 없거나 한 IP 에서 기기 ID 를 너무 많이 만들면 IP
+  //   (MAC 주소는 브라우저·서버 어디서도 볼 수 없다. 기기 ID 는 저장소를 지우면 새로 생기므로 IP 당 하루 DEV_PER_IP 개까지만 인정)
+  const who = await identity(env, request, ip, body);
   let mm;
-  if (path === '/api/rpg/quota' && m === 'GET') return json(pubQuota(await quota(env, ip)));
+  if (path === '/api/rpg/quota' && m === 'GET') return json(pubQuota(await quota(env, who)));
   if (path === '/api/rpg/aitest' && m === 'GET') {   // 운영자 점검: 특정 제공자로 서술 1회 (RPG_ADMIN_KEY 시크릿 필요, 한도에 포함)
     if (!env.RPG_ADMIN_KEY || url.searchParams.get('key') !== env.RPG_ADMIN_KEY) return json({ error: 'forbidden' }, 403);
     const pv = PROVIDERS.find(x => x.id === url.searchParams.get('provider'));
@@ -137,25 +154,26 @@ export async function handleRpg(request, env, path) {
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
-  if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, ip);
-  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], url.searchParams.get('token'), env);
+  if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
+  const qtok = request.headers.get('X-Token') || url.searchParams.get('token');   // 토큰은 헤더로 (쿼리는 로그에 남으므로 호환용)
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], qtok, env);
   if (path === '/api/rpg/battles' && m === 'POST') return createBattle(body, env);
   if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave|narrate))?$/))) {
     const [, id, sub] = mm;
-    if (!sub && m === 'GET') return getBattle(id, url.searchParams.get('token'), env);
-    if (sub === 'turn' && m === 'POST') return battleTurn(id, body, env, ip);
+    if (!sub && m === 'GET') return getBattle(id, qtok, env);
+    if (sub === 'turn' && m === 'POST') return battleTurn(id, body, env, who);
     if (sub === 'leave' && m === 'POST') return leaveBattle(id, body, env);
     if (sub === 'narrate' && m === 'POST') return narrateBattle(id, body, env);
   }
-  if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env);
-  if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env);
+  if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env, false, who);
+  if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env, who);
   if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave|narrate))?$/))) {
     const [, code, sub] = mm;
-    if (!sub && m === 'GET') return getRoom(code, url.searchParams.get('token'), env);
-    if (sub === 'join' && m === 'POST') return joinRoom(code, body, env);
+    if (!sub && m === 'GET') return getRoom(code, qtok, env);
+    if (sub === 'join' && m === 'POST') return joinRoom(code, body, env, who);
     if (sub === 'start' && m === 'POST') return startRoom(code, body, env);
-    if (sub === 'action' && m === 'POST') return roomAction(code, body, env, ip);
-    if (sub === 'leave' && m === 'POST') return leaveRoom(code, body, env, ip);
+    if (sub === 'action' && m === 'POST') return roomAction(code, body, env, who);
+    if (sub === 'leave' && m === 'POST') return leaveRoom(code, body, env, who);
     if (sub === 'narrate' && m === 'POST') return narrateRoom(code, body, env);
   }
   return json({ error: 'Not Found' }, 404);
@@ -183,7 +201,7 @@ async function quota(env, ip) {
   return {
     day, resetsAt: Date.parse(day + 'T00:00:00Z') + 86400e3,
     global: { budget: DAILY_BUDGET, used: Math.round(used), remaining: Math.round(remaining), estCalls, capacity, perCall: Math.round(perCall * 10) / 10, requests: g?.requests ?? 0 },
-    ip: { limit: b.cap, used: b.used, remaining: Math.floor(b.tokens), users: b.users, refills: b.refills },
+    ip: { limit: b.cap, used: b.used, remaining: Math.floor(b.tokens), users: b.users, refills: b.refills, scope: ip.startsWith('acct:') ? 'account' : ip.startsWith('dev:') ? 'device' : 'ip' },
     providers, active: active?.id || null, exhausted: estCalls <= 0, _bucket: b,
   };
 }
@@ -226,14 +244,24 @@ async function ipBucket(env, ip, providers) {
     refills: [{ name: g.utc.name, at: g.utc.next, add: share('utc') }, { name: g.pt.name, at: g.pt.next, add: share('pt') }, { name: g.cont.name, perHour: Math.round(g.cont.perDay / users / 24 * 10) / 10 }] };
 }
 // 카운터 증감 (delta = +1 예약 / -1 환불). Workers AI 는 rpg_quota, 나머지는 rpg_provider. IP 는 공통
-async function bump(env, day, ip, providerId, delta, b) {
-  const stmts = [];
+async function bumpProvider(env, day, providerId, delta) { const stmts = []; pushProviderStmt(stmts, env, day, providerId, delta); await env.DB.batch(stmts); }
+function pushProviderStmt(stmts, env, day, providerId, delta) {
   if (providerId === 'cf') stmts.push(delta > 0
     ? env.DB.prepare('INSERT INTO rpg_quota (day, neurons, requests) VALUES (?, 0, 1) ON CONFLICT(day) DO UPDATE SET requests = requests + 1').bind(day)
     : env.DB.prepare('UPDATE rpg_quota SET requests = MAX(0, requests - 1) WHERE day = ?').bind(day));
   else stmts.push(delta > 0
     ? env.DB.prepare('INSERT INTO rpg_provider (day, provider, requests) VALUES (?, ?, 1) ON CONFLICT(day, provider) DO UPDATE SET requests = requests + 1').bind(day, providerId)
     : env.DB.prepare('UPDATE rpg_provider SET requests = MAX(0, requests - 1) WHERE day = ? AND provider = ?').bind(day, providerId));
+}
+// 분담 결제: 충전 반영한 현재 값에서 share 만큼 빼서 저장 (환불이면 더함)
+async function chargeShare(env, who, b, amount) {
+  await env.DB.prepare('INSERT INTO rpg_ip_bucket (ip, tokens, updated, used) VALUES (?, ?, ?, 1) ON CONFLICT(ip) DO UPDATE SET tokens = ?, updated = ?, used = used + ?')
+    .bind(who, b.tokens - amount, b.now, b.tokens - amount, b.now, amount > 0 ? 1 : 0).run();
+  b.tokens -= amount;
+}
+async function bump(env, day, ip, providerId, delta, b) {
+  const stmts = [];
+  pushProviderStmt(stmts, env, day, providerId, delta);
   // 사용자 버킷: 예약이면 (충전 반영한 값 - 1) 로 저장, 환불이면 +1
   stmts.push(delta > 0
     ? env.DB.prepare('INSERT INTO rpg_ip_bucket (ip, tokens, updated, used) VALUES (?, ?, ?, 1) ON CONFLICT(ip) DO UPDATE SET tokens = ?, updated = ?, used = used + 1').bind(ip, b.tokens - 1, b.now, b.tokens - 1, b.now)
@@ -247,19 +275,29 @@ async function record(env, usage, model) {
 }
 // AI 호출 한 번: IP 한도 확인 → 남은 제공자 순서대로 예약·호출, 실패하면 환불하고 다음 제공자 (최대 3곳)
 //   → { ok, parsed, raw, provider } | { ok: false, reason: 'ip' | 'exhausted' | 'failed' }
+// ip 가 배열이면(방 판정) 참가자 전원이 1/N 씩 낸다 — 몫이 남은 사람들끼리 나누고, 아무도 없으면 'ip' 사유로 막힘
 async function aiCall(env, ip, system, user, temperature) {
-  const q = await quota(env, ip);
-  if (q.ip.remaining <= 0) return { ok: false, reason: 'ip' };
+  const payers = Array.isArray(ip) ? [...new Set(ip.filter(Boolean))] : null;
+  const q = await quota(env, payers ? payers[0] : ip);
+  let split = null;
+  if (payers) {
+    const buckets = await Promise.all(payers.map(async w => [w, await ipBucket(env, w, q.providers)]));
+    const able = buckets.filter(([, b]) => b.tokens > 0);
+    if (!able.length) return { ok: false, reason: 'ip' };
+    split = able.map(([w, b]) => [w, b, 1 / able.length]);
+  } else if (q.ip.remaining <= 0) return { ok: false, reason: 'ip' };
+  const charge = async delta => { for (const [w, b, share] of split) await chargeShare(env, w, b, delta * share); };
   let tried = 0;
   for (const p of q.providers) {
     if (!p.configured || (p.remaining <= 0 && !p.probe) || paused(p.id)) continue;
-    await bump(env, q.day, ip, p.id, +1, q._bucket); q._bucket = { ...q._bucket, tokens: q._bucket.tokens - 1 };
+    if (split) { await bumpProvider(env, q.day, p.id, +1); await charge(+1); }
+    else { await bump(env, q.day, ip, p.id, +1, q._bucket); q._bucket = { ...q._bucket, tokens: q._bucket.tokens - 1 }; }
     try {
       const out = await ask(env, PROVIDERS.find(x => x.id === p.id), system, user, temperature);
       if (p.id === 'cf') await record(env, out.usage, out.model);
       return { ok: true, parsed: out.parsed, raw: out.raw, provider: p.id };
     } catch (e) {
-      await bump(env, q.day, ip, p.id, -1, q._bucket);
+      if (split) { await bumpProvider(env, q.day, p.id, -1); await charge(-1); } else await bump(env, q.day, ip, p.id, -1, q._bucket);
       // 지역 불가(Gemini, 송신 지점에 따라 간헐적)는 쿨다운 없이 다음 제공자로 — 다음 호출은 다른 지점에서 나가 성공할 수 있다
       if (!/User location/i.test(e.message) && (p.id !== 'cf' || !/quota|limit|429/i.test(e.message))) {
         const plan = / 402 |payment_required|limit-req-minute: 0|"code":"1300"/i.test(e.message);   // 결제·플랜 문제 → 길게 쉼
@@ -301,12 +339,13 @@ async function userInfo(env, sub) {
 }
 // Google Identity Services 가 준 ID 토큰을 구글 tokeninfo 로 검증 (서명·만료 확인은 구글이 함) → aud 가 우리 클라이언트 ID 인지 확인
 async function authGoogle(body, env) {
+  if (!env.GOOGLE_CLIENT_ID) return json({ error: 'auth_disabled' }, 503);   // 클라이언트 ID 없이는 aud 를 검증할 수 없으므로 로그인 자체를 막는다
   const cred = String(body.credential || '');
   if (!cred) return json({ error: 'bad_request' }, 400);
   let info;
   try { const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred)); if (!r.ok) return json({ error: 'bad_token' }, 401); info = await r.json(); }
   catch { return json({ error: 'ai_failed' }, 502); }
-  if (env.GOOGLE_CLIENT_ID && info.aud !== env.GOOGLE_CLIENT_ID) return json({ error: 'bad_aud' }, 401);
+  if (info.aud !== env.GOOGLE_CLIENT_ID) return json({ error: 'bad_aud' }, 401);
   if (!info.sub || (info.exp && Number(info.exp) * 1000 < Date.now())) return json({ error: 'bad_token' }, 401);
   const now = Date.now();
   await env.DB.prepare('INSERT INTO rpg_users (sub, email, name, picture, created, last) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture, last = excluded.last')
@@ -647,8 +686,11 @@ async function narrateRoom(code, body, env) {
   for (let i = 0; i < 3; i++) {
     const r = await loadRoom(env, code);
     if (!r) return json({ error: 'no_room' }, 404);
-    if (!slotOf(r.s, body.token)) return json({ error: 'forbidden' }, 403);
-    const ok = await fillNarration(r.s.log.find(l => l.round === Number(body.round)), body.narration, env);
+    const mySlot = slotOf(r.s, body.token);
+    if (!mySlot) return json({ error: 'forbidden' }, 403);
+    const entry = r.s.log.find(l => l.round === Number(body.round));
+    if (entry && entry.resolver && mySlot !== entry.resolver && mySlot !== r.s.host) return json({ error: 'forbidden' }, 403);   // 판정 요청자나 방장만 서술을 채울 수 있다
+    const ok = await fillNarration(entry, body.narration, env);
     if (!ok) return json({ ok: false });
     if (await saveRoom(env, code, r.s, r.v)) return json({ ok: true });
   }
@@ -664,11 +706,12 @@ async function loadChar(env, id, token) {
 }
 // 승점 = PvE 승 1점 + PvP 승 3점 (순위표). 컬럼에 같이 써서 정렬 쿼리가 JSON 을 열지 않게 한다
 const scoreOf = c => (c.wins || 0) + (c.pvpWins || 0) * 2;
-async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
+async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, Date.now(), c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
 
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
+  if (Math.random() < 0.05) await env.DB.prepare('DELETE FROM rpg_chars WHERE user_sub IS NULL AND score = 0 AND COALESCE(updated, created) < ?').bind(Date.now() - 90 * 86400e3).run();   // 손님·무승·90일 미사용 캐릭터 정리
   const mod = await moderate(env, name + '\n' + setting);
   if (!mod.ok) return json({ error: 'policy', reason: mod.reason, label: mod.label }, 400);
   const r = await aiCall(env, ip, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2);
@@ -810,24 +853,24 @@ async function saveRoom(env, code, s, v) {
 }
 const slotOf = (s, t) => Number(Object.keys(s.tokens).find(k => s.tokens[k] === t)) || 0;
 function pub(s, slot) {
-  const { tokens, ...rest } = s;
+  const { tokens, who, ...rest } = s;
   rest.log = s.log.map((l, i) => i < s.log.length - 2 && l.narrateUser ? { ...l, narrateUser: undefined } : l);   // 최근 2라운드만 로컬 서술 프롬프트 포함 (폴링 응답 크기)
   const moves = {}; for (const k in s.p) moves[k] = !!s.moves[k];
   const firstAt = Math.min(...Object.values(s.moves).map(m => m.at || Infinity));
   return { ...rest, you: slot, moves, myMove: s.moves[slot] || null, waitingSince: Number.isFinite(firstAt) ? firstAt : null, max: ROOM_MAX };
 }
-async function createRoom(body, env, isPublic = false) {
+async function createRoom(body, env, isPublic = false, who = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_rooms WHERE updated < ?').bind(Date.now() - ROOM_TTL).run();
   const code = code6(), rt = uid(), now = Date.now();
-  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined };
+  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, who: { 1: who }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined };
   await env.DB.prepare('INSERT INTO rpg_rooms (code, created, updated, state) VALUES (?, ?, ?, ?)').bind(code, now, now, JSON.stringify(s)).run();
   return json({ code, roomToken: rt, slot: 1, state: pub(s, 1) });
 }
 // 랜덤 대전(1:1): 최근 2분 안에 만들어진 공개 대기 방 중 하나에 들어가 바로 시작. 없으면 공개 방을 만들고 기다린다 (방장 시작 불필요)
 const MATCH_FRESH_MS = 2 * 60e3;
-async function matchRoom(body, env) {
+async function matchRoom(body, env, who = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   const rows = await env.DB.prepare('SELECT code, state, updated FROM rpg_rooms WHERE updated > ? ORDER BY updated ASC LIMIT 30').bind(Date.now() - MATCH_FRESH_MS).all();
@@ -836,14 +879,14 @@ async function matchRoom(body, env) {
     if (!s.public || s.status !== 'waiting' || Object.keys(s.p).length !== 1) continue;
     if (s.p[1].char.id === c.id) return json({ code: s.code, roomToken: s.tokens[1], slot: 1, state: pub(s, 1), rejoined: true });   // 내가 만든 대기 방
     const rt = uid();
-    s.p[2] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[2] = rt;
+    s.p[2] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[2] = rt; (s.who ||= {})[2] = who;
     s.status = 'playing'; s.round = 1;   // 둘이 모이면 바로 시작
     if (await saveRoom(env, s.code, s, row.updated)) return json({ code: s.code, roomToken: rt, slot: 2, state: pub(s, 2), matched: true });
     // 동시에 다른 사람이 들어갔으면 다음 방으로
   }
-  return createRoom(body, env, true);
+  return createRoom(body, env, true, who);
 }
-async function joinRoom(code, body, env) {
+async function joinRoom(code, body, env, who = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   const r = await loadRoom(env, code);
@@ -856,7 +899,7 @@ async function joinRoom(code, body, env) {
   if (s.public) return json({ error: 'no_room' }, 404);   // 랜덤 매칭용 공개 방은 코드로 못 들어감
   if (Object.keys(s.p).length >= ROOM_MAX) return json({ error: 'full' }, 409);
   const slot = [1, 2, 3, 4, 5, 6].find(k => !s.p[k]), rt = uid();
-  s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt;
+  s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who;
   if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
   return json({ code, roomToken: rt, slot, state: pub(s, slot) });
 }
@@ -917,9 +960,10 @@ async function settleRoom(env, ip, code, s, v, slot) {
   let quotaBlocked = null;
   if (alive.length > 1) {
     const prevLog = s.log[s.log.length - 1], nm = {}; for (const k in s.p) nm[k] = s.p[k].char.name;
-    const t = await runRound(env, ip, s.p, s.moves, { round: s.round, prev: prevLog ? factsText(nm, prevLog.events).replace(/\n/g, ' / ') : '' });
+    const payers = aliveSlots(s.p).map(k => s.who?.[k]).filter(Boolean);   // 살아 있는 참가자 전원이 1/N 씩 (몫 주인을 모르는 옛 방이면 판정 요청자)
+    const t = await runRound(env, payers.length ? payers : ip, s.p, s.moves, { round: s.round, prev: prevLog ? factsText(nm, prevLog.events).replace(/\n/g, ' / ') : '' });
     const acts = {}; for (const k in s.moves) { const { local, ...a } = s.moves[k]; acts[k] = a; }
-    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser });
+    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, resolver: slot });
     if (s.log.length > 40) s.log.shift();
     quotaBlocked = t.quotaBlocked;
   }
