@@ -14,6 +14,11 @@
  *
  * 라우트:
  *   GET  /api/rpg/quota                          → 제공자별 남은 횟수 · exhausted (전부 소진 시 클라이언트가 크롬 내장 AI 로 대체)
+ *   GET  /api/rpg/leaderboard?charId=            → 승점 상위 20 + 내 순위 (승점 = PvE 승 1 + PvP 승 3)
+ *   POST /api/rpg/auth/google                    { credential, charId?, token? } → Google ID 토큰 검증 → { session, user, chars }  (캐릭터를 계정에 연결)
+ *   GET  /api/rpg/me?session=                    → { user, chars }   (다른 기기에서 캐릭터 복구)
+ *   POST /api/rpg/auth/logout                    { session }
+ *   POST /api/rpg/chars/:id/link                 { token, session }  (기존 캐릭터를 로그인 계정에 연결)
  *   GET  /api/rpg/prompts                        → 클라이언트 로컬 AI 가 쓸 시스템 프롬프트 (서버와 동일)
  *   POST /api/rpg/chars                          { name, setting }            → { char, token }
  *   GET  /api/rpg/chars/:id?token=
@@ -106,6 +111,11 @@ export async function handleRpg(request, env, path) {
     try { const out = await ask(env, pv, SYS_NARRATE, '[p1] 노정원 (평범한 고등학생) — 설정: 유도를 한다\n행동: 공격 → 대상: 검사 / 선언: "업어치기"\n\n[확정된 결과]\n노정원 → 검사: 공격 명중(70%, 난이도 쉬움) → 피해 87\n남은 HP: 노정원 600/600, 검사 433/520', 0.9); return json({ ok: true, provider: pv.id, ms: Date.now() - t0, parsed: out.parsed, raw: out.raw, usage: out.usage }); }
     catch (e) { return json({ ok: false, provider: pv.id, ms: Date.now() - t0, error: e.message }, 502); }
   }
+  if (path === '/api/rpg/leaderboard' && m === 'GET') return leaderboard(env, url.searchParams.get('charId'));
+  if (path === '/api/rpg/auth/google' && m === 'POST') return authGoogle(body, env);
+  if (path === '/api/rpg/auth/logout' && m === 'POST') { await env.DB.prepare('DELETE FROM rpg_sessions WHERE token = ?').bind(String(body.session || '')).run(); return json({ ok: true }); }
+  if (path === '/api/rpg/me' && m === 'GET') return me(env, url.searchParams.get('session'));
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, ip);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], url.searchParams.get('token'), env);
@@ -239,6 +249,64 @@ async function aiCall(env, ip, system, user, temperature) {
     }
   }
   return { ok: false, reason: tried ? 'failed' : 'exhausted' };
+}
+
+// ─── 순위표 · Google 로그인 ────────────────────────────────────────
+let lbCache = { at: 0, rows: [] };
+async function leaderboard(env, charId) {
+  if (Date.now() - lbCache.at > 20e3) {
+    const r = await env.DB.prepare('SELECT c.id, c.name, c.score, c.json, u.name AS owner, u.picture FROM rpg_chars c LEFT JOIN rpg_users u ON u.sub = c.user_sub WHERE c.score > 0 ORDER BY c.score DESC, c.created ASC LIMIT 20').all();
+    lbCache = { at: Date.now(), rows: (r?.results || []).map((row, i) => { const c = JSON.parse(row.json); return { rank: i + 1, id: row.id, name: c.name, owner: row.owner || null, picture: row.picture || null, score: row.score, tier: c.stats?.tier || null, fiction: c.fiction, wins: c.wins || 0, losses: c.losses || 0, pvpWins: c.pvpWins || 0 }; }) };
+  }
+  let mine = null;
+  if (charId) {
+    const row = await env.DB.prepare('SELECT score FROM rpg_chars WHERE id = ?').bind(charId).first();
+    if (row) { const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_chars WHERE score > ?').bind(row.score).first(); mine = { rank: (n?.n ?? 0) + 1, score: row.score }; }
+  }
+  const total = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_chars WHERE score > 0').first();
+  return json({ rows: lbCache.rows, mine, total: total?.n ?? 0 });
+}
+async function sessionUser(env, session) {
+  if (!session) return null;
+  const row = await env.DB.prepare('SELECT sub FROM rpg_sessions WHERE token = ? AND created > ?').bind(String(session), Date.now() - 90 * 86400e3).first();
+  return row?.sub || null;
+}
+async function userChars(env, sub) {
+  const r = await env.DB.prepare('SELECT id, token, json FROM rpg_chars WHERE user_sub = ? ORDER BY created DESC LIMIT 10').bind(sub).all();
+  return (r?.results || []).map(row => { const c = JSON.parse(row.json); return { id: row.id, token: row.token, name: c.name, fiction: c.fiction, tier: c.stats?.tier, wins: c.wins, losses: c.losses, created: c.created }; });
+}
+async function userInfo(env, sub) {
+  const u = await env.DB.prepare('SELECT sub, email, name, picture FROM rpg_users WHERE sub = ?').bind(sub).first();
+  return u ? { name: u.name, picture: u.picture, email: u.email } : null;
+}
+// Google Identity Services 가 준 ID 토큰을 구글 tokeninfo 로 검증 (서명·만료 확인은 구글이 함) → aud 가 우리 클라이언트 ID 인지 확인
+async function authGoogle(body, env) {
+  const cred = String(body.credential || '');
+  if (!cred) return json({ error: 'bad_request' }, 400);
+  let info;
+  try { const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred)); if (!r.ok) return json({ error: 'bad_token' }, 401); info = await r.json(); }
+  catch { return json({ error: 'ai_failed' }, 502); }
+  if (env.GOOGLE_CLIENT_ID && info.aud !== env.GOOGLE_CLIENT_ID) return json({ error: 'bad_aud' }, 401);
+  if (!info.sub || (info.exp && Number(info.exp) * 1000 < Date.now())) return json({ error: 'bad_token' }, 401);
+  const now = Date.now();
+  await env.DB.prepare('INSERT INTO rpg_users (sub, email, name, picture, created, last) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture, last = excluded.last')
+    .bind(info.sub, info.email || null, clip(info.name || info.email || '플레이어', 40), info.picture || null, now, now).run();
+  const session = uid();
+  await env.DB.prepare('INSERT INTO rpg_sessions (token, sub, created) VALUES (?, ?, ?)').bind(session, info.sub, now).run();
+  if (body.charId && body.token) { const c = await loadChar(env, body.charId, body.token); if (c) await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(info.sub, c.id).run(); }   // 지금 쓰던 캐릭터를 계정에 연결
+  return json({ session, user: await userInfo(env, info.sub), chars: await userChars(env, info.sub) });
+}
+async function me(env, session) {
+  const sub = await sessionUser(env, session);
+  if (!sub) return json({ error: 'forbidden' }, 403);
+  return json({ user: await userInfo(env, sub), chars: await userChars(env, sub) });
+}
+async function linkChar(id, body, env) {
+  const sub = await sessionUser(env, body.session);
+  const c = await loadChar(env, id, body.token);
+  if (!sub || !c) return json({ error: 'forbidden' }, 403);
+  await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(sub, id).run();
+  return json({ ok: true });
 }
 
 // ─── 검열 (이용 정책) ─────────────────────────────────────────────
@@ -555,7 +623,9 @@ async function loadChar(env, id, token) {
   if (!row || row.token !== token) return null;
   return JSON.parse(row.json);
 }
-async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ? WHERE id = ?').bind(JSON.stringify(c), c.id).run(); }
+// 승점 = PvE 승 1점 + PvP 승 3점 (순위표). 컬럼에 같이 써서 정렬 쿼리가 JSON 을 열지 않게 한다
+const scoreOf = c => (c.wins || 0) + (c.pvpWins || 0) * 2;
+async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
 
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
@@ -580,7 +650,9 @@ async function createChar(body, env, ip) {
     wins: 0, losses: 0, created: Date.now(),
   };
   const token = uid();
-  await env.DB.prepare('INSERT INTO rpg_chars (id, token, json, created) VALUES (?, ?, ?, ?)').bind(c.id, token, JSON.stringify(c), c.created).run();
+  // 로그인 세션이 있으면 캐릭터를 계정에 연결 (다른 기기에서 복구·순위표 이름 표시)
+  const sub = body.session ? await sessionUser(env, body.session) : null;
+  await env.DB.prepare('INSERT INTO rpg_chars (id, token, json, created, score, name, user_sub) VALUES (?, ?, ?, ?, 0, ?, ?)').bind(c.id, token, JSON.stringify(c), c.created, c.name, sub).run();
   return json({ char: publicChar(c), token, quota: pubQuota(await quota(env, ip)) });
 }
 async function getChar(id, token, env) {
@@ -814,7 +886,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
   const left = aliveSlots(s.p);
   if (left.length <= 1) {
     s.status = 'finished'; s.winner = left[0] || 0;
-    for (const k in s.p) { const c = s.p[k].char; if (s.winner === Number(k)) c.wins++; else c.losses++; await saveChar(env, c); }
+    for (const k in s.p) { const c = s.p[k].char; if (s.winner === Number(k)) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } await saveChar(env, c); }
   } else s.round++;
   s.moves = {}; s.busy = false;
   await saveRoom(env, code, s, v2);

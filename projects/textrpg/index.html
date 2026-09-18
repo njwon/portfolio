@@ -14,6 +14,8 @@
     <link rel="icon" href="../../img/favicon.png" />
     <link rel="preload" href="font/DeathMohawk.subset.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preconnect" href="https://blog-api.njwon19.workers.dev">
+    <!-- Google 로그인 (Google Identity Services). 클라이언트 ID 는 아래 GOOGLE_CLIENT_ID 상수 -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         @font-face {
             font-family: 'rock';
@@ -109,6 +111,19 @@
         .plist .c1 { border-color: #75fa69; } .plist .c2 { border-color: #ea36af; } .plist .c3 { border-color: #69c9fa; }
         .plist .c4 { border-color: #fae069; } .plist .c5 { border-color: #c98cff; } .plist .c6 { border-color: #ff9c6b; }
         button.mini { padding: .3rem .7rem; font-size: 13px; }
+        /* 계정 줄 (Google 로그인) */
+        .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin: -6px 0 12px; font-size: 13px; min-height: 32px; }
+        .account img { width: 26px; height: 26px; border-radius: 50%; }
+        .account .gsi { min-height: 32px; }
+        /* 순위표 */
+        .lb { border: 0.5px dashed #eee; border-radius: 4px; padding: 10px 12px; margin: 14px 0 0; animation-name: boxflicker; }
+        .lb h3 { margin: 0 0 6px; font-size: 1rem; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+        .lb table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .lb td, .lb th { padding: 3px 6px; text-align: left; white-space: nowrap; }
+        .lb th { font-weight: normal; opacity: .6; font-size: 11px; }
+        .lb td.n { text-align: right; opacity: .8; } .lb td.name { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; }
+        .lb tr.me td { background: #333; }
+        .lb img { width: 16px; height: 16px; border-radius: 50%; vertical-align: -3px; margin-right: 4px; }
         .targets { display: flex; gap: 8px; flex-wrap: wrap; }
         .targets button { flex: 1 1 120px; padding: .55rem .6rem; font-size: .95rem; background: transparent; color: #eee; border: 0.5px dashed #eee; }
         .targets button.on { background: #eee; color: #1d1d1d; border-style: solid; }
@@ -137,6 +152,9 @@
             <span id="quotaIp" class="hint"></span>
         </div>
 
+        <!-- 계정: Google 로그인 → 캐릭터를 계정에 묶어 다른 기기에서 복구, 순위표에 이름 표시 -->
+        <div class="account" id="account"><span class="hint" id="accountHint"></span><div class="gsi" id="gsiBtn"></div></div>
+
         <!-- 1. 캐릭터 만들기 -->
         <section class="screen active" id="s-create">
             <div class="div-group">
@@ -160,6 +178,7 @@
                 <button id="btnOnline">온라인 대전</button>
                 <button id="btnWake" class="ghost">일어나기 (초기화)</button>
             </div>
+            <div class="lb" data-lb></div>
         </section>
 
         <!-- 3. AI 전투 -->
@@ -182,6 +201,7 @@
             <p class="status" id="bStatus"></p>
             <div class="result" id="bResult" style="display:none"></div>
             <div class="btn-row" id="bEnd" style="display:none"><button id="btnBattleBack">돌아가기</button></div>
+            <div class="lb" data-lb></div>
         </section>
 
         <!-- 4. 온라인 대전 로비 -->
@@ -216,6 +236,7 @@
             </div>
             <div class="btn-row" id="oBtns"><button id="btnOAttack">공격</button><button id="btnODefend">방어</button><button id="btnOUlt">필살기 <span class="hint" id="oUlt"></span></button><button id="btnOSkip" class="ghost" style="display:none">안 낸 사람 건너뛰기</button><button id="btnOLeave" class="ghost">나가기</button></div>
             <div class="result" id="oResult" style="display:none"></div>
+            <div class="lb" data-lb></div>
         </section>
     </div>
 
@@ -355,7 +376,7 @@
     }
     function goHome() {
         $('homeCard').innerHTML = cardHtml({ char: me, hp: me.stats.hp, gauge: 0 }, false, `<br><span class="hint">${esc(me.info)}</span>${me.powerReason ? `<br><span class="hint">심사관: ${esc(me.powerReason)}</span>` : ''}${me.luck?.table ? `<br><span class="hint">등급 주사위 (심사 위력 ${me.luck.judged}): ${me.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(me.luck.tier)}</b>${me.luck.moved === 'up' ? ' ⬆ 상승!' : me.luck.moved === 'down' ? ' ⬇ 하락' : ''}</span>` : ''}<br><span class="hint">전적 ${me.wins}승 ${me.losses}패 · 일관성 ${me.stats.coherence}</span>`);
-        show('s-home');
+        show('s-home'); refreshLeaderboard();
     }
     $('btnCreate').addEventListener('click', async () => {
         const name = $('char-name').value.trim(), setting = $('char-setting').value.trim();
@@ -365,7 +386,7 @@
         try {
             let local = null;
             if (localMode()) { $('btnCreate').textContent = '내 크롬 AI가 읽는 중…'; local = await nanoJudgeChar(name, setting); }
-            const d = await api('/api/rpg/chars', { name, setting, local }); me = d.char; myToken = d.token; saveMe(); goHome();
+            const d = await api('/api/rpg/chars', { name, setting, local, session: gSession }); me = d.char; myToken = d.token; saveMe(); goHome(); refreshLeaderboard(true);
         }
         catch (e) { $('createStatus').textContent = errMsg(e); }
         finally { $('btnCreate').textContent = '몽상 시작!'; applyQuota(quotaState); }
@@ -446,7 +467,7 @@
             logLine($('bLog'), roundHtml(`턴 ${last.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, last));
             $('bAction').value = ''; $('bStatus').textContent = d.quotaBlocked && !nano.ready ? '오늘 AI 한도가 소진돼 사실만 기록됩니다.' : '';
             narrateLocally(last, `턴${last.turn}`, `/api/rpg/battles/${battle.id}/narrate`, { token: myToken, turn: last.turn });
-            if (battle.status === 'finished') endBattle();
+            if (battle.status === 'finished') { endBattle(); refreshLeaderboard(true); }
         } catch (e) {
             $('bStatus').textContent = errMsg(e);
             if (e.message === 'no_battle' || e.message === 'forbidden') { saveSess(null); $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bEnd').style.display = ''; }   // 만료 → 돌아가기만 남김
@@ -558,7 +579,7 @@
         else if (waiting) $('oStatus').textContent = my === s.host ? `${slots.length}명 입장 · 코드를 알려주고 2명 이상 모이면 시작을 누르세요 (최대 ${s.max || 6}명)` : `${slots.length}명 입장 · 방장이 시작하기를 기다리는 중…`;
         else if (s.status === 'finished') {
             stopPoll(); $('oResult').style.display = '';
-            saveSess(null);
+            saveSess(null); refreshLeaderboard(true);
             $('oResult').innerHTML = (s.winner === 0 ? '모두 쓰러졌다… 무승부' : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(s.p[s.winner].char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
             $('btnOBack').addEventListener('click', leaveRoom);
             $('oStatus').textContent = '';
@@ -606,8 +627,61 @@
         saveSess(null); return false;
     }
 
+    // ── 순위표 (승점 = PvE 승 1 + PvP 승 3). 홈·전투·온라인 화면 아래에 같은 표를 그린다 ──
+    let lbData = null, lbAt = 0;
+    async function refreshLeaderboard(force = false) {
+        if (!force && Date.now() - lbAt < 20000) return renderLeaderboard();
+        try { lbData = await api('/api/rpg/leaderboard' + (me ? '?charId=' + me.id : '')); lbAt = Date.now(); } catch {}
+        renderLeaderboard();
+    }
+    function renderLeaderboard() {
+        const d = lbData; if (!d) return;
+        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name">${r.picture ? `<img src="${esc(r.picture)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(r.name)}</b>${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint">${esc(r.tier || '')} ${esc(r.fiction || '')}</td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
+        const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${d.mine.rank}</b>위 / ${d.total}명 · 승점 ${d.mine.score}` : '내 순위 — 첫 승리 후 집계') : '';
+        const html = `<h3><span>🏆 순위표</span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
+        document.querySelectorAll('[data-lb]').forEach(el => { el.innerHTML = html; });
+    }
+
+    // ── Google 로그인 (OAuth2 / OpenID Connect via Google Identity Services) ──────────────────────
+    //   흐름: GIS 버튼 → ID 토큰(JWT) → 서버가 구글 tokeninfo 로 검증하고 세션 발급 → 캐릭터를 계정에 연결.
+    //   로그인하면 다른 기기에서도 캐릭터를 불러올 수 있고, 순위표에 구글 이름·사진이 붙는다. 로그인 없이도 플레이는 그대로 가능.
+    const GOOGLE_CLIENT_ID = '';   // Google Cloud Console → OAuth 클라이언트 ID(웹). 비어 있으면 로그인 버튼 대신 안내만
+    const GSESS = 'dreamrpg.google';
+    let gUser = null, gSession = localStorage.getItem(GSESS) || null;
+    function renderAccount() {
+        const hint = $('accountHint');
+        if (gUser) hint.innerHTML = `${gUser.picture ? `<img src="${esc(gUser.picture)}" alt="" referrerpolicy="no-referrer">` : ''}<b>${esc(gUser.name)}</b> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
+        else hint.innerHTML = GOOGLE_CLIENT_ID ? '<span class="hint">로그인하면 캐릭터가 계정에 저장돼 다른 기기에서도 이어 하고, 순위표에 이름이 붙습니다.</span>' : '<span class="hint">Google 로그인 준비 중</span>';
+        $('gsiBtn').style.display = gUser || !GOOGLE_CLIENT_ID ? 'none' : '';
+        if ($('btnLogout')) $('btnLogout').addEventListener('click', async () => { const t = gSession; gSession = null; gUser = null; localStorage.removeItem(GSESS); renderAccount(); if (t) api('/api/rpg/auth/logout', { session: t }).catch(() => {}); });
+    }
+    async function onGoogleCredential(resp) {
+        try {
+            const d = await api('/api/rpg/auth/google', { credential: resp.credential, charId: me?.id, token: myToken });
+            gSession = d.session; gUser = d.user; localStorage.setItem(GSESS, gSession);
+            await adoptAccountChars(d.chars); renderAccount(); refreshLeaderboard(true);
+        } catch (e) { $('accountHint').textContent = '로그인 실패: ' + errMsg(e); }
+    }
+    // 계정에 묶인 캐릭터가 있고 지금 캐릭터가 없으면 가장 최근 것을 이어서 쓴다
+    async function adoptAccountChars(chars) {
+        if (me || !chars?.length) return;
+        const c = chars[0]; localStorage.setItem('dreamrpg.v2', JSON.stringify({ id: c.id, token: c.token }));
+        await loadMe(); if (me) goHome();
+    }
+    async function initGoogle() {
+        if (gSession) { try { const d = await api('/api/rpg/me?session=' + encodeURIComponent(gSession)); gUser = d.user; await adoptAccountChars(d.chars); if (me && myToken) api(`/api/rpg/chars/${me.id}/link`, { token: myToken, session: gSession }).catch(() => {}); } catch { gSession = null; localStorage.removeItem(GSESS); } }
+        renderAccount();
+        if (!GOOGLE_CLIENT_ID || gUser) return;
+        const tryInit = () => {
+            if (!window.google?.accounts?.id) return setTimeout(tryInit, 300);
+            google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential, auto_select: false, ux_mode: 'popup' });
+            google.accounts.id.renderButton($('gsiBtn'), { theme: 'filled_black', size: 'medium', text: 'signin_with', shape: 'pill', locale: 'ko' });
+        };
+        tryInit();
+    }
+
     // ── 시작 ─────────────────────────────────────────────────────────
-    (async () => { await nanoCheck(); await refreshQuota(); await loadMe(); if (me && !(await resumeSession())) goHome(); setInterval(refreshQuota, 60000); })();
+    (async () => { await nanoCheck(); await refreshQuota(); await loadMe(); await initGoogle(); if (me && !(await resumeSession())) goHome(); refreshLeaderboard(true); setInterval(refreshQuota, 60000); setInterval(() => refreshLeaderboard(), 30000); })();
     </script>
 </body>
 

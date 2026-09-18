@@ -71,3 +71,22 @@ CREATE TABLE IF NOT EXISTS rpg_ip_bucket (
   updated INTEGER NOT NULL,
   used    INTEGER NOT NULL DEFAULT 0
 );
+-- DREAM RPG: Google 로그인 계정·세션, 캐릭터 ↔ 계정 연결, 순위표용 승점 컬럼
+CREATE TABLE IF NOT EXISTS rpg_users (
+  sub     TEXT PRIMARY KEY,
+  email   TEXT,
+  name    TEXT,
+  picture TEXT,
+  created INTEGER NOT NULL,
+  last    INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS rpg_sessions (
+  token   TEXT PRIMARY KEY,
+  sub     TEXT NOT NULL,
+  created INTEGER NOT NULL
+);
+ALTER TABLE rpg_chars ADD COLUMN user_sub TEXT;
+ALTER TABLE rpg_chars ADD COLUMN score INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE rpg_chars ADD COLUMN name TEXT;
+CREATE INDEX IF NOT EXISTS idx_rpg_chars_score ON rpg_chars(score);
+CREATE INDEX IF NOT EXISTS idx_rpg_chars_user ON rpg_chars(user_sub);
