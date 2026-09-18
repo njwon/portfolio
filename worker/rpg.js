@@ -38,7 +38,7 @@
  *   POST /api/rpg/rooms/:code/start              { token }                    (방장, 2명 이상)
  *   POST /api/rpg/rooms/:code/action             { token, type, text, target } | { token, skip: true }   (전원 제출 시 판정, 60초 미제출은 건너뛰기, 3연속이면 기권)
  *   POST /api/rpg/rooms/:code/narrate            { token, round, narration }  (위와 같음, 방 전원에게 공유)
- *   POST /api/rpg/rooms/:code/leave              { token }                    (대기 중: 자리 비움·방장 승계 / 진행 중: 기권 / 마지막 사람이면 방 삭제)
+ *   POST /api/rpg/rooms/:code/leave              { token }                    (대기 중: 자리 비움·방장 승계 / 진행 중: 기권(판정 중이면 끝날 때까지 잠깐 대기) / 끝난 방: 자리는 남기고 토큰만 정리, 마지막 사람이면 방 삭제)
  */
 
 // 모델 후보 (앞에서부터 시도, 계정에서 막힌 모델(5018)이면 다음으로). 뉴런 = 달러 / 0.011 per 1k 뉴런
@@ -258,10 +258,10 @@ function pushProviderStmt(stmts, env, day, providerId, delta) {
     ? env.DB.prepare('INSERT INTO rpg_provider (day, provider, requests) VALUES (?, ?, 1) ON CONFLICT(day, provider) DO UPDATE SET requests = requests + 1').bind(day, providerId)
     : env.DB.prepare('UPDATE rpg_provider SET requests = MAX(0, requests - 1) WHERE day = ? AND provider = ?').bind(day, providerId));
 }
-// 분담 결제: 충전 반영한 현재 값에서 share 만큼 빼서 저장 (환불이면 더함)
+// 분담 결제: 충전 반영한 현재 값에서 share 만큼 빼서 저장 (환불이면 더하고 used 도 되돌림 — bump 의 환불과 같게)
 async function chargeShare(env, who, b, amount) {
-  await env.DB.prepare('INSERT INTO rpg_ip_bucket (ip, tokens, updated, used) VALUES (?, ?, ?, 1) ON CONFLICT(ip) DO UPDATE SET tokens = ?, updated = ?, used = used + ?')
-    .bind(who, b.tokens - amount, b.now, b.tokens - amount, b.now, amount > 0 ? 1 : 0).run();
+  await env.DB.prepare('INSERT INTO rpg_ip_bucket (ip, tokens, updated, used) VALUES (?, ?, ?, 1) ON CONFLICT(ip) DO UPDATE SET tokens = ?, updated = ?, used = MAX(0, used + ?)')
+    .bind(who, b.tokens - amount, b.now, b.tokens - amount, b.now, amount > 0 ? 1 : -1).run();
   b.tokens -= amount;
 }
 async function bump(env, day, ip, providerId, delta, b) {
@@ -302,11 +302,12 @@ async function aiCall(env, ip, system, user, temperature) {
       if (p.id === 'cf') await record(env, out.usage, out.model);
       return { ok: true, parsed: out.parsed, raw: out.raw, provider: p.id };
     } catch (e) {
-      if (split) { await bumpProvider(env, q.day, p.id, -1); await charge(-1); } else await bump(env, q.day, ip, p.id, -1, q._bucket);
+      const msg = String(e?.message ?? e);   // AbortError·문자열 throw 도 안전하게
+      if (split) { await bumpProvider(env, q.day, p.id, -1); await charge(-1); } else { await bump(env, q.day, ip, p.id, -1, q._bucket); q._bucket = { ...q._bucket, tokens: q._bucket.tokens + 1 }; }   // 환불하면 메모리 버킷도 되돌림 (다음 제공자 예약이 2 를 빼지 않게)
       // 지역 불가(Gemini, 송신 지점에 따라 간헐적)는 쿨다운 없이 다음 제공자로 — 다음 호출은 다른 지점에서 나가 성공할 수 있다
-      if (!/User location/i.test(e.message) && (p.id !== 'cf' || !/quota|limit|429/i.test(e.message))) {
-        const plan = / 402 |payment_required|limit-req-minute: 0|"code":"1300"/i.test(e.message);   // 결제·플랜 문제 → 길게 쉼
-        failedAt[p.id] = { at: Date.now(), until: Date.now() + (plan ? PLAN_COOLDOWN : PROVIDER_COOLDOWN), why: e.message.slice(0, 120) };
+      if (!/User location/i.test(msg) && (p.id !== 'cf' || !/quota|limit|429/i.test(msg))) {
+        const plan = / 402 |payment_required|limit-req-minute: 0|"code":"1300"/i.test(msg);   // 결제·플랜 문제 → 길게 쉼
+        failedAt[p.id] = { at: Date.now(), until: Date.now() + (plan ? PLAN_COOLDOWN : PROVIDER_COOLDOWN), why: msg.slice(0, 120) };
       }
       if (++tried >= 3) break;
     }
@@ -320,9 +321,9 @@ async function aiCall(env, ip, system, user, temperature) {
 async function setAuto(id, body, env) {
   const c = await loadChar(env, id, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
-  c.auto = !!body.on;
-  await env.DB.prepare('UPDATE rpg_chars SET json = ?, auto = ? WHERE id = ?').bind(JSON.stringify(c), c.auto ? 1 : 0, id).run();
-  return json({ ok: true, auto: c.auto });
+  const on = !!body.on;
+  await env.DB.prepare('UPDATE rpg_chars SET auto = ? WHERE id = ?').bind(on ? 1 : 0, id).run();   // JSON 은 건드리지 않는다 (같은 순간 끝난 전투의 전적을 덮어쓰지 않게)
+  return json({ ok: true, auto: on });
 }
 async function autoInfo(env, charId) {
   const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_chars WHERE auto = 1').first();
@@ -337,14 +338,17 @@ async function autoInfo(env, charId) {
 async function recordAutoResult(env, st, c) {
   await env.DB.prepare('INSERT INTO rpg_auto_log (id, a_id, a_name, b_id, b_name, winner, rounds, mode, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
     .bind(uid(), c.id, c.name, st.foeId, st.foe.char.name, st.winner === 1 ? c.id : st.foeId, st.turn, 'online', Date.now()).run();
-  // 상대(AI 조종)도 전적에 반영
-  const row = await env.DB.prepare('SELECT json FROM rpg_chars WHERE id = ?').bind(st.foeId).first();
-  if (row) { const f = JSON.parse(row.json); if (st.winner === 1) { f.losses++; f.autoLosses = (f.autoLosses || 0) + 1; } else { f.wins++; f.autoWins = (f.autoWins || 0) + 1; f.pvpWins = (f.pvpWins || 0) + 0.5; } await saveChar(env, f); }
+  // 상대(AI 조종)도 전적에 반영 — 이기면 cron 자동 전투와 똑같이 보상도 받는다 (부재 중 성장)
+  await updateChar(env, st.foeId, f => {
+    if (st.winner === 1) { f.losses++; f.autoLosses = (f.autoLosses || 0) + 1; }
+    else { f.wins++; f.autoWins = (f.autoWins || 0) + 1; f.pvpWins = (f.pvpWins || 0) + 0.5; applyReward(f, rollReward(f, c, 'auto')); }
+  });
 }
 // cron: 참가자 최대 30명을 섞어 짝지어 최대 40라운드 자동 전투 (템플릿 서술만, AI 호출 없음)
 export async function runAutoBattles(env) {
   const r = await env.DB.prepare('SELECT id, json FROM rpg_chars WHERE auto = 1 ORDER BY RANDOM() LIMIT 30').all();
-  const list = (r?.results || []).map(x => ({ id: x.id, c: JSON.parse(x.json) }));
+  const list = [];
+  for (const x of (r?.results || [])) { try { const c = JSON.parse(x.json); if (c?.stats?.hp > 0) list.push({ id: x.id, c }); } catch { /* 깨진 JSON 은 건너뜀 */ } }
   let played = 0;
   for (let i = 0; i + 1 < list.length; i += 2) {
     const A = list[i], B = list[i + 1];
@@ -354,9 +358,11 @@ export async function runAutoBattles(env) {
     const winner = players[1].hp > 0 && players[2].hp <= 0 ? A : players[2].hp > 0 && players[1].hp <= 0 ? B : null;
     for (const X of [A, B]) {
       if (!winner) continue;
-      if (X === winner) { X.c.wins++; X.c.autoWins = (X.c.autoWins || 0) + 1; X.c.pvpWins = (X.c.pvpWins || 0) + 0.5; const rw = rollReward(X.c, (X === A ? B : A).c, 'auto'); X.c.stats.hp = Math.min(6000, X.c.stats.hp + rw.hp); X.c.stats.atk = Math.min(800, X.c.stats.atk + rw.atk); }
-      else { X.c.losses++; X.c.autoLosses = (X.c.autoLosses || 0) + 1; }
-      await saveChar(env, X.c);
+      // 목록을 읽은 뒤 끝난 온라인 전투·방의 결과를 덮어쓰지 않게, 지금 DB 에 있는 JSON 에 델타만 적용 (보너스 능력치도 온라인 승리와 동일)
+      await updateChar(env, X.id, c => {
+        if (X === winner) { c.wins++; c.autoWins = (c.autoWins || 0) + 1; c.pvpWins = (c.pvpWins || 0) + 0.5; applyReward(c, rollReward(c, (X === A ? B : A).c, 'auto')); }
+        else { c.losses++; c.autoLosses = (c.autoLosses || 0) + 1; }
+      });
     }
     await env.DB.prepare('INSERT INTO rpg_auto_log (id, a_id, a_name, b_id, b_name, winner, rounds, mode, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .bind(uid(), A.id, A.c.name, B.id, B.c.name, winner ? winner.id : null, round, 'offline', Date.now()).run();
@@ -407,13 +413,15 @@ async function authGoogle(body, env) {
       const u = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + at } }); if (u.ok) { const ui = await u.json(); info = { ...info, sub: ui.sub || info.sub, email: ui.email || info.email, name: ui.name, picture: ui.picture, email_verified: String(ui.email_verified ?? info.email_verified ?? 'true') }; }
       if (info.expires_in !== undefined && Number(info.expires_in) <= 0) return json({ error: 'bad_token' }, 401);
     }
-  } catch { return json({ error: 'ai_failed' }, 502); }
+  } catch { return json({ error: 'bad_token' }, 502); }   // 구글 검증 서버에 못 닿음 (AI 오류가 아니므로 bad_token 으로 안내)
+  if (!info || typeof info !== 'object') return json({ error: 'bad_token' }, 401);
   if (info.aud !== env.GOOGLE_CLIENT_ID) return json({ error: 'bad_aud' }, 401);
   if (!info.sub || (info.exp && Number(info.exp) * 1000 < Date.now())) return json({ error: 'bad_token' }, 401);
+  if (String(info.email_verified) === 'false') return json({ error: 'bad_token' }, 401);   // 거절할 계정은 DB 에 만들지 않는다
   const now = Date.now();
   await env.DB.prepare('INSERT INTO rpg_users (sub, email, name, picture, created, last) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET email = excluded.email, name = excluded.name, picture = excluded.picture, last = excluded.last')
-    .bind(info.sub, info.email || null, clip(info.name || info.email || '플레이어', 40), null, now, now).run();   // 프로필 사진은 저장하지 않음
-  if (info.email_verified === 'false') return json({ error: 'bad_token' }, 401);
+    .bind(String(info.sub), info.email || null, clip(info.name || info.email || '플레이어', 40), null, now, now).run();   // 프로필 사진은 저장하지 않음
+  info.sub = String(info.sub);
   const session = uid();
   await env.DB.batch([
     env.DB.prepare('DELETE FROM rpg_sessions WHERE created < ?').bind(now - 90 * 86400e3),   // 만료 세션 정리
@@ -537,7 +545,7 @@ async function ask(env, provider, system, user, temperature) {
         throw new Error(provider.id + ' ' + res.status + ' ' + msg);
       }
       const data = await res.json();
-      const text = data.choices?.[0]?.message?.content ?? '';
+      const text = String(data.choices?.[0]?.message?.content ?? '');
       if (!text) throw new Error(provider.id + ' empty');
       const clean = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/<thought>[\s\S]*?<\/thought>/g, '').replace(/^[\s\S]*<\/thought>/, '');   // Gemma 4 · qwen 생각 블록 제거
       return { parsed: lenientJson(clean), usage: data.usage, model: provider, raw: clean.slice(0, 400) };
@@ -553,8 +561,8 @@ async function ask(env, provider, system, user, temperature) {
       // 모델마다 응답 형태가 다르다: { response } | OpenAI 호환 { choices:[{message:{content}}] } | { output_text }
       const text = typeof res === 'string' ? res
         : (res.response ?? res.choices?.[0]?.message?.content ?? res.output_text ?? res.result?.response ?? '');
-      const parsed = lenientJson(text.replace(/<think>[\s\S]*?<\/think>/g, ''));
-      return { parsed, usage: res?.usage, model, raw: text.slice(0, 400) };
+      const parsed = lenientJson(String(text ?? '').replace(/<think>[\s\S]*?<\/think>/g, ''));
+      return { parsed, usage: res?.usage, model, raw: String(text ?? '').slice(0, 400) };
     } catch (e) {
       if (/5018|not allowed|No such model|not found/i.test(e.message) && i + 1 < MODELS.length) continue;   // 이 계정에서 막힌 모델 → 다음 후보
       throw e;
@@ -656,7 +664,7 @@ function resolveRound(players, acts, judge = {}) {
     const foe = players[tk];
     const isUlt = act.type === 'ult' && me.gauge >= ULT_COST;
     if (act.type === 'ult' && !isUlt) events.push({ who: k, type: 'ult_fail' });
-    const s = me.char.stats, t = foe.char.stats, style = ULT_STYLES[me.char.ult.style] || ULT_STYLES.burst;
+    const s = me.char.stats, t = foe.char.stats, style = ULT_STYLES[me.char.ult?.style] || ULT_STYLES.burst;
     const acc = s.acc + (isUlt && style.accBonus ? style.accBonus : 0);
     const dmod = diff <= -1 ? -1 : (!allowed ? DIFF_MOD.hard : diff);   // 불가능 → 자동 실패, 불허 → 기본 공격 + 어려움
     const chance = dmod <= -1 ? 0 : Math.min(0.95, Math.max(0.05, (acc - t.eva) / 100 * s.stability + dmod));
@@ -695,10 +703,11 @@ function templateNarration(names, events) {
 const actLabel = t => t === 'defend' ? '방어' : t === 'ult' ? '필살기' : '공격';
 function charLine(k, p, act, names) {
   const tgt = act.target && names[act.target] ? ` → 대상: ${names[act.target]}` : '';
-  return `[p${k}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult.name}: ${p.char.ult.effect}
+  return `[p${k}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult?.name || '혼신의 일격'}: ${p.char.ult?.effect || '온 힘을 담은 한 방'}
 행동: ${actLabel(act.type)}${tgt} / 선언: "${act.text || '기본 공격'}"`;
 }
 // ctx: { round, prev } — 라운드 번호와 직전 라운드 요약을 GM 에게 넘겨 "첫 라운드"라고 반복하지 않게 한다
+const safeAi = (...a) => aiCall(...a).catch(() => ({ ok: false, reason: 'failed' }));   // 한도 조회 등이 던져도 라운드는 진행 (규칙 엔진이 이미 HP 를 바꾼 뒤일 수 있다)
 async function runRound(env, ip, players, acts, ctx = {}) {
   const names = {}; for (const k in players) if (players[k]) names[k] = players[k].char.name;
   const slots = aliveSlots(players);
@@ -710,7 +719,7 @@ async function runRound(env, ip, players, acts, ctx = {}) {
   const needJudge = slots.some(k => acts[k]?.text);
   if (needJudge) {
     const user = slots.map(k => charLine(k, players[k], acts[k] || { type: 'attack' }, names)).join('\n\n');
-    const r = await aiCall(env, ip, SYS_JUDGE_ACTION, user, 0.2);
+    const r = await safeAi(env, ip, SYS_JUDGE_ACTION, user, 0.2);
     if (r.ok) { provider = r.provider; for (const k of slots) { const p = r.parsed?.['p' + k]; if (p && !judge[k].policy) judge[k] = clampJudge(p); } }
     else {
       quotaBlocked = r.reason;
@@ -723,7 +732,7 @@ async function runRound(env, ip, players, acts, ctx = {}) {
   const head = ctx.round ? `현재 ${ctx.round}라운드${ctx.round === 1 ? ' (전투 시작)' : ' (전투는 이미 진행 중 — "첫 라운드"·"전투가 시작되자" 같은 표현 금지)'}${ctx.prev ? `\n직전 라운드 요약: ${ctx.prev}` : ''}\n\n` : '';
   const narrateUser = head + slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
     + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
-  const r2 = await aiCall(env, ip, SYS_NARRATE, narrateUser, 0.9);
+  const r2 = await safeAi(env, ip, SYS_NARRATE, narrateUser, 0.9);
   if (r2.ok) { provider = provider || r2.provider; if (r2.parsed?.narration) { narration = safeHtml(r2.parsed.narration); usedAi = true; } }
   else quotaBlocked = quotaBlocked || r2.reason;
   // 서술을 못 얻었으면 클라이언트 로컬 AI 가 이어받을 수 있게 프롬프트를 남긴다 (서술이 채워지면 제거)
@@ -737,20 +746,23 @@ async function fillNarration(entry, narration, env) {
   return true;
 }
 async function narrateBattle(id, body, env) {
-  const row = await env.DB.prepare('SELECT state FROM rpg_battles WHERE id = ?').bind(id).first();
+  const row = await env.DB.prepare('SELECT state, updated FROM rpg_battles WHERE id = ?').bind(id).first();
   if (!row) return json({ error: 'no_battle' }, 404);
   const st = JSON.parse(row.state);
   if (!(await loadChar(env, st.charId, body.token))) return json({ error: 'forbidden' }, 403);
-  const ok = await fillNarration(st.log.find(l => l.turn === Number(body.turn)), body.narration, env);
-  if (ok) await env.DB.prepare('UPDATE rpg_battles SET state = ? WHERE id = ?').bind(JSON.stringify(st), id).run();
+  if (isBusy(st)) return json({ ok: false });   // 턴 판정 중이면 그 결과를 덮어쓰지 않는다
+  let ok = await fillNarration(st.log.find(l => l.turn === Number(body.turn)), body.narration, env);
+  // 낙관적 잠금: 그 사이 턴이 진행됐으면(updated 변경) 옛 상태로 덮어쓰지 않고 포기
+  if (ok) ok = (await env.DB.prepare('UPDATE rpg_battles SET state = ? WHERE id = ? AND updated = ?').bind(JSON.stringify(st), id, row.updated).run()).meta.changes === 1;
   return json({ ok });
 }
 async function narrateRoom(code, body, env) {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 4; i++) {
     const r = await loadRoom(env, code);
     if (!r) return json({ error: 'no_room' }, 404);
     const mySlot = slotOf(r.s, body.token);
     if (!mySlot) return json({ error: 'forbidden' }, 403);
+    if (isBusy(r.s)) { await sleep(700); continue; }   // 라운드 판정 중 — 끝난 뒤에 채운다 (판정자의 최종 저장과 충돌 방지)
     const entry = r.s.log.find(l => l.round === Number(body.round));
     if (entry && entry.resolver && mySlot !== entry.resolver && mySlot !== r.s.host) return json({ error: 'forbidden' }, 403);   // 판정 요청자나 방장만 서술을 채울 수 있다
     const ok = await fillNarration(entry, body.narration, env);
@@ -763,10 +775,27 @@ async function narrateRoom(code, body, env) {
 // ─── 캐릭터 ─────────────────────────────────────────────────────────
 function publicChar(c) { return c; }
 async function loadChar(env, id, token) {
+  if (typeof id !== 'string' || !id || typeof token !== 'string' || !token) return null;   // undefined 를 bind 하면 D1 이 던진다(500) → 그냥 인증 실패
   const row = await env.DB.prepare('SELECT token, json FROM rpg_chars WHERE id = ?').bind(id).first();
   if (!row || row.token !== token) return null;
   return JSON.parse(row.json);
 }
+// 전적·보상 반영: 방·전투·cron 이 들고 있던 스냅샷이 아니라 지금 DB 에 있는 최신 JSON 에 적용해 저장한다
+//   (스냅샷으로 덮어쓰면 그 사이 다른 곳(PvE·cron·다른 방)에서 얻은 승수·보상이 지워진다). 캐릭터가 삭제됐으면 fallback 에만 적용(저장 안 됨)
+async function updateChar(env, id, fn, fallback = null) {
+  let c = null;
+  try { const row = await env.DB.prepare('SELECT json FROM rpg_chars WHERE id = ?').bind(String(id)).first(); if (row) c = JSON.parse(row.json); } catch {}
+  if (!c) { if (fallback) fn(fallback); return fallback; }
+  fn(c); await saveChar(env, c); return c;
+}
+// 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
+function applyReward(c, rw) {
+  c.stats.hp = Math.min(6000, c.stats.hp + rw.hp); c.stats.atk = Math.min(800, c.stats.atk + rw.atk);
+  if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);
+}
+// 판정·턴 진행 중 표시: busy 는 시작 시각. 워커가 도중에 죽어 표시가 남았으면 BUSY_STALE_MS 뒤엔 무시한다 (옛 형식 true 도 무시)
+const BUSY_STALE_MS = 90e3, sleep = ms => new Promise(r => setTimeout(r, ms));
+const isBusy = s => typeof s.busy === 'number' && Date.now() - s.busy < BUSY_STALE_MS;
 // 승점 = PvE 승 1점 + PvP 승 3점 (순위표). 컬럼에 같이 써서 정렬 쿼리가 JSON 을 열지 않게 한다
 const scoreOf = c => Math.round((c.wins || 0) + (c.pvpWins || 0) * 2);   // 자동 생사결 승 = pvpWins 0.5 → 총 2점
 async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, Date.now(), c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
@@ -837,7 +866,7 @@ function pickEnemy(c) {
 }
 // 상대 AI: 게이지 차면 필살기(HP 낮을수록 더 자주), 내 HP 가 낮고 상대 게이지가 차 있으면 가끔 방어
 function enemyDecide(e, me) {
-  if (e.gauge >= ULT_COST && rnd() < (e.hp < e.char.stats.hp * 0.5 ? 0.85 : 0.5)) return { type: 'ult', text: `${e.char.ult.name}! ${e.char.ult.effect}` };
+  if (e.gauge >= ULT_COST && rnd() < (e.hp < e.char.stats.hp * 0.5 ? 0.85 : 0.5)) return { type: 'ult', text: `${e.char.ult?.name || '필살기'}! ${e.char.ult?.effect || ''}`.trim() };
   if (me.gauge >= ULT_COST && e.hp < e.char.stats.hp * 0.4 && rnd() < 0.35) return { type: 'defend', text: '자세를 낮추고 상대의 다음 수를 기다린다' };
   return { type: 'attack', text: '' };
 }
@@ -893,21 +922,27 @@ function escapeRoll(me, foe) {
   return { ok, chance: Math.round(chance * 100), penalty: { hp, atk } };
 }
 async function leaveBattle(id, body, env) {
-  const row = await env.DB.prepare('SELECT state FROM rpg_battles WHERE id = ?').bind(id).first();
+  const row = await env.DB.prepare('SELECT state, updated FROM rpg_battles WHERE id = ?').bind(id).first();
   if (!row) return json({ ok: true, escaped: true });
   const st = JSON.parse(row.state);
-  const c = await loadChar(env, st.charId, body.token);
-  if (!c) return json({ error: 'forbidden' }, 403);
+  const c0 = await loadChar(env, st.charId, body.token);
+  if (!c0) return json({ error: 'forbidden' }, 403);
+  if (isBusy(st)) return json({ error: 'retry' }, 409);   // 턴 판정 중 — 끝난 뒤에
+  // 낙관적 잠금: 같은 순간 턴이 진행됐으면(updated 변경) 지우지 않고 다시 (턴 결과와 도망 판정이 둘 다 적용되는 일 방지)
+  const del = await env.DB.prepare('DELETE FROM rpg_battles WHERE id = ? AND updated = ?').bind(id, row.updated).run();
+  if (del.meta.changes !== 1) return json({ error: 'retry' }, 409);
   let result = { ok: true, escaped: true };
   if (st.status === 'playing' && st.log.length) {                         // 한 턴이라도 싸운 뒤의 도망만 판정 (시작 직후엔 자유)
     const r = escapeRoll(st.me, st.foe);
     if (!r.ok) {
-      c.losses++; c.stats.hp = Math.max(200, c.stats.hp - r.penalty.hp); c.stats.atk = Math.max(20, c.stats.atk - r.penalty.atk);
-      await saveChar(env, c);
+      const c = await updateChar(env, c0.id, x => {
+        x.losses++; x.stats.hp = Math.max(200, x.stats.hp - r.penalty.hp); x.stats.atk = Math.max(20, x.stats.atk - r.penalty.atk);
+        if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
+      }, c0);
+      if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, { ...st, winner: 2 }, c);   // 자동 생사결 상대에게 붙잡힘 = 상대 승리로 기록
       result = { ok: true, escaped: false, chance: r.chance, penalty: r.penalty, char: c, message: `도망치다 ${st.foe.char.name}에게 붙잡혔다! 패배 기록 · HP 최대치 -${r.penalty.hp} · ATK -${r.penalty.atk}` };
     } else result = { ok: true, escaped: true, chance: r.chance, message: `${st.foe.char.name}을(를) 따돌리고 도망쳤다. (성공 확률 ${r.chance}%)` };
   }
-  await env.DB.prepare('DELETE FROM rpg_battles WHERE id = ?').bind(id).run();
   return json(result);
 }
 async function battleTurn(id, body, env, ip) {
@@ -917,9 +952,12 @@ async function battleTurn(id, body, env, ip) {
   const c = await loadChar(env, st.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   if (st.status !== 'playing') return json({ battle: st });
-  // 낙관적 잠금: 같은 턴을 두 번 처리하지 않게
-  const lock = await env.DB.prepare('UPDATE rpg_battles SET updated = ? WHERE id = ? AND updated = ?').bind(Date.now(), id, row.updated).run();
+  if (isBusy(st)) return json({ error: 'retry' }, 409);   // 다른 요청(다른 탭·더블 클릭)이 이 턴을 처리 중
+  // 낙관적 잠금: 같은 턴을 두 번 처리하지 않게 — busy 표시를 같이 써서, 처리 중(AI 서술 수 초) 들어온 요청도 막는다
+  st.busy = Date.now();
+  const lock = await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ? AND updated = ?').bind(JSON.stringify(st), st.busy, id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
+  delete st.busy;
   const actMe = { ...await parseActSafe(body, env), target: 2, local: body.local }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
   const prevLog = st.log[st.log.length - 1];
   const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '' });
@@ -928,15 +966,15 @@ async function battleTurn(id, body, env, ip) {
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
-    if (st.winner === 1) {
-      c.wins++;
-      st.reward = rollReward(c, st.foe.char, st.mode);
-      c.stats.hp = Math.min(6000, c.stats.hp + st.reward.hp); c.stats.atk = Math.min(800, c.stats.atk + st.reward.atk);
-      if (st.reward.bonus) c.stats[st.reward.bonus.stat] = Math.min(st.reward.bonus.max, c.stats[st.reward.bonus.stat] + st.reward.bonus.amount);
-      if (st.mode === 'auto') { c.autoWins = (c.autoWins || 0) + 1; c.pvpWins = (c.pvpWins || 0) + 0.5; }
-    } else { c.losses++; if (st.mode === 'auto') c.autoLosses = (c.autoLosses || 0) + 1; }
-    await saveChar(env, c); st.me.char = c;
-    if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, c);
+    const fresh = await updateChar(env, c.id, x => {   // AI 서술을 기다리는 동안 다른 곳(cron·방)이 저장한 전적 위에 적용
+      if (st.winner === 1) {
+        x.wins++;
+        st.reward = rollReward(x, st.foe.char, st.mode); applyReward(x, st.reward);
+        if (st.mode === 'auto') { x.autoWins = (x.autoWins || 0) + 1; x.pvpWins = (x.pvpWins || 0) + 0.5; }
+      } else { x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1; }
+    }, c);
+    st.me.char = fresh;
+    if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, fresh);
   } else st.turn++;
   await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ?').bind(JSON.stringify(st), Date.now(), id).run();
   return json({ battle: st, quota: pubQuota(await quota(env, ip)), quotaBlocked: t.quotaBlocked });
@@ -979,14 +1017,19 @@ async function matchRoom(body, env, who = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   const rows = await env.DB.prepare('SELECT code, state, updated FROM rpg_rooms WHERE updated > ? ORDER BY updated ASC LIMIT 30').bind(Date.now() - MATCH_FRESH_MS).all();
+  const open = [];
   for (const row of (rows?.results || [])) {
-    const s = JSON.parse(row.state);
+    let s; try { s = JSON.parse(row.state); } catch { continue; }
     if (!s.public || s.status !== 'waiting' || Object.keys(s.p).length !== 1) continue;
-    if (s.p[1].char.id === c.id) return json({ code: s.code, roomToken: s.tokens[1], slot: 1, state: pub(s, 1), rejoined: true });   // 내가 만든 대기 방
-    const rt = uid();
-    s.p[2] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[2] = rt; (s.who ||= {})[2] = who;
+    const k = Number(Object.keys(s.p)[0]);
+    if (s.p[k].char.id === c.id) return json({ code: s.code, roomToken: s.tokens[k], slot: k, state: pub(s, k), rejoined: true });   // 내가 만든 대기 방이 있으면 (남의 방보다 먼저) 거기로 — 내 방이 고아가 되지 않게
+    open.push([row, s, k]);
+  }
+  for (const [row, s, k] of open) {
+    const rt = uid(), slot = k === 1 ? 2 : 1;
+    s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who;
     s.status = 'playing'; s.round = 1;   // 둘이 모이면 바로 시작
-    if (await saveRoom(env, s.code, s, row.updated)) return json({ code: s.code, roomToken: rt, slot: 2, state: pub(s, 2), matched: true });
+    if (await saveRoom(env, s.code, s, row.updated)) return json({ code: s.code, roomToken: rt, slot, state: pub(s, slot), matched: true });
     // 동시에 다른 사람이 들어갔으면 다음 방으로
   }
   return createRoom(body, env, true, who);
@@ -998,7 +1041,7 @@ async function joinRoom(code, body, env, who = null) {
   if (!r) return json({ error: 'no_room' }, 404);
   const s = r.s;
   // 같은 캐릭터가 다시 오면 (새로고침·앱 전환) 기존 자리로 재접속 — 캐릭터 토큰으로 본인 확인됨
-  const mine = Object.keys(s.p).find(k => s.p[k].char.id === c.id);
+  const mine = Object.keys(s.p).find(k => s.p[k].char.id === c.id && s.tokens[k]);   // (끝난 방에서 이미 나간 자리는 토큰이 없다)
   if (mine) return json({ code, roomToken: s.tokens[mine], slot: Number(mine), state: pub(s, Number(mine)), rejoined: true });
   if (s.status !== 'waiting') return json({ error: 'started' }, 409);
   if (s.public) return json({ error: 'no_room' }, 404);   // 랜덤 매칭용 공개 방은 코드로 못 들어감
@@ -1033,6 +1076,7 @@ async function roomAction(code, body, env, ip) {
   const s = r.s, slot = slotOf(s, body.token);
   if (!slot) return json({ error: 'forbidden' }, 403);
   if (s.status !== 'playing') return json({ state: pub(s, slot) });
+  if (isBusy(s)) return json({ state: pub(s, slot) });   // 이 라운드는 이미 판정 중 (전원 제출됨) — 건너뛰기도 불필요
   const alive = aliveSlots(s.p);
   if (body.skip) {
     // 60초 넘게 안 낸 사람들을 자동 방어로 처리 (누구나 요청 가능)
@@ -1059,8 +1103,8 @@ async function settleRoom(env, ip, code, s, v, slot) {
     if (!(await saveRoom(env, code, s, v))) return json({ error: 'retry' }, 409);
     return json({ state: pub(s, slot) });
   }
-  s.busy = true;
-  const v2 = await saveRoom(env, code, s, v);   // 낙관적 잠금: 동시 요청 중 하나만 판정
+  s.busy = Date.now();
+  const v2 = await saveRoom(env, code, s, v);   // 낙관적 잠금: 동시 요청 중 하나만 판정 (busy 가 남아 있는 동안 다른 요청은 기다린다)
   if (!v2) return json({ error: 'retry' }, 409);
   let quotaBlocked = null;
   if (alive.length > 1) {
@@ -1075,28 +1119,37 @@ async function settleRoom(env, ip, code, s, v, slot) {
   const left = aliveSlots(s.p);
   if (left.length <= 1) {
     s.status = 'finished'; s.winner = left[0] || 0;
-    for (const k in s.p) { const c = s.p[k].char; if (s.winner === Number(k)) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } await saveChar(env, c); }
+    for (const k in s.p) {   // 입장 때 스냅샷이 아니라 지금 DB 의 캐릭터에 전적을 더한다 (방에 있는 동안 PvE·cron 으로 바뀐 것을 지우지 않게)
+      const won = s.winner === Number(k);
+      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
+    }
   } else s.round++;
-  s.moves = {}; s.busy = false;
-  await saveRoom(env, code, s, v2);
+  s.moves = {}; delete s.busy;
+  if (!(await saveRoom(env, code, s, v2))) return json({ error: 'retry' }, 409);   // busy 중엔 아무도 쓰지 않으므로 실패는 90초 넘게 걸려 다른 요청이 넘겨받은 경우뿐
   return json({ state: pub(s, slot), quota: pubQuota(await quota(env, ip)), quotaBlocked });
 }
 async function leaveRoom(code, body, env, ip) {
-  const r = await loadRoom(env, code);
+  let r = await loadRoom(env, code);
   if (!r) return json({ ok: true, gone: true });
+  if (!slotOf(r.s, body.token)) return json({ error: 'forbidden' }, 403);
+  for (let i = 0; i < 12 && r.s.status === 'playing' && isBusy(r.s); i++) {   // 라운드 판정 중이면 끝날 때까지 잠깐 기다림 (최대 ~10초, 클라이언트가 한 번 더 재시도)
+    await sleep(800); r = await loadRoom(env, code); if (!r) return json({ ok: true, gone: true });
+  }
   const s = r.s, slot = slotOf(s, body.token);
   if (!slot) return json({ error: 'forbidden' }, 403);
   if (s.status === 'waiting' || s.status === 'finished') {
-    delete s.p[slot]; delete s.tokens[slot];
-    const rest = Object.keys(s.p).map(Number).sort((a, b) => a - b);
+    delete s.tokens[slot];
+    if (s.status === 'waiting') delete s.p[slot];   // 끝난 방은 자리를 남긴다 — 아직 결과를 못 본 사람의 화면에 승자가 계속 보이게
+    else s.p[slot].gone = true;
+    const rest = Object.keys(s.tokens).map(Number).sort((a, b) => a - b);
     if (!rest.length) { await env.DB.prepare('DELETE FROM rpg_rooms WHERE code = ?').bind(code).run(); return json({ ok: true, gone: true }); }
     if (s.host === slot) s.host = rest[0];   // 방장 승계
     if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
     return json({ ok: true });
   }
+  if (isBusy(s)) return json({ error: 'retry' }, 409);
   // 진행 중 나가기 = 기권 (패배 기록). 남은 사람들끼리 계속. 나 때문에 막혀 있던 라운드라면 바로 판정
   if (s.p[slot].hp > 0) forfeit(s, slot, 'left');   // 패배 기록은 방이 끝날 때 한 번에 (이중 집계 방지)
   delete s.moves[slot];
-  const res = await settleRoom(env, ip, code, s, r.v, slot);
-  return res;
+  return settleRoom(env, ip, code, s, r.v, slot);
 }
