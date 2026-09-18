@@ -29,6 +29,7 @@
  *   GET  /api/rpg/battles/:id?token=             (재접속)
  *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 속도·회피·등급으로 실패 확률 → 실패하면 능력치 손실 + 패배)
  *   POST /api/rpg/battles                        { charId, token, mode: 'auto' } → 자동 생사결에 참가한 다른 플레이어 캐릭터(AI 조종)와 전투
+ *   POST /api/rpg/chars/:id/rebirth              { token }                    (HP·ATK 가 등급 상한이면 환생 → 다음 등급)
  *   POST /api/rpg/chars/:id/auto                 { token, on }                (자동 생사결 참가 on/off — 꺼져 있는 동안 서버가 매시간 참가자끼리 붙임)
  *   GET  /api/rpg/auto?charId=                   → { on, participants, recent: [...] } 부재 중 자동 생사결 결과
  *   POST /api/rpg/rooms                          { charId, token }            → { code, roomToken, state }
@@ -157,6 +158,7 @@ export async function handleRpg(request, env, path) {
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/auto$/)) && m === 'POST') return setAuto(mm[1], body, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/rebirth$/)) && m === 'POST') return rebirthChar(mm[1], body, env);
   if (path === '/api/rpg/auto' && m === 'GET') return autoInfo(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
@@ -773,7 +775,7 @@ async function narrateRoom(code, body, env) {
 }
 
 // ─── 캐릭터 ─────────────────────────────────────────────────────────
-function publicChar(c) { return c; }
+function publicChar(c) { return { ...c, caps: capsOf(c), rebirthReady: rebirthReady(c) }; }
 async function loadChar(env, id, token) {
   if (typeof id !== 'string' || !id || typeof token !== 'string' || !token) return null;   // undefined 를 bind 하면 D1 이 던진다(500) → 그냥 인증 실패
   const row = await env.DB.prepare('SELECT token, json FROM rpg_chars WHERE id = ?').bind(id).first();
@@ -789,10 +791,47 @@ async function updateChar(env, id, fn, fallback = null) {
   fn(c); await saveChar(env, c); return c;
 }
 // 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
+// 등급별 성장 상한. HP·ATK 가 둘 다 상한에 닿으면 '환생' 가능 → 다음 등급의 기본 능력치로 다시 시작(환생 횟수만큼 +10% 영구 보너스)
+const TIER_CAPS = {
+  '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 },
+  '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 },
+  '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 },
+  '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 },
+  '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 },
+};
+const capsOf = c => TIER_CAPS[c.stats?.tier] || TIER_CAPS['신화'];
+const rebirthReady = c => { const cap = capsOf(c); return c.stats.hp >= cap.hp && c.stats.atk >= cap.atk; };
 function applyReward(c, rw) {
-  c.stats.hp = Math.min(6000, c.stats.hp + rw.hp); c.stats.atk = Math.min(800, c.stats.atk + rw.atk);
-  for (const k in (rw.stats || {})) c.stats[k] = Math.min(STAT_CAP[k], (c.stats[k] || 0) + rw.stats[k]);
-  if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);   // 옛 형식 호환
+  const cap = capsOf(c);
+  c.stats.hp = Math.min(cap.hp, c.stats.hp + rw.hp); c.stats.atk = Math.min(cap.atk, c.stats.atk + rw.atk);
+  for (const k in (rw.stats || {})) c.stats[k] = Math.min(cap[k], (c.stats[k] || 0) + rw.stats[k]);
+  if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(cap[rw.bonus.stat] || rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);   // 옛 형식 호환
+  c.rebirthReady = rebirthReady(c);
+}
+// 환생: HP·ATK 상한 도달 시. 다음 등급 하한 위력으로 기본 능력치를 다시 뽑고(성향 배분은 유지, 흔들림 없음) 환생 횟수당 +10%. 신화는 최상위라 불가
+async function rebirthChar(id, body, env) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  if (!rebirthReady(c)) return json({ error: 'not_ready', caps: capsOf(c) }, 409);
+  const idx = TIERS.findIndex(t => t[0] === c.stats.tier);
+  if (idx < 0 || idx >= TIERS.length - 1) return json({ error: 'max_tier' }, 409);
+  const [name, lo] = TIERS[idx + 1];
+  const alloc = c.alloc || allocFromStats(c);                        // 옛 캐릭터는 현재 능력치 비율에서 성향을 역산
+  const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
+  const fresh = buildStats(alloc, c.stats.coherence, 1, lo + 2);
+  for (const k of ['hp', 'atk']) fresh[k] = Math.round(fresh[k] * bonus);
+  for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
+  const prevTier = c.stats.tier;
+  await updateChar(env, c.id, x => { x.stats = fresh; x.alloc = alloc; x.rebirths = n; x.rebirthReady = false; x.rebirthLog = [...(x.rebirthLog || []), { from: prevTier, to: name, at: Date.now() }].slice(-10); });
+  const out = await loadChar(env, id, body.token);
+  return json({ ok: true, char: publicChar(out), from: prevTier, to: name, bonus: Math.round((bonus - 1) * 100) });
+}
+function allocFromStats(c) {
+  const s = c.stats, m = s.mult || 1;
+  const a = { atk: Math.max(0, (s.atk / m - 40) / 1.6), hp: Math.max(0, (s.hp / m - 400) / 8), def: Math.max(0, s.def / 0.4), spd: Math.max(0, s.spd), acc: Math.max(0, (s.acc - 60) / 0.35), eva: Math.max(0, s.eva / 0.3) };
+  const sum = Object.values(a).reduce((x, y) => x + y, 0) || 1;
+  for (const k in a) a[k] = a[k] / sum * 100;
+  return a;
 }
 // 판정·턴 진행 중 표시: busy 는 시작 시각. 워커가 도중에 죽어 표시가 남았으면 BUSY_STALE_MS 뒤엔 무시한다 (옛 형식 true 도 무시)
 const BUSY_STALE_MS = 90e3, sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -820,7 +859,7 @@ async function createChar(body, env, ip) {
   const c = {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
     stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, num(parsed.coherence, 0, 100, 50) < 60 ? 45 : 100, judgedBy === 'local' ? 50 : 100), true),
-    powerReason: clip(parsed.powerReason, 120), luck,
+    powerReason: clip(parsed.powerReason, 120), luck, alloc: parsed.alloc || null, rebirths: 0,
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
   };

@@ -185,6 +185,7 @@
         <!-- 2. 홈 -->
         <section class="screen" id="s-home">
             <div class="card" id="homeCard"></div>
+            <div class="btn-row" id="rebirthRow" style="display:none"><button id="btnRebirth" class="full">환생</button></div>
             <div class="btn-row">
                 <button id="btnBattle">전투 (AI 상대)</button>
                 <button id="btnAutoFight">자동 생사결 상대와 전투</button>
@@ -381,7 +382,7 @@
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. 한국시간 09:00에 초기화됩니다.', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', max_tier: '신화는 최고 등급이라 환생할 수 없습니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
@@ -421,9 +422,32 @@
             <div class="meta">HP ${p.hp}/${c.stats.hp} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · 방어 중' : ''}<br>${statLine(c)}<br>필살기 <b>${esc(c.ult.name)}</b> — ${esc(c.ult.effect)}${extra}</div>`;
     }
     function goHome() {
-        $('homeCard').innerHTML = cardHtml({ char: me, hp: me.stats.hp, gauge: 0 }, false, `<br><span class="hint">${esc(me.info)}</span>${me.powerReason ? `<br><span class="hint">심사관: ${esc(me.powerReason)}</span>` : ''}${me.luck?.table ? `<br><span class="hint">등급 주사위 (심사 위력 ${me.luck.judged}): ${me.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(me.luck.tier)}</b>${me.luck.moved === 'up' ? ' ↑ 상승!' : me.luck.moved === 'down' ? ' ↓ 하락' : ''}</span>` : ''}<br><span class="hint">전적 ${me.wins}승 ${me.losses}패 · 일관성 ${me.stats.coherence}</span>`);
+        $('homeCard').innerHTML = cardHtml({ char: me, hp: me.stats.hp, gauge: 0 }, false, `<br><span class="hint">${esc(me.info)}</span>${me.powerReason ? `<br><span class="hint">심사관: ${esc(me.powerReason)}</span>` : ''}${me.luck?.table ? `<br><span class="hint">등급 주사위 (심사 위력 ${me.luck.judged}): ${me.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(me.luck.tier)}</b>${me.luck.moved === 'up' ? ' ↑ 상승!' : me.luck.moved === 'down' ? ' ↓ 하락' : ''}</span>` : ''}<br><span class="hint">전적 ${me.wins}승 ${me.losses}패 · 일관성 ${me.stats.coherence}${me.rebirths ? ` · 환생 ${me.rebirths}회 (+${me.rebirths * 10}%)` : ''}</span>${capsLine(me)}`);
+        // 환생: HP·ATK 가 등급 상한에 닿았고 신화가 아니면 버튼 표시
+        const ready = rebirthReady(me), maxTier = me.stats.tier === '신화';
+        $('rebirthRow').style.display = ready ? '' : 'none';
+        if (ready) $('btnRebirth').textContent = maxTier ? '최고 등급 — 환생 불가' : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
+        $('btnRebirth').disabled = maxTier;
         show('s-home'); refreshLeaderboard(); refreshAuto();
     }
+    // 등급별 성장 상한 (서버와 같은 표). HP·ATK 둘 다 상한이면 환생 가능
+    const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 } };
+    const TIER_ORDER = ['평범', '숙련', '초인', '전설', '신화'];
+    const capsOf = c => c.caps || TIER_CAPS[c.stats.tier] || TIER_CAPS['신화'];
+    const rebirthReady = c => c.rebirthReady ?? (c.stats.hp >= capsOf(c).hp && c.stats.atk >= capsOf(c).atk);
+    const nextTier = t => TIER_ORDER[Math.min(TIER_ORDER.length - 1, TIER_ORDER.indexOf(t) + 1)];
+    function capsLine(c) {
+        const cap = capsOf(c), s = c.stats, pct = k => Math.min(100, Math.round(s[k] / cap[k] * 100));
+        return `<br><span class="hint">성장 상한(${esc(s.tier || '')}) HP ${s.hp}/${cap.hp} (${pct('hp')}%) · ATK ${s.atk}/${cap.atk} (${pct('atk')}%) · 방어 ${s.def}/${cap.def} · 속도 ${s.spd}/${cap.spd} · 명중 ${s.acc}/${cap.acc} · 회피 ${s.eva}/${cap.eva} — HP·ATK 가 상한에 닿으면 환생 가능</span>`;
+    }
+    $('btnRebirth').addEventListener('click', async () => {
+        if (!me || !rebirthReady(me)) return;
+        const to = nextTier(me.stats.tier);
+        if (!confirm(`환생할까요? ${me.stats.tier} → ${to} 등급으로 넘어가며 능력치는 새 등급의 기본값으로 다시 시작합니다(성향·전적·필살기 유지, 환생 횟수당 +10% 영구 보너스).`)) return;
+        $('btnRebirth').disabled = true;
+        try { const d = await api(`/api/rpg/chars/${me.id}/rebirth`, { token: myToken }); me = d.char; saveMe(); alert(`환생! ${d.from} → ${d.to} 등급 (영구 보너스 +${d.bonus}%)`); goHome(); refreshLeaderboard(true); if (gUser) { try { await refreshAcctChars(); } catch {} renderAccount(); } }
+        catch (e) { alert(errMsg(e)); $('btnRebirth').disabled = false; }
+    });
     $('btnCreate').addEventListener('click', async () => {
         const name = $('char-name').value.trim(), setting = $('char-setting').value.trim();
         if (!name || !setting) return $('createStatus').textContent = '이름과 설정을 모두 입력하세요.';
