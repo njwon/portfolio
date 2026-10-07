@@ -167,6 +167,10 @@ export async function handleRpg(request, env, path) {
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/rebirth$/)) && m === 'POST') return rebirthChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/refine$/)) && m === 'POST') return refineChar(mm[1], body, env, who);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/buy$/)) && m === 'POST') return buyItem(mm[1], body, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/ascend$/)) && m === 'POST') return ascendChar(mm[1], body, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/foes\/prepare$/)) && m === 'POST') return prepareFoes(mm[1], body, env, who);
+  if (path === '/api/rpg/account' && m === 'GET') return getAccount(env, request.headers.get('X-Session'));
+  if (path === '/api/rpg/account/upgrade' && m === 'POST') return buyUpgrade(body, env);
   if (path === '/api/rpg/auto' && m === 'GET') return autoInfo(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
@@ -554,18 +558,20 @@ async function deleteAccount(body, env) {
   const sub = await sessionUser(env, body.session);
   if (!sub) return json({ error: 'forbidden' }, 403);
   if (body.confirm !== '탈퇴') return json({ error: 'bad_request' }, 400);
-  await ensureStoryTable(env); await ensurePrefsTable(env);
+  await ensureStoryTable(env); await ensurePrefsTable(env); await ensureFoesTable(env); await ensureAcctTable(env);
   const ids = ((await env.DB.prepare('SELECT id FROM rpg_chars WHERE user_sub = ?').bind(sub).all())?.results || []).map(r => r.id);
   const stmts = [];
   for (const id of ids) stmts.push(
     env.DB.prepare('DELETE FROM rpg_battles WHERE char_id = ?').bind(id),
     env.DB.prepare('DELETE FROM rpg_story WHERE char_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM rpg_foes WHERE char_id = ?').bind(id),
     env.DB.prepare('DELETE FROM rpg_auto_log WHERE a_id = ? OR b_id = ?').bind(id, id));
   stmts.push(
     env.DB.prepare('DELETE FROM rpg_chars WHERE user_sub = ?').bind(sub),
     env.DB.prepare('DELETE FROM rpg_sessions WHERE sub = ?').bind(sub),
     env.DB.prepare('DELETE FROM rpg_ip_bucket WHERE ip = ?').bind('acct:' + sub),
     env.DB.prepare('DELETE FROM rpg_prefs WHERE sub = ?').bind(sub),
+    env.DB.prepare('DELETE FROM rpg_accounts WHERE sub = ?').bind(sub),
     env.DB.prepare('DELETE FROM rpg_users WHERE sub = ?').bind(sub));
   await env.DB.batch(stmts);
   lbCache.at = 0;
@@ -606,6 +612,7 @@ async function linkChar(id, body, env) {
   if (!sub || !c) return json({ error: 'forbidden' }, 403);
   const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(id).first();
   if (row?.user_sub && row.user_sub !== sub) return json({ error: 'owned' }, 409);   // 다른 계정의 캐릭터는 못 가져감
+  if (row?.user_sub !== sub) { const lim = slotLimit((await loadAcct(env, sub)).a), used = await acctCharCount(env, sub); if (used >= lim) return json({ error: 'char_limit', used, limit: lim }, 409); }
   await env.DB.prepare('UPDATE rpg_chars SET user_sub = ? WHERE id = ?').bind(sub, id).run(); lbCache.at = 0;
   return json({ ok: true });
 }
@@ -961,7 +968,7 @@ async function updateChar(env, id, fn, fallback = null) {
 // 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
 // 개연성(stability): 선언으로 쌓인다 — 적합도 ≥ 0.8 이고 쉬움/보통 판정이면 +0.3%p, 불허·불가면 −0.5%p. 등급별 상한, 하한은 0.55 + 환생 횟수 × 0.03
 const PLAUS_CAP = { '평범': 0.85, '숙련': 0.90, '초인': 0.95, '전설': 0.98, '신화': 1.0, '???': 1.0 };
-const plausFloor = c => 0.55 + (c.rebirths || 0) * 0.03;
+const plausFloor = c => 0.55 + (c.rebirths || 0) * 0.03 + (c.ascPlaus || 0);   // ascPlaus: 선계 강화 '단단한 꿈'
 const plausCap = c => PLAUS_CAP[c.stats?.tier] ?? 1.0;
 // 상한은 '성장'에만 적용: 생성 때 이미 상한보다 높았던 값은 깎지 않는다 (상한 = max(등급 상한, 현재값))
 const clampPlaus = (c, v) => { const cur = c.stats?.stability ?? 0.75; return Math.round(Math.min(Math.max(plausCap(c), cur), Math.max(plausFloor(c), v)) * 1000) / 1000; };
@@ -1085,6 +1092,11 @@ async function createChar(body, env, ip) {
   if (Math.random() < 0.05) await env.DB.prepare('DELETE FROM rpg_chars WHERE user_sub IS NULL AND score = 0 AND COALESCE(updated, created) < ?').bind(Date.now() - 90 * 86400e3).run();   // 손님·무승·90일 미사용 캐릭터 정리
   const mod = await moderate(env, name + '\n' + setting);
   if (!mod.ok) return json({ error: 'policy', reason: mod.reason, label: mod.label }, 400);
+  // 로그인 세션이 있으면 캐릭터를 계정에 연결 (다른 기기에서 복구·순위표 이름 표시). 계정 칸이 다 찼으면 AI 를 부르기 전에 거절
+  const sub = body.session ? await sessionUser(env, body.session) : null;
+  let acct = null;
+  if (sub) { acct = (await loadAcct(env, sub)).a; const used = await acctCharCount(env, sub); if (used >= slotLimit(acct)) return json({ error: 'char_limit', used, limit: slotLimit(acct) }, 409); }
+  const up = acct?.up || {};
   const r = await aiCall(env, ip, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2);
   let parsed, judgedBy = r.provider;
   if (r.ok) parsed = r.parsed;
@@ -1094,7 +1106,7 @@ async function createChar(body, env, ip) {
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
-  const luck = rollTier(Math.round(num(parsed.power, 0, 95, 15) * JUDGE_SCALE), CREATE_RARITY);   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
+  const luck = rollTier(Math.round((num(parsed.power, 0, 95, 15) + 3 * (up.power || 0)) * JUDGE_SCALE), CREATE_RARITY);   // 선계 강화 '꿈의 깊이': 심사 위력 +3/단계   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
   const c = {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
     stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, cohCap(num(parsed.coherence, 0, 100, 50)), judgedBy === 'local' ? 50 : 100), true),
@@ -1102,9 +1114,28 @@ async function createChar(body, env, ip) {
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: own(ULT_STYLES, ult.style) ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
   };
+  // 선계 강화: 시작 HP·ATK +5%/단계 · 개연성 바닥 +2%p/단계 · 시작 꿈 조각 +150/단계
+  if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); }
+  if (up.plaus) { c.ascPlaus = 0.02 * up.plaus; c.stats.stability = Math.round(Math.max(c.stats.stability, plausFloor(c)) * 1000) / 1000; }
+  if (up.dream) c.dream = 150 * up.dream;
+  if (acct && Object.keys(up).length) c.ascBonus = { ...up };
+  // 등선 선물(일회성): 최소 등급 보장 · 시작 HP·ATK 보정 · 꿈 조각 · 아이템. 쓰면 계정에서 비운다
+  const gift = acct?.gift;
+  if (gift && (gift.dream || gift.minTier || gift.statPct || Object.keys(gift.items || {}).length)) {
+    const want = gift.minTier && TIERS.find(t => t[0] === gift.minTier);
+    if (want && (TIER_IDX[c.stats.tier] ?? 0) < (TIER_IDX[gift.minTier] ?? 0)) {
+      const keep = { stability: c.stats.stability, coherence: c.stats.coherence };
+      c.stats = { ...buildStats(c.alloc, keep.coherence, 1, want[1] + 2, true), stability: keep.stability };
+      if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); }   // 다시 만든 능력치에도 선계 강화
+      c.luck = { ...c.luck, gifted: gift.minTier };
+    }
+    if (gift.statPct) { c.stats.hp = Math.round(c.stats.hp * (1 + gift.statPct / 100)); c.stats.atk = Math.round(c.stats.atk * (1 + gift.statPct / 100)); }
+    if (gift.dream) c.dream = Math.min(DREAM_MAX, (c.dream || 0) + gift.dream);
+    if (gift.items) { c.bag = { ...(c.bag || {}) }; for (const [k, n] of Object.entries(gift.items)) if (own(ITEMS, k)) c.bag[k] = Math.min(ITEMS[k].max || STACK, (c.bag[k] || 0) + n); }
+    c.giftUsed = gift;
+    await updateAcct(env, sub, a => { a.gift = null; });
+  }
   const token = uid();
-  // 로그인 세션이 있으면 캐릭터를 계정에 연결 (다른 기기에서 복구·순위표 이름 표시)
-  const sub = body.session ? await sessionUser(env, body.session) : null;
   await env.DB.prepare('INSERT INTO rpg_chars (id, token, json, created, score, name, user_sub) VALUES (?, ?, ?, ?, 0, ?, ?)').bind(c.id, token, JSON.stringify(c), c.created, c.name, sub).run();
   return json({ char: publicChar(c), token, quota: pubQuota(await quota(env, ip)) });
 }
@@ -1322,7 +1353,7 @@ async function rerollBattle(id, body, env) {
   let bad = false;
   await updateChar(env, c.id, x => { bad = false; if (!((x.bag?.map || 0) > 0)) { bad = true; return; } x.bag.map--; }, c);
   if (bad) return json({ error: 'no_item' }, 409);
-  const foe = pickEnemy(c, { nightmare: !!st.nightmare });
+  const foe = pickEnemy(c, { nightmare: !!st.nightmare, roster: await loadRoster(env, c.id) });
   st.foe = { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }; st.rerolled = true;
   const upd = await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ? AND updated = ?').bind(JSON.stringify(st), Date.now(), id, row.updated).run();
   if (upd.meta.changes !== 1) return json({ error: 'retry' }, 409);
@@ -1672,25 +1703,26 @@ const ENEMIES = [
   ['그림자 연인의 주술사', '저주를 안은 주술사', { atk: 25, hp: 20, def: 10, spd: 15, acc: 15, eva: 15 }, 75, ['그림자 포옹', '그림자 연인이 상대를 삼키고 힘을 나눠 준다', 'drain'], '사랑했던 이의 그림자를 데리고 다니는 주술사. 그림자가 지치면 혼자 남는다.', 1.4],
   ['무한 복도의 문지기', '끝나지 않는 복도의 주인', { atk: 25, hp: 15, def: 20, spd: 15, acc: 15, eva: 10 }, 60, ['닫히지 않는 문', '끝없는 복도로 상대를 가둔다', 'shield'], '닿을 수 없는 복도 끝에 선 문지기. 너무 자신만만해 빈틈을 보인다.', 1.8],
 ];
-function makeEnemy(i, scale = 1, label = null) {
-  const [name, fiction, alloc, coherence, ult, info, tier] = ENEMIES[i];
-  const e = { id: 'enemy-' + i, name, fiction, info, stats: buildStats(alloc, coherence, tier * scale), ult: { name: ult[0], effect: ult[1], style: ult[2] }, tier };
+function makeEnemy(i, scale = 1, label = null, roster = null) {
+  const [name0, fiction0, alloc, coherence, ult, info0, tier] = ENEMIES[i], r = roster?.[i];   // 캐릭터별 명부가 있으면 그 자리의 글을 씀 (강함·능력·필살기 종류는 그대로)
+  const name = r?.name || name0, fiction = r?.fiction || fiction0, info = r?.info || info0;
+  const e = { id: 'enemy-' + i, name, fiction, info, stats: buildStats(alloc, coherence, tier * scale), ult: { name: r?.ultName || ult[0], effect: r?.effect || ult[1], style: ult[2] }, tier };
   e.stats.tier = label || (tier >= 1.4 ? '전설' : tier >= 1.1 ? '초인' : tier >= 1 ? '숙련' : '평범');   // 표시용 등급은 원래 강적 등급대로
   return e;
 }
 // 처음 EASY_FIRST 전은 약한 상대만(강함 ×0.85): 시뮬레이션상 새 캐릭터의 첫 전투 승률이 약 49% 라 손님 캐릭터가 평균 1.4승 만에 사라졌다
 const EASY_FIRST = 3, EASY_SCALE = 0.85;
-function pickEnemy(c, { nightmare = false } = {}) {
+function pickEnemy(c, { nightmare = false, roster = null } = {}) {
   const scale = Math.sqrt(c.stats.mult || 1);                       // 강한 캐릭터에겐 상대도 조금 강하게 (배율의 제곱근 → 여전히 압도적)
   if (!nightmare && (c.wins || 0) + (c.losses || 0) < EASY_FIRST) {
     const easy = ENEMIES.map((e, i) => [e[6], i]).filter(([t]) => t <= 1);
-    return makeEnemy(easy[Math.floor(rnd() * easy.length)][1], scale * EASY_SCALE, '평범');
+    return makeEnemy(easy[Math.floor(rnd() * easy.length)][1], scale * EASY_SCALE, '평범', roster);
   }
   const rec = Math.max(0, (c.wins || 0) - (c.losses || 0) - EASY_FIRST);   // 이기고 있으면 강적이 더 자주 (처음 쉬운 3전은 빼고 — 안 그러면 4전째에 강적 확률이 확 뛰어 승률 51%)
   const weights = ENEMIES.map(e => { const t = e[6]; return 1 / (1 + Math.abs(t - (1 + Math.max(0, Math.min(3, rec)) * 0.25)) * 3); });
   let r = rnd() * weights.reduce((s, w) => s + w, 0), idx = 0;
   for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { idx = i; break; } }
-  const e = makeEnemy(idx, scale);
+  const e = makeEnemy(idx, scale, null, roster);
   // 적을 내 현재 능력치에 맞춘다: HP·ATK = 내 값 × 적 강함(0.9~1.8) × (0.72 − 0.18 × 성장도), 방어·속도·명중·회피 = 내 값
   //   예전엔 등급 배율의 제곱근으로만 커져서 숙련 이후 승률 96~100% (긴장감 없음). 배율 지수만 올려선 안 바뀜(m^1.0 도 97~100%) — 플레이어 HP·ATK 는 상한까지 4~8배 크기 때문
   //   시뮬레이션(평범→신화 상한, 100명): 등급 막 올라옴 81~87% → 상한 근처 93~95%, 신화 상한까지 약 19시간. 악몽 초대장은 ×1.3 (승률 62~78%)
@@ -1698,6 +1730,162 @@ function pickEnemy(c, { nightmare = false } = {}) {
   if (nightmare) { e.name = '악몽 · ' + e.name; e.nightmare = true; }
   return e;
 }
+// ─── 캐릭터별 AI 전투 적 (꿈의 명부) ─────────────────────────────────
+// 고정 적 12명(ENEMIES)은 '자리'로만 쓴다: 강함·능력 배분·필살기 종류는 그대로(숫자는 코드가), 이름·설명·필살기 이름/효과만 AI 가 그 캐릭터의 설정으로 한 번 지어 저장
+//   생성 전이거나 실패한 자리는 고정 적의 글을 그대로 쓴다. 캐릭터당 AI 1회(약 25초, 꿈 이야기와 같은 gemma 경로)
+const FOE_SLOTS = ENEMIES.map(([, , alloc, , ult, , tier], i) => ({ id: 'e' + i, tier, style: ult[2], alloc }));
+const STRENGTH_KO = t => t >= 1.4 ? '최강' : t >= 1.1 ? '강함' : t >= 1 ? '보통' : '약함';
+const STYLE_HINT = { burst: '한 방형(크게 한 번 내려침)', precise: '정밀형(잘 맞는 날카로운 기술)', drain: '흡수형(상처를 주며 기운을 빼앗음)', shield: '방패형(공격하며 몸을 지킴)' };
+const STAT_HINT = { atk: '공격', hp: '체력', def: '방어', spd: '속도', acc: '명중', eva: '회피' };
+const allocHint = a => Object.entries(a).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([k]) => STAT_HINT[k]).join('·') + ' 위주';
+const SYS_FOES = `당신은 꿈속 텍스트 RPG 'DREAM RPG'의 적 설계자입니다. 한 캐릭터의 꿈에 나올 적 12명의 글만 씁니다. 강함·능력치·필살기 종류는 게임 코드가 이미 정했고, 당신은 주어진 JSON 틀의 빈 문자열만 한국어로 채웁니다.
+규칙:
+1) 키를 바꾸거나 더하거나 빼지 마세요.
+2) 그 캐릭터의 설정(배경·특기·약점·세계)에서 나올 법한 꿈속 존재로: 일상의 사람·사물, 과거의 기억, 두려움, 라이벌이 꿈에서 변한 모습. 12명이 서로 겹치지 않게 다양하게. 강함이 셀수록 더 위협적인 존재로.
+3) 길이: name 12자 이내(고유한 이름이나 별명), fiction 16자 이내(한 줄 수식어), info 80자 이내(한 문장, 약점 하나 포함), ult.name 12자 이내, ult.effect 50자 이내(주어진 필살기 종류에 맞게).
+4) 숫자·수치·확률을 쓰지 마세요.
+5) 실존 인물, 애니메이션·만화·게임·영화 등 기존 작품의 캐릭터 이름·기술 이름을 쓰지 마세요. 플레이어 캐릭터의 이름을 그대로 쓰지 마세요. 성적·혐오·잔혹한 표현 금지.
+설명 없이 완성된 JSON 하나만 출력하세요.`;
+function foesTemplate() { const o = {}; for (const s of FOE_SLOTS) o[s.id] = { name: '', fiction: '', info: '', ult: { name: '', effect: '' } }; return o; }
+function foesUser(c) {
+  return `[캐릭터]\n이름: ${c.name}\n설정: ${c.info}\n\n[적 자리 — 강함 / 능력 / 필살기 종류]\n${FOE_SLOTS.map(s => `${s.id}: 강함 ${STRENGTH_KO(s.tier)} / ${allocHint(s.alloc)} / ${STYLE_HINT[s.style]}`).join('\n')}\n\n[채울 JSON 틀 — 빈 문자열만 채워서 그대로 출력]\n${JSON.stringify(foesTemplate())}`;
+}
+const FOE_LIM = { name: 12, fiction: 16, info: 80, ultName: 12, effect: 50 };
+// 자리별로 검사: 비었거나 수치·실존 작품 이름·외국 문자가 섞인 자리는 고정 적의 글로 대신. 절반 넘게 못 쓰면 전체 폐기
+function buildRoster(text, c) {
+  const j = chExtract(text); if (!j || typeof j !== 'object') return null;
+  const bad = v => !v || /\d|[０-９]|%/.test(v) || STORY_BANNED.some(b => v.includes(b)) || /[぀-ヿ一-鿿]/.test(v) || (c.name && v.includes(c.name));
+  let fails = 0;
+  const roster = FOE_SLOTS.map((s, i) => {
+    const e = j[s.id], u = e?.ult || {};
+    const f = { name: clip(e?.name, FOE_LIM.name), fiction: clip(e?.fiction, FOE_LIM.fiction), info: clip(e?.info, FOE_LIM.info), ultName: clip(u.name, FOE_LIM.ultName), effect: clip(u.effect, FOE_LIM.effect) };
+    if (Object.values(f).some(bad)) { fails++; return null; }
+    return f;
+  });
+  const names = roster.filter(Boolean).map(f => f.name);
+  if (fails > 6 || new Set(names).size < names.length) return null;
+  return roster;
+}
+let foesTable = false;
+async function ensureFoesTable(env) { if (!foesTable) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_foes (char_id TEXT PRIMARY KEY, json TEXT, created INTEGER NOT NULL)').run(); foesTable = true; } }
+async function loadRoster(env, charId) {
+  await ensureFoesTable(env);
+  const row = await env.DB.prepare('SELECT json FROM rpg_foes WHERE char_id = ?').bind(charId).first();
+  try { return row?.json ? JSON.parse(row.json) : null; } catch { return null; }
+}
+async function prepareFoes(id, body, env, who) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  await ensureFoesTable(env);
+  const row = await env.DB.prepare('SELECT json, created FROM rpg_foes WHERE char_id = ?').bind(c.id).first();
+  if (row?.json) return json({ status: 'ready' });
+  if (row && Date.now() - row.created < 90e3) return json({ status: 'generating' });
+  await env.DB.prepare('INSERT INTO rpg_foes (char_id, json, created) VALUES (?, NULL, ?) ON CONFLICT(char_id) DO UPDATE SET created = excluded.created').bind(c.id, Date.now()).run();
+  let roster = null, why = '';
+  for (let attempt = 0; attempt < 2 && !roster; attempt++) {
+    const r = await storyAi(env, who, SYS_FOES, foesUser(c), attempt ? 0.7 : 0.9);
+    if (!r.ok) { why = r.reason; break; }
+    roster = buildRoster(r.text, c);
+    if (roster && !(await moderate(env, roster.filter(Boolean).map(f => Object.values(f).join(' ')).join('\n').slice(0, 6000))).ok) { roster = null; why = 'policy'; }
+    else if (!roster) why = 'invalid';
+  }
+  if (!roster) { await env.DB.prepare('DELETE FROM rpg_foes WHERE char_id = ? AND json IS NULL').bind(c.id).run(); return json({ status: 'fallback', reason: why }); }
+  await env.DB.prepare('UPDATE rpg_foes SET json = ? WHERE char_id = ?').bind(JSON.stringify(roster), c.id).run();
+  await updateChar(env, c.id, x => { x.foes = 'ready'; });
+  return json({ status: 'ready' });
+}
+
+// ─── 계정: 캐릭터 칸 · 등선 · 선계 강화 ──────────────────────────────
+// 계정 캐릭터는 기본 2개. 등선하면 캐릭터가 지워지는 대신 계정에 '선기'가 쌓이고, 선기로 다음 캐릭터에 쓰일 선계 강화를 고른다
+const BASE_SLOTS = 2, ASCEND_MIN_WINS = 30;
+const ASC_UP = {
+  slot: { name: '캐릭터 칸', max: 3, cost: [3, 6, 10], desc: '계정 캐릭터 칸 +1' },
+  stat: { name: '타고난 몸', max: 5, cost: [2, 4, 6, 8, 10], desc: '새 캐릭터 시작 HP·ATK +5%' },
+  power: { name: '꿈의 깊이', max: 5, cost: [2, 4, 6, 8, 10], desc: '새 캐릭터 심사 위력 +3 (등급 주사위가 조금 위로)' },
+  plaus: { name: '단단한 꿈', max: 5, cost: [1, 2, 3, 4, 5], desc: '새 캐릭터 개연성 바닥 +2%p' },
+  dream: { name: '꿈 조각 유산', max: 5, cost: [1, 2, 3, 4, 5], desc: '새 캐릭터 시작 꿈 조각 +150' },
+};
+// 등급별 등선 보상: 선기(기본) + 다음 캐릭터 일회성 선물. 높은 등급일수록 훨씬 크다. 선기 = 등급 기본값 + 환생 횟수 + 100승마다 1
+const ASC_TIER = {
+  '평범': { qi: 1 }, '숙련': { qi: 3 },
+  '초인': { qi: 6, gift: { dream: 300 } },
+  '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련' } },
+  '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10 } },
+  '???': { qi: 25, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15 } },
+};
+const qiOf = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + (c.rebirths || 0) + Math.floor((c.wins || 0) / 100);
+// 선물은 쌓인다: 꿈 조각·아이템은 더하고, 최소 등급·능력 보정은 큰 쪽
+function mergeGift(g = {}, add = {}) {
+  const items = { ...(g.items || {}) }; for (const [k, n] of Object.entries(add.items || {})) items[k] = Math.min(own(ITEMS, k) ? (ITEMS[k].max || STACK) : 1, (items[k] || 0) + n);
+  const minTier = [g.minTier, add.minTier].filter(Boolean).sort((a, b) => (TIER_IDX[b] ?? 0) - (TIER_IDX[a] ?? 0))[0];
+  return { dream: (g.dream || 0) + (add.dream || 0), items, minTier, statPct: Math.max(g.statPct || 0, add.statPct || 0) };
+}
+let acctTable = false;
+async function ensureAcctTable(env) { if (!acctTable) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_accounts (sub TEXT PRIMARY KEY, json TEXT NOT NULL, updated INTEGER NOT NULL)').run(); acctTable = true; } }
+const blankAcct = () => ({ qi: 0, total: 0, up: {}, hall: [] });
+async function loadAcct(env, sub) {
+  await ensureAcctTable(env);
+  const row = await env.DB.prepare('SELECT json, updated FROM rpg_accounts WHERE sub = ?').bind(sub).first();
+  let a = blankAcct(); try { if (row) a = { ...a, ...JSON.parse(row.json) }; } catch {}
+  return { a, ver: row?.updated ?? null };
+}
+async function updateAcct(env, sub, fn) {   // 낙관적 잠금 (updateChar 와 같은 방식)
+  for (let i = 0; i < 6; i++) {
+    const { a, ver } = await loadAcct(env, sub); fn(a);
+    const now = Math.max(Date.now(), (ver || 0) + 1);
+    const r = ver === null
+      ? await env.DB.prepare('INSERT OR IGNORE INTO rpg_accounts (sub, json, updated) VALUES (?, ?, ?)').bind(sub, JSON.stringify(a), now).run()
+      : await env.DB.prepare('UPDATE rpg_accounts SET json = ?, updated = ? WHERE sub = ? AND updated = ?').bind(JSON.stringify(a), now, sub, ver).run();
+    if (r.meta.changes === 1) return a;
+    await new Promise(res => setTimeout(res, 15 + Math.random() * 40));
+  }
+  throw new Error('busy');
+}
+const slotLimit = a => BASE_SLOTS + (a.up?.slot || 0);
+const acctCharCount = async (env, sub) => (await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_chars WHERE user_sub = ?').bind(sub).first())?.n ?? 0;
+async function accountView(env, sub) {
+  const { a } = await loadAcct(env, sub);
+  return { account: a, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades: ASC_UP, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
+}
+async function getAccount(env, session) {
+  const sub = await sessionUser(env, session); if (!sub) return json({ error: 'forbidden' }, 403);
+  return json(await accountView(env, sub));
+}
+async function buyUpgrade(body, env) {
+  const sub = await sessionUser(env, body.session); if (!sub) return json({ error: 'forbidden' }, 403);
+  const key = String(body.key || ''); if (!own(ASC_UP, key)) return json({ error: 'bad_request' }, 400);
+  let err = null;
+  await updateAcct(env, sub, a => {
+    err = null; const lv = a.up[key] || 0, u = ASC_UP[key];
+    if (lv >= u.max) { err = 'max_item'; return; }
+    if (a.qi < u.cost[lv]) { err = 'no_qi'; return; }
+    a.qi -= u.cost[lv]; a.up = { ...a.up, [key]: lv + 1 };
+  });
+  if (err) return json({ error: err }, 409);
+  return json(await accountView(env, sub));
+}
+async function ascendChar(id, body, env) {
+  const sub = await sessionUser(env, body.session), c = await loadChar(env, id, body.token);
+  if (!sub || !c) return json({ error: 'forbidden' }, 403);
+  const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(id).first();
+  if (row?.user_sub !== sub) return json({ error: 'forbidden' }, 403);
+  if (body.confirm !== '등선') return json({ error: 'bad_request' }, 400);
+  if ((c.wins || 0) < ASCEND_MIN_WINS) return json({ error: 'ascend_wins', needWins: ASCEND_MIN_WINS }, 409);
+  const qi = qiOf(c);
+  await ensureStoryTable(env); await ensureFoesTable(env);
+  const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub = ?').bind(id, sub).run();
+  if (!del.meta.changes) return json({ error: 'retry' }, 409);   // 동시에 두 번 누름
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM rpg_battles WHERE char_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM rpg_story WHERE char_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM rpg_foes WHERE char_id = ?').bind(id),
+  ]);
+  lbCache.at = 0;
+  const gift = ASC_TIER[c.stats?.tier]?.gift;
+  await updateAcct(env, sub, a => { a.qi += qi; a.total = (a.total || 0) + qi; if (gift) a.gift = mergeGift(a.gift, gift); a.hall = [{ name: c.name, fiction: c.fiction, tier: c.stats?.tier, wins: c.wins || 0, losses: c.losses || 0, rebirths: c.rebirths || 0, qi, at: Date.now() }, ...(a.hall || [])].slice(0, 30); });
+  return json({ ok: true, qi, gift: gift || null, ...(await accountView(env, sub)) });
+}
+
 const ENEMY_K0 = 0.72, ENEMY_KG = 0.18, NIGHTMARE_X = 1.3;
 const growthOf = c => { const cap = capsOf(c); return Math.max(0, Math.min(1, (c.stats.hp / cap.hp + c.stats.atk / cap.atk) / 2)); };
 function matchToPlayer(e, c, t) {
@@ -1729,7 +1917,7 @@ async function createBattle(body, env) {
     c = await updateChar(env, c.id, x => { bad = false; const b = x.bag || {}; if (items.some(k => !(b[k] > 0)) || (nightmare && !(b.nightmare > 0))) { bad = true; return; } for (const k of items) b[k]--; if (nightmare) b.nightmare--; x.bag = b; }, c);
     if (bad) return json({ error: 'no_item' }, 409);
   }
-  if (mode !== 'auto') foe = pickEnemy(c, { nightmare });
+  if (mode !== 'auto') foe = pickEnemy(c, { nightmare, roster: await loadRoster(env, c.id) });
   const st = { id: uid(), charId: c.id, mode, foeId, me: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null };
   applyBag(st, items); if (nightmare) st.nightmare = true;
   applyCond(st, c);

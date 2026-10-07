@@ -291,7 +291,7 @@
         </div>
 
         <!-- 도움말 + 계정: Google 로그인 → 캐릭터를 계정에 묶어 다른 기기에서 복구, 순위표에 이름 표시 -->
-        <div class="account" id="account"><button type="button" class="mini ghost" id="btnHelp" aria-haspopup="dialog">? 도움말</button><button type="button" class="mini ghost" id="btnSettings" aria-haspopup="dialog">⚙ 설정</button><span class="hint" id="accountHint"></span><button type="button" class="mini gbtn" id="btnGoogle" style="display:none"><svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><path fill="#1d1d1d" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg> Google 로그인</button></div>
+        <div class="account" id="account"><button type="button" class="mini ghost" id="btnHelp" aria-haspopup="dialog">? 도움말</button><button type="button" class="mini ghost" id="btnSettings" aria-haspopup="dialog">⚙ 설정</button><button type="button" class="mini ghost" id="btnAcct" aria-haspopup="dialog" hidden>☯ 선계</button><span class="hint" id="accountHint"></span><button type="button" class="mini gbtn" id="btnGoogle" style="display:none"><svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><path fill="#1d1d1d" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg> Google 로그인</button></div>
 
         <!-- 1. 캐릭터 만들기 -->
         <section class="screen active" id="s-create" aria-labelledby="h-create">
@@ -333,7 +333,7 @@
                     <div class="bag-row" id="bagList"></div>
                 </details>
                 <div class="choices">
-                    <button id="btnBattle" class="choice"><b>AI 상대와 전투</b><span class="sub">혼자 하는 1:1. 처음 3전은 약한 상대만 나와요 (이기면 승점 1 · 능력치 상승, 지면 캐릭터가 사라짐 — 깨지 않는 꿈이 있으면 지켜 줌)</span></button>
+                    <button id="btnBattle" class="choice"><b>AI 상대와 전투</b><span class="sub">혼자 하는 1:1. 적은 내 설정으로 지어진 꿈속 존재들 · 처음 3전은 약한 상대만 나와요 (이기면 승점 1 · 능력치 상승, 지면 캐릭터가 사라짐 — 깨지 않는 꿈이 있으면 지켜 줌)</span></button>
                     <button id="btnAutoFight" class="choice ghost"><b>다른 플레이어의 캐릭터와 전투</b><span class="sub">자동 생사결 참가자의 캐릭터를 AI가 조종합니다 (이기면 승점 2 · 보상 1.3배, 져도 캐릭터 유지)</span></button>
                     <button id="btnOnline" class="choice ghost"><b>온라인 대전</b><span class="sub">사람끼리 2~6명, 랜덤 매칭 또는 코드로 초대 (이기면 승점 3, 능력치 보상은 없음)</span></button>
                 </div>
@@ -366,6 +366,11 @@
                     <div class="div-group" style="margin-bottom:8px"><label for="refineText" class="sr-only">덧붙일 문장</label><input type="text" id="refineText" maxlength="100" placeholder="예) 왼팔에 낡은 부상이 있어 큰 기술 뒤엔 한 턴 쉬어야 한다"></div>
                     <div class="btn-row" style="margin-top:0"><button id="btnRefine">심사 받기</button></div>
                     <p class="hint" id="refineResult" role="status"></p>
+                </div>
+                <div class="card" id="ascendCard">
+                    <h3>등선 <span class="hint" id="ascendHint"></span></h3>
+                    <p class="meta" style="margin:4px 0 8px">이 캐릭터를 꿈에서 떠나보내고(<b>캐릭터 삭제</b>), 계정에 <b>선기</b>를 쌓습니다. 선기로 선계 강화(위의 ☯ 선계 버튼)를 사면 다음에 만드는 캐릭터가 더 강하게 시작하거나 캐릭터 칸이 늘어나요. 높은 등급일수록 선기와 선물이 훨씬 큽니다.</p>
+                    <div id="ascendBody"></div>
                 </div>
                 <details class="more"><summary>개연성은 어떻게 오르나요?</summary><p class="hint">전투에서 <b>설정에 맞게 선언</b>할수록 조금씩 오릅니다 (심사관 적합 80% 이상 + 난이도 쉬움·보통이면 +0.3%p, 불허·불가면 −0.5%p). 등급마다 오를 수 있는 상한이 있고(평범 85% ~ 신화 100%), 환생할 때마다 바닥이 +3%p 올라갑니다.</p></details>
             </div>
@@ -471,7 +476,7 @@
         <div class="tut-step" hidden><h2 id="tut-h1">① 캐릭터 만들기</h2><p>이름과 200자 이내의 설정을 씁니다. 심사관이 설정을 읽고 <b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화 → ???)과 <b>개연성</b>을 매깁니다.</p><p class="eg">좋은 예) 대장간 집 딸. 망치를 다뤄 힘이 세지만 발이 느리다. 불 앞에서는 기운이 난다.</p><p>할 수 있는 것과 <b>못 하는 것</b>을 같이 쓸수록 개연성이 높아 기술이 잘 맞습니다. "뭐든 다 한다"는 오히려 불리해요.</p></div>
         <div class="tut-step" hidden><h2 id="tut-h2">② 전투: 선언 → 판정 → 주사위</h2><ol><li>이번 턴에 할 행동을 한 줄로 씁니다 (비우면 기본 공격).</li><li><b>공격 · 방어 · 필살기</b> 중 하나를 누릅니다.</li><li>심사관이 <b>적합도</b>(설정에 맞는가)와 <b>난이도</b>를 매깁니다.</li><li>주사위로 명중·피해가 정해지고, 게임 마스터가 서술합니다.</li></ol><p class="hint">방어는 피해를 절반으로 줄이고 필살기 게이지를 2칸 채웁니다. 게이지 3칸이면 필살기! AI 상대에게 <b>지면 캐릭터가 사라지니</b>(로그인한 계정 캐릭터는 남음) 위험하면 <b>도망</b>을 고려하세요.</p></div>
         <div class="tut-step" hidden><h2 id="tut-h3">③ 성장</h2><p>이기면 HP·ATK 가 오르고, 가끔 방어·속도·명중·회피도 오릅니다. 등급마다 성장 상한이 있어서, HP·ATK 가 상한에 닿으면 <b>환생</b>으로 다음 등급에 올라갈 수 있습니다.</p><p>100승마다 한 번 <b>설정 보강</b>으로 설정에 문장을 덧붙여 개연성을 다시 심사받을 수 있습니다. 이런 기능은 홈의 <b>성장</b> 탭에 모여 있어요.</p></div>
-        <div class="tut-step" hidden><h2 id="tut-h4">④ 함께 하기</h2><ul><li><b>온라인 대전</b> — 사람끼리 2~6명. 승점 3점.</li><li><b>자동 생사결</b> — 참가해 두면 접속하지 않아도 매시간 자동으로 싸웁니다.</li><li><b>꿈 이야기</b> — 내 설정으로 지어지는 7장면짜리 꿈. 져도 캐릭터는 남아요.</li><li><b>Google 로그인</b> — 캐릭터를 계정에 저장해 다른 기기에서도 이어 합니다.</li></ul><p class="hint">AI 는 하루 무료 한도(위의 '오늘 몽상')가 있습니다. 다 쓰면 판정은 계속되지만 서술이 빠집니다.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h4">④ 함께 하기</h2><ul><li><b>온라인 대전</b> — 사람끼리 2~6명. 승점 3점.</li><li><b>자동 생사결</b> — 참가해 두면 접속하지 않아도 매시간 자동으로 싸웁니다.</li><li><b>꿈 이야기</b> — 내 설정으로 지어지는 7장면짜리 꿈. 져도 캐릭터는 남아요.</li><li><b>등선</b> — 30승 넘은 계정 캐릭터를 떠나보내고 계정을 강화. 계정 캐릭터는 기본 2개까지.</li><li><b>Google 로그인</b> — 캐릭터를 계정에 저장해 다른 기기에서도 이어 합니다.</li></ul><p class="hint">AI 는 하루 무료 한도(위의 '오늘 몽상')가 있습니다. 다 쓰면 판정은 계속되지만 서술이 빠집니다.</p></div>
         <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></div>
         <p class="sr-only" id="tutCount" aria-live="polite"></p>
         <div class="dlg-foot"><button type="button" class="mini ghost" id="tutSkip">건너뛰기</button><span><button type="button" class="ghost" id="tutPrev" disabled>이전</button><button type="button" id="tutNext">다음</button></span></div>
@@ -511,6 +516,19 @@
             </details>
         </fieldset>
         <p class="hint">설정은 이 브라우저에 저장되고, 로그인 중이면 계정에도 저장돼 다른 기기에서도 같게 적용됩니다.</p>
+    </dialog>
+
+    <!-- 선계: 계정 강화 · 명예의 전당 (어느 화면에서든 — 마지막 캐릭터를 등선한 뒤 새 캐릭터를 만들기 전에도) -->
+    <dialog id="dlgAcct" aria-labelledby="acctTitle">
+        <div class="dlg-head"><h2 id="acctTitle">선계</h2><form method="dialog"><button class="mini ghost" aria-label="선계 닫기">닫기 ✕</button></form></div>
+        <div id="acctCard">
+            <p class="meta" style="margin:0 0 6px"><b id="qiHint"></b></p>
+            <p class="meta" style="margin:4px 0 6px">계정 강화입니다. <b>다음에 만드는 캐릭터</b>부터 적용돼요 (캐릭터 칸은 바로).</p>
+            <div id="upList"></div>
+            <details class="more"><summary>명예의 전당 (등선한 캐릭터)</summary><div id="hallList" class="meta"></div></details>
+            <p class="meta" id="giftLine"></p>
+        <p class="hint" id="acctStatus" role="status"></p>
+        </div>
     </dialog>
 
     <!-- 도움말: 다시 보기 · 용어 -->
@@ -800,7 +818,7 @@ const Snd = (() => {
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', nothing_to_cure: '지금은 고칠 흔적이 없습니다.', img_quota: '오늘 그림 한도를 다 썼습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', char_limit: `계정 캐릭터 칸이 꽉 찼습니다${e.data?.limit ? ` (${e.data.used}/${e.data.limit})` : ''}. 캐릭터를 등선하거나 선계에서 칸을 늘리세요.`, no_qi: '선기가 모자랍니다.', ascend_wins: `${e.data?.needWins || 30}승부터 등선할 수 있습니다.`, nothing_to_cure: '지금은 고칠 흔적이 없습니다.', img_quota: '오늘 그림 한도를 다 썼습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
@@ -922,7 +940,7 @@ const Snd = (() => {
         $('rebirthRow').style.display = ready ? '' : 'none';
         if (ready) $('btnRebirth').textContent = me.stats.tier === '???' ? '최고 등급 — 환생 불가' : maxTier ? `??? 로 환생하려면 1000승 필요 (${me.wins || 0}/1000)` : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
         $('btnRebirth').disabled = maxTier;
-        show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine(); renderBag(); renderShop(); refreshStoryCard();
+        show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine(); renderBag(); renderShop(); refreshStoryCard(); renderAscend(); refreshAccount(); prefetchFoes();
     }
     // 등급별 성장 상한 (서버와 같은 표). HP·ATK 둘 다 상한이면 환생 가능
     const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 }, '???': { hp: 8000, atk: 1000, def: 65, spd: 130, acc: 99, eva: 55 } };
@@ -1440,10 +1458,11 @@ const Snd = (() => {
     let acctChars = [], guestOwnedElsewhere = false;   // 로그인한 계정의 캐릭터 목록 (최근 순) / 손님 캐릭터가 다른 계정 소유라 추가 불가
     function renderAccount() {
         const hint = $('accountHint');
+        $('btnAcct').hidden = !gUser;   // 선계는 로그인 계정만
         if (gUser) {
             const guest = readSlot(GUEST), guestLinked = guest && (acctChars.some(c => c.id === guest.id) || guestOwnedElsewhere);
             const opts = acctChars.map(c => `<option value="${esc(c.id)}"${me && c.id === me.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.tier || '')} ${c.wins}승 ${c.losses}패</option>`).join('')
-                + (guest && !guestLinked ? `<option value="__guest">손님 캐릭터를 계정에 추가</option>` : '') + `<option value="__new">+ 새 캐릭터 만들기</option>`;
+                + (guest && !guestLinked ? `<option value="__guest">손님 캐릭터를 계정에 추가</option>` : '') + `<option value="__new">+ 새 캐릭터 만들기${acctState ? ` (${acctState.slots.used}/${acctState.slots.limit})` : ''}</option>`;
             hint.innerHTML = `<b>${esc(gUser.name)}</b> <select id="charPick" title="캐릭터 교체">${opts}</select> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
             $('charPick').addEventListener('change', onPickChange);
             $('btnLogout').addEventListener('click', logout);
@@ -1666,6 +1685,68 @@ const Snd = (() => {
     });
     $('btnStHome').addEventListener('click', () => goHome());
 
+    // ── 선계: 등선 · 계정 강화 · 캐릭터 칸 ──
+    let acctState = null; const foesPrefetched = new Set();
+    // 등급별 등선 보상 (서버 ASC_TIER 와 같음)
+    const ASC_TIER = { '평범': { qi: 1 }, '숙련': { qi: 3 }, '초인': { qi: 6, gift: { dream: 300 } }, '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련' } }, '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10 } }, '???': { qi: 25, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15 } } };
+    const qiPreview = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + (c.rebirths || 0) + Math.floor((c.wins || 0) / 100);
+    const giftText = g => !g ? '' : [g.minTier ? `최소 ${g.minTier} 보장` : '', g.statPct ? `시작 HP·ATK +${g.statPct}%` : '', g.dream ? `꿈 조각 ${g.dream}` : '', ...Object.entries(g.items || {}).filter(([, n]) => n > 0).map(([k, n]) => `${ITEM_INFO[k]?.[0] || k} ${n}개`)].filter(Boolean).join(' · ');
+    async function refreshAccount() {
+        $('btnAcct').hidden = !gUser;
+        if (!gUser || !gSession) { acctState = null; renderAscend(); return; }
+        try { acctState = await api('/api/rpg/account', null, { 'X-Session': gSession }); } catch { return; }
+        renderAcct(); renderAscend(); renderAccount();
+    }
+    function renderAcct() {
+        const v = acctState; if (!v) return;
+        const a = v.account, up = a.up || {};
+        $('qiHint').textContent = `선기 ${a.qi} · 캐릭터 칸 ${v.slots.used}/${v.slots.limit}`;
+        const gt = giftText(a.gift);
+        $('giftLine').innerHTML = gt ? `<b>다음 캐릭터 선물</b>: ${esc(gt)} <span class="hint">(새 캐릭터를 만들 때 한 번에 쓰임)</span>` : '';
+        setHtml($('upList'), Object.entries(v.upgrades).map(([k, u]) => { const lv = up[k] || 0, full = lv >= u.max, cost = full ? 0 : u.cost[lv];
+            return `<div class="shop-item"><div><b>${esc(u.name)}</b> <span class="hint">${lv}/${u.max}단계</span><div class="meta">${esc(u.desc)}</div></div><button type="button" class="mini" data-up="${k}"${full || a.qi < cost ? ' disabled' : ''}>${full ? '최대' : `선기 ${cost}`}</button></div>`; }).join(''));
+        setHtml($('hallList'), (a.hall || []).length ? a.hall.map(h => `<div>• <b>${esc(h.name)}</b> (${esc(h.fiction || '')}) — ${esc(h.tier || '')} · ${n0(h.wins)}승 ${n0(h.losses)}패${h.rebirths ? ` · 환생 ${n0(h.rebirths)}회` : ''} → 선기 +${n0(h.qi)} <span class="hint">${new Date(h.at).toLocaleDateString('ko-KR')}</span></div>`).join('') : '<span class="hint">아직 등선한 캐릭터가 없습니다.</span>');
+    }
+    function renderAscend() {
+        if (!me) return;
+        const isAcct = gUser && acctChars.some(c => c.id === me.id), need = acctState?.ascendMinWins || 30;
+        let h;
+        if (!isAcct) h = '<p class="hint" style="margin:0">Google 로그인한 <b>계정 캐릭터</b>만 등선할 수 있어요. 선기는 계정에 쌓이기 때문입니다.</p>';
+        else if ((me.wins || 0) < need) h = `<p class="hint" style="margin:0">${need}승부터 등선할 수 있어요 (지금 ${me.wins || 0}승). 지금 등선하면 받을 선기: ${qiPreview(me)}</p>`;
+        else h = `<p class="meta" style="margin:0 0 6px">지금 등선하면 선기 <b>+${qiPreview(me)}</b> (${esc(me.stats.tier)} 기본 ${ASC_TIER[me.stats.tier]?.qi ?? 1} + 환생 ${me.rebirths || 0} + 100승마다 1)${ASC_TIER[me.stats.tier]?.gift ? `<br>다음 캐릭터 선물: <b>${esc(giftText(ASC_TIER[me.stats.tier].gift))}</b>` : ''}</p>
+            <details class="more"><summary>등급별 등선 보상</summary><div class="meta">${Object.entries(ASC_TIER).map(([t, r]) => `<div>${t}: 선기 ${r.qi}${r.gift ? ' · ' + esc(giftText(r.gift)) : ''}</div>`).join('')}</div></details>
+            <label for="ascendConfirm" class="hint" style="display:block;margin:4px 0">되돌릴 수 없습니다. <b>등선</b>이라고 입력하세요</label><input type="text" id="ascendConfirm" autocomplete="off">
+            <button type="button" id="btnAscend" class="ghost danger full" style="margin-top:8px" disabled>${esc(me.name)} 등선하기</button>`;
+        $('ascendHint').textContent = isAcct ? `받을 선기 ${qiPreview(me)}` : '';
+        setHtml($('ascendBody'), h);
+    }
+    $('ascendBody').addEventListener('input', e => { if (e.target.id === 'ascendConfirm') $('btnAscend').disabled = e.target.value.trim() !== '등선'; });
+    $('ascendBody').addEventListener('click', async e => {
+        if (e.target.id !== 'btnAscend' || $('ascendConfirm').value.trim() !== '등선') return;
+        if (!(await dropPlay())) return;
+        e.target.disabled = true;
+        try {
+            const d = await api(`/api/rpg/chars/${me.id}/ascend`, { token: myToken, session: gSession, confirm: '등선' });
+            const gone = me.name; acctState = d; lsDel(ACCT); await refreshAcctChars();
+            alert(`${gone} 등선! 선기 +${d.qi} (지금 선기 ${d.account.qi})${d.gift ? `\n다음 캐릭터 선물: ${giftText(d.gift)}` : ''}\n선계에서 강화를 고르고 새 캐릭터를 만들어 보세요.`);
+            if (acctChars.length) await pickAccountChar(acctChars[0]); else { me = null; myToken = null; renderAccount(); show('s-create'); }
+            await refreshAccount(); $('dlgAcct').showModal();   // 바로 선계 강화를 고를 수 있게
+        } catch (err) { alert(errMsg(err)); e.target.disabled = false; }
+    });
+    $('btnAcct').addEventListener('click', async () => { await refreshAccount(); $('dlgAcct').showModal(); });
+    $('upList').addEventListener('click', async e => {
+        const b = e.target.closest('[data-up]'); if (!b || b.disabled) return;
+        b.disabled = true;
+        try { acctState = await api('/api/rpg/account/upgrade', { session: gSession, key: b.dataset.up }); renderAcct(); renderAccount(); $('acctStatus').textContent = '강화했습니다. 다음에 만드는 캐릭터부터 적용돼요.'; }
+        catch (err) { $('acctStatus').textContent = errMsg(err); b.disabled = false; }
+    });
+    // 꿈의 명부(캐릭터별 AI 적): 홈에 오면 아직 없을 때 미리 짓는다 (AI 1회)
+    function prefetchFoes() {
+        if (!me || me.foes === 'ready' || foesPrefetched.has(me.id) || !aiAvailable()) return;
+        foesPrefetched.add(me.id); const id = me.id;
+        api(`/api/rpg/chars/${id}/foes/prepare`, { token: myToken }).then(r => { if (r.status === 'ready' && me?.id === id) me.foes = 'ready'; }).catch(() => {});
+    }
+
     // ── 턴 그림: 서버가 그린 PNG 를 토큰 헤더로 받아 blob URL 로 붙인다 (img src 로는 헤더를 못 보냄) ──
     const imgPref = () => lsGet('dreamrpg.img') !== '0';   // 기본 켜짐
     let imgQuotaHit = false;
@@ -1784,6 +1865,8 @@ const Snd = (() => {
             ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 상점 탭의 꿈 시장에서 그 전투에서만 효과가 있는 소모품과 보험, 그리고 영구히 남는 꾸미기(꿈의 유물·별 표식)와 설정 보강 열쇠(설정을 영구히 바꿈)를 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
             ['흔적 (부상·피로·기세·공포)', '전투의 영향이 캐릭터에 남아요. 크게 다치면 부상이 다음 싸움에도 이어지고, 같은 상대를 다시 만나면 지난 싸움에 따라 얕보거나(방심) 긴장하거나 겁에 질리거나(공포) 복수심에 불타요(투지). 게임 마스터도 그걸 기억해 말해요. 캐릭터 탭에서 볼 수 있어요.', '예: 왼팔을 크게 다치면 며칠 동안 주먹이 무뎌지고, 나으면 흉터가 남아요.', '부상: 지면 45%, 이겨도 HP 30% 미만이면 25%·60% 미만이면 8% (받은 크리티컬마다 +6%p). 부위별 효과 — 팔 ATK −8%/−15%, 다리 속도 −10%/−20%(중상은 도망 −10%p), 머리 명중 −5/−10, 몸통 방어 −4%p/−8%p(중상은 시작 HP −10%). 경상은 3전 또는 6시간, 중상은 6전 또는 24시간 뒤 낫고 중상은 흉터를 남김(효과 없음). 같은 부위를 또 다치면 중상으로 악화. 최대 3개. 피로: 1시간에 15판 넘게 싸우면 속도 −10%·명중 −5. 기세: 3연승부터 게이지 +1. 마음가짐(상대별 최근 7일 기록으로): 공포 — 연달아 2패 또는 상대 HP 를 70% 넘게 남기고 짐 → 명중 −5, 이기면 극복 / 투지 — 지난번에 짐 → ATK +5% / 긴장 — 지난번이 아슬아슬(이긴 쪽 HP 30% 미만)하거나 승패가 섞임 → 방어 +3%p·속도 −5% / 방심 — 진 적 없이 2번 이상 HP 60% 넘게 남기고 이김 → 명중 +3·방어 −4%p. 의기소침: 3연패부터 명중 −3. 숙적: 같은 상대와 5번 이상. 최근 3일 동안 다시 만나면 "요즘 자주 만난다"고 서술. AI 전투·자동 생사결 상대·꿈 이야기에만 적용(온라인 대전 제외). 상점의 꿈 연고·깊은 잠·용기의 부적으로 바로 없앨 수 있음.'],
+            ['등선 · 선기 · 선계', '계정 캐릭터를 꿈에서 떠나보내면(삭제) 계정에 선기가 쌓여요. 선기로 선계 강화를 사면 다음에 만드는 캐릭터가 더 강하게 시작하거나 캐릭터 칸이 늘어나요. 등선한 캐릭터는 명예의 전당에 남아요.', '', '30승부터 등선 가능, 로그인한 계정 캐릭터만. 선기 = 등급 기본값(평범 1 · 숙련 3 · 초인 6 · 전설 10 · 신화 16 · ??? 25) + 환생 횟수 + 100승마다 1. 초인 이상은 다음 캐릭터 선물도: 초인 꿈 조각 300 / 전설 꿈 조각 500·깨지 않는 꿈·최소 숙련 / 신화 꿈 조각 800·깨지 않는 꿈·최소 숙련·시작 HP·ATK +10% / ??? 꿈 조각 1200·깨지 않는 꿈·최소 초인·+15% (쌓이고, 다음 캐릭터 하나에 한 번에 쓰임). 강화: 캐릭터 칸 +1(선기 3·6·10) · 시작 HP·ATK +5%/단계 · 심사 위력 +3/단계 · 개연성 바닥 +2%p/단계 · 시작 꿈 조각 +150/단계 (각 최대 5단계). 계정 캐릭터는 기본 2개까지.'],
+            ['꿈의 명부 (AI 전투 상대)', 'AI 전투의 적은 내 캐릭터 설정을 읽고 지어진 꿈속 존재들이에요. 캐릭터마다 다른 12명이 나와요.', '', '강함·능력 배분·필살기 종류는 코드가 정한 12개 자리 그대로, 이름·설명·필살기 이름만 AI 가 캐릭터당 한 번 지음(약 25초, 홈에 오면 미리 지어 둠). 생성 전이거나 실패한 자리는 기본 적이 나옴.'],
             ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
             ['오늘 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
         ]],
@@ -1813,7 +1896,7 @@ const Snd = (() => {
         lsSet('dreamrpg.' + r.name, r.value); pushPrefs();
     });
     // 바깥(배경)을 누르면 닫기 — 대화상자 안쪽 여백도 target 이 dialog 라서 좌표로 판단
-    for (const d of [$('dlgTut'), $('dlgHelp'), $('dlgSettings')]) d.addEventListener('click', e => {
+    for (const d of [$('dlgTut'), $('dlgHelp'), $('dlgSettings'), $('dlgAcct')]) d.addEventListener('click', e => {
         if (e.target !== d) return; const r = d.getBoundingClientRect();
         if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
     });
