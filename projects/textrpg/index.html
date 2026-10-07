@@ -1703,7 +1703,10 @@ const Snd = (() => {
         $('qiHint').textContent = `선기 ${a.qi} · 캐릭터 칸 ${v.slots.used}/${v.slots.limit}`;
         const gt = giftText(a.gift);
         $('giftLine').innerHTML = gt ? `<b>다음 캐릭터 선물</b>: ${esc(gt)} <span class="hint">(새 캐릭터를 만들 때 한 번에 쓰임)</span>` : '';
-        setHtml($('upList'), Object.entries(v.upgrades).map(([k, u]) => { const lv = up[k] || 0, full = lv >= u.max, cost = full ? 0 : u.cost[lv];
+        // 지금 가격 낮은 순 (최대 단계는 맨 아래, 같으면 원래 순서)
+        const price = ([k, u]) => (up[k] || 0) >= u.max ? Infinity : u.cost[up[k] || 0];
+        const ordered = Object.entries(v.upgrades).map((e, i) => [e, i]).sort((x, y) => price(x[0]) - price(y[0]) || x[1] - y[1]).map(([e]) => e);
+        setHtml($('upList'), ordered.map(([k, u]) => { const lv = up[k] || 0, full = lv >= u.max, cost = full ? 0 : u.cost[lv];
             return `<div class="shop-item"><div><b>${esc(u.name)}</b> <span class="hint">${lv}/${u.max}단계</span><div class="meta">${esc(u.desc)}</div></div><button type="button" class="mini" data-up="${k}"${full || a.qi < cost ? ' disabled' : ''}>${full ? '최대' : `선기 ${cost}`}</button></div>`; }).join(''));
         setHtml($('hallList'), (a.hall || []).length ? a.hall.map(h => `<div>• <b>${esc(h.name)}</b> (${esc(h.fiction || '')}) — ${esc(h.tier || '')} · ${n0(h.wins)}승 ${n0(h.losses)}패${h.rebirths ? ` · 환생 ${n0(h.rebirths)}회` : ''} → 선기 +${n0(h.qi)} <span class="hint">${new Date(h.at).toLocaleDateString('ko-KR')}</span></div>`).join('') : '<span class="hint">아직 등선한 캐릭터가 없습니다.</span>');
     }
