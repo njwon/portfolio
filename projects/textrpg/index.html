@@ -219,6 +219,10 @@
         .shop-item:first-child { border-top: none; }
         .shop-item .meta { font-size: 0.8125rem; }
         .stars { color: #fae069; letter-spacing: 1px; }
+        .cond-list { margin: 6px 0 0; padding: 0; list-style: none; }
+        .cond-list li { border-left: 2px solid #ea36af; padding: 2px 0 2px 10px; margin: 4px 0; font-size: 0.875rem; }
+        .cond-list li.good { border-color: #75fa69; }
+        .cond-list li.mild { border-color: #fae069; }
         .perm { display: inline-block; font-size: 0.75rem; font-weight: bold; padding: 0 6px; border-radius: 4px; border: 1px solid #fae069; color: #fae069; margin-left: 4px; }
         .danger-zone { margin-top: 22px; padding-top: 12px; border-top: 0.5px dashed #555; }
 
@@ -768,7 +772,7 @@ const Snd = (() => {
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', nothing_to_cure: '지금은 고칠 흔적이 없습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
@@ -865,6 +869,7 @@ const Snd = (() => {
         return `<h3>능력치</h3>
             <p class="meta" style="margin:0 0 6px">위력 등급 <b>${esc(s.tier || '')}</b>${sec ? ' (×???)' : s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} — ${STAT_SHORT.tier}</p>
             <dl class="slist">${rows}</dl>
+            ${condHtml(c)}
             ${c.alloc ? allocHtml(c.alloc, sec) : ''}
             <h3 style="margin-top:14px">필살기 · ${esc(c.ult.name)} <span class="hint">(${ultStyle(c.ult)[0]}형)</span></h3>
             <p class="meta" style="margin:0">${esc(c.ult.effect)}<br><b>${ultStyle(c.ult)[0]}형</b>: ${ultStyle(c.ult)[1]}<br><span class="hint">게이지 3칸이 차야 쓸 수 있습니다 (공격 +1칸, 방어 +2칸).</span></p>
@@ -880,7 +885,7 @@ const Snd = (() => {
         setHtml($('homeSummary'), `<h3>${esc(me.name)} <span class="hint">(${esc(me.fiction)})</span></h3>
             <div class="meta">위력 <b>${esc(s.tier || '')}</b> · ${isSecret(me) ? 'HP ??? · ATK ??? · 개연성 ???' : `HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}%`} · 전적 ${me.wins}승 ${me.losses}패${me.draws ? ` ${me.draws}무` : ''}${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''} · 꿈 조각 <b>${me.dream || 0}</b></div>
             <div class="hpbar" aria-hidden="true" style="margin-top:8px"><i style="width:${tierProgress(me).pct}%;background:#fae069"></i></div>
-            <div class="hint">${tierProgress(me).text}</div>`);
+            <div class="hint">${tierProgress(me).text}</div>${condShort(me) ? `<div class="hint" style="color:#f7a6da">흔적: ${esc(condShort(me))} — 캐릭터 탭에서 자세히</div>` : ''}`);
         setHtml($('homeCard'), charDetailHtml(me));
         setHtml($('growCard'), growHtml(me));
         // 환생: HP·ATK 가 등급 상한에 닿았고 ??? 가 아니면 버튼 표시 (신화 → ??? 는 1000승 이상)
@@ -905,6 +910,41 @@ const Snd = (() => {
             : pct >= 100 ? (winsLeft ? `${nx} 환생까지 ${winsLeft}승 남음` : `${nx}(으)로 환생 가능`)
             : `다음 등급(${nx})까지 ${100 - pct}% 남음${winsLeft ? ` · 그리고 ${winsLeft}승` : ''}`;
         return { pct, text };
+    }
+    // 흔적 (서버 condView): 부상·피로·기세·공포·숙적·흉터
+    function condShort(c) {
+        const v = c.condView; if (!v) return '';
+        const parts = v.injuries.map(j => j.label);
+        if (v.fatigue) parts.push('피로'); if (v.momentum) parts.push(`${v.streak}연승 기세`); if (v.slump) parts.push(`${v.slump}연패 의기소침`); if (v.fears.length) parts.push(`공포 ${v.fears.length}`);
+        return parts.join(' · ');
+    }
+    function condHtml(c) {
+        const v = c.condView || { injuries: [], fears: [], rivals: [], overcame: [], scars: [] }, li = [];
+        for (const j of v.injuries) li.push(`<li class="${j.sev ? '' : 'mild'}"><b>${esc(j.label)}</b> — ${esc(j.effect)}<br><span class="hint">${esc(j.hint)} · ${j.battlesLeft}전 더 싸우거나 ${j.hoursLeft}시간 지나면 나음${j.sev ? ' (나으면 흉터가 남음)' : ''}</span></li>`);
+        if (v.fatigue) li.push(`<li><b>피로</b> — 속도 −10% · 명중 −5<br><span class="hint">최근 1시간에 ${v.recent}판 (${v.fatigueAt}판부터). 쉬면 풀립니다.</span></li>`);
+        else if (v.recent >= v.fatigueAt - 3) li.push(`<li class="mild"><b>피로가 쌓이는 중</b> — 최근 1시간 ${v.recent}/${v.fatigueAt}판<br><span class="hint">${v.fatigueAt}판을 넘으면 속도·명중이 떨어집니다.</span></li>`);
+        if (v.momentum) li.push(`<li class="good"><b>${v.streak}연승 기세</b> — 다음 전투 게이지 +1 (지면 끝)</li>`);
+        if (v.slump) li.push(`<li><b>${v.slump}연패 의기소침</b> — 명중 −3 (한 번 이기면 풀림)</li>`);
+        const MOOD_HINT = { fear: '이 상대를 이기면 극복합니다', grit: '지난번에 진 상대 — 갚아 주고 싶다', tense: '지난번에 아슬아슬했던 상대', cocky: '쉽게 이겼던 상대라 얕보는 중 — 방심은 금물' };
+        for (const m of v.moods || []) li.push(`<li class="${m.key === 'cocky' || m.key === 'grit' ? 'mild' : ''}"><b>${esc(m.ko)}: ${esc(m.foe)}</b> — 이 상대를 만나면 ${esc(m.tag)}<br><span class="hint">${MOOD_HINT[m.key] || ''}</span></li>`);
+        for (const r of v.rivals) li.push(`<li class="mild"><b>숙적: ${esc(r)}</b></li>`);
+        for (const o of v.overcame) li.push(`<li class="good"><b>극복: ${esc(o)}</b> — 예전에 두려워했던 상대</li>`);
+        for (const sc of v.scars) li.push(`<li class="mild"><b>${esc(sc)}</b> — 능력치 효과는 없고, 게임 마스터가 서술에 씁니다</li>`);
+        return `<h3 style="margin-top:14px">흔적 <span class="hint">(전투가 남긴 영향)</span></h3>${li.length ? `<ul class="cond-list">${li.join('')}</ul>` : '<p class="hint" style="margin:4px 0 0">아직 남은 흔적이 없습니다. 크게 다치거나 같은 상대를 자주 만나면 여기에 남습니다.</p>'}`;
+    }
+    function afterHtml(a) {
+        if (!a) return '';
+        const o = [];
+        if (a.injury) o.push(`새 부상: <b>${esc(a.injury)}</b> (${esc(a.effect)}) — ${a.dur?.battles}전 또는 ${a.dur?.hours}시간 동안 다음 전투에도 남음`);
+        if (a.worse) o.push(`부상 악화: <b>${esc(a.worse)}</b> (${esc(a.effect)})`);
+        if (a.healed?.length) o.push(`나음: ${a.healed.map(esc).join(', ')}`);
+        if (a.scars?.length) o.push(`흉터가 남았다: ${a.scars.map(esc).join(', ')}`);
+        if (a.fear) o.push(`<b>${esc(a.fear)}</b>에게 연달아 져서 겁을 먹었다 (이 상대에게 명중 −5)`);
+        if (a.overcame) o.push(`<b>${esc(a.overcame)}</b>에 대한 공포를 극복했다!`);
+        if (a.streak >= 3) o.push(`${a.streak}연승 — 다음 전투 기세 (게이지 +1)`);
+        if (a.lstreak >= 3) o.push(`${a.lstreak}연패 — 의기소침 (명중 −3, 이기면 풀림)`);
+        if (a.mood) o.push(`다음에 <b>${esc(a.mood.foe)}</b>을(를) 만나면: ${esc(a.mood.ko)} (${esc(a.mood.tag)})`);
+        return o.length ? `<br><span class="hint">${o.join('<br>')}</span>` : '';
     }
     // 성장 탭: 상한까지 얼마나 왔는지 막대로
     function growHtml(c) {
@@ -1008,7 +1048,7 @@ const Snd = (() => {
         $('btnItem').style.display = pl && battle.items?.bandage > 0 ? '' : 'none'; $('btnItem').disabled = busy;
         $('rerollRow').style.display = pl && battle.mode === 'pve' && !battle.log.length && !battle.rerolled && (me?.bag?.map || 0) > 0 ? '' : 'none';
         $('btnRun').textContent = battle.mode === 'story' ? '꿈에서 깨기' : '도망';
-        $('bBag').textContent = [battle.nightmare ? '악몽 초대장 — 이기면 꿈 조각 2.5배, 져도 캐릭터는 남음' : '', battle.bagUsed?.length ? '가방: ' + battle.bagUsed.map(k => ITEM_INFO[k][0]).join(' · ') : '', battle.mode === 'story' ? `꿈 이야기 ${battle.boss ? '보스 전투' : '전투 (요약 서술)'} — 져도 캐릭터는 남음 (생사결 꿈 제외)` : ''].filter(Boolean).join(' · ');
+        $('bBag').textContent = [battle.cond?.length ? '상태: ' + battle.cond.join(' · ') : '', battle.nightmare ? '악몽 초대장 — 이기면 꿈 조각 2.5배, 져도 캐릭터는 남음' : '', battle.bagUsed?.length ? '가방: ' + battle.bagUsed.map(k => ITEM_INFO[k][0]).join(' · ') : '', battle.mode === 'story' ? `꿈 이야기 ${battle.boss ? '보스 전투' : '전투 (요약 서술)'} — 져도 캐릭터는 남음 (생사결 꿈 제외)` : ''].filter(Boolean).join(' · ');
     }
     let starting = false;   // 홈 버튼 연타로 전투·방이 두 개 생기지 않게
     const HOME_BTNS = ['btnBattle', 'btnAutoFight', 'btnOnline', 'btnWake'];
@@ -1086,6 +1126,8 @@ const Snd = (() => {
         battle = b; busy = false; saveSess({ battle: b.id });
         $('bLog').innerHTML = ''; $('bLb').style.display = 'none'; $('bAction').value = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
         if (battle.intro) logLine($('bLog'), `<span class="st-scene">${esc(battle.intro)}</span>`);
+        const mm = battle.memo;
+        if (mm) logLine($('bLog'), `<span class="hint">${mm.recent >= 1 ? `또 만났다 — 최근 3일 동안 ${mm.recent + 1}번째 대결` : `${mm.n + 1}번째 대결`} · 지금까지 ${mm.w}승 ${mm.l}패${mm.rival ? ' · <b>숙적</b>' : ''}${mm.mood ? ' · ' + ({ fear: '이 상대가 두렵다', grit: '지난번 패배를 갚을 투지', tense: '지난번처럼 아슬아슬할까 긴장된다', cocky: '쉬운 상대라 얕보는 마음' }[mm.mood] || '') : ''}${mm.overcame ? ' · 예전에 공포를 이겨낸 상대' : ''}</span>`);
         logLine($('bLog'), `<b>${esc(battle.foe.char.name)}</b>(${esc(battle.foe.char.fiction)})이(가) 나타났다!${battle.mode === 'auto' ? ' <span class="hint">— 자동 생사결 참가자의 캐릭터 (AI 조종)</span>' : ''}<br><span class="hint">${esc(battle.foe.char.info)}</span>`);
         for (const l of battle.log) logLine($('bLog'), roundHtml(`턴 ${l.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, l, battleSec()));   // 재접속이면 지난 턴 복원
         if (battle.log.length) logLine($('bLog'), '<span class="hint">— 이어서 진행합니다 —</span>');
@@ -1107,7 +1149,7 @@ const Snd = (() => {
         else if (b.saved) html = `당신은 쓰러졌다… 그러나 깨지 않는 꿈이 대신 깨졌습니다.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 5% 줄었습니다.</span>`;
         else if (b.nightmare) html = `악몽에 삼켜졌다…<br><span class="hint">악몽 초대장으로 들어간 꿈이라 캐릭터는 그대로입니다.</span>`;
         else html = `당신은 쓰러졌다… 꿈에서 깨어납니다.<br><span class="hint">${gUser ? '이 캐릭터는 이 기기에서 내려갑니다. 계정의 다른 캐릭터를 고르거나 새로 만들 수 있습니다.' : '로그인하지 않은 캐릭터는 지면 사라집니다. 돌아가기를 누르면 새 캐릭터를 만듭니다.'}</span>`;
-        $('bResult').innerHTML = html;
+        $('bResult').innerHTML = html + (b.deleted ? '' : afterHtml(b.after));
         $('btnBattleBack').textContent = b.mode === 'story' && !b.deleted ? '꿈 이야기로' : '돌아가기';
         $('bLb').style.display = '';
         $('bEnd').style.display = '';
@@ -1159,7 +1201,7 @@ const Snd = (() => {
         if (!battle) return goHome();
         const story = battle.mode === 'story', fought = battle.status === 'playing' && battle.log.length > 0;
         if (story && !confirm('꿈에서 깰까요? 이번 회차가 끝나고, 모은 꿈 조각은 절반만 남습니다 (캐릭터는 그대로).')) return;
-        if (!story && fought && !confirm(`도망칠까요? 성공 확률 약 ${escapeChance(battle.me, battle.foe, battle.items?.smoke ? 0.25 : 0)}%\n붙잡히면 패배로 기록되고 HP·ATK 최대치를 조금 잃습니다 (캐릭터는 남음).`)) return;
+        if (!story && fought && !confirm(`도망칠까요? 성공 확률 약 ${escapeChance(battle.me, battle.foe, (battle.items?.smoke ? 0.25 : 0) - (battle.fleePenalty || 0))}%\n붙잡히면 패배로 기록되고 HP·ATK 최대치를 조금 잃습니다 (캐릭터는 남음).`)) return;
         const b = battle; battle = null; saveSess(null);
         for (const id of ['btnAttack', 'btnDefend', 'btnUlt', 'btnRun']) $(id).disabled = true;
         try {
@@ -1455,10 +1497,12 @@ const Snd = (() => {
         map: ['꿈길 지도', 100, 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기'], nightmare: ['악몽 초대장', 200, '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음'],
         insurance: ['깨지 않는 꿈', 300, 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)', 1], key: ['설정 보강 열쇠', 1500, '설정 보강의 100승 대기를 바로 풂 (하루 1회)'],
         relic: ['꿈의 유물', 600, '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 300)'], star: ['별 표식', [1500, 3000, 6000], '순위표 이름 옆 장식 (3단계)'],
+        salve: ['꿈 연고', 80, '가장 심한 부상 하나를 바로 낫게 함 (사면 바로 쓰임, 흉터 없음)'], charm: ['용기의 부적', 150, '모든 상대에 대한 공포를 바로 없앰 (사면 바로 쓰임)'], sleep: ['깊은 잠', 250, '모든 부상과 피로를 바로 씻어 냄 (사면 바로 쓰임, 흉터 없음)'],
     };
     // 영구: 사면 계속 남음(유물·별 표식) 또는 쓰면 설정이 영구히 바뀜(설정 보강 열쇠)
     const PERM = { relic: '바꾸기 전까지 계속 지님', star: '한 번 사면 계속 남음', key: '이 열쇠로 하는 설정 보강은 설정을 영구히 바꿈 (열쇠는 1회용)' };
-    const BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'], SHOP = ['tea', 'sight', 'guard', 'bandage', 'smoke', 'map', 'nightmare', 'insurance', 'key', 'relic', 'star'];
+    const BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'], SHOP = ['tea', 'sight', 'guard', 'bandage', 'smoke', 'map', 'nightmare', 'insurance', 'key', 'relic', 'star', 'salve', 'charm', 'sleep'];
+    const CURE = { salve: v => v.injuries.length > 0, charm: v => v.fears.length > 0, sleep: v => v.injuries.length > 0 || v.fatigue };   // 고칠 게 있을 때만 살 수 있음
     const bagSel = new Set(); let useNightmare = false;
     function renderBag() {
         if (!me) return;
@@ -1483,8 +1527,10 @@ const Snd = (() => {
             let pr = price, full = (bag[k] || 0) >= (max || 5), extra = '';
             if (k === 'star') { const lv = me.stars || 0; full = lv >= 3; pr = full ? 0 : price[lv]; extra = lv ? ` <span class="stars">${'★'.repeat(lv)}</span>` : ''; }
             if (k === 'relic') { full = false; if (me.relic) pr = 300; extra = me.relic ? ` — 지금: <b>${esc(me.relic)}</b>` : ''; }
-            const cnt = k === 'relic' || k === 'star' ? '' : ` <span class="hint">보유 ${bag[k] || 0}${max ? '/' + max : ''}</span>`;
-            return `<div class="shop-item"><div><b>${name}</b>${PERM[k] ? ' <span class="perm" title="' + PERM[k] + '">영구</span>' : ''}${cnt}${extra}<div class="meta">${desc}${PERM[k] ? `<br><span class="hint">영구: ${PERM[k]}</span>` : ''}</div>${k === 'relic' ? `<input type="text" id="relicName" maxlength="12" placeholder="예) 할아버지의 망치" style="margin-top:6px;padding:.5rem" aria-label="유물 이름">` : ''}</div><button type="button" class="mini" data-buy="${k}"${full || d < pr ? ' disabled' : ''}>${full ? '최대' : (k === 'relic' && me.relic ? '바꾸기 ' : '') + pr + ' 조각'}</button></div>`;
+            const cure = CURE[k], cureOk = cure && me.condView ? cure(me.condView) : false;
+            if (cure) full = !cureOk;
+            const cnt = k === 'relic' || k === 'star' || cure ? '' : ` <span class="hint">보유 ${bag[k] || 0}${max ? '/' + max : ''}</span>`;
+            return `<div class="shop-item"><div><b>${name}</b>${PERM[k] ? ' <span class="perm" title="' + PERM[k] + '">영구</span>' : ''}${cnt}${extra}<div class="meta">${desc}${PERM[k] ? `<br><span class="hint">영구: ${PERM[k]}</span>` : ''}</div>${k === 'relic' ? `<input type="text" id="relicName" maxlength="12" placeholder="예) 할아버지의 망치" style="margin-top:6px;padding:.5rem" aria-label="유물 이름">` : ''}</div><button type="button" class="mini" data-buy="${k}"${full || d < pr ? ' disabled' : ''}>${cure && !cureOk ? '고칠 것 없음' : full ? '최대' : (k === 'relic' && me.relic ? '바꾸기 ' : cure ? '바로 쓰기 ' : '') + pr + ' 조각'}</button></div>`;
         }).join(''));
     }
     $('shopList').addEventListener('click', async e => {
@@ -1492,7 +1538,7 @@ const Snd = (() => {
         const item = b.dataset.buy, name = item === 'relic' ? ($('relicName')?.value || '').trim() : undefined;
         if (item === 'relic' && !name) return $('shopStatus').textContent = '유물 이름을 적어 주세요.';
         b.disabled = true; $('shopStatus').textContent = '';
-        try { const d = await api(`/api/rpg/chars/${me.id}/buy`, { token: myToken, item, name }); me = d.char; goHome(); $('shopStatus').textContent = `${ITEM_INFO[item][0]}을(를) 샀습니다 (−${d.paid} 조각).`; }
+        try { const d = await api(`/api/rpg/chars/${me.id}/buy`, { token: myToken, item, name }); me = d.char; goHome(); $('shopStatus').textContent = CURE[item] ? `${ITEM_INFO[item][0]}을(를) 썼습니다 (−${d.paid} 조각). 캐릭터 탭의 흔적을 확인하세요.` : `${ITEM_INFO[item][0]}을(를) 샀습니다 (−${d.paid} 조각).`; }
         catch (err) { $('shopStatus').textContent = errMsg(err); b.disabled = false; }
     });
 
@@ -1682,6 +1728,7 @@ const Snd = (() => {
             ['온라인 대전', '사람끼리 2~6명이 싸워요. 이기면 승점 3점을 받지만 능력치는 오르지 않아요.', '', '첫 제출 뒤 60초가 지나면 누구나 \'건너뛰기\'를 누를 수 있고, 건너뛰어진 사람은 자동 방어. 3번 연속이면 기권. 도중에 나가면 기권 패배. 마지막 라운드에 모두 쓰러지면 무승부(그 전에 쓰러졌거나 기권한 사람은 패배). 랜덤 대전은 2분 안에 만들어진 방끼리만 짝지어짐. 방은 3시간 동안 아무 일이 없으면 사라짐.'],
             ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 상점 탭의 꿈 시장에서 그 전투에서만 효과가 있는 소모품과 보험, 그리고 영구히 남는 꾸미기(꿈의 유물·별 표식)와 설정 보강 열쇠(설정을 영구히 바꿈)를 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
+            ['흔적 (부상·피로·기세·공포)', '전투의 영향이 캐릭터에 남아요. 크게 다치면 부상이 다음 싸움에도 이어지고, 같은 상대를 다시 만나면 지난 싸움에 따라 얕보거나(방심) 긴장하거나 겁에 질리거나(공포) 복수심에 불타요(투지). 게임 마스터도 그걸 기억해 말해요. 캐릭터 탭에서 볼 수 있어요.', '예: 왼팔을 크게 다치면 며칠 동안 주먹이 무뎌지고, 나으면 흉터가 남아요.', '부상: 지면 45%, 이겨도 HP 30% 미만이면 25%·60% 미만이면 8% (받은 크리티컬마다 +6%p). 부위별 효과 — 팔 ATK −8%/−15%, 다리 속도 −10%/−20%(중상은 도망 −10%p), 머리 명중 −5/−10, 몸통 방어 −4%p/−8%p(중상은 시작 HP −10%). 경상은 3전 또는 6시간, 중상은 6전 또는 24시간 뒤 낫고 중상은 흉터를 남김(효과 없음). 같은 부위를 또 다치면 중상으로 악화. 최대 3개. 피로: 1시간에 15판 넘게 싸우면 속도 −10%·명중 −5. 기세: 3연승부터 게이지 +1. 마음가짐(상대별 최근 7일 기록으로): 공포 — 연달아 2패 또는 상대 HP 를 70% 넘게 남기고 짐 → 명중 −5, 이기면 극복 / 투지 — 지난번에 짐 → ATK +5% / 긴장 — 지난번이 아슬아슬(이긴 쪽 HP 30% 미만)하거나 승패가 섞임 → 방어 +3%p·속도 −5% / 방심 — 진 적 없이 2번 이상 HP 60% 넘게 남기고 이김 → 명중 +3·방어 −4%p. 의기소침: 3연패부터 명중 −3. 숙적: 같은 상대와 5번 이상. 최근 3일 동안 다시 만나면 "요즘 자주 만난다"고 서술. AI 전투·자동 생사결 상대·꿈 이야기에만 적용(온라인 대전 제외). 상점의 꿈 연고·깊은 잠·용기의 부적으로 바로 없앨 수 있음.'],
             ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
             ['오늘 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
         ]],
