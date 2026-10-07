@@ -16,6 +16,13 @@
     <link rel="preconnect" href="https://blog-api.njwon19.workers.dev">
     <!-- Google 로그인 (Google Identity Services). 클라이언트 ID 는 아래 GOOGLE_CLIENT_ID 상수 -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- 화면 효과·글자 크기 설정을 첫 페인트 전에 적용 (나중에 바꾸면 한 번 번쩍임). 시스템 '동작 줄이기'가 켜져 있으면 기본값은 효과 없음 -->
+    <script>
+        (function () { var d = document.documentElement, f = null, z = null;
+            try { f = localStorage.getItem('dreamrpg.fx'); z = localStorage.getItem('dreamrpg.size'); } catch (e) {}
+            d.dataset.fx = f || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 'off' : 'low');
+            if (z) d.dataset.size = z; })();
+    </script>
     <style>
         @font-face {
             font-family: 'rock';
@@ -23,20 +30,41 @@
             font-display: swap;
         }
         * { box-sizing: border-box; }
+        html { font-size: 100%; }
+        html[data-size="l"] { font-size: 112.5%; }   /* 도움말 → 글자 크게. 모든 크기를 rem 으로 써서 한꺼번에 커진다 */
         body {
             margin: 0; min-height: 100vh; background: #1d1d1d; color: #eee;
             font-family: 'Pretendard', 'Segoe UI', Tahoma, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-            overflow-x: hidden;
+            overflow-x: hidden; line-height: 1.6;
             word-break: keep-all; overflow-wrap: anywhere;   /* 한글은 단어 단위로 줄바꿈("(계정)" 이 "(계 / 정)" 으로 안 갈라짐), 띄어쓰기 없는 긴 선언문은 넘치지 않게 강제 줄바꿈 */
         }
         /* 키보드 포커스: 기본 파란 링 대신 테마색 */
         :focus-visible { outline: 2px solid #75fa69; outline-offset: 2px; }
-        input[type="checkbox"] { accent-color: #eee; }
-        .main-container * {
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        input[type="checkbox"], input[type="radio"] { accent-color: #eee; width: 1.1rem; height: 1.1rem; vertical-align: -3px; }
+
+        /* ── 화면 효과 (html[data-fx]: off | low | high) ──────────────────────────
+           예전엔 모든 글자·테두리가 0.1초마다(초당 10번) 깜빡였다 — 초당 3번 넘게 번쩍이면 광과민성 발작 위험(WCAG 2.3.1)이 있고 글도 읽기 힘들어서
+           기본(low)은 깜빡임 없이 정적 색수차 + 제목만 몇 초에 한 번 살짝 흔들림. 예전 지직거림은 도움말 → 화면 효과 '강하게' 로 고를 수 있다 */
+        .title, .main-container h2, .main-container h3 { text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69; }
+        .title { animation: titleglitch 7s ease-in-out infinite; }
+        @keyframes titleglitch {
+            0%, 92%, 100% { text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69; transform: none; }
+            94% { text-shadow: 3px 0 1px #ea36af, -4px 0 1px #75fa69; transform: translateX(1px); }
+            96% { text-shadow: -2px 0 1px #ea36af, 3px 0 1px #75fa69; transform: translateX(-1px); }
+        }
+        /* 노이즈: SVG feTurbulence 한 장. 기본은 멈춘 채로 은은하게 */
+        .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.2 0 0 0 0 0.7 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 300px 300px; }
+        html[data-fx="off"] .noise { display: none; }
+        html[data-fx="off"] .title, html[data-fx="off"] .main-container h2, html[data-fx="off"] .main-container h3 { text-shadow: none; animation: none; }
+        /* 강하게: 예전 그대로 (모든 글자 textflicker + 테두리 boxflicker + 흐림 + 노이즈 지직거림) */
+        html[data-fx="high"] .main-container * {
             animation-duration: 0.1s; animation-iteration-count: infinite; animation-name: textflicker; animation-direction: alternate;
             text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
         }
-        .boxflicker { animation-name: boxflicker !important; }
+        html[data-fx="high"] :is(.card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, button, textarea, input[type="text"], .hint kbd, .account select, .lb) { animation-name: boxflicker; }
+        html[data-fx="high"] .main-container { filter: blur(0.6px); }
+        html[data-fx="high"] .noise { opacity: 0.05; animation: noiseflicker 0.3s steps(2, jump-none) infinite alternate; }
         @keyframes textflicker { from { text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69; } to { text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69; } }
         @keyframes boxflicker {
             0%   { box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69; text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69; }
@@ -44,179 +72,275 @@
             50%  { box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69; text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69; }
             100% { box-shadow: inset 2px 0.5px 2px #ea36af, inset -1px -0.5px 2px #75fa69; text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69; }
         }
-        /* 테두리가 있는 모든 요소에 상자 깜빡임(box-shadow) — 글자 깜빡임은 .main-container * 로 전부 적용됨 */
-        /* 모든 버튼(구글 로그인·로그아웃·만들기 포함)에 상자 깜빡임 — .main-container * 규칙이 button 규칙보다 우선이라 여기서 다시 지정 */
-        .card, .log, .msg .bubble, .quota, .code, .hpbar, .hpbar i, .quota .bar, .quota .bar i, .targets button, .result, .main-container button, .main-container textarea, .hint kbd, .account select { animation-name: boxflicker; }
-        .main-container { width: min(920px, 94vw); margin: 0 auto; padding: 8px 0 60px; position: relative; filter: blur(0.6px); }
-        ::-webkit-scrollbar { display: none; }
-        /* 노이즈: 3MB tenor GIF + 전체화면 blur 대신 SVG feTurbulence 한 장(수백 바이트, 필터 없음). 보이는 정도(불투명도 3%)는 같다 */
-        .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.2 0 0 0 0 0.7 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 300px 300px; animation: noiseflicker 0.3s steps(2, jump-none) infinite alternate; }   /* 불투명도만 바꿔 GPU 합성으로 지직거림 */
         @keyframes noiseflicker { from { opacity: 0.035; } to { opacity: 0.07; } }
-        /* 모바일·터치 기기: 깜빡임을 steps(2) 로(프레임마다가 아니라 초당 4번만 바뀜). blur 는 유지하되 컨테이너를 별도 레이어로 올려 GPU 에서 합성 */
+        /* 모바일·터치 기기: 깜빡임을 steps(2) 로(초당 4번만 바뀜). 컨테이너를 별도 레이어로 올려 GPU 에서 합성 */
         @media (hover: none), (max-width: 768px) {
-            .main-container { will-change: transform; transform: translateZ(0); }
-            .main-container *, input[type="text"], textarea, button { animation-duration: 0.5s; animation-timing-function: steps(2, jump-none); }
+            html[data-fx="high"] .main-container { will-change: transform; transform: translateZ(0); }
+            html[data-fx="high"] .main-container * { animation-duration: 0.5s; animation-timing-function: steps(2, jump-none); }
         }
+        /* 시스템 '동작 줄이기'는 어떤 설정보다 우선 */
         @media (prefers-reduced-motion: reduce) {
-            .main-container *, input[type="text"], textarea, button, .noise { animation: none !important; }
-            .main-container { filter: none; }
+            *, .noise { animation: none !important; transition: none !important; }
+            .main-container { filter: none !important; }
         }
-        .title { text-align: center; letter-spacing: 4px; font-family: 'rock', sans-serif; font-size: min(18vw, 88px); margin: 8px 0 4px; }
+
+        .main-container { width: min(920px, calc(100vw - 32px)); margin: 0 auto; padding: 8px 0 60px; position: relative; }
+        ::-webkit-scrollbar { display: none; }
+        .title { text-align: center; letter-spacing: 4px; font-family: 'rock', sans-serif; font-weight: normal; font-size: min(18vw, 88px); margin: 8px 0 4px; line-height: 1.1; }
         .screen { display: none; }
         .screen.active { display: block; }
+        .screen > h2 { font-size: 1.15rem; margin: 6px 0 12px; }
+        .screen > h2:focus { outline: none; }
         .div-group { margin-bottom: 1.3rem; }
         label { display: block; margin-bottom: 0.5rem; color: #eee; }
         input[type="text"], textarea {
-            width: 100%; padding: 0.8rem; border: 0.5px dashed #eee; background-color: transparent; color: #eee; border-radius: 4px;
-            font: inherit; animation-name: boxflicker; animation-duration: 0.1s; animation-iteration-count: infinite; animation-direction: alternate;
+            width: 100%; padding: 0.8rem; border: 0.5px dashed #eee; background-color: transparent; color: #eee; border-radius: 4px; font: inherit;
         }
         textarea { resize: none; min-height: 90px; }
+        ::placeholder { color: #9a9a9a; }
         button {
-            padding: 0.9rem 1rem; background-color: #eee; color: #1d1d1d; border: none; border-radius: 4px; font: inherit; font-size: 1.05rem; cursor: pointer;
-            transition: background-color 0.3s; animation-name: boxflicker; animation-duration: 0.1s; animation-iteration-count: infinite; animation-direction: alternate;
+            padding: 0.8rem 1rem; min-height: 44px; background-color: #eee; color: #1d1d1d; border: none; border-radius: 4px; font: inherit; font-size: 1.05rem; cursor: pointer;
+            transition: background-color 0.2s;
         }
-        button:hover { background-color: #9b9b9b; }
-        button:disabled { background-color: #555; color: #ccc; cursor: not-allowed; }   /* 대비 5.5:1 (전엔 #333/#6a6a6a ≈ 2.2:1 로 안 읽혔음) */
+        button:hover { background-color: #bdbdbd; }
+        button:disabled { background-color: #555; color: #ccc; cursor: not-allowed; }   /* 대비 5.5:1 */
         button.ghost { background: transparent; color: #eee; border: 0.5px dashed #eee; }
+        button.ghost:hover { background: #2e2e2e; }   /* 예전엔 밝은 회색 배경 위 흰 글자라 마우스를 올리면 안 읽혔음 */
+        button.ghost:disabled { color: #999; border-color: #666; background: transparent; }
+        button.danger { border-color: #ea36af; color: #f7a6da; }
         .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 18px 0 14px; }
         .btn-row button { flex: 1 1 140px; }
         .full { width: 100%; }
+        details > summary { cursor: pointer; min-height: 32px; padding: 4px 0; }
+        details.more > summary { font-size: 0.875rem; opacity: .9; }
 
-        /* 한도 표시줄 */
-        .quota { position: relative; z-index: 2; background: #1d1d1dee; border: 0.5px dashed #eee; border-radius: 4px; padding: 8px 12px; font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-        .quota .bar { flex: 1 1 160px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+        /* 한도 표시줄: 한 줄 요약 + '자세히' 로 접기 */
+        .quota { position: relative; z-index: 2; background: #1d1d1dee; border: 0.5px dashed #eee; border-radius: 4px; padding: 6px 12px; font-size: 0.8125rem; margin-bottom: 10px; }
+        .quota .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .quota .bar { flex: 1 1 120px; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
         .quota .bar i { display: block; height: 100%; background: #75fa69; width: 0; transition: width .4s; }
         .quota.low .bar i { background: #ea36af; }
-        .quota .warn { color: #ea36af; }
+        .quota .warn { color: #f7a6da; }
+        .quota details > summary { min-height: 0; padding: 0; font-size: 0.8125rem; opacity: .85; }
+        .quota details[open] > summary { margin-bottom: 4px; }
+        #quotaWarn { margin-top: 6px; }
+        #quotaWarn:empty { display: none; }
 
         /* 캐릭터 카드 */
         .card { border: 0.5px dashed #eee; border-radius: 4px; padding: 12px 14px; margin: 0 auto 12px; }
         .card h3 { margin: 0 0 6px; font-size: 1.1rem; }
-        .card .meta { font-size: 13px; opacity: .85; line-height: 1.55; }
+        .card .meta { font-size: 0.875rem; opacity: .9; line-height: 1.6; }
         .hpbar { height: 10px; background: #333; border-radius: 4px; overflow: hidden; margin: 6px 0 4px; }
         .hpbar i { display: block; height: 100%; background: #75fa69; transition: width .5s; }
         .hpbar.enemy i { background: #ea36af; }
+        .hpbar.low i { background: #fae069; }
         .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .vs .card { margin: 0; }   /* auto 여백이면 격자 칸 안에서 내용 폭으로 쪼그라듦 */
         @media (max-width: 640px) { .vs { grid-template-columns: 1fr; } }
+        .slist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 14px; margin: 6px 0 0; }
+        .slist > div { border-left: 2px solid #555; padding: 2px 0 2px 10px; }
+        .slist dt { font-size: 0.9375rem; }
+        .slist dd { margin: 0; font-size: 0.8125rem; opacity: .85; }
 
         .log { border: 0.5px dashed #eee; border-radius: 4px; padding: 14px; line-height: 1.7; white-space: pre-wrap; margin: 12px 0; max-height: 46vh; overflow-y: auto; }
         .log:empty { display: none; }   /* 대기 중인 방: 빈 점선 상자를 그리지 않음 */
-        .log .round { opacity: .7; font-size: 12px; margin-top: 14px; text-align: center; }
-        .log .dice { font-size: 13px; opacity: .85; }
+        .log .round { opacity: .75; font-size: 0.75rem; margin-top: 14px; text-align: center; }
         .msg { display: flex; gap: 8px; margin: 6px 0; align-items: flex-start; }
-        .msg .who { flex: none; font-size: 11px; opacity: .75; min-width: 64px; max-width: 30%; padding-top: 6px; text-align: right; }
+        .msg .who { flex: none; font-size: 0.75rem; opacity: .8; min-width: 64px; max-width: 30%; padding-top: 6px; text-align: right; }
         @media (max-width: 480px) { .msg .who { min-width: 48px; } }
         .msg .bubble { border: 0.5px dashed #eee; border-radius: 10px; padding: 6px 10px; max-width: 100%; }
         .msg.p1 .bubble { border-color: #75fa69; } .msg.p2 .bubble { border-color: #ea36af; } .msg.p3 .bubble { border-color: #69c9fa; }
         .msg.p4 .bubble { border-color: #fae069; } .msg.p5 .bubble { border-color: #c98cff; } .msg.p6 .bubble { border-color: #ff9c6b; }
+        .msg.dice .bubble { font-size: 0.875rem; }
         /* 온라인 방: 모든 플레이어에게 똑같이 보이는 판 */
         .plist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 12px; }
         .plist .card { margin: 0; position: relative; }
         .plist .card.me { border-style: solid; }
-        .plist .card.dead { opacity: .6; }   /* .45 는 탈락한 내 카드 글자가 안 읽혔음 */
-        .plist .badge { display: block; text-align: right; font-size: 11px; opacity: .8; margin: -4px 0 2px; min-height: 1em; }   /* 절대 위치면 긴 이름과 겹쳤음 */
+        .plist .card.dead { opacity: .6; }
+        .plist .badge { display: block; text-align: right; font-size: 0.75rem; opacity: .85; margin: -4px 0 2px; min-height: 1em; }
         .plist .c1 { border-color: #75fa69; } .plist .c2 { border-color: #ea36af; } .plist .c3 { border-color: #69c9fa; }
         .plist .c4 { border-color: #fae069; } .plist .c5 { border-color: #c98cff; } .plist .c6 { border-color: #ff9c6b; }
-        button.mini { padding: .3rem .7rem; font-size: 13px; }
-        /* 계정 줄 (Google 로그인) */
-        .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin: -6px 0 12px; font-size: 13px; min-height: 32px; }
+        button.mini { padding: .3rem .75rem; min-height: 36px; font-size: 0.875rem; }
+        /* 계정 줄 (도움말 · Google 로그인) */
+        .account { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; margin: 0 0 14px; font-size: 0.8125rem; min-height: 36px; }
+        .account #btnHelp { margin-right: auto; }
         .account img { width: 26px; height: 26px; border-radius: 50%; }
-        .account select { background: transparent; color: #eee; border: 0.5px dashed #eee; border-radius: 4px; padding: 4px 6px; font: inherit; font-size: 13px; max-width: 60vw; }
+        .account select { background: transparent; color: #eee; border: 0.5px dashed #eee; border-radius: 4px; padding: 6px; min-height: 36px; font: inherit; font-size: 0.8125rem; max-width: 60vw; }
         .account select option { background: #1d1d1d; }
         .account .gbtn { display: inline-flex; align-items: center; gap: 6px; }
         /* 순위표 */
-        .lb { border: 0.5px dashed #eee; border-radius: 4px; padding: 10px 12px; margin: 14px 0 0; animation-name: boxflicker; }
+        .lb { border: 0.5px dashed #eee; border-radius: 4px; padding: 10px 12px; margin: 14px 0 0; }
+        .lb:empty { display: none; }
         .lb h3 { margin: 0 0 6px; font-size: 1rem; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-        .lb table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .lb td, .lb th { padding: 3px 6px; text-align: left; white-space: nowrap; }
-        .lb th { font-weight: normal; opacity: .6; font-size: 11px; }
-        .lb td.n { text-align: right; opacity: .8; } .lb td.name, .lb td.tier { white-space: normal; } .lb td.name { max-width: 44vw; } .lb td.tier { min-width: 3.2em; }   /* 이름·등급 칸은 줄바꿈 허용 (nowrap 이면 좁은 화면에서 표가 상자 밖으로 넘침) */
-        @media (max-width: 480px) { .lb .fic { display: none; } }   /* 폰에서는 설정 한 줄 요약을 숨기고 등급만 */
+        .lb table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+        .lb td, .lb th { padding: 4px 6px; text-align: left; white-space: nowrap; }
+        .lb th { font-weight: normal; opacity: .75; font-size: 0.75rem; }
+        .lb td.n { text-align: right; opacity: .85; } .lb td.name, .lb td.tier { white-space: normal; } .lb td.name { max-width: 44vw; } .lb td.tier { min-width: 3.2em; }
+        @media (max-width: 480px) { .lb .fic { display: none; } }
         .lb tr.me td { background: #333; }
         .lb img { width: 16px; height: 16px; border-radius: 50%; vertical-align: -3px; margin-right: 4px; }
         .targets { display: flex; gap: 8px; flex-wrap: wrap; }
+        #oTargetGroup { margin-top: 14px; }
         .targets button { flex: 1 1 120px; padding: .55rem .6rem; font-size: .95rem; background: transparent; color: #eee; border: 0.5px dashed #eee; }
+        .targets button:hover { background: #2e2e2e; }
         .targets button.on { background: #eee; color: #1d1d1d; border-style: solid; }
-        .msg.judge .bubble { border-style: dotted; opacity: .95; font-size: 13px; }
-        .msg.judge .tag { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 4px; background: #333; margin-right: 4px; }
-        .msg.judge .tag.deny, .msg.judge .tag.impossible { background: #5a1f3d; } .msg.judge .tag.easy { background: #1f5a2c; } .msg.judge .tag.hard { background: #5a4a1f; }
+        .msg.judge .bubble { border-style: dotted; font-size: 0.875rem; }
+        .msg.judge .tag { display: inline-block; font-size: 0.75rem; padding: 0 6px; border-radius: 4px; background: #333; margin-right: 4px; }
+        .msg.judge .tag.denied, .msg.judge .tag.impossible, .msg.judge .tag.deny { background: #5a1f3d; } .msg.judge .tag.easy { background: #1f5a2c; } .msg.judge .tag.hard { background: #5a4a1f; }
         .msg.gm .bubble { border-style: solid; }
-        .status { text-align: center; opacity: .85; font-size: 14px; min-height: 1.4em; }
-        .result { text-align: center; font-size: 20px; font-weight: bolder; padding: 20px 0; }
+        .status { text-align: center; opacity: .9; font-size: 0.875rem; min-height: 1.4em; }
+        .result { text-align: center; font-size: 1.25rem; font-weight: bolder; padding: 20px 0; }
         .code { font-family: ui-monospace, monospace; font-size: 1.8rem; letter-spacing: .35em; text-align: center; padding: 10px; border: 0.5px dashed #eee; border-radius: 4px; }
-        .hint { font-size: 12px; opacity: .7; }
+        .hint { font-size: 0.8125rem; opacity: .8; }
         .hint kbd { border: 1px solid #777; border-radius: 3px; padding: 0 4px; font-family: ui-monospace, monospace; }
+
+        /* 홈 탭 (모험 / 캐릭터 / 성장 / 순위) — 한 화면에 모든 기능을 늘어놓지 않고 나눠 보여준다 */
+        .tabs { display: flex; gap: 4px; border-bottom: 0.5px dashed #eee; margin: 4px 0 14px; }
+        .tabs [role="tab"] { flex: 1 1 0; background: transparent; color: #eee; border: 0.5px dashed transparent; border-bottom: none; border-radius: 4px 4px 0 0; padding: .6rem .3rem; font-size: 1rem; opacity: .8; }
+        .tabs [role="tab"]:hover { background: #2a2a2a; opacity: 1; }
+        .tabs [role="tab"][aria-selected="true"] { opacity: 1; border: 0.5px solid #eee; border-bottom: none; background: #262626; font-weight: bold; }
+        .tab-badge { display: inline-block; min-width: 1.3em; padding: 0 .3em; border-radius: 999px; background: #75fa69; color: #1d1d1d; font-size: 0.75rem; font-weight: bold; margin-left: 4px; text-shadow: none; }
+        .tab-badge[hidden] { display: none; }
+        [role="tabpanel"][hidden] { display: none; }
+        .choices { display: grid; gap: 10px; margin: 0 0 14px; }
+        button.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; padding: .9rem 1rem; }
+        button.choice .sub { font-size: 0.875rem; opacity: .85; }
+        .grow { display: grid; grid-template-columns: 3.6em 1fr auto; gap: 6px 10px; align-items: center; font-size: 0.875rem; margin: 10px 0 4px; }
+        .grow .hpbar { margin: 0; }
+        .grow .hpbar.max i { background: #fae069; }
+        .grow .n { text-align: right; font-variant-numeric: tabular-nums; }
+        .locked { opacity: .85; }
+        .danger-zone { margin-top: 22px; padding-top: 12px; border-top: 0.5px dashed #555; }
+
+        /* 상황별 1회 안내 (닫으면 다시 안 뜸, 도움말 → 처음 안내 다시 보기로 되살림) */
+        .coach { display: flex; gap: 10px; align-items: flex-start; border: 1px solid #75fa69; border-radius: 6px; padding: 10px 12px; margin: 0 0 14px; background: #1f2a1f; font-size: 0.9375rem; line-height: 1.65; }
+        .coach[hidden] { display: none; }
+        .coach p { margin: 0; flex: 1; }
+        .coach button { flex: none; }
+
+        /* 대화상자 (튜토리얼 · 도움말) */
+        dialog { background: #232323; color: #eee; border: 1px solid #eee; border-radius: 8px; padding: 20px; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; line-height: 1.7; }
+        dialog::backdrop { background: rgba(0, 0, 0, .75); }
+        dialog h2 { margin: 0 0 10px; font-size: 1.25rem; }
+        dialog h3 { margin: 20px 0 6px; font-size: 1.05rem; }
+        dialog ol, dialog ul { padding-left: 1.3em; margin: 6px 0; }
+        dialog dl dt { font-weight: bold; margin-top: 8px; }
+        dialog dl dd { margin: 0 0 0 0; opacity: .9; font-size: 0.9375rem; }
+        dialog fieldset { border: 0.5px dashed #777; border-radius: 4px; margin: 8px 0; padding: 6px 12px 10px; }
+        dialog fieldset label { display: inline-flex; align-items: center; gap: 6px; margin: 4px 14px 0 0; min-height: 32px; cursor: pointer; }
+        .dlg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+        .dlg-head h2 { margin: 0; }
+        .tut-step[hidden] { display: none; }
+        .tut-step .eg { border-left: 2px solid #75fa69; padding: 4px 10px; margin: 8px 0; opacity: .9; font-size: 0.9375rem; }
+        .dots { display: flex; gap: 6px; justify-content: center; margin: 14px 0 0; }
+        .dots i { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+        .dots i.on { background: #eee; }
+        .dlg-foot { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+        .dlg-foot span { display: flex; gap: 8px; }
     </style>
 </head>
 
 <body>
-    <div class="noise"></div>
+    <div class="noise" aria-hidden="true"></div>
     <div class="main-container">
-        <div class="title">&lt;DREAMRPG&gt;</div>
+        <h1 class="title" aria-label="DREAM RPG">&lt;DREAMRPG&gt;</h1>
 
-        <!-- 무료 한도 (서버 값을 그대로 표시, 0이면 모든 AI 버튼 잠금) -->
+        <!-- 무료 한도: 한 줄 요약 + 자세히 (서버 값을 그대로 표시, 0이면 모든 AI 버튼 잠금) -->
         <div class="quota" id="quota">
-            <span>오늘 무료 몽상</span>
-            <div class="bar"><i id="quotaBar"></i></div>
-            <span id="quotaText">확인 중…</span>
-            <span id="quotaIp" class="hint"></span>
+            <div class="row">
+                <span>오늘 무료 몽상</span>
+                <div class="bar" aria-hidden="true"><i id="quotaBar"></i></div>
+                <span id="quotaShort">확인 중…</span>
+                <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div></details>
+            </div>
+            <div id="quotaWarn"></div>
         </div>
 
-        <!-- 계정: Google 로그인 → 캐릭터를 계정에 묶어 다른 기기에서 복구, 순위표에 이름 표시 -->
-        <div class="account" id="account"><span class="hint" id="accountHint"></span><button type="button" class="mini gbtn" id="btnGoogle" style="display:none"><svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><path fill="#1d1d1d" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg> Google 로그인</button></div>
+        <!-- 도움말 + 계정: Google 로그인 → 캐릭터를 계정에 묶어 다른 기기에서 복구, 순위표에 이름 표시 -->
+        <div class="account" id="account"><button type="button" class="mini ghost" id="btnHelp" aria-haspopup="dialog">? 도움말</button><span class="hint" id="accountHint"></span><button type="button" class="mini gbtn" id="btnGoogle" style="display:none"><svg width="14" height="14" viewBox="0 0 48 48" aria-hidden="true"><path fill="#1d1d1d" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg> Google 로그인</button></div>
 
         <!-- 1. 캐릭터 만들기 -->
-        <section class="screen active" id="s-create">
+        <section class="screen active" id="s-create" aria-labelledby="h-create">
+            <h2 id="h-create" tabindex="-1">캐릭터 만들기</h2>
             <div class="div-group">
                 <label for="char-name">캐릭터 이름</label>
-                <input type="text" id="char-name" maxlength="20" placeholder="예) 홍길동">
+                <input type="text" id="char-name" maxlength="20" placeholder="예) 홍길동" autocomplete="off">
             </div>
             <div class="div-group">
-                <label for="char-setting">캐릭터 설정 <span class="hint">(200자 · 앞뒤가 맞고 한계가 분명할수록 기술이 안정적으로 발동합니다. 강한 능력은 대가·약점까지 구체적으로 써야 위력 등급이 올라갑니다)</span></label>
-                <textarea id="char-setting" maxlength="200" placeholder="예) 대한민국의 평범한 고등학생. 복싱를 배워 잽을 날릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
+                <label for="char-setting">캐릭터 설정 <span class="hint">(200자까지)</span></label>
+                <textarea id="char-setting" maxlength="200" aria-describedby="settingTip" placeholder="예) 대한민국의 평범한 고등학생. 복싱을 배워 잽을 날릴 수 있다. 밤을 새면 힘이 빠진다."></textarea>
+                <p class="hint" id="settingTip" style="margin:6px 0 0"><b>할 수 있는 것</b>과 <b>못 하는 것(약점·대가)</b>을 함께 쓰면 기술이 잘 맞고, 강한 능력일수록 대가를 구체적으로 써야 높은 등급을 받습니다.</p>
             </div>
             <button id="btnCreate" class="full">몽상 시작!</button>
             <div class="btn-row" id="createBackRow" style="display:none"><button id="btnCreateBack" class="ghost">돌아가기 (지금 캐릭터 그대로)</button></div>
-            <p class="status" id="createStatus"></p>
-            <div class="lb" data-lb></div>
-            <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)을 매기고, 서버가 등급에 따라 예산을 정합니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다.</p>
+            <p class="status" id="createStatus" role="status"></p>
+            <details class="more">
+                <summary>심사는 어떻게 하나요?</summary>
+                <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)을 매기고, 서버가 등급에 따라 능력치를 정합니다. "뭐든 다 한다" 같은 막연한 설정은 개연성이 낮아 기술이 자주 빗나갑니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다.</p>
+            </details>
+            <details class="more"><summary>순위표 보기</summary><div class="lb" data-lb></div></details>
         </section>
 
-        <!-- 2. 홈 -->
-        <section class="screen" id="s-home">
-            <div class="card" id="homeCard"></div>
-            <div class="btn-row" id="rebirthRow" style="display:none"><button id="btnRebirth" class="full">환생</button></div>
-            <div class="btn-row">
-                <button id="btnBattle">전투 (AI 상대)</button>
-                <button id="btnAutoFight">자동 생사결 상대와 전투</button>
-                <button id="btnOnline">온라인 대전</button>
-                <button id="btnWake" class="ghost">일어나기 (초기화)</button>
+        <!-- 2. 홈: 요약 카드 + 탭 -->
+        <section class="screen" id="s-home" aria-labelledby="h-home">
+            <h2 id="h-home" class="sr-only" tabindex="-1">홈</h2>
+            <div class="coach" data-coach="home" hidden><p>처음이라면 <b>모험 → AI 상대와 전투</b>부터 해 보세요. 이기면 능력치가 오르고, 조건을 채우면 <b>성장</b> 탭에서 환생·설정 보강이 열립니다. 막히면 위의 <b>? 도움말</b>.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
+            <div class="card" id="homeSummary"></div>
+            <div class="tabs" role="tablist" aria-label="홈 메뉴">
+                <button type="button" role="tab" id="tab-play" aria-controls="p-play" aria-selected="true">모험</button>
+                <button type="button" role="tab" id="tab-char" aria-controls="p-char" aria-selected="false" tabindex="-1">캐릭터</button>
+                <button type="button" role="tab" id="tab-grow" aria-controls="p-grow" aria-selected="false" tabindex="-1">성장<span class="tab-badge" id="growBadge" hidden>!</span></button>
+                <button type="button" role="tab" id="tab-rank" aria-controls="p-rank" aria-selected="false" tabindex="-1">순위</button>
             </div>
-            <div class="card" id="refineCard">
-                <h3>설정 보강 <span class="hint" id="refineHint"></span></h3>
-                <p class="hint" style="margin:4px 0">개연성은 <b>설정에 맞게 선언</b>할수록 조금씩 오르고(적합 80%↑·쉬움/보통 +0.3%p, 불허·불가 −0.5%p), 여기서 설정에 문장을 덧붙이면 심사관이 <b>일관성만 다시 심사</b>합니다(위력 등급은 그대로). 한계·약점·대가를 구체적으로 적으면 오르고, 모순을 더하면 내려갑니다. 5승마다 1회, 첫 번째는 무료.</p>
-                <div class="div-group" style="margin-bottom:8px"><input type="text" id="refineText" maxlength="100" placeholder="예) 왼팔에 낡은 부상이 있어 큰 기술 뒤엔 한 턴 쉬어야 한다"></div>
-                <div class="btn-row" style="margin-top:0"><button id="btnRefine">심사 받기</button></div>
-                <p class="hint" id="refineResult"></p>
+            <div role="tabpanel" id="p-play" aria-labelledby="tab-play">
+                <div class="choices">
+                    <button id="btnBattle" class="choice"><b>AI 상대와 전투</b><span class="sub">혼자 하는 1:1. 처음이라면 여기부터 (이기면 승점 1)</span></button>
+                    <button id="btnAutoFight" class="choice ghost"><b>다른 플레이어의 캐릭터와 전투</b><span class="sub">자동 생사결 참가자의 캐릭터를 AI가 조종합니다</span></button>
+                    <button id="btnOnline" class="choice ghost"><b>온라인 대전</b><span class="sub">사람끼리 2~6명, 랜덤 매칭 또는 코드로 초대 (이기면 승점 3)</span></button>
+                </div>
+                <div class="card" id="autoCard">
+                    <h3>자동 생사결 <span class="hint" id="autoCount"></span></h3>
+                    <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><input type="checkbox" id="autoOn" style="margin-top:4px" aria-describedby="autoDesc"> <span>참가하기<br><span class="hint" id="autoDesc">접속하지 않은 동안에도 서버가 매시간 참가자끼리 붙여 전적·보상이 쌓입니다 (AI 서술 없이 규칙 엔진만).</span></span></label>
+                    <details class="more"><summary>최근 기록</summary><div class="meta" id="autoRecent"></div></details>
+                </div>
             </div>
-            <div class="card" id="autoCard">
-                <h3>자동 생사결 <span class="hint" id="autoCount"></span></h3>
-                <label class="hint" style="display:block;margin:4px 0"><input type="checkbox" id="autoOn"> 참가 — 접속하지 않은 동안에도 서버가 매시간 참가자끼리 붙여 전적·보상이 쌓입니다 (AI 서술 없음, 규칙 엔진만). 접속 중인 사람은 위 메뉴로 참가자와 실시간 전투를 할 수 있습니다.</label>
-                <div class="meta" id="autoRecent"></div>
+            <div role="tabpanel" id="p-char" aria-labelledby="tab-char" hidden>
+                <div class="card" id="homeCard"></div>
+                <div class="danger-zone">
+                    <button id="btnWake" class="ghost danger full">일어나기 (초기화)</button>
+                    <p class="hint">캐릭터를 지우고 처음부터 다시 만듭니다. 되돌릴 수 없습니다.</p>
+                </div>
             </div>
-            <div class="lb" data-lb></div>
+            <div role="tabpanel" id="p-grow" aria-labelledby="tab-grow" hidden>
+                <div class="card" id="growCard"></div>
+                <div class="btn-row" id="rebirthRow" style="display:none"><button id="btnRebirth" class="full">환생</button></div>
+                <div class="card" id="refineCard">
+                    <h3>설정 보강 <span class="hint" id="refineHint"></span></h3>
+                    <p class="meta" style="margin:4px 0 8px">설정에 문장을 덧붙이면 심사관이 <b>일관성만 다시 심사</b>합니다 (위력 등급은 그대로). 한계·약점·대가를 구체적으로 적으면 개연성이 오르고, 모순을 더하면 내려갑니다. 5승마다 1회, 첫 번째는 무료.</p>
+                    <div class="div-group" style="margin-bottom:8px"><label for="refineText" class="sr-only">덧붙일 문장</label><input type="text" id="refineText" maxlength="100" placeholder="예) 왼팔에 낡은 부상이 있어 큰 기술 뒤엔 한 턴 쉬어야 한다"></div>
+                    <div class="btn-row" style="margin-top:0"><button id="btnRefine">심사 받기</button></div>
+                    <p class="hint" id="refineResult" role="status"></p>
+                </div>
+                <details class="more"><summary>개연성은 어떻게 오르나요?</summary><p class="hint">전투에서 <b>설정에 맞게 선언</b>할수록 조금씩 오릅니다 (심사관 적합 80% 이상 + 난이도 쉬움·보통이면 +0.3%p, 불허·불가면 −0.5%p). 등급마다 오를 수 있는 상한이 있고(평범 85% ~ 신화 100%), 환생할 때마다 바닥이 +3%p 올라갑니다.</p></details>
+            </div>
+            <div role="tabpanel" id="p-rank" aria-labelledby="tab-rank" hidden>
+                <div class="lb" data-lb></div>
+            </div>
         </section>
 
         <!-- 3. AI 전투 -->
-        <section class="screen" id="s-battle">
+        <section class="screen" id="s-battle" aria-labelledby="h-battle">
+            <h2 id="h-battle" class="sr-only" tabindex="-1">전투</h2>
+            <div class="coach" data-coach="battle" hidden><p><b>한 턴은 이렇게:</b> ① 아래 칸에 할 행동을 글로 쓰고 ② 공격·방어·필살기 중 하나를 누르면 ③ 심사관이 설정에 맞는지(적합도)와 난이도를 매기고 ④ 주사위로 명중을 굴린 뒤 ⑤ 게임 마스터가 서술합니다. 칸을 비우면 기본 공격. 필살기는 게이지 3칸(공격 +1, 방어 +2)이 차야 쓸 수 있습니다. <b>지면 (로그인하지 않은) 캐릭터가 사라지니</b>, 불리하면 도망도 방법입니다.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
             <div class="vs">
                 <div class="card" id="bMe"></div>
                 <div class="card" id="bFoe"></div>
             </div>
-            <div class="log" id="bLog"></div>
+            <div class="log" id="bLog" role="log" aria-label="전투 기록" tabindex="0"></div>
             <div class="div-group" id="bActionGroup">
-                <label for="bAction">이번 턴, 무엇을 하나요? <span class="hint">(말로 선언 → 심사관이 허용·난이도를 판정 → 주사위 → 게임 마스터 서술)</span></label>
-                <input type="text" id="bAction" maxlength="120" placeholder="예) 상대의 손목을 잡아 업어치기를 시도한다 / 비워두면 기본 공격">
+                <label for="bAction">이번 턴, 무엇을 하나요?</label>
+                <input type="text" id="bAction" maxlength="120" autocomplete="off" aria-describedby="bActionHint" placeholder="예) 상대의 손목을 잡아 업어치기를 시도한다">
+                <p class="hint" id="bActionHint" style="margin:6px 0 0">비워 두면 기본 공격 · <kbd>Enter</kbd> = 공격</p>
             </div>
             <div class="btn-row" id="bBtns">
                 <button id="btnAttack">공격</button>
@@ -224,47 +348,80 @@
                 <button id="btnUlt">필살기 <span class="hint" id="ultLeft"></span></button>
                 <button id="btnRun" class="ghost">도망</button>
             </div>
-            <p class="status" id="bStatus"></p>
-            <div class="result" id="bResult" style="display:none"></div>
+            <p class="status" id="bStatus" role="status"></p>
+            <div class="result" id="bResult" role="status" style="display:none"></div>
             <div class="btn-row" id="bEnd" style="display:none"><button id="btnBattleBack">돌아가기</button></div>
-            <div class="lb" data-lb></div>
         </section>
 
         <!-- 4. 온라인 대전 로비 -->
-        <section class="screen" id="s-lobby">
-            <div class="card">
-                <h3>온라인 대전 (2~6명)</h3>
-                <p class="meta">방을 만들어 코드를 알려주거나, 받은 코드로 들어갑니다. 방장이 시작하면 라운드마다 각자 <b>공격 대상</b>을 고르고 행동을 말로 선언합니다. 전원이 내면 심사관이 판정하고 규칙 엔진이 주사위를 굴린 뒤 게임 마스터가 서술합니다 (라운드당 무료 몽상 1회). 마지막까지 서 있는 사람이 승리.</p>
-            </div>
-            <div class="btn-row"><button id="btnMatch">랜덤 대전 (1:1)</button><button id="btnRoomCreate">방 만들기 (2~6명)</button></div>
+        <section class="screen" id="s-lobby" aria-labelledby="h-lobby">
+            <h2 id="h-lobby" tabindex="-1">온라인 대전 <span class="hint">(2~6명)</span></h2>
+            <div class="coach" data-coach="lobby" hidden><p><b>랜덤 대전</b>은 지금 기다리는 사람과 바로 1:1로 붙습니다. 친구와 하려면 <b>방 만들기</b>로 6자리 코드를 받아 알려 주세요. 라운드마다 무료 몽상 1회가 듭니다.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
+            <div class="btn-row"><button id="btnMatch">랜덤 대전 (1:1)</button><button id="btnRoomCreate" class="ghost">방 만들기 (2~6명)</button></div>
             <div class="div-group" style="margin-top:16px">
-                <label for="roomCodeInput">코드로 참가</label>
-                <input type="text" id="roomCodeInput" maxlength="6" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:.3em">
+                <label for="roomCodeInput">받은 코드로 참가</label>
+                <input type="text" id="roomCodeInput" maxlength="6" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase;letter-spacing:.3em">
             </div>
             <div class="btn-row"><button id="btnRoomJoin">참가</button><button id="btnLobbyBack" class="ghost">돌아가기</button></div>
-            <p class="status" id="lobbyStatus"></p>
+            <p class="status" id="lobbyStatus" role="status"></p>
+            <details class="more"><summary>대전은 어떻게 진행되나요?</summary><p class="hint">방장이 시작하면 라운드마다 각자 <b>공격 대상</b>을 고르고 행동을 글로 선언합니다. 전원이 내면 심사관이 판정하고 규칙 엔진이 주사위를 굴린 뒤 게임 마스터가 서술합니다. 마지막까지 서 있는 사람이 승리.</p></details>
         </section>
 
         <!-- 5. 온라인 대전 -->
-        <section class="screen" id="s-online">
-            <div class="code" id="roomCode"></div>
-            <p class="status" id="oStatus"></p>
+        <section class="screen" id="s-online" aria-labelledby="h-online">
+            <h2 id="h-online" class="sr-only" tabindex="-1">대전 방</h2>
+            <div class="coach" data-coach="online" hidden><p>모두가 행동을 내야 라운드가 진행됩니다. 3명 이상이면 <b>공격 대상</b>을 고를 수 있어요 (안 고르면 무작위). 오래 안 내는 사람이 있으면 60초 뒤 '건너뛰기'가 나타납니다.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
+            <div class="code" id="roomCode" aria-label="방 코드"></div>
+            <p class="status" id="oStatus" role="status"></p>
             <div class="plist" id="oPlayers"></div>
             <div class="btn-row" id="oHostRow" style="display:none"><button id="btnOStart">시작 (2명 이상)</button></div>
-            <div class="log" id="oLog"></div>
-            <div class="div-group" id="oTargetGroup">
-                <label>공격 대상 <span class="hint">(공격·필살기에 적용. 안 고르면 무작위)</span></label>
+            <div class="log" id="oLog" role="log" aria-label="대전 기록" tabindex="0"></div>
+            <div class="div-group" id="oTargetGroup" role="group" aria-labelledby="oTargetLabel">
+                <div id="oTargetLabel" style="margin-bottom:.5rem">공격 대상 <span class="hint">(안 고르면 무작위)</span></div>
                 <div class="targets" id="oTargets"></div>
             </div>
             <div class="div-group" id="oActionGroup">
-                <label for="oAction">이번 라운드, 무엇을 하나요? <span class="hint">(말로 선언 → 심사관 판정 → 주사위 → 서술)</span></label>
-                <input type="text" id="oAction" maxlength="120" placeholder="예) 상대가 방어할 때를 노려 옆구리를 찌른다">
+                <label for="oAction">이번 라운드, 무엇을 하나요?</label>
+                <input type="text" id="oAction" maxlength="120" autocomplete="off" placeholder="예) 상대가 방어할 때를 노려 옆구리를 찌른다 (비우면 기본 공격)">
             </div>
             <div class="btn-row" id="oBtns"><button id="btnOAttack">공격</button><button id="btnODefend">방어</button><button id="btnOUlt">필살기 <span class="hint" id="oUlt"></span></button><button id="btnOSkip" class="ghost" style="display:none">안 낸 사람 건너뛰기</button><button id="btnOLeave" class="ghost">나가기</button></div>
-            <div class="result" id="oResult" style="display:none"></div>
-            <div class="lb" data-lb></div>
+            <div class="result" id="oResult" role="status" style="display:none"></div>
         </section>
     </div>
+
+    <!-- 처음 안내 (첫 방문 때 한 번, 도움말에서 다시 보기) -->
+    <dialog id="dlgTut" aria-labelledby="tut-h0">
+        <div class="tut-step"><h2 id="tut-h0">글로 싸우는 RPG</h2><p>DREAM RPG 에서는 캐릭터도, 전투 행동도 <b>글로 씁니다</b>. AI 심사관이 그 글이 말이 되는지 판정하고, 주사위가 결과를 정하고, 게임 마스터가 이야기로 풀어 줍니다.</p><p class="hint">안내는 다섯 장이고 언제든 건너뛸 수 있습니다. 위의 <b>? 도움말</b>에서 다시 볼 수 있어요.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h1">① 캐릭터 만들기</h2><p>이름과 200자 이내의 설정을 씁니다. 심사관이 설정을 읽고 <b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)과 <b>개연성</b>을 매깁니다.</p><p class="eg">좋은 예) 대장간 집 딸. 망치를 다뤄 힘이 세지만 발이 느리다. 불 앞에서는 기운이 난다.</p><p>할 수 있는 것과 <b>못 하는 것</b>을 같이 쓸수록 개연성이 높아 기술이 잘 맞습니다. "뭐든 다 한다"는 오히려 불리해요.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h2">② 전투: 선언 → 판정 → 주사위</h2><ol><li>이번 턴에 할 행동을 한 줄로 씁니다 (비우면 기본 공격).</li><li><b>공격 · 방어 · 필살기</b> 중 하나를 누릅니다.</li><li>심사관이 <b>적합도</b>(설정에 맞는가)와 <b>난이도</b>를 매깁니다.</li><li>주사위로 명중·피해가 정해지고, 게임 마스터가 서술합니다.</li></ol><p class="hint">방어는 피해를 절반으로 줄이고 필살기 게이지를 2칸 채웁니다. 게이지 3칸이면 필살기! AI 상대에게 <b>지면 캐릭터가 사라지니</b>(로그인한 계정 캐릭터는 남음) 위험하면 <b>도망</b>을 고려하세요.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h3">③ 성장</h2><p>이기면 HP·ATK 가 오르고, 가끔 방어·속도·명중·회피도 오릅니다. 등급마다 성장 상한이 있어서, HP·ATK 가 상한에 닿으면 <b>환생</b>으로 다음 등급에 올라갈 수 있습니다.</p><p>5승마다 한 번 <b>설정 보강</b>으로 설정에 문장을 덧붙여 개연성을 다시 심사받을 수 있습니다. 이런 기능은 홈의 <b>성장</b> 탭에 모여 있어요.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h4">④ 함께 하기</h2><ul><li><b>온라인 대전</b> — 사람끼리 2~6명. 승점 3점.</li><li><b>자동 생사결</b> — 참가해 두면 접속하지 않아도 매시간 자동으로 싸웁니다.</li><li><b>Google 로그인</b> — 캐릭터를 계정에 저장해 다른 기기에서도 이어 합니다.</li></ul><p class="hint">AI 는 하루 무료 한도(위의 '오늘 무료 몽상')가 있습니다. 다 쓰면 판정은 계속되지만 서술이 빠집니다.</p></div>
+        <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+        <p class="sr-only" id="tutCount" aria-live="polite"></p>
+        <div class="dlg-foot"><button type="button" class="mini ghost" id="tutSkip">건너뛰기</button><span><button type="button" class="ghost" id="tutPrev" disabled>이전</button><button type="button" id="tutNext">다음</button></span></div>
+    </dialog>
+
+    <!-- 도움말: 다시 보기 · 화면 설정 · 용어 -->
+    <dialog id="dlgHelp" aria-labelledby="helpTitle">
+        <div class="dlg-head"><h2 id="helpTitle">도움말</h2><form method="dialog"><button class="mini ghost" aria-label="도움말 닫기">닫기 ✕</button></form></div>
+        <button type="button" class="ghost full" id="btnTutAgain">처음 안내 다시 보기</button>
+        <h3>화면 설정</h3>
+        <fieldset><legend>화면 효과</legend>
+            <label><input type="radio" name="fx" value="off"> 끄기</label>
+            <label><input type="radio" name="fx" value="low"> 은은하게 (기본)</label>
+            <label><input type="radio" name="fx" value="high"> 강하게 (깜빡임)</label>
+            <p class="hint" style="margin:4px 0 0">'강하게'는 화면 전체가 빠르게 깜빡입니다. 빛에 민감하다면 쓰지 마세요. 기기의 '동작 줄이기'가 켜져 있으면 움직임은 항상 꺼집니다.</p>
+        </fieldset>
+        <fieldset><legend>글자 크기</legend>
+            <label><input type="radio" name="size" value="m"> 보통</label>
+            <label><input type="radio" name="size" value="l"> 크게</label>
+        </fieldset>
+        <h3>한 턴의 흐름</h3>
+        <ol><li>행동을 글로 선언 (비우면 기본 공격)</li><li>공격 · 방어 · 필살기 선택</li><li>심사관: 허용 여부 · 난이도 · 적합도</li><li>주사위: 순서 · 명중 · 피해</li><li>게임 마스터 서술</li></ol>
+        <h3>용어</h3>
+        <dl id="glossary"></dl>
+        <form method="dialog" class="dlg-foot"><span></span><button>닫기</button></form>
+    </dialog>
 
     <script>
     'use strict';
@@ -273,7 +430,21 @@
     const MIN_INTERVAL_MS = 2000;                // 클라이언트 단 연타 방지
     const $ = id => document.getElementById(id);
     const screens = ['s-create', 's-home', 's-battle', 's-lobby', 's-online'];
-    const show = id => { screens.forEach(s => $(s).classList.toggle('active', s === id)); if (id === 's-create') $('createBackRow').style.display = me ? '' : 'none'; };
+    const SCREEN_TITLE = { 's-create': '캐릭터 만들기', 's-home': '홈', 's-battle': '전투', 's-lobby': '온라인 대전', 's-online': '대전 방' };
+    const show = id => {
+        screens.forEach(s => $(s).classList.toggle('active', s === id)); if (id === 's-create') $('createBackRow').style.display = me ? '' : 'none';
+        document.title = `${SCREEN_TITLE[id]} · DREAM RPG`;
+        showCoach(id);
+        // 누른 버튼이 화면과 함께 사라지면 포커스가 허공에 남아 키보드·스크린 리더 사용자가 길을 잃는다 → 새 화면 제목으로 옮기고 맨 위로
+        const a = document.activeElement;
+        if (!a || a === document.body || !a.offsetParent) { $(id).querySelector('h2')?.focus({ preventScroll: true }); window.scrollTo(0, 0); }
+    };
+    // 바뀐 경우에만 innerHTML 교체 — 폴링·주기 갱신 때 같은 내용을 다시 그리면 노드가 새로 생겨 애니메이션이 처음부터 재생되고(깜빡임) 펼친 상자·포커스가 풀린다
+    const setHtml = (el, html) => { if (el._html !== html) { el._html = html; el.innerHTML = html; } };
+    // 상황별 1회 안내: 그 화면에 처음 들어왔을 때만 보이고, '알겠어요'를 누르면 다시 안 뜬다
+    const COACH_KEY = k => 'dreamrpg.coach.' + k;
+    function showCoach(id) { document.querySelectorAll('.coach').forEach(c => { c.hidden = c.closest('.screen').id !== id || !!lsGet(COACH_KEY(c.dataset.coach)); }); }
+    document.addEventListener('click', e => { const b = e.target.closest('[data-coach-ok]'); if (!b) return; const c = b.closest('.coach'); lsSet(COACH_KEY(c.dataset.coach), '1'); c.hidden = true; });
     const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const ULT_COST = 3;
 
@@ -286,7 +457,8 @@
         $('quotaBar').style.width = pct + '%';
         const calls = Math.min(q.global.estCalls, q.ip.remaining);
         const active = (q.providers || []).find(p => p.id === q.active);
-        $('quotaText').textContent = `약 ${q.global.estCalls}회 남음 (≈ ${Math.floor(q.global.estCalls / 2)}라운드)` + (active ? ` · 지금 ${active.name} ${active.remaining}/${active.limit}` : '');
+        $('quotaShort').textContent = calls > 0 ? `내 몫 ${q.ip.remaining}/${q.ip.limit}회 남음` : '오늘 몫 소진';
+        $('quotaText').textContent = `서버 전체 약 ${q.global.estCalls}회 남음 (≈ ${Math.floor(q.global.estCalls / 2)}라운드)` + (active ? ` · 지금 ${active.name} ${active.remaining}/${active.limit}` : '');
         // 내 몫: 전체 무료 용량을 활동 이용자 수로 나눈 버킷. 제공자별 초기화 시각(Workers AI 09:00 · Gemini 16~17시)에 충전, Groq 는 시간당 충전
         const hm = t => new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
         const refills = (q.ip.refills || []).filter(r => r.add > 0 || r.perHour > 0).map(r => r.at ? `${hm(r.at)} +${r.add}` : `시간당 +${r.perHour}`).join(' · ');
@@ -297,12 +469,12 @@
         if (calls <= 0) {
             // 서버 쪽 무료 AI(Workers AI → Groq → Gemini → …)가 전부 소진됐거나 내 몫이 끝남 → 데스크톱 크롬이면 내장 AI(Gemini Nano)로 이어간다
             const why = q.global.estCalls <= 0 ? '서버 무료 AI 전부 소진' : '오늘 내 몫 소진';
-            $('quotaText').innerHTML = nano.ready ? `<span class="warn">${why}</span> → 내 크롬 내장 AI(Gemini Nano)로 진행 중 <span class="hint">(심사·서술을 이 컴퓨터에서 계산)</span>`
+            $('quotaWarn').innerHTML = nano.ready ? `<span class="warn">${why}</span> → 내 크롬 내장 AI(Gemini Nano)로 진행 중 <span class="hint">(심사·서술을 이 컴퓨터에서 계산)</span>`
                 : nano.state === 'downloadable' ? `<span class="warn">${why}</span> — <button type="button" id="btnNano" class="mini">크롬 내장 AI 설치하고 계속하기 <span class="hint">(약 4GB · 데스크톱 크롬 138+)</span></button>`
                 : nano.state === 'downloading' ? `<span class="warn">${why}</span> — 크롬 내장 AI 내려받는 중… 잠시 뒤 새로고침`
                 : `<span class="warn">${why} — 캐릭터 생성·AI 서술 불가 (판정은 계속됨)</span> <span class="hint">데스크톱 크롬(138+, 여유 공간 22GB)이면 내장 AI로 계속할 수 있습니다</span>`;
             if ($('btnNano')) $('btnNano').addEventListener('click', nanoInstall);
-        }
+        } else $('quotaWarn').textContent = '';
         $('btnCreate').disabled = calls <= 0 && !nano.ready;
     }
     const aiAvailable = () => !quotaState || (quotaState.global.estCalls > 0 && quotaState.ip.remaining > 0) || nano.ready;
@@ -321,7 +493,7 @@
         try {
             const sess = await LanguageModel.create({ monitor(m) { m.addEventListener('downloadprogress', e => { if ($('btnNano')) $('btnNano').textContent = `내려받는 중… ${Math.round(e.loaded * 100)}%`; }); } });
             sess.destroy(); await nanoCheck(); applyQuota(quotaState);
-        } catch (e) { $('quotaText').innerHTML = `<span class="warn">내장 AI 설치 실패: ${esc(e.message)}</span>`; }
+        } catch (e) { $('quotaWarn').innerHTML = `<span class="warn">내장 AI 설치 실패: ${esc(e.message)}</span>`; }
     }
     const localMode = () => nano.ready && !!quotaState && (quotaState.exhausted || quotaState.ip.remaining <= 0);
     async function nanoAsk(system, user) {
@@ -371,7 +543,7 @@
     const lsDel = k => { delete mem[k]; try { localStorage.removeItem(k); } catch {} };
     const uuid = () => crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : r & 3 | 8).toString(16); });   // http 비보안 문맥엔 randomUUID 가 없음
     const deviceId = () => { let d = lsGet('dreamrpg.device'); if (!d) { d = uuid(); lsSet('dreamrpg.device', d); } return d; };
-    async function refreshQuota() { try { applyQuota(await api('/api/rpg/quota')); } catch { $('quotaText').textContent = '서버 연결 실패'; } }
+    async function refreshQuota() { try { applyQuota(await api('/api/rpg/quota')); } catch { $('quotaShort').textContent = '서버 연결 실패'; } }
     async function api(path, body, extraHdr) {
         const wait = MIN_INTERVAL_MS - (Date.now() - lastCall);
         if (body && wait > 0) await new Promise(r => setTimeout(r, wait));
@@ -408,7 +580,8 @@
         try { const d = await api(`/api/rpg/chars/${s.id}`, null, { 'X-Token': s.token }); me = d.char; myToken = s.token; }
         catch (e) { if (e.message !== 'net') lsDel(key); }
     }
-    // 수치 설명(마우스 올리면 표시). 승리할 때마다 HP·ATK 는 반드시, 방어·속도·명중·회피는 각각 35% 확률로 오른다
+    // 수치 설명. 승리할 때마다 HP·ATK 는 반드시, 방어·속도·명중·회피는 각각 35% 확률로 오른다
+    //   STAT_TIP 은 자세한 공식(도움말 용어집·마우스 올림), STAT_SHORT 는 화면에 늘 보이는 한 줄 (툴팁은 터치 기기에서 안 보여서 툴팁에만 기대지 않는다)
     const STAT_TIP = {
         tier: '위력 등급: 심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴린 등급. 배율(×)만큼 HP·ATK 예산이 커짐',
         hp: 'HP: 체력. 0이 되면 패배. 승리마다 +10~30×배율 (상한 6000)',
@@ -419,23 +592,60 @@
         eva: '회피: 상대의 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐 (상한 50)',
         stability: '개연성: 설정의 일관성(0~100)에서 온 명중률 계수 0.55~1.0. 설정이 앞뒤가 맞고 한계가 분명할수록 높음. "뭐든 다 한다" 같은 막연한 설정은 낮아 기술이 자주 빗나감',
     };
+    const STAT_SHORT = {
+        tier: '설정의 힘. 높을수록 능력치가 크게 자람',
+        hp: '체력. 0이 되면 패배',
+        atk: '한 번에 주는 피해의 기준',
+        def: '받는 피해를 이만큼 줄임',
+        spd: '높을수록 먼저 행동하고 도망도 잘 침',
+        acc: '높을수록 공격이 잘 맞음',
+        eva: '상대의 명중률을 이만큼 깎음',
+        stability: '설정이 앞뒤가 맞을수록 높음. 명중률에 곱해짐',
+    };
+    const STATS = [['hp', 'HP', v => v], ['atk', 'ATK', v => v], ['def', '방어', v => v + '%'], ['spd', '속도', v => v], ['acc', '명중', v => v], ['eva', '회피', v => v], ['stability', '개연성', v => Math.round(v * 100) + '%']];
     const tip = (k, html) => `<span title="${esc(STAT_TIP[k])}">${html}</span>`;
     function statLine(c) { const s = c.stats; return `${s.tier ? tip('tier', `위력 <b>${esc(s.tier)}</b>${s.power !== undefined ? ` ${s.power}` : ''}${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''}`) + ' · ' : ''}${tip('hp', `HP ${s.hp}`)} · ${tip('atk', `ATK ${s.atk}`)} · ${tip('def', `방어 ${s.def}%`)} · ${tip('spd', `속도 ${s.spd}`)} · ${tip('acc', `명중 ${s.acc}`)} · ${tip('eva', `회피 ${s.eva}`)} · ${tip('stability', `개연성 ${Math.round(s.stability * 100)}%`)}`; }
-    function gaugeHtml(g) { return '게이지 ' + '■'.repeat(g) + '□'.repeat(ULT_COST - g); }
-    function cardHtml(p, isEnemy, extra = '') {
-        const c = p.char, pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100)));
+    // 필살기 게이지: 모양(■□)과 숫자를 같이 — 색·기호만으로 상태를 알리지 않는다
+    function gaugeHtml(g) { return `게이지 <span aria-hidden="true">${'■'.repeat(g) + '□'.repeat(ULT_COST - g)}</span> ${g}/${ULT_COST}${g >= ULT_COST ? ' <b>필살기 준비됨</b>' : ''}`; }
+    // 펼친 '능력치 보기' 상자는 HP 가 바뀌어 카드를 다시 그려도 펼친 채로 둔다
+    const openK = new Set();
+    document.addEventListener('toggle', e => { const k = e.target.dataset?.k; if (k) e.target.open ? openK.add(k) : openK.delete(k); }, true);
+    // 전투 카드: 싸우는 데 필요한 것(HP·게이지·필살기 이름)만 보이고, 능력치는 접어 둔다
+    function cardHtml(p, isEnemy, key) {
+        const c = p.char, pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100))), low = p.hp > 0 && pct <= 30;
         return `<h3>${esc(c.name)} <span class="hint">(${esc(c.fiction)})${c.tier && c.tier > 1.2 ? ' ★강적' : ''}</span></h3>
-            <div class="hpbar${isEnemy ? ' enemy' : ''}"><i style="width:${pct}%"></i></div>
-            <div class="meta">HP ${p.hp}/${c.stats.hp} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · 방어 중' : ''}<br>${statLine(c)}<br>필살기 <b>${esc(c.ult.name)}</b> — ${esc(c.ult.effect)}${extra}</div>`;
+            <div class="hpbar${isEnemy ? ' enemy' : low ? ' low' : ''}" aria-hidden="true"><i style="width:${pct}%"></i></div>
+            <div class="meta">HP <b>${p.hp}</b>/${c.stats.hp}${low ? ' (위험)' : p.hp <= 0 ? ' (쓰러짐)' : ''} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · <b>방어 중</b>' : ''}<br>필살기 <b>${esc(c.ult.name)}</b></div>
+            ${key ? `<details class="more" data-k="${esc(key)}"${openK.has(key) ? ' open' : ''}><summary>능력치·필살기 보기</summary><div class="meta">${statLine(c)}<br>필살기 효과: ${esc(c.ult.effect)}</div></details>` : ''}`;
+    }
+    // 캐릭터 탭: 모든 수치에 한 줄 설명을 붙여 늘 보이게
+    function charDetailHtml(c) {
+        const s = c.stats;
+        const rows = STATS.map(([k, l, f]) => `<div><dt>${l} <b>${f(s[k])}</b></dt><dd>${STAT_SHORT[k]}</dd></div>`).join('');
+        return `<h3>능력치</h3>
+            <p class="meta" style="margin:0 0 6px">위력 등급 <b>${esc(s.tier || '')}</b>${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} — ${STAT_SHORT.tier}</p>
+            <dl class="slist">${rows}</dl>
+            <h3 style="margin-top:14px">필살기 · ${esc(c.ult.name)}</h3>
+            <p class="meta" style="margin:0">${esc(c.ult.effect)}<br><span class="hint">게이지 3칸이 차야 쓸 수 있습니다 (공격 +1칸, 방어 +2칸).</span></p>
+            <h3 style="margin-top:14px">설정</h3>
+            <p class="meta" style="margin:0">${esc(c.info)}</p>
+            <details class="more" style="margin-top:8px"><summary>심사 기록</summary><div class="meta">
+                ${c.powerReason ? `심사관: ${esc(c.powerReason)}<br>` : ''}
+                ${c.luck?.table ? `등급 주사위 (심사 위력 ${c.luck.judged}): ${c.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(c.luck.tier)}</b>${c.luck.moved === 'up' ? ' ↑ 상승!' : c.luck.moved === 'down' ? ' ↓ 하락' : ''}<br>` : ''}
+                일관성 ${s.coherence} (개연성의 바탕)${c.rebirths ? ` · 환생 ${c.rebirths}회 (+${c.rebirths * 10}%)` : ''}</div></details>`;
     }
     function goHome() {
-        $('homeCard').innerHTML = cardHtml({ char: me, hp: me.stats.hp, gauge: 0 }, false, `<br><span class="hint">${esc(me.info)}</span>${me.powerReason ? `<br><span class="hint">심사관: ${esc(me.powerReason)}</span>` : ''}${me.luck?.table ? `<br><span class="hint">등급 주사위 (심사 위력 ${me.luck.judged}): ${me.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(me.luck.tier)}</b>${me.luck.moved === 'up' ? ' ↑ 상승!' : me.luck.moved === 'down' ? ' ↓ 하락' : ''}</span>` : ''}<br><span class="hint">전적 ${me.wins}승 ${me.losses}패 · 일관성 ${me.stats.coherence}${me.rebirths ? ` · 환생 ${me.rebirths}회 (+${me.rebirths * 10}%)` : ''}</span>${capsLine(me)}`);
+        const s = me.stats;
+        setHtml($('homeSummary'), `<h3>${esc(me.name)} <span class="hint">(${esc(me.fiction)})</span></h3>
+            <div class="meta">위력 <b>${esc(s.tier || '')}</b> · HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}% · 전적 ${me.wins}승 ${me.losses}패${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''}</div>`);
+        setHtml($('homeCard'), charDetailHtml(me));
+        setHtml($('growCard'), growHtml(me));
         // 환생: HP·ATK 가 등급 상한에 닿았고 신화가 아니면 버튼 표시
         const ready = rebirthReady(me), maxTier = me.stats.tier === '신화';
         $('rebirthRow').style.display = ready ? '' : 'none';
         if (ready) $('btnRebirth').textContent = maxTier ? '최고 등급 — 환생 불가' : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
         $('btnRebirth').disabled = maxTier;
-        show('s-home'); refreshLeaderboard(); refreshAuto(); refreshRefine();
+        show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine();
     }
     // 등급별 성장 상한 (서버와 같은 표). HP·ATK 둘 다 상한이면 환생 가능
     const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 } };
@@ -443,9 +653,15 @@
     const capsOf = c => c.caps || TIER_CAPS[c.stats.tier] || TIER_CAPS['신화'];
     const rebirthReady = c => c.rebirthReady ?? (c.stats.hp >= capsOf(c).hp && c.stats.atk >= capsOf(c).atk);
     const nextTier = t => TIER_ORDER[Math.min(TIER_ORDER.length - 1, TIER_ORDER.indexOf(t) + 1)];
-    function capsLine(c) {
+    // 성장 탭: 상한까지 얼마나 왔는지 막대로
+    function growHtml(c) {
         const cap = capsOf(c), s = c.stats, pct = k => Math.min(100, Math.round(s[k] / cap[k] * 100));
-        return `<br><span class="hint">성장 상한(${esc(s.tier || '')}) HP ${s.hp}/${cap.hp} (${pct('hp')}%) · ATK ${s.atk}/${cap.atk} (${pct('atk')}%) · 방어 ${s.def}/${cap.def} · 속도 ${s.spd}/${cap.spd} · 명중 ${s.acc}/${cap.acc} · 회피 ${s.eva}/${cap.eva} — HP·ATK 가 상한에 닿으면 환생 가능</span>`;
+        const rows = STATS.filter(([k]) => k in cap).map(([k, l]) => `<span>${l}${k === 'hp' || k === 'atk' ? '<span aria-hidden="true">*</span>' : ''}</span><div class="hpbar${pct(k) >= 100 ? ' max' : ''}" aria-hidden="true"><i style="width:${pct(k)}%"></i></div><span class="n">${s[k]}/${cap[k]}${pct(k) >= 100 ? ' 최대' : ''}</span>`).join('');
+        const ready = rebirthReady(c), last = s.tier === '신화';
+        return `<h3>성장 <span class="hint">(${esc(s.tier || '')} 등급의 상한까지)</span></h3>
+            <p class="meta" style="margin:0">이길 때마다 HP·ATK 는 꼭 오르고, 방어·속도·명중·회피는 가끔 오릅니다. <b>* HP와 ATK</b>가 둘 다 최대에 닿으면 다음 등급으로 <b>환생</b>할 수 있습니다.</p>
+            <div class="grow">${rows}</div>
+            <p class="hint" style="margin:6px 0 0">${last ? '신화는 최고 등급입니다.' : ready ? `환생 준비 완료! 아래 버튼으로 ${nextTier(s.tier)} 등급이 됩니다 (능력치는 새 등급 기본값으로, 성향·전적·필살기는 그대로, 환생마다 영구 +10%).` : `환생까지 HP ${pct('hp')}% · ATK ${pct('atk')}%`}</p>`;
     }
     $('btnRebirth').addEventListener('click', async () => {
         if (!me || !rebirthReady(me)) return;
@@ -489,7 +705,7 @@
     });
 
     // ── 전투 로그 렌더 (공통) ────────────────────────────────────────
-    function logLine(el, html) { const d = document.createElement('div'); d.innerHTML = html; el.appendChild(d); el.scrollTop = el.scrollHeight; }
+    function logLine(el, html) { const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 60; const d = document.createElement('div'); d.innerHTML = html; el.appendChild(d); if (atEnd || el.childElementCount === 1) el.scrollTop = el.scrollHeight; }   // 위로 올려 지난 턴을 읽는 중이면 끌어내리지 않음
     function eventsHtml(names, ev) {
         return ev.map(e => {
             const n = esc(names[e.who]);
@@ -497,10 +713,11 @@
             if (e.type === 'ult_fail') return `${n} 게이지 부족 → 기본 공격`;
             const k = e.type === 'ult' ? '필살기' : '공격';
             const t = e.target && names[e.target] ? ` → ${esc(names[e.target])}` : '';
-            return e.hit ? `${n}${t} ${k} <b>명중</b> (${e.chance}%)${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (방어 ½)' : ''} → 피해 <b>${e.dmg}</b>${e.fit !== undefined && Math.abs(e.fit - 0.5) > 0.15 ? (e.fit > 0.5 ? ' ↑적합' : ' ↓부적합') : ''}${e.killed ? ' — 쓰러짐' : ''}` : `${n}${t} ${k} 빗나감 (${e.chance}%)`;
+            return e.hit ? `${n}${t} ${k} <b>명중</b> (명중률 ${e.chance}%)${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (방어 ½)' : ''} → 피해 <b>${e.dmg}</b>${e.fit !== undefined && Math.abs(e.fit - 0.5) > 0.15 ? (e.fit > 0.5 ? ' ↑설정에 맞아 피해 증가' : ' ↓설정과 안 맞아 피해 감소') : ''}${e.killed ? ' — 쓰러짐' : ''}` : `${n}${t} ${k} 빗나감 (명중률 ${e.chance}%)`;
         }).join('<br>');
     }
     const DIFF_KO = { easy: '쉬움', normal: '보통', hard: '어려움', impossible: '불가', denied: '불허' };
+    const DIFF_TIP = { easy: '명중률 +10%', normal: '보정 없음', hard: '명중률 −15%', impossible: '설정상 불가능 — 명중률 0%', denied: '설정에 없거나 정책 위반 — 기본 공격으로 처리' };
     const msg = (cls, who, html) => `<div class="msg ${cls}"><span class="who">${who}</span><div class="bubble">${html}</div></div>`;
     function roundHtml(label, names, entry) {
         let out = `<div class="round">— ${label} —</div>`;
@@ -511,7 +728,7 @@
             out += msg('p' + k, esc(names[k]), `<b>${kind}</b>${tgt} ${act.text ? '“' + esc(act.text) + '”' : act.policy ? `<span class="hint">(이용 정책 위반 — ${esc(act.policy)} — 으로 가려짐)</span>` : act.type === 'defend' ? '' : '<span class="hint">기본 공격</span>'}${act.skipped ? ' <span class="hint">(시간 초과 → 자동 방어)</span>' : ''}`);
             if (j && act.type !== 'defend' && (act.text || j.verdict)) {
                 const d = j.policy || j.allowed === false ? 'denied' : (j.difficulty in DIFF_KO ? j.difficulty : 'normal');
-                out += msg('judge', '심사관', `<span class="tag ${d}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''}${entry.plaus?.[k] ? `<span class="tag ${entry.plaus[k] > 0 ? 'easy' : 'deny'}">개연성 ${entry.plaus[k] > 0 ? '+' : ''}${Math.round(entry.plaus[k] * 1000) / 10}%p</span>` : ''} ${esc(j.verdict || '')}`);
+                out += msg('judge', '심사관', `<span class="tag ${d}" title="${esc(DIFF_TIP[d])}">${j.allowed === false ? '불허' : '난이도 ' + DIFF_KO[d]}</span><span class="tag" title="설정에 얼마나 맞는 행동인가. 높을수록 피해 증가">적합 ${Math.round((j.fit ?? 0.5) * 100)}%</span>${j.src === 'local' ? '<span class="tag">크롬 내장 AI</span>' : ''}${entry.plaus?.[k] ? `<span class="tag ${entry.plaus[k] > 0 ? 'easy' : 'deny'}">개연성 ${entry.plaus[k] > 0 ? '+' : ''}${Math.round(entry.plaus[k] * 1000) / 10}%p</span>` : ''} ${esc(j.verdict || '')}`);
             }
         }
         const order = entry.order || (entry.first ? [entry.first === 'a' ? 1 : 2, entry.first === 'a' ? 2 : 1] : []);
@@ -524,7 +741,7 @@
     // ── AI 상대 전투 ──────────────────────────────────────────────────
     let battle = null, busy = false;
     function renderBattle() {
-        $('bMe').innerHTML = cardHtml(battle.me, false); $('bFoe').innerHTML = cardHtml(battle.foe, true);
+        setHtml($('bMe'), cardHtml(battle.me, false, 'bme')); setHtml($('bFoe'), cardHtml(battle.foe, true, 'bfoe'));
         $('ultLeft').textContent = battle.me.gauge >= ULT_COST ? '준비됨' : `${battle.me.gauge}/${ULT_COST}`;
         $('btnUlt').disabled = busy || battle.me.gauge < ULT_COST; $('btnAttack').disabled = $('btnDefend').disabled = $('btnRun').disabled = busy;
     }
@@ -546,8 +763,13 @@
         if (!me) return;
         const used = me.refineCount || 0, need = used * 5, ok = (me.wins || 0) >= need;
         $('refineHint').textContent = ok ? `사용 가능 (${used}회 사용)` : `다음 심사까지 ${need - me.wins}승 더 (${me.wins}/${need})`;
-        $('btnRefine').disabled = !ok || !aiAvailable();
+        $('btnRefine').disabled = $('refineText').disabled = !ok || !aiAvailable();
+        $('refineCard').classList.toggle('locked', !ok);
         $('refineResult').textContent = '';
+        // 성장 탭 배지: 환생 가능, 또는 설정 보강이 새로 열렸는데 아직 성장 탭을 안 봤을 때
+        const fresh = ok && lsGet('dreamrpg.refineSeen') !== me.id + ':' + used;
+        $('growBadge').hidden = !((rebirthReady(me) && me.stats.tier !== '신화') || fresh);
+        $('growBadge').title = '새로 할 수 있는 것이 있습니다';
     }
     $('btnRefine').addEventListener('click', async () => {
         const text = $('refineText').value.trim(); if (!text) return;
@@ -559,11 +781,27 @@
             goHome(); $('refineResult').textContent = `일관성 ${d.coherence} → 개연성 ${Math.round(d.after * 100)}% (${dp >= 0 ? '+' : ''}${dp}%p) — ${d.reason}`;
         } catch (e) { $('refineResult').textContent = errMsg(e); refreshRefine(); }
     });
+    // ── 홈 탭 (모험 / 캐릭터 / 성장 / 순위): 방향키로 이동, 고른 탭은 기억 ──
+    const TABS = ['play', 'char', 'grow', 'rank'];
+    function selectTab(t, focus) {
+        if (!TABS.includes(t)) t = 'play';
+        TABS.forEach(k => { const on = k === t; $('tab-' + k).setAttribute('aria-selected', on); $('tab-' + k).tabIndex = on ? 0 : -1; $('p-' + k).hidden = !on; });
+        if (focus) $('tab-' + t).focus();
+        lsSet('dreamrpg.tab', t);
+        if (t === 'grow' && me) { lsSet('dreamrpg.refineSeen', me.id + ':' + (me.refineCount || 0)); if (!(rebirthReady(me) && me.stats.tier !== '신화')) $('growBadge').hidden = true; }
+        if (t === 'rank') refreshLeaderboard();
+    }
+    TABS.forEach(k => $('tab-' + k).addEventListener('click', () => selectTab(k)));
+    document.querySelector('[role="tablist"]').addEventListener('keydown', e => {
+        const i = TABS.indexOf(e.target.id.replace('tab-', '')); if (i < 0) return;
+        const j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TABS.length - 1 }[e.key]; if (j === undefined) return;
+        e.preventDefault(); selectTab(TABS[(j + TABS.length) % TABS.length], true);
+    });
     async function refreshAuto() {
         if (!me) return;
         try {
             const d = await api('/api/rpg/auto?charId=' + me.id);
-            $('autoOn').checked = d.on; $('autoCount').textContent = `참가자 ${d.participants}명`;
+            $('autoOn').checked = d.on; $('autoCount').textContent = `${d.on ? '참가 중 · ' : ''}참가자 ${d.participants}명`;
             const fmt = t => new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             $('autoRecent').innerHTML = d.recent.length ? d.recent.map(r => `<div>${fmt(r.at)} · ${r.mode === 'offline' ? '자동' : '실시간'} · vs <b>${esc(r.foe)}</b> ${r.rounds}라운드 → ${r.draw ? '무승부' : r.won ? '<b>승리</b>' : '패배'}</div>`).join('') : '<span class="hint">아직 기록이 없습니다.</span>';
         } catch {}
@@ -586,7 +824,7 @@
         saveSess(null);
         $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = '';
         const rw = battle.reward;
-        $('bResult').textContent = won ? `적이 쓰러졌다! 승리!${rw ? ` 보상: HP 최대치 +${rw.hp} · ATK +${rw.atk}${rw.tags?.length ? ' · ' + rw.tags.join(' · ') : ''}` : ''}` : '당신은 쓰러졌다… 꿈에서 깨어납니다.';
+        $('bResult').innerHTML = won ? `적이 쓰러졌다! 승리!${rw ? `<br><span class="hint">보상: HP 최대치 +${rw.hp} · ATK +${rw.atk}${rw.tags?.length ? ' · ' + rw.tags.map(esc).join(' · ') : ''} — 홈의 성장 탭에서 상한까지 얼마나 왔는지 볼 수 있습니다</span>` : ''}` : `당신은 쓰러졌다… 꿈에서 깨어납니다.<br><span class="hint">${gUser ? '이 캐릭터는 이 기기에서 내려갑니다. 계정의 다른 캐릭터를 고르거나 새로 만들 수 있습니다.' : '로그인하지 않은 캐릭터는 지면 사라집니다. 돌아가기를 누르면 새 캐릭터를 만듭니다.'}</span>`;
         $('bEnd').style.display = '';
     }
     async function turn(type) {
@@ -608,7 +846,11 @@
             $('bStatus').textContent = errMsg(e);
             if (e.message === 'no_battle' || e.message === 'forbidden') { saveSess(null); $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bEnd').style.display = ''; }   // 만료 → 돌아가기만 남김
         }
-        finally { if (battle === b || battle === cur) { busy = false; if (battle) renderBattle(); } }   // 버린 전투의 늦은 응답은 새 전투의 잠금을 건드리지 않음 (enterBattle 이 busy 를 초기화)
+        finally {
+            if (battle === b || battle === cur) { busy = false; if (battle) renderBattle(); }
+            // 누른 버튼이 판정 동안 잠기면서 포커스가 빠짐 → 키보드(마우스 기기)면 다음 선언 칸으로, 끝났으면 돌아가기로. 터치 기기는 자판이 튀어나오므로 건드리지 않음
+            if (battle && (document.activeElement === document.body) && matchMedia('(hover: hover)').matches) (battle.status === 'playing' ? $('bAction') : $('btnBattleBack')).focus({ preventScroll: true });
+        }   // 버린 전투의 늦은 응답은 새 전투의 잠금을 건드리지 않음 (enterBattle 이 busy 를 초기화)
     }
     $('btnAttack').addEventListener('click', () => turn('attack'));
     $('btnDefend').addEventListener('click', () => turn('defend'));
@@ -699,10 +941,10 @@
         if (!mine) return roomGone('이 방의 자리가 사라졌습니다.');
         const playing = s.status === 'playing', waiting = s.status === 'waiting';
         // 플레이어 판 (모두에게 같은 순서)
-        $('oPlayers').innerHTML = slots.map(k => {
+        setHtml($('oPlayers'), slots.map(k => {
             const p = s.p[k], tags = [k === s.host ? '방장' : '', k === my ? '나' : '', playing && p.hp > 0 ? (s.moves[k] ? '✓ 제출' : (p.afk ? `… 무응답 ${p.afk}회` : '… 고르는 중')) : '', p.left === 'left' ? '기권' : p.left === 'afk' ? '무응답 기권' : p.hp <= 0 ? '탈락' : ''].filter(Boolean).join(' · ');
-            return `<div class="card c${k}${k === my ? ' me' : ''}${p.hp <= 0 ? ' dead' : ''}"><span class="badge">${tags}</span>${cardHtml(p, k !== my)}</div>`;
-        }).join('');
+            return `<div class="card c${k}${k === my ? ' me' : ''}${p.hp <= 0 ? ' dead' : ''}"><span class="badge">${tags}</span>${cardHtml(p, k !== my, 'o' + k)}</div>`;
+        }).join(''));
         $('oHostRow').style.display = waiting && my === s.host && !s.public ? '' : 'none';
         $('btnOStart').disabled = slots.length < 2 || acting;
         const submitted = !!s.myMove, iAmAlive = mine.hp > 0, canAct = playing && iAmAlive && !submitted && !acting;   // acting: 내 행동이 서버로 가는 동안 폴링이 버튼을 다시 열지 않게
@@ -796,8 +1038,8 @@
         const d = lbData; if (!d) return;
         const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name"><b>${esc(r.name)}</b>${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint tier">${esc(r.tier || '')} <span class="fic">${esc(r.fiction || '')}</span></td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
         const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${d.mine.rank}</b>위 / ${d.total}명 · 승점 ${d.mine.score}` : '내 순위 — 첫 승리 후 집계') : '';
-        const html = `<h3><span>순위표</span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
-        document.querySelectorAll('[data-lb]').forEach(el => { el.innerHTML = html; });
+        const html = `<h3><span>순위표 <span class="hint">(승점 = AI전 승 1 + 온라인 승 3)</span></span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
+        document.querySelectorAll('[data-lb]').forEach(el => setHtml(el, html));
     }
 
     // ── Google 로그인 (OAuth2 / OpenID Connect via Google Identity Services) ──────────────────────
@@ -817,7 +1059,7 @@
             $('charPick').addEventListener('change', onPickChange);
             $('btnLogout').addEventListener('click', logout);
         } else {
-            hint.innerHTML = GOOGLE_CLIENT_ID ? '<span class="hint">로그인하면 캐릭터가 계정에 저장돼 다른 기기에서도 이어 하고, 순위표에 이름이 붙습니다.</span>' : '<span class="hint">Google 로그인 준비 중</span>';
+            hint.innerHTML = GOOGLE_CLIENT_ID ? '<span class="hint">로그인하면 다른 기기에서도 이어 합니다</span>' : '<span class="hint">Google 로그인 준비 중</span>';
         }
         $('btnGoogle').style.display = gUser || !GOOGLE_CLIENT_ID ? 'none' : '';
         if (me) $('btnWake').textContent = gUser && acctChars.some(c => c.id === me.id) ? '이 캐릭터 삭제 (계정)' : '일어나기 (초기화)';
@@ -891,8 +1133,69 @@
         return false;
     }
 
+    // ── 처음 안내 · 도움말 ───────────────────────────────────────────
+    //   첫 방문(캐릭터 없음)에만 저절로 열린다. 5장, 언제든 건너뛰기, Esc 로 닫힘, 닫으면 누르던 버튼으로 포커스가 돌아간다(<dialog> 기본 동작)
+    const TUT = 'dreamrpg.tutorial';
+    let tutStep = 0;
+    function tutGo(i) {
+        const steps = [...document.querySelectorAll('#dlgTut .tut-step')];
+        tutStep = Math.max(0, Math.min(steps.length - 1, i));
+        steps.forEach((el, k) => el.hidden = k !== tutStep);
+        document.querySelectorAll('#dlgTut .dots i').forEach((d, k) => d.classList.toggle('on', k === tutStep));
+        $('dlgTut').setAttribute('aria-labelledby', 'tut-h' + tutStep);
+        $('tutCount').textContent = `${tutStep + 1} / ${steps.length}`;
+        $('tutPrev').disabled = tutStep === 0;
+        $('tutNext').textContent = tutStep === steps.length - 1 ? '시작하기' : '다음';
+    }
+    function openTutorial() { tutGo(0); if (!$('dlgTut').open) $('dlgTut').showModal(); $('tutNext').focus(); }
+    $('tutPrev').addEventListener('click', () => tutGo(tutStep - 1));
+    $('tutNext').addEventListener('click', () => { if (tutStep === document.querySelectorAll('#dlgTut .tut-step').length - 1) $('dlgTut').close(); else tutGo(tutStep + 1); });
+    $('tutSkip').addEventListener('click', () => $('dlgTut').close());
+    $('dlgTut').addEventListener('close', () => { lsSet(TUT, '1'); if (!me && screens.every(id => id === 's-create' || !$(id).classList.contains('active'))) $('char-name').focus(); });
+    // 용어집: 화면에 나오는 모든 수치·기능의 뜻
+    const GLOSSARY = [
+        ['위력 등급', STAT_TIP.tier.replace(/^위력 등급: /, '') + '. 평범 → 숙련 → 초인 → 전설 → 신화'],
+        ['HP', STAT_TIP.hp.replace(/^HP: /, '')], ['ATK', STAT_TIP.atk.replace(/^ATK: /, '')],
+        ['방어', STAT_TIP.def.replace(/^방어: /, '')], ['속도', STAT_TIP.spd.replace(/^속도: /, '')],
+        ['명중', STAT_TIP.acc.replace(/^명중: /, '')], ['회피', STAT_TIP.eva.replace(/^회피: /, '')],
+        ['개연성', STAT_TIP.stability.replace(/^개연성: /, '') + '. 설정에 맞게 선언하면 조금씩 오르고(+0.3%p), 불허·불가 판정이면 내려감(−0.5%p)'],
+        ['일관성', '심사관이 매긴 설정의 앞뒤 맞음 점수(0~100). 개연성의 바탕이 되며, 설정 보강으로 다시 심사받을 수 있음'],
+        ['적합도 (적합 %)', '이번 선언이 내 설정에 얼마나 맞는가. 높으면 피해 최대 ×1.15, 낮으면 ×0.85'],
+        ['난이도', '쉬움 명중률 +10% · 보통 보정 없음 · 어려움 −15% · 불가 0% · 불허 = 설정에 없거나 정책 위반이라 기본 공격으로 처리'],
+        ['필살기 · 게이지', '게이지 3칸이 차면 쓸 수 있는 강한 기술. 공격하면 +1칸, 방어하면 +2칸. 부족한데 누르면 기본 공격'],
+        ['방어 (행동)', '이번 턴 받는 피해를 절반으로 줄이고 게이지 +2칸'],
+        ['도망', '한 번이라도 싸운 뒤엔 속도·회피·등급으로 성공 확률을 굴림. 실패하면 패배로 기록되고 HP·ATK 를 잃음'],
+        ['환생', 'HP·ATK 가 등급 상한에 닿으면 다음 등급으로 다시 시작. 성향·전적·필살기 유지, 환생마다 영구 +10%, 개연성 바닥 +3%p'],
+        ['설정 보강', '설정에 100자까지 덧붙여 일관성만 다시 심사. 5승마다 1회, 첫 회 무료'],
+        ['자동 생사결', '참가해 두면 접속하지 않아도 서버가 매시간 참가자끼리 붙여 전적·보상이 쌓임 (AI 서술 없음)'],
+        ['승점 · 순위표', 'AI 상대 승리 1점, 온라인 대전 승리 3점'],
+        ['오늘 무료 몽상', '하루에 쓸 수 있는 AI 호출 횟수. 다 쓰면 판정·주사위는 계속되지만 캐릭터 생성과 서술이 멈춤'],
+    ];
+    $('glossary').innerHTML = GLOSSARY.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join('');
+    $('btnHelp').addEventListener('click', () => {
+        document.querySelectorAll('#dlgHelp input[name="fx"]').forEach(r => r.checked = r.value === document.documentElement.dataset.fx);
+        document.querySelectorAll('#dlgHelp input[name="size"]').forEach(r => r.checked = r.value === (document.documentElement.dataset.size || 'm'));
+        $('dlgHelp').showModal();
+    });
+    $('btnTutAgain').addEventListener('click', () => {
+        $('dlgHelp').close();
+        document.querySelectorAll('.coach').forEach(c => lsDel(COACH_KEY(c.dataset.coach)));   // 화면별 안내도 다시
+        showCoach(screens.find(id => $(id).classList.contains('active')));
+        openTutorial();
+    });
+    $('dlgHelp').addEventListener('change', e => {
+        const r = e.target; if (r.name !== 'fx' && r.name !== 'size') return;
+        if (r.name === 'fx') document.documentElement.dataset.fx = r.value; else document.documentElement.dataset.size = r.value;
+        lsSet('dreamrpg.' + r.name, r.value);
+    });
+    // 바깥(배경)을 누르면 닫기 — 대화상자 안쪽 여백도 target 이 dialog 라서 좌표로 판단
+    for (const d of [$('dlgTut'), $('dlgHelp')]) d.addEventListener('click', e => {
+        if (e.target !== d) return; const r = d.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
+    });
+
     // ── 시작 ─────────────────────────────────────────────────────────
-    (async () => { await nanoCheck(); await refreshQuota(); const viaAccount = await initGoogle(); if (!viaAccount) { await loadMe(GUEST); if (me && !(await resumeSession())) goHome(); } renderAccount(); refreshLeaderboard(true); setInterval(refreshQuota, 60000); setInterval(() => refreshLeaderboard(), 30000); })();
+    (async () => { await nanoCheck(); await refreshQuota(); const viaAccount = await initGoogle(); if (!viaAccount) { await loadMe(GUEST); if (me && !(await resumeSession())) goHome(); } renderAccount(); refreshLeaderboard(true); if (!me && !lsGet(TUT)) openTutorial(); setInterval(refreshQuota, 60000); setInterval(() => refreshLeaderboard(), 30000); })();
     </script>
 </body>
 
