@@ -20,7 +20,7 @@
     <script>
         (function () { var d = document.documentElement, f = null, z = null;
             try { f = localStorage.getItem('dreamrpg.fx'); z = localStorage.getItem('dreamrpg.size'); } catch (e) {}
-            d.dataset.fx = f || 'off';
+            d.dataset.fx = f === 'high' ? 'high' : 'off';   // '은은하게'(low)는 없앰 → 끄기
             if (z) d.dataset.size = z; })();
     </script>
     <style>
@@ -43,9 +43,9 @@
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
         input[type="checkbox"], input[type="radio"] { accent-color: #eee; width: 1.1rem; height: 1.1rem; vertical-align: -3px; }
 
-        /* ── 화면 효과 (html[data-fx]: off | low | high) ──────────────────────────
+        /* ── 화면 효과 (html[data-fx]: off | high) ──────────────────────────
            예전엔 모든 글자·테두리가 0.1초마다(초당 10번) 깜빡였다 — 초당 3번 넘게 번쩍이면 광과민성 발작 위험(WCAG 2.3.1)이 있고 글도 읽기 힘들어서
-           기본은 끄기(off). low 는 깜빡임 없이 정적 색수차 + 제목만 몇 초에 한 번 살짝 흔들림, 예전 지직거림은 설정 → 화면 효과 '강하게' */
+           기본은 끄기(off). 예전 지직거림은 설정 → 화면 효과 '깜빡임'(high). 중간 단계 '은은하게'는 없앰 */
         .title, .main-container h2, .main-container h3 { text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69; }
         .title { animation: titleglitch 7s ease-in-out infinite; }
         @keyframes titleglitch {
@@ -53,10 +53,10 @@
             94% { text-shadow: 3px 0 1px #ea36af, -4px 0 1px #75fa69; transform: translateX(1px); }
             96% { text-shadow: -2px 0 1px #ea36af, 3px 0 1px #75fa69; transform: translateX(-1px); }
         }
-        /* 노이즈: SVG feTurbulence 한 장. 기본은 멈춘 채로 은은하게 */
+        /* 노이즈: SVG feTurbulence 한 장. 깜빡임(high)에서만 보임 */
         .noise { top: 0; pointer-events: none; z-index: 1; position: fixed; width: 100vw; height: 100vh; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.9 0 0 0 0 0.2 0 0 0 0 0.7 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 300px 300px; }
-        html[data-fx="off"] .noise { display: none; }
-        html[data-fx="off"] .title, html[data-fx="off"] .main-container h2, html[data-fx="off"] .main-container h3 { text-shadow: none; animation: none; }
+        html:not([data-fx="high"]) .noise { display: none; }
+        html:not([data-fx="high"]) .title, html:not([data-fx="high"]) .main-container h2, html:not([data-fx="high"]) .main-container h3 { text-shadow: none; animation: none; }
         /* 강하게: 예전 그대로 (모든 글자 textflicker + 테두리 boxflicker + 흐림 + 노이즈 지직거림) */
         html[data-fx="high"] .main-container * {
             animation-duration: 0.1s; animation-iteration-count: infinite; animation-name: textflicker; animation-direction: alternate;
@@ -465,9 +465,8 @@
         <div class="dlg-head"><h2 id="setTitle">설정</h2><form method="dialog"><button class="mini ghost" aria-label="설정 닫기">닫기 ✕</button></form></div>
         <fieldset><legend>화면 효과</legend>
             <label><input type="radio" name="fx" value="off"> 끄기 (기본)</label>
-            <label><input type="radio" name="fx" value="low"> 은은하게</label>
-            <label><input type="radio" name="fx" value="high"> 강하게 (깜빡임)</label>
-            <p class="hint" style="margin:4px 0 0">'은은하게'는 글자에 색 번짐을 주고 제목이 가끔 흔들립니다. '강하게'는 화면 전체가 빠르게 깜빡이니 빛에 민감하다면 쓰지 마세요. 기기의 '동작 줄이기'가 켜져 있으면 움직임은 항상 꺼집니다.</p>
+            <label><input type="radio" name="fx" value="high"> 깜빡임</label>
+            <p class="hint" style="margin:4px 0 0">'깜빡임'은 화면 전체가 빠르게 깜빡이니 빛에 민감하다면 쓰지 마세요. 기기의 '동작 줄이기'가 켜져 있으면 움직임은 항상 꺼집니다.</p>
         </fieldset>
         <fieldset><legend>소리</legend>
             <label><input type="checkbox" id="sndOn"> 소리 켜기 (기본 꺼짐)</label>
@@ -1590,7 +1589,7 @@ const Snd = (() => {
     function armSound() { const unlock = () => { if (sndCfg.on) Snd.setOn(true).then(() => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(lastAmb); }); }; document.addEventListener('pointerdown', unlock, { once: true, capture: true }); document.addEventListener('keydown', unlock, { once: true, capture: true }); }
     function applyPrefs(pr) {
         const d = document.documentElement;
-        if (pr.fx) { d.dataset.fx = pr.fx; lsSet('dreamrpg.fx', pr.fx); }
+        if (pr.fx) { const fx = pr.fx === 'high' ? 'high' : 'off'; d.dataset.fx = fx; lsSet('dreamrpg.fx', fx); }
         if (pr.size) { d.dataset.size = pr.size; lsSet('dreamrpg.size', pr.size); }
         if (pr.snd) { const wasOn = Snd.state.on; Object.assign(sndCfg, pr.snd); lsSet(SND_KEY, JSON.stringify(sndCfg)); Snd.setVol('sfx', sndCfg.sfx / 100); Snd.setVol('amb', sndCfg.amb / 100); Snd.setCueOnly(sndCfg.cueOnly); if (!sndCfg.on && wasOn) Snd.setOn(false); else if (sndCfg.on && !wasOn) armSound(); }
     }

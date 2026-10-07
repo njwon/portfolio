@@ -490,7 +490,7 @@ let prefsTable = false;
 async function ensurePrefsTable(env) { if (prefsTable) return; await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_prefs (sub TEXT PRIMARY KEY, json TEXT NOT NULL, updated INTEGER NOT NULL)').run(); prefsTable = true; }
 function cleanPrefs(p) {
   const o = {};
-  if (['off', 'low', 'high'].includes(p?.fx)) o.fx = p.fx;
+  if (['off', 'low', 'high'].includes(p?.fx)) o.fx = p.fx === 'high' ? 'high' : 'off';   // '은은하게'(low)는 없앰 → 끄기
   if (['m', 'l'].includes(p?.size)) o.size = p.size;
   const sd = p?.snd; if (sd && typeof sd === 'object') o.snd = { on: !!sd.on, sfx: Math.round(num(sd.sfx, 0, 100, 70)), amb: Math.round(num(sd.amb, 0, 100, 0)), cueOnly: !!sd.cueOnly };
   return o;
