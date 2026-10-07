@@ -296,7 +296,7 @@
             <p class="status" id="createStatus" role="status"></p>
             <details class="more">
                 <summary>심사는 어떻게 하나요?</summary>
-                <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)을 매기고, 서버가 등급에 따라 능력치를 정합니다. "뭐든 다 한다" 같은 막연한 설정은 개연성이 낮아 기술이 자주 빗나갑니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다.</p>
+                <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화 → ???)을 매기고, 서버가 등급에 따라 능력치를 정합니다. "뭐든 다 한다" 같은 막연한 설정은 개연성이 낮아 기술이 자주 빗나갑니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다.</p>
             </details>
             <details class="more" open><summary>순위표</summary><div class="lb" data-lb></div></details>
         </section>
@@ -347,14 +347,14 @@
                 <div class="btn-row" id="rebirthRow" style="display:none"><button id="btnRebirth" class="full">환생</button></div>
                 <div class="card" id="refineCard">
                     <h3>설정 보강 <span class="hint" id="refineHint"></span></h3>
-                    <p class="meta" style="margin:4px 0 8px">설정에 문장을 덧붙이면 심사관이 <b>일관성만 다시 심사</b>합니다 (위력 등급은 그대로). 한계·약점·대가를 구체적으로 적으면 개연성이 오르고, 모순을 더하면 내려갑니다. 5승마다 1회, 첫 번째는 무료.</p>
+                    <p class="meta" style="margin:4px 0 8px">설정에 문장을 덧붙이면 심사관이 <b>일관성만 다시 심사</b>합니다 (위력 등급은 그대로). 한계·약점·대가를 구체적으로 적으면 개연성이 오르고, 모순을 더하면 내려갑니다. 100승마다 1회, 첫 번째는 무료.</p>
                     <div class="div-group" style="margin-bottom:8px"><label for="refineText" class="sr-only">덧붙일 문장</label><input type="text" id="refineText" maxlength="100" placeholder="예) 왼팔에 낡은 부상이 있어 큰 기술 뒤엔 한 턴 쉬어야 한다"></div>
                     <div class="btn-row" style="margin-top:0"><button id="btnRefine">심사 받기</button></div>
                     <p class="hint" id="refineResult" role="status"></p>
                 </div>
                 <div class="card" id="shopCard">
                     <h3>꿈 시장 <span class="hint" id="walletHint"></span></h3>
-                    <p class="meta" style="margin:4px 0 6px">꿈 조각은 이기거나 꿈 이야기를 깨면 모입니다 (최대 600). 능력치를 영구히 올리는 물건은 없고, 전부 그 전투에서만 효과가 있습니다.</p>
+                    <p class="meta" style="margin:4px 0 6px">꿈 조각은 이기거나 꿈 이야기를 깨면 모입니다 . 능력치를 영구히 올리는 물건은 없고, 전부 그 전투에서만 효과가 있습니다.</p>
                     <div id="shopList"></div>
                     <p class="hint" id="shopStatus" role="status"></p>
                 </div>
@@ -451,9 +451,9 @@
     <!-- 처음 안내 (첫 방문 때 한 번, 도움말에서 다시 보기) -->
     <dialog id="dlgTut" aria-labelledby="tut-h0">
         <div class="tut-step"><h2 id="tut-h0">글로 싸우는 RPG</h2><p>DREAM RPG 에서는 캐릭터도, 전투 행동도 <b>글로 씁니다</b>. AI 심사관이 그 글이 말이 되는지 판정하고, 주사위가 결과를 정하고, 게임 마스터가 이야기로 풀어 줍니다.</p><p class="hint">안내는 다섯 장이고 언제든 건너뛸 수 있습니다. 위의 <b>? 도움말</b>에서 다시 볼 수 있어요.</p></div>
-        <div class="tut-step" hidden><h2 id="tut-h1">① 캐릭터 만들기</h2><p>이름과 200자 이내의 설정을 씁니다. 심사관이 설정을 읽고 <b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)과 <b>개연성</b>을 매깁니다.</p><p class="eg">좋은 예) 대장간 집 딸. 망치를 다뤄 힘이 세지만 발이 느리다. 불 앞에서는 기운이 난다.</p><p>할 수 있는 것과 <b>못 하는 것</b>을 같이 쓸수록 개연성이 높아 기술이 잘 맞습니다. "뭐든 다 한다"는 오히려 불리해요.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h1">① 캐릭터 만들기</h2><p>이름과 200자 이내의 설정을 씁니다. 심사관이 설정을 읽고 <b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화 → ???)과 <b>개연성</b>을 매깁니다.</p><p class="eg">좋은 예) 대장간 집 딸. 망치를 다뤄 힘이 세지만 발이 느리다. 불 앞에서는 기운이 난다.</p><p>할 수 있는 것과 <b>못 하는 것</b>을 같이 쓸수록 개연성이 높아 기술이 잘 맞습니다. "뭐든 다 한다"는 오히려 불리해요.</p></div>
         <div class="tut-step" hidden><h2 id="tut-h2">② 전투: 선언 → 판정 → 주사위</h2><ol><li>이번 턴에 할 행동을 한 줄로 씁니다 (비우면 기본 공격).</li><li><b>공격 · 방어 · 필살기</b> 중 하나를 누릅니다.</li><li>심사관이 <b>적합도</b>(설정에 맞는가)와 <b>난이도</b>를 매깁니다.</li><li>주사위로 명중·피해가 정해지고, 게임 마스터가 서술합니다.</li></ol><p class="hint">방어는 피해를 절반으로 줄이고 필살기 게이지를 2칸 채웁니다. 게이지 3칸이면 필살기! AI 상대에게 <b>지면 캐릭터가 사라지니</b>(로그인한 계정 캐릭터는 남음) 위험하면 <b>도망</b>을 고려하세요.</p></div>
-        <div class="tut-step" hidden><h2 id="tut-h3">③ 성장</h2><p>이기면 HP·ATK 가 오르고, 가끔 방어·속도·명중·회피도 오릅니다. 등급마다 성장 상한이 있어서, HP·ATK 가 상한에 닿으면 <b>환생</b>으로 다음 등급에 올라갈 수 있습니다.</p><p>5승마다 한 번 <b>설정 보강</b>으로 설정에 문장을 덧붙여 개연성을 다시 심사받을 수 있습니다. 이런 기능은 홈의 <b>성장</b> 탭에 모여 있어요.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h3">③ 성장</h2><p>이기면 HP·ATK 가 오르고, 가끔 방어·속도·명중·회피도 오릅니다. 등급마다 성장 상한이 있어서, HP·ATK 가 상한에 닿으면 <b>환생</b>으로 다음 등급에 올라갈 수 있습니다.</p><p>100승마다 한 번 <b>설정 보강</b>으로 설정에 문장을 덧붙여 개연성을 다시 심사받을 수 있습니다. 이런 기능은 홈의 <b>성장</b> 탭에 모여 있어요.</p></div>
         <div class="tut-step" hidden><h2 id="tut-h4">④ 함께 하기</h2><ul><li><b>온라인 대전</b> — 사람끼리 2~6명. 승점 3점.</li><li><b>자동 생사결</b> — 참가해 두면 접속하지 않아도 매시간 자동으로 싸웁니다.</li><li><b>꿈 이야기</b> — 내 설정으로 지어지는 7장면짜리 꿈. 져도 캐릭터는 남아요.</li><li><b>Google 로그인</b> — 캐릭터를 계정에 저장해 다른 기기에서도 이어 합니다.</li></ul><p class="hint">AI 는 하루 무료 한도(위의 '오늘 무료 몽상')가 있습니다. 다 쓰면 판정은 계속되지만 서술이 빠집니다.</p></div>
         <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></div>
         <p class="sr-only" id="tutCount" aria-live="polite"></p>
@@ -490,7 +490,7 @@
                 <p class="hint" id="delStatus" role="status"></p>
             </details>
         </fieldset>
-        <p class="hint">설정은 이 브라우저에 저장됩니다.</p>
+        <p class="hint">설정은 이 브라우저에 저장되고, 로그인 중이면 계정에도 저장돼 다른 기기에서도 같게 적용됩니다.</p>
     </dialog>
 
     <!-- 도움말: 다시 보기 · 용어 -->
@@ -502,7 +502,7 @@
         <h3>등급표</h3>
         <p style="margin:0 0 6px">등급이 높을수록 이길 때 <b>더 많이</b>, 더 <b>높이까지</b> 자랍니다. 대신 도망치기 어렵고 붙잡히면 많이 잃어요.</p>
         <div id="tierTable"></div>
-        <details class="calc"><summary>등급은 어떻게 정해지나요? (등급 주사위 확률)</summary><p style="margin:4px 0">심사관이 매긴 위력 점수를 중심으로 주사위를 굴립니다. 점수가 등급 경계 근처면 위·아래 등급이 나올 수 있는데, 올라가기는 어렵고 내려가기는 쉽습니다. 설정의 일관성이 60 미만이면 숙련까지만 나옵니다.</p><div id="tierOdds"></div></details>
+        <details class="calc"><summary>등급은 어떻게 정해지나요? (등급 주사위 확률)</summary><p style="margin:4px 0">심사관이 매긴 위력 점수를 중심으로 주사위를 굴립니다. 점수가 등급 경계 근처면 위·아래 등급이 나올 수 있는데, 올라가기는 어렵고 내려가기는 쉽습니다. 처음 만들 때는 <b>평범이나 숙련만</b> 나옵니다(심사 점수 0.8배, 위력 상한 50). 그 위 등급은 이겨서 키우고 환생해서 올라가요. 일관성이 50 미만이면 평범까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.</p><div id="tierOdds"></div></details>
         <h3>용어</h3>
         <p class="hint" style="margin:0 0 4px">숫자가 궁금하면 각 항목의 '자세한 계산'을 펼쳐 보세요.</p>
         <div id="glossary"></div>
@@ -765,7 +765,7 @@ const Snd = (() => {
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 5승마다 1회입니다.', max_tier: '신화는 최고 등급이라 환생할 수 없습니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
@@ -807,13 +807,15 @@ const Snd = (() => {
         stability: '설정이 앞뒤가 맞을수록 높음. 명중률에 곱해짐',
     };
     // 등급표: 서버(worker/rpg.js)의 TIERS·powerMult·TIER_CAPS·PLAUS_CAP 과 같은 값. 배율은 공식으로 계산해 옮겨 적다 틀리는 일을 없앤다
-    const TIER_RANGE = [['평범', 0, 30], ['숙련', 31, 50], ['초인', 51, 70], ['전설', 71, 85], ['신화', 86, 100]];
-    const PLAUS_CAP = { '평범': 85, '숙련': 90, '초인': 95, '전설': 98, '신화': 100 };
-    const powerMult = p => p <= 30 ? 0.6 + p / 30 * 0.4 : 1 + Math.pow((p - 30) / 70, 2) * 2;
+    const TIER_RANGE = [['평범', 0, 30], ['숙련', 31, 50], ['초인', 51, 70], ['전설', 71, 85], ['신화', 86, 97], ['???', 98, 100]];
+    const PLAUS_CAP = { '평범': 85, '숙련': 90, '초인': 95, '전설': 98, '신화': 100, '???': 100 };
+    const powerMult = p => p <= 30 ? 0.6 + p / 30 * 0.4 : p <= 97 ? 1 + Math.pow((p - 30) / 70, 2) * 2 : 3 + (p - 98) * 0.25;
     // 등급 주사위 확률표 (서버 rollTier 와 같은 식: 정규분포 σ14, 위 등급 ×0.35 · 아래 등급 ×1.5)
     function tierOdds(P) {
-        const w = TIER_RANGE.map(([, lo, hi]) => Math.exp(-0.5 * Math.pow(((lo + hi) / 2 - P) / 14, 2)) * (lo > P ? 0.35 : hi < P ? 1.5 : 1));
-        const sum = w.reduce((a, b) => a + b, 0); return w.map(x => Math.round(x / sum * 100));
+        const w = TIER_RANGE.map(([n, lo, hi]) => Math.exp(-0.5 * Math.pow(((lo + hi) / 2 - P) / 14, 2)) * (lo > P ? 0.2 : hi < P ? 1.8 : 1) * (n === '???' ? 0.03 : 1));
+        const sum = w.reduce((a, b) => a + b, 0), pr = w.map(x => x / sum * 100);
+        const up = pr.slice(2).reduce((a, b) => a + b, 0); pr[1] += up; for (let i = 2; i < pr.length; i++) pr[i] = 0;   // 생성 위력 상한 50: 초인 이상이 나와도 숙련으로
+        return pr.map(v => v > 0 && v < 1 ? '<1' : Math.round(v));
     }
     function tierTableHtml(cur) {
         const f = x => (Math.round(x * 100) / 100).toFixed(2).replace(/0$/, '');
@@ -822,7 +824,7 @@ const Snd = (() => {
         return `<div class="tbl"><table class="tiers"><thead><tr><th scope="col">등급</th><th scope="col">위력 점수</th><th scope="col">성장 배율</th><th scope="col">HP / ATK 상한</th><th scope="col">방어 / 속도 / 명중 / 회피 상한</th><th scope="col">개연성 상한</th><th scope="col">도망 확률 · 실패 손실</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
     function tierOddsHtml() {
-        const Ps = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+        const Ps = [10, 20, 30, 40, 50, 60, 70, 76];   // 심사 위력은 서버가 0.8배로 깎으므로 최대 76
         return `<div class="tbl"><table class="tiers"><thead><tr><th scope="col">심사 위력</th>${TIER_RANGE.map(([n]) => `<th scope="col">${n}</th>`).join('')}</tr></thead><tbody>${Ps.map(P => `<tr><th scope="row">${P}</th>${tierOdds(P).map(x => `<td>${x}%</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     }
     // 필살기 종류 (서버 ULT_STYLES): 심사관이 필살기 설명을 보고 넷 중 하나로 분류
@@ -864,7 +866,7 @@ const Snd = (() => {
             <p class="meta" style="margin:0">${esc(c.info)}</p>
             <details class="more" style="margin-top:8px"><summary>심사 기록</summary><div class="meta">
                 ${c.powerReason ? `심사관: ${esc(c.powerReason)}<br>` : ''}
-                ${c.luck?.table ? `등급 주사위 (심사 위력 ${c.luck.judged}): ${c.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(c.luck.tier)}</b>${c.luck.moved === 'up' ? ' ↑ 상승!' : c.luck.moved === 'down' ? ' ↓ 하락' : ''}${c.luck.tier !== s.tier ? ` → 최종 <b>${esc(s.tier)}</b> (설정의 일관성이 60 미만이거나 내장 AI 가 심사하면 숙련까지로 제한)` : ''}<br>` : ''}
+                ${c.luck?.table ? `등급 주사위 (심사 위력 ${c.luck.judged}): ${c.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(c.luck.tier)}</b>${c.luck.moved === 'up' ? ' ↑ 상승!' : c.luck.moved === 'down' ? ' ↓ 하락' : ''}${c.luck.tier !== s.tier ? ` → 최종 <b>${esc(s.tier)}</b> (처음 만들 때는 숙련까지만 — 그 위는 환생으로)` : ''}<br>` : ''}
                 일관성 ${s.coherence} (개연성의 바탕)${c.rebirths ? ` · 환생 ${c.rebirths}회 (+${c.rebirths * 10}%)` : ''}</div></details>`;
     }
     function goHome() {
@@ -873,16 +875,16 @@ const Snd = (() => {
             <div class="meta">위력 <b>${esc(s.tier || '')}</b> · HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}% · 전적 ${me.wins}승 ${me.losses}패${me.draws ? ` ${me.draws}무` : ''}${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''} · 꿈 조각 <b>${me.dream || 0}</b></div>`);
         setHtml($('homeCard'), charDetailHtml(me));
         setHtml($('growCard'), growHtml(me));
-        // 환생: HP·ATK 가 등급 상한에 닿았고 신화가 아니면 버튼 표시
-        const ready = rebirthReady(me), maxTier = me.stats.tier === '신화';
+        // 환생: HP·ATK 가 등급 상한에 닿았고 ??? 가 아니면 버튼 표시 (신화 → ??? 는 1000승 이상)
+        const ready = rebirthReady(me), maxTier = me.stats.tier === '???' || (me.stats.tier === '신화' && (me.wins || 0) < 1000);
         $('rebirthRow').style.display = ready ? '' : 'none';
-        if (ready) $('btnRebirth').textContent = maxTier ? '최고 등급 — 환생 불가' : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
+        if (ready) $('btnRebirth').textContent = me.stats.tier === '???' ? '최고 등급 — 환생 불가' : maxTier ? `??? 로 환생하려면 1000승 필요 (${me.wins || 0}/1000)` : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
         $('btnRebirth').disabled = maxTier;
         show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine(); renderBag(); renderShop(); refreshStoryCard();
     }
     // 등급별 성장 상한 (서버와 같은 표). HP·ATK 둘 다 상한이면 환생 가능
-    const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 } };
-    const TIER_ORDER = ['평범', '숙련', '초인', '전설', '신화'];
+    const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 }, '???': { hp: 8000, atk: 1000, def: 65, spd: 130, acc: 99, eva: 55 } };
+    const TIER_ORDER = ['평범', '숙련', '초인', '전설', '신화', '???'];
     const capsOf = c => c.caps || TIER_CAPS[c.stats.tier] || TIER_CAPS['신화'];
     const rebirthReady = c => c.rebirthReady ?? (c.stats.hp >= capsOf(c).hp && c.stats.atk >= capsOf(c).atk);
     const nextTier = t => TIER_ORDER[Math.min(TIER_ORDER.length - 1, TIER_ORDER.indexOf(t) + 1)];
@@ -890,13 +892,13 @@ const Snd = (() => {
     function growHtml(c) {
         const cap = capsOf(c), s = c.stats, pct = k => Math.min(100, Math.round(s[k] / cap[k] * 100));
         const rows = STATS.filter(([k]) => k in cap).map(([k, l]) => `<span>${l}${k === 'hp' || k === 'atk' ? '<span aria-hidden="true">*</span>' : ''}</span><div class="hpbar${pct(k) >= 100 ? ' max' : ''}" aria-hidden="true"><i style="width:${pct(k)}%"></i></div><span class="n">${s[k]}/${cap[k]}${pct(k) >= 100 ? ' 최대' : ''}</span>`).join('');
-        const ready = rebirthReady(c), last = s.tier === '신화';
+        const ready = rebirthReady(c), last = s.tier === '???';
         return `<h3>성장 <span class="hint">(${esc(s.tier || '')} 등급의 상한까지)</span></h3>
             <p class="meta" style="margin:0">이길 때마다 HP·ATK 는 꼭 오르고, 방어·속도·명중·회피는 가끔 오릅니다. <b>* HP와 ATK</b>가 둘 다 최대에 닿으면 다음 등급으로 <b>환생</b>할 수 있습니다.</p>
             <div class="grow">${rows}</div>
             ${last ? '' : `<p class="hint" style="margin:6px 0 0">다음 등급(${nextTier(s.tier)}) 상한: HP ${TIER_CAPS[nextTier(s.tier)].hp} · ATK ${TIER_CAPS[nextTier(s.tier)].atk} · 개연성 ${PLAUS_CAP[nextTier(s.tier)]}%</p>`}
             <details class="more"><summary>등급별 수치 전체 보기</summary>${tierTableHtml(s.tier)}</details>
-            <p class="hint" style="margin:6px 0 0">${last ? '신화는 최고 등급입니다.' : ready ? `환생 준비 완료! 아래 버튼으로 ${nextTier(s.tier)} 등급이 됩니다 (능력치는 새 등급 기본값으로, 성향·전적·필살기는 그대로, 환생마다 영구 +10%).` : `환생까지 HP ${pct('hp')}% · ATK ${pct('atk')}%`}</p>`;
+            <p class="hint" style="margin:6px 0 0">${last ? '??? 는 최고 등급입니다.' : ready && s.tier === '신화' && (c.wins || 0) < 1000 ? `상한에 닿았습니다. ??? 로 환생하려면 1000승이 필요합니다 (지금 ${c.wins || 0}승).` : ready ? `환생 준비 완료! 아래 버튼으로 ${nextTier(s.tier)} 등급이 됩니다 (능력치는 새 등급 기본값으로, 성향·전적·필살기는 그대로, 환생마다 영구 +10%).` : `환생까지 HP ${pct('hp')}% · ATK ${pct('atk')}%`}</p>`;
     }
     $('btnRebirth').addEventListener('click', async () => {
         if (!me || !rebirthReady(me)) return;
@@ -1007,7 +1009,7 @@ const Snd = (() => {
     let useKeyNow = false;
     function refreshRefine() {
         if (!me) return;
-        const used = me.refineCount || 0, need = used * 5, ok = (me.wins || 0) >= need;
+        const used = me.refineCount || 0, need = used * 100, ok = (me.wins || 0) >= need;   // 100승마다 1회 (첫 회 무료)
         $('refineHint').textContent = ok ? `사용 가능 (${used}회 사용)` : `다음 심사까지 ${need - me.wins}승 더 (${me.wins}/${need})`;
         useKeyNow = !ok && (me.bag?.key || 0) > 0 && me.keyDay !== new Date().toISOString().slice(0, 10);   // 설정 보강 열쇠 (하루 1회)
         $('btnRefine').disabled = $('refineText').disabled = !(ok || useKeyNow) || !aiAvailable();
@@ -1016,7 +1018,7 @@ const Snd = (() => {
         $('refineResult').textContent = '';
         // 성장 탭 배지: 환생 가능, 또는 설정 보강이 새로 열렸는데 아직 성장 탭을 안 봤을 때
         const fresh = ok && lsGet('dreamrpg.refineSeen') !== me.id + ':' + used;
-        $('growBadge').hidden = !((rebirthReady(me) && me.stats.tier !== '신화') || fresh);
+        $('growBadge').hidden = !((rebirthReady(me) && me.stats.tier !== '???') || fresh);
         $('growBadge').title = '새로 할 수 있는 것이 있습니다';
     }
     $('btnRefine').addEventListener('click', async () => {
@@ -1036,7 +1038,7 @@ const Snd = (() => {
         TABS.forEach(k => { const on = k === t; $('tab-' + k).setAttribute('aria-selected', on); $('tab-' + k).tabIndex = on ? 0 : -1; $('p-' + k).hidden = !on; });
         if (focus) $('tab-' + t).focus();
         lsSet('dreamrpg.tab', t);
-        if (t === 'grow' && me) { lsSet('dreamrpg.refineSeen', me.id + ':' + (me.refineCount || 0)); if (!(rebirthReady(me) && me.stats.tier !== '신화')) $('growBadge').hidden = true; }
+        if (t === 'grow' && me) { lsSet('dreamrpg.refineSeen', me.id + ':' + (me.refineCount || 0)); if (!(rebirthReady(me) && me.stats.tier !== '???')) $('growBadge').hidden = true; }
         if (t === 'rank') refreshLeaderboard();
     }
     TABS.forEach(k => $('tab-' + k).addEventListener('click', () => selectTab(k)));
@@ -1125,7 +1127,7 @@ const Snd = (() => {
         finally { $('btnReroll').disabled = false; }
     });
     // 도망: 한 턴이라도 싸운 뒤엔 서버가 속도·회피·등급으로 성공 확률을 굴린다. 실패하면 붙잡혀 패배 + HP·ATK 손실(등급이 높을수록 큼)
-    const TIER_IDX = { '평범': 0, '숙련': 1, '초인': 2, '전설': 3, '신화': 4 };
+    const TIER_IDX = { '평범': 0, '숙련': 1, '초인': 2, '전설': 3, '신화': 4, '???': 5 };
     function escapeChance(me, foe, bonus = 0) {   // 서버 escapeRoll 과 같은 식 (연막 구름 +25%p)
         const a = me.char.stats, b = foe.char.stats, t = TIER_IDX[a.tier] ?? 0, ft = TIER_IDX[b.tier] ?? 1;
         const p = 0.75 + (a.spd - b.spd) / 120 + a.eva / 200 - t * 0.06 + (ft - t) * 0.04 - (me.hp < a.hp * 0.3 ? 0.1 : 0) + bonus;
@@ -1401,6 +1403,7 @@ const Snd = (() => {
     }
     // 계정 캐릭터 선택: 이전에 고른 것 → 최근 것 → 없으면 손님 캐릭터 그대로(있으면) / 만들기 화면
     async function enterAccount() {
+        syncPrefs();
         const prev = readSlot(ACCT), pick = acctChars.find(c => prev && c.id === prev.id) || acctChars[0];
         if (pick) { lsSet(ACCT, JSON.stringify({ id: pick.id, token: pick.token })); await loadMe(ACCT); }
         else { lsDel(ACCT); await loadMe(GUEST); }
@@ -1425,11 +1428,11 @@ const Snd = (() => {
 
     // ── 꿈 조각 · 가방 · 꿈 시장 (가격·효과는 서버 ITEMS 와 같음, 판단은 서버가 함) ──
     const ITEM_INFO = {
-        tea: ['깨어남의 차', 25, '필살기 게이지 1칸 찬 채로 전투 시작'], sight: ['또렷한 시선', 35, '이번 전투 명중 +8 (등급 상한까지)'], guard: ['단단한 꿈', 35, '이번 전투 방어 +8%p (등급 상한까지)'],
-        bandage: ['꿈결 붕대', 40, '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)'], smoke: ['연막 구름', 25, '도망 성공 확률 +25%p, 붙잡혀도 손실 절반'],
-        map: ['꿈길 지도', 20, 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기'], nightmare: ['악몽 초대장', 40, '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음'],
-        insurance: ['깨지 않는 꿈', 60, 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)', 1], key: ['설정 보강 열쇠', 100, '설정 보강의 5승 대기를 바로 풂 (하루 1회)'],
-        relic: ['꿈의 유물', 120, '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 60)'], star: ['별 표식', [300, 600, 1000], '순위표 이름 옆 장식 (3단계)'],
+        tea: ['깨어남의 차', 125, '필살기 게이지 1칸 찬 채로 전투 시작'], sight: ['또렷한 시선', 175, '이번 전투 명중 +8 (등급 상한까지)'], guard: ['단단한 꿈', 175, '이번 전투 방어 +8%p (등급 상한까지)'],
+        bandage: ['꿈결 붕대', 200, '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)'], smoke: ['연막 구름', 125, '도망 성공 확률 +25%p, 붙잡혀도 손실 절반'],
+        map: ['꿈길 지도', 100, 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기'], nightmare: ['악몽 초대장', 200, '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음'],
+        insurance: ['깨지 않는 꿈', 300, 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)', 1], key: ['설정 보강 열쇠', 1500, '설정 보강의 100승 대기를 바로 풂 (하루 1회)'],
+        relic: ['꿈의 유물', 600, '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 300)'], star: ['별 표식', [1500, 3000, 6000], '순위표 이름 옆 장식 (3단계)'],
     };
     const BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'], SHOP = ['tea', 'sight', 'guard', 'bandage', 'smoke', 'map', 'nightmare', 'insurance', 'key', 'relic', 'star'];
     const bagSel = new Set(); let useNightmare = false;
@@ -1447,12 +1450,12 @@ const Snd = (() => {
     function renderShop() {
         if (!me) return;
         const d = me.dream || 0, bag = me.bag || {};
-        $('walletHint').textContent = `꿈 조각 ${d} / 600`;
+        $('walletHint').textContent = `꿈 조각 ${d}`;
         setHtml($('shopList'), SHOP.map(k => {
             const [name, price, desc, max] = ITEM_INFO[k];
             let pr = price, full = (bag[k] || 0) >= (max || 5), extra = '';
             if (k === 'star') { const lv = me.stars || 0; full = lv >= 3; pr = full ? 0 : price[lv]; extra = lv ? ` <span class="stars">${'★'.repeat(lv)}</span>` : ''; }
-            if (k === 'relic') { full = false; if (me.relic) pr = 60; extra = me.relic ? ` — 지금: <b>${esc(me.relic)}</b>` : ''; }
+            if (k === 'relic') { full = false; if (me.relic) pr = 300; extra = me.relic ? ` — 지금: <b>${esc(me.relic)}</b>` : ''; }
             const cnt = k === 'relic' || k === 'star' ? '' : ` <span class="hint">보유 ${bag[k] || 0}${max ? '/' + max : ''}</span>`;
             return `<div class="shop-item"><div><b>${name}</b>${cnt}${extra}<div class="meta">${desc}</div>${k === 'relic' ? `<input type="text" id="relicName" maxlength="12" placeholder="예) 할아버지의 망치" style="margin-top:6px;padding:.5rem" aria-label="유물 이름">` : ''}</div><button type="button" class="mini" data-buy="${k}"${full || d < pr ? ' disabled' : ''}>${full ? '최대' : (k === 'relic' && me.relic ? '바꾸기 ' : '') + pr + ' 조각'}</button></div>`;
         }).join(''));
@@ -1560,9 +1563,24 @@ const Snd = (() => {
     // ── 소리 설정 (이 브라우저에 저장. 저장된 '켜짐'은 첫 클릭·키 입력 때 오디오를 연다 — 브라우저 자동 재생 정책) ──
     const SND_KEY = 'dreamrpg.snd';
     const sndCfg = (() => { const d = { on: false, sfx: 70, amb: 0, cueOnly: false }; try { return { ...d, ...JSON.parse(lsGet(SND_KEY) || '{}') }; } catch { return d; } })();
-    const saveSnd = () => lsSet(SND_KEY, JSON.stringify(sndCfg));
+    const saveSnd = () => { lsSet(SND_KEY, JSON.stringify(sndCfg)); pushPrefs(); };
+    // 계정 설정 동기화: 바꿀 때마다 브라우저에 저장하고, 로그인 중이면 계정에도 (0.8초 묶어서) 저장. 로그인하면 계정 값을 받아 적용 (계정에 없으면 지금 브라우저 값을 올림)
+    const curPrefs = () => ({ fx: document.documentElement.dataset.fx, size: document.documentElement.dataset.size || 'm', snd: { ...sndCfg } });
+    let prefTimer = null;
+    function pushPrefs() { if (!gUser || !gSession) return; clearTimeout(prefTimer); prefTimer = setTimeout(() => api('/api/rpg/prefs', { session: gSession, prefs: curPrefs() }).catch(() => {}), 800); }
+    function armSound() { const unlock = () => { if (sndCfg.on) Snd.setOn(true).then(() => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(lastAmb); }); }; document.addEventListener('pointerdown', unlock, { once: true, capture: true }); document.addEventListener('keydown', unlock, { once: true, capture: true }); }
+    function applyPrefs(pr) {
+        const d = document.documentElement;
+        if (pr.fx) { d.dataset.fx = pr.fx; lsSet('dreamrpg.fx', pr.fx); }
+        if (pr.size) { d.dataset.size = pr.size; lsSet('dreamrpg.size', pr.size); }
+        if (pr.snd) { const wasOn = Snd.state.on; Object.assign(sndCfg, pr.snd); lsSet(SND_KEY, JSON.stringify(sndCfg)); Snd.setVol('sfx', sndCfg.sfx / 100); Snd.setVol('amb', sndCfg.amb / 100); Snd.setCueOnly(sndCfg.cueOnly); if (!sndCfg.on && wasOn) Snd.setOn(false); else if (sndCfg.on && !wasOn) armSound(); }
+    }
+    async function syncPrefs() {
+        if (!gSession) return;
+        try { const d = await api('/api/rpg/prefs', null, { 'X-Session': gSession }); if (d.prefs && Object.keys(d.prefs).length) applyPrefs(d.prefs); else pushPrefs(); } catch {}
+    }
     Snd.setVol('sfx', sndCfg.sfx / 100); Snd.setVol('amb', sndCfg.amb / 100); Snd.setCueOnly(sndCfg.cueOnly);
-    if (sndCfg.on) { const unlock = () => Snd.setOn(true).then(() => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(lastAmb); }); document.addEventListener('pointerdown', unlock, { once: true, capture: true }); document.addEventListener('keydown', unlock, { once: true, capture: true }); }
+    if (sndCfg.on) armSound();
     $('sndOn').addEventListener('change', async e => { sndCfg.on = e.target.checked; saveSnd(); await Snd.setOn(sndCfg.on); if (sndCfg.on) { lastAmb = AMB_OF[curScreen()]; Snd.ambient(lastAmb); Snd.play('turn'); } });
     $('vSfx').addEventListener('input', e => { sndCfg.sfx = +e.target.value; Snd.setVol('sfx', sndCfg.sfx / 100); saveSnd(); });
     $('vSfx').addEventListener('change', () => Snd.play('hit'));
@@ -1608,13 +1626,13 @@ const Snd = (() => {
     //   [용어, 쉬운 설명, 예시(선택), 자세한 계산(선택)]
     const GLOSSARY = [
         ['능력치', [
-            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'.'],
-            ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 보상 배율(아래 \'승리 보상\'). 상한은 등급마다 달라요: 평범 1500 ~ 신화 6000.'],
-            ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 맞으면 10% 확률로 크리티컬(1.5배), 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 보상 배율. 상한: 평범 200 ~ 신화 800.'],
-            ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임. 이기면 35% 확률로 +1%. 상한: 평범 20% ~ 신화 60%.'],
-            ['속도', '누가 먼저 움직일지 정해요. 빠를수록 도망도 잘 칩니다.', '', '행동 순서 = 속도 + 주사위(0~30), 높은 쪽이 먼저. 도망 성공 확률에도 더해짐. 상한: 평범 60 ~ 신화 120. 등급과 상관없이 성향으로만 정해짐.'],
+            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 그 위에 거의 나오지 않는 ??? 가 있어요. 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'. 처음 만들 때는 평범이나 숙련만 나오고(심사 점수 0.8배, 위력 상한 50), 그 위 등급은 승리와 환생으로 올라갑니다. 일관성이 50 미만이면 평범까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.'],
+            ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 보상 배율(아래 \'승리 보상\'). 상한은 등급마다 달라요: 평범 1500 ~ ??? 8000.'],
+            ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 맞으면 10% 확률로 크리티컬(1.5배), 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 보상 배율. 상한: 평범 200 ~ ??? 1000.'],
+            ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임. 이기면 35% 확률로 +1%. 상한: 평범 20% ~ ??? 65%.'],
+            ['속도', '누가 먼저 움직일지 정해요. 빠를수록 도망도 잘 칩니다.', '', '행동 순서 = 속도 + 주사위(0~30), 높은 쪽이 먼저. 도망 성공 확률에도 더해짐. 상한: 평범 60 ~ ??? 130. 등급과 상관없이 성향으로만 정해짐.'],
             ['명중', '내 공격이 맞을 가능성이에요.', '', '명중 확률 = (명중 − 상대 회피) ÷ 100 × 개연성 + 난이도 보정(쉬움 +10% / 어려움 −15% / 불가 0%). 5~95% 사이로 제한. 맞으면 10% 확률로 크리티컬. 상한: 평범 85 ~ 신화 99.'],
-            ['회피', '상대 공격을 피하는 솜씨예요. 상대의 명중을 깎아요.', '', '상대 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐. 상한: 평범 20 ~ 신화 50.'],
+            ['회피', '상대 공격을 피하는 솜씨예요. 상대의 명중을 깎아요.', '', '상대 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐. 상한: 평범 20 ~ ??? 55.'],
             ['개연성', '내 캐릭터가 "말이 되는" 정도예요. 설정이 앞뒤가 맞을수록 높고, 높을수록 공격이 잘 맞아요.', '"뭐든 다 할 수 있다"보다 "힘은 세지만 발이 느리다"가 개연성이 높아요.', '설정의 일관성(0~100)에서 나온 명중 계수 0.55~1.0 (명중 확률에 곱해짐). 설정에 맞는 선언(적합 80% 이상 + 난이도 쉬움·보통)마다 +0.3%p, 불허·불가 판정이면 −0.5%p. 등급별 상한: 평범 85% ~ 신화 100% (오를 때만 적용 — 처음부터 높으면 깎지 않음). 환생마다 바닥 +3%p.'],
             ['일관성', '심사관이 보기에 설정이 얼마나 앞뒤가 맞는지에 대한 점수예요. 개연성은 이 점수에서 출발해요.', '', '0~100. 설정 보강으로 다시 심사받을 수 있음.'],
         ]],
@@ -1631,11 +1649,11 @@ const Snd = (() => {
         ['성장 · 그 밖', [
             ['승리 보상', '이길 때마다 HP·ATK 가 오르고, 방어·속도·명중·회피도 가끔 올라요. 내 등급이 높을수록, 강한 상대를 이길수록 많이 올라요. 온라인 대전은 승점만 주고 능력치는 오르지 않아요.', '', 'HP +10~30, ATK +1~4 에 보상 배율 = 내 등급 배율 × (1 + 상대 등급 단계 × 0.25) × (자동 생사결이면 1.3)을 곱함. 방어·속도·명중·회피는 각각 35% 확률로 +1. 5% 확률 대성공이면 HP·ATK 2배, 나머지는 65% 확률로 +2. 모두 등급 상한까지.'],
             ['환생', '능력치가 지금 등급의 끝까지 자라면, 다음 등급으로 새로 태어날 수 있어요. 잠깐 약해지지만 더 높이 자랄 수 있어요.', '', 'HP·ATK 가 둘 다 등급 상한에 닿으면 가능. 능력치는 새 등급 기본값으로, 성향·전적·필살기는 유지. 환생마다 영구 +10%, 개연성 바닥 +3%p. 신화는 최고 등급이라 환생 불가.'],
-            ['설정 보강', '설정에 한 문장을 덧붙여 다시 평가받아요. 약점이나 한계를 잘 적으면 개연성이 올라요.', '', '100자까지. 일관성만 다시 심사하고 위력 등급은 그대로. 5승마다 1회, 첫 번째는 무료. 모순을 더하면 오히려 내려감.'],
+            ['설정 보강', '설정에 한 문장을 덧붙여 다시 평가받아요. 약점이나 한계를 잘 적으면 개연성이 올라요.', '', '100자까지. 일관성만 다시 심사하고 위력 등급은 그대로. 100승마다 1회, 첫 번째는 무료. 모순을 더하면 오히려 내려감.'],
             ['자동 생사결', '참가해 두면 내가 접속하지 않아도 다른 참가자와 자동으로 싸워서 기록과 보상이 쌓여요.', '', '매시 정각에 참가자 최대 30명을 무작위로 둘씩 짝지어 최대 40라운드. 끝까지 승부가 안 나면 기록 없음. AI 서술 없이 규칙 엔진만 사용(체력이 낮으면 방어, 게이지가 차면 필살기). 이기면 승점 2 · 보상 1.3배, 지면 패배 기록만. 다른 사람이 \'다른 플레이어의 캐릭터와 전투\'로 내 캐릭터와 싸워 내가 이겨도 보상을 받음.'],
             ['승점 · 순위표', '이기면 점수를 얻고, 점수가 높을수록 순위가 올라가요. 사람과 싸워 이기면 더 많이 받아요.', '', 'AI 상대 승리 1점 · 자동 생사결 승리 2점(부재 중 자동 전투, 다른 플레이어 캐릭터와 전투 모두) · 온라인 대전 승리 3점. 순위표에는 승점 1점 이상인 상위 20명, 승점이 같으면 먼저 만든 캐릭터가 위.'],
             ['온라인 대전', '사람끼리 2~6명이 싸워요. 이기면 승점 3점을 받지만 능력치는 오르지 않아요.', '', '첫 제출 뒤 60초가 지나면 누구나 \'건너뛰기\'를 누를 수 있고, 건너뛰어진 사람은 자동 방어. 3번 연속이면 기권. 도중에 나가면 기권 패배. 마지막 라운드에 모두 쓰러지면 무승부(그 전에 쓰러졌거나 기권한 사람은 패배). 랜덤 대전은 2분 안에 만들어진 방끼리만 짝지어짐. 방은 3시간 동안 아무 일이 없으면 사라짐.'],
-            ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 성장 탭의 꿈 시장에서 그 전투에서만 효과가 있는 물건, 꾸미기, 보험을 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 600. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
+            ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 성장 탭의 꿈 시장에서 그 전투에서만 효과가 있는 물건, 꾸미기, 보험을 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
             ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
             ['오늘 무료 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
@@ -1662,7 +1680,7 @@ const Snd = (() => {
     $('dlgSettings').addEventListener('change', e => {
         const r = e.target; if (r.name !== 'fx' && r.name !== 'size') return;
         if (r.name === 'fx') document.documentElement.dataset.fx = r.value; else document.documentElement.dataset.size = r.value;
-        lsSet('dreamrpg.' + r.name, r.value);
+        lsSet('dreamrpg.' + r.name, r.value); pushPrefs();
     });
     // 바깥(배경)을 누르면 닫기 — 대화상자 안쪽 여백도 target 이 dialog 라서 좌표로 판단
     for (const d of [$('dlgTut'), $('dlgHelp'), $('dlgSettings')]) d.addEventListener('click', e => {

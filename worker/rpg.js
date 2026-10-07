@@ -30,7 +30,7 @@
  *   GET  /api/rpg/battles/:id?token=             (재접속)
  *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 속도·회피·등급으로 실패 확률 → 실패하면 능력치 손실 + 패배)
  *   POST /api/rpg/battles                        { charId, token, mode: 'auto' } → 자동 생사결에 참가한 다른 플레이어 캐릭터(AI 조종)와 전투
- *   POST /api/rpg/chars/:id/refine               { token, text }              (설정 보강 100자 → 일관성 재심사 → 개연성 갱신. 5승마다 1회)
+ *   POST /api/rpg/chars/:id/refine               { token, text }              (설정 보강 100자 → 일관성 재심사 → 개연성 갱신. 100승마다 1회)
  *   POST /api/rpg/chars/:id/rebirth              { token }                    (HP·ATK 가 등급 상한이면 환생 → 다음 등급)
  *   POST /api/rpg/chars/:id/auto                 { token, on }                (자동 생사결 참가 on/off — 꺼져 있는 동안 서버가 매시간 참가자끼리 붙임)
  *   GET  /api/rpg/auto?charId=                   → { on, participants, recent: [...] } 부재 중 자동 생사결 결과
@@ -158,6 +158,8 @@ export async function handleRpg(request, env, path) {
   if (path === '/api/rpg/auth/logout' && m === 'POST') { await env.DB.prepare('DELETE FROM rpg_sessions WHERE token = ?').bind(String(body.session || '')).run(); return json({ ok: true }); }
   if (path === '/api/rpg/me' && m === 'GET') return me(env, url.searchParams.get('session'));
   if (path === '/api/rpg/auth/delete' && m === 'POST') return deleteAccount(body, env);
+  if (path === '/api/rpg/prefs' && m === 'GET') return prefsGet(env, request.headers.get('X-Session') || url.searchParams.get('session'));
+  if (path === '/api/rpg/prefs' && m === 'POST') return prefsSet(body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/auto$/)) && m === 'POST') return setAuto(mm[1], body, env);
@@ -466,7 +468,7 @@ async function deleteAccount(body, env) {
   const sub = await sessionUser(env, body.session);
   if (!sub) return json({ error: 'forbidden' }, 403);
   if (body.confirm !== '탈퇴') return json({ error: 'bad_request' }, 400);
-  await ensureStoryTable(env);
+  await ensureStoryTable(env); await ensurePrefsTable(env);
   const ids = ((await env.DB.prepare('SELECT id FROM rpg_chars WHERE user_sub = ?').bind(sub).all())?.results || []).map(r => r.id);
   const stmts = [];
   for (const id of ids) stmts.push(
@@ -477,10 +479,34 @@ async function deleteAccount(body, env) {
     env.DB.prepare('DELETE FROM rpg_chars WHERE user_sub = ?').bind(sub),
     env.DB.prepare('DELETE FROM rpg_sessions WHERE sub = ?').bind(sub),
     env.DB.prepare('DELETE FROM rpg_ip_bucket WHERE ip = ?').bind('acct:' + sub),
+    env.DB.prepare('DELETE FROM rpg_prefs WHERE sub = ?').bind(sub),
     env.DB.prepare('DELETE FROM rpg_users WHERE sub = ?').bind(sub));
   await env.DB.batch(stmts);
   lbCache.at = 0;
   return json({ ok: true, deletedChars: ids.length });
+}
+// 계정 설정: 화면 효과·글자 크기·소리를 계정에 저장해 다른 기기에서도 같게 (브라우저에도 따로 저장됨)
+let prefsTable = false;
+async function ensurePrefsTable(env) { if (prefsTable) return; await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_prefs (sub TEXT PRIMARY KEY, json TEXT NOT NULL, updated INTEGER NOT NULL)').run(); prefsTable = true; }
+function cleanPrefs(p) {
+  const o = {};
+  if (['off', 'low', 'high'].includes(p?.fx)) o.fx = p.fx;
+  if (['m', 'l'].includes(p?.size)) o.size = p.size;
+  const sd = p?.snd; if (sd && typeof sd === 'object') o.snd = { on: !!sd.on, sfx: Math.round(num(sd.sfx, 0, 100, 70)), amb: Math.round(num(sd.amb, 0, 100, 0)), cueOnly: !!sd.cueOnly };
+  return o;
+}
+async function prefsGet(env, session) {
+  const sub = await sessionUser(env, session); if (!sub) return json({ error: 'forbidden' }, 403);
+  await ensurePrefsTable(env);
+  const row = await env.DB.prepare('SELECT json FROM rpg_prefs WHERE sub = ?').bind(sub).first();
+  return json({ prefs: row ? JSON.parse(row.json) : null });
+}
+async function prefsSet(body, env) {
+  const sub = await sessionUser(env, body.session); if (!sub) return json({ error: 'forbidden' }, 403);
+  await ensurePrefsTable(env);
+  const pr = cleanPrefs(body.prefs);
+  await env.DB.prepare('INSERT INTO rpg_prefs (sub, json, updated) VALUES (?, ?, ?) ON CONFLICT(sub) DO UPDATE SET json = excluded.json, updated = excluded.updated').bind(sub, JSON.stringify(pr), Date.now()).run();
+  return json({ ok: true, prefs: pr });
 }
 async function me(env, session) {
   const sub = await sessionUser(env, session);
@@ -615,9 +641,9 @@ const SYS_JUDGE = `당신은 텍스트 RPG 캐릭터 심사관입니다. 사용�
 2) alloc: 이 캐릭터의 성향을 6개 항목에 합계 100으로 배분. atk(공격) hp(체력) def(방어) spd(속도) acc(명중) eva(회피). 설정에 근거해서만.
 3) coherence 0~100: 설정의 내적 일관성. 앞뒤가 맞고 한계·약점이 분명하면 높음(80~100). 짧거나 막연하면 중간(40~60). "무엇이든 다 한다", 모순, 근거 없는 전능은 낮음(5~25). 현실적/비현실적 여부와 무관. 낮은 점수는 거절 사유가 아니라 그냥 점수입니다.
 4) ult: 필살기 하나. name(짧게), effect(한 문장), style 은 burst(한 방)·precise(명중 위주)·drain(피해+회복)·shield(피해+다음 턴 방어) 중 하나. 설정이 짧으면 설정에서 자연스럽게 유추해 만드세요(고양이 → 할퀴기).
-5) power 0~100: 설정이 근거하는 위력 등급. 엄격하게: 낮게 주기는 쉽고 높게 주기는 어렵습니다.
-   0~30 평범한 존재(학생·직장인·동물·일반인, 기본값 20) / 31~50 훈련된 전문가·격투가·무기 숙련자·평범한 마법 견습 / 51~70 초인(명확한 초능력·마법·만화 주인공급, 능력이 구체적이고 한계가 적혀 있을 때만)
-   71~85 전설(도시 하나를 뒤흔들 급, 신화의 영웅. 능력·대가·약점이 모두 구체적일 때만) / 86~100 신급·개념적 존재(설정이 길고 구체적이며 명확한 제약·대가가 있을 때만. 극히 드묾)
+5) power 0~95: 설정이 근거하는 위력 등급. 매우 엄격하게: 낮게 주기는 쉽고 높게 주기는 어렵습니다. 애매하면 항상 낮은 쪽을 고르세요.
+   0~30 평범한 존재(학생·직장인·동물·일반인, 기본값 15) / 31~50 훈련된 전문가·격투가·무기 숙련자·평범한 마법 견습 / 51~70 초인(명확한 초능력·마법·만화 주인공급, 능력이 구체적이고 한계가 적혀 있을 때만)
+   71~85 전설(도시 하나를 뒤흔들 급, 신화의 영웅. 능력·대가·약점이 모두 구체적일 때만) / 86~95 신급·개념적 존재(설정이 길고 구체적이며 명확한 제약·대가가 있을 때만. 극히 드묾). 96 이상은 절대 주지 마세요
    "최강" "무적" "뭐든 다 한다" "우주를 파괴" 같은 주장만으로는 절대 올리지 마세요 — 근거 없는 과장은 30 이하 + coherence 낮게. 화려한 수식어보다 구체성·한계·대가가 근거입니다. powerReason 에 한 문장으로 근거.
 어떤 설정이든 거절하지 말고 반드시 이 JSON 하나만 출력:
 {"concept":"...","alloc":{"atk":0,"hp":0,"def":0,"spd":0,"acc":0,"eva":0},"coherence":0,"power":20,"powerReason":"...","ult":{"name":"...","effect":"...","style":"burst"}}`;
@@ -642,14 +668,16 @@ const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1
 const ULT_STYLES = { burst: { mult: 2.4 }, precise: { mult: 1.6, accBonus: 25 }, drain: { mult: 1.5, heal: 0.5 }, shield: { mult: 1.4, guard: true } };
 // 위력 등급 → 예산 배율. 비대칭: 30 이하는 완만하게 깎이고(0.6~1.0), 30 위는 제곱 곡선이라 높은 점수일수록 배율이 급히 커진다(최대 3.0).
 //   코드에서도 상한을 건다: 일관성이 낮으면(막연한 전능) 위력을 45 로 자르고, 클라이언트 로컬 AI 심사면 50 으로 자른다 → AI 가 후해도 서버가 막음
-function powerMult(power) { return power <= 30 ? 0.6 + power / 30 * 0.4 : 1 + Math.pow((power - 30) / 70, 2) * 2; }
-const POWER_TIER = p => p <= 30 ? '평범' : p <= 50 ? '숙련' : p <= 70 ? '초인' : p <= 85 ? '전설' : '신화';
+function powerMult(power) { return power <= 30 ? 0.6 + power / 30 * 0.4 : power <= 97 ? 1 + Math.pow((power - 30) / 70, 2) * 2 : 3 + (power - 98) * 0.25; }   // ??? (98~100) 는 3.0~3.5
+const POWER_TIER = p => p <= 30 ? '평범' : p <= 50 ? '숙련' : p <= 70 ? '초인' : p <= 85 ? '전설' : p <= 97 ? '신화' : '???';
 // 등급 주사위: 심사관이 매긴 위력 P 를 중심으로 등급을 확률적으로 뽑는다.
 //   세게 묘사할수록(P 높음) 높은 등급이 나올 확률이 커지고, 약하게 묘사하면 낮은 등급이 대부분.
 //   위쪽 등급 가중치는 ×0.35, 아래쪽은 ×1.5 → 올라가기가 내려가기보다 어렵다. 결과와 확률표를 모두 돌려줘 플레이어에게 보여 준다
-const TIERS = [['평범', 0, 30], ['숙련', 31, 50], ['초인', 51, 70], ['전설', 71, 85], ['신화', 86, 100]];
+const TIERS = [['평범', 0, 30], ['숙련', 31, 50], ['초인', 51, 70], ['전설', 71, 85], ['신화', 86, 97], ['???', 98, 100]];
+// 등급 주사위 가중치: 위로 올라가기 ×0.2, 아래로 내려가기 ×1.8 (2026-10 하향: 첫 심사가 후하다는 피드백). ??? 는 거기에 ×0.03 더 — 생성 때 1% 미만
+const TIER_UP = 0.2, TIER_DOWN = 1.8, SECRET_W = 0.03;
 function rollTier(P) {
-  const w = TIERS.map(([, lo, hi]) => { const c = (lo + hi) / 2, base = Math.exp(-0.5 * Math.pow((c - P) / 14, 2)); return base * (lo > P ? 0.35 : hi < P ? 1.5 : 1); });
+  const w = TIERS.map(([n, lo, hi]) => { const c = (lo + hi) / 2, base = Math.exp(-0.5 * Math.pow((c - P) / 14, 2)); return base * (lo > P ? TIER_UP : hi < P ? TIER_DOWN : 1) * (n === '???' ? SECRET_W : 1); });
   const sum = w.reduce((a, b) => a + b, 0), probs = w.map(x => x / sum);
   let r = rnd(), idx = probs.length - 1;
   for (let i = 0; i < probs.length; i++) { r -= probs[i]; if (r <= 0) { idx = i; break; } }
@@ -832,7 +860,7 @@ async function updateChar(env, id, fn, fallback = null) {
 }
 // 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
 // 개연성(stability): 선언으로 쌓인다 — 적합도 ≥ 0.8 이고 쉬움/보통 판정이면 +0.3%p, 불허·불가면 −0.5%p. 등급별 상한, 하한은 0.55 + 환생 횟수 × 0.03
-const PLAUS_CAP = { '평범': 0.85, '숙련': 0.90, '초인': 0.95, '전설': 0.98, '신화': 1.0 };
+const PLAUS_CAP = { '평범': 0.85, '숙련': 0.90, '초인': 0.95, '전설': 0.98, '신화': 1.0, '???': 1.0 };
 const plausFloor = c => 0.55 + (c.rebirths || 0) * 0.03;
 const plausCap = c => PLAUS_CAP[c.stats?.tier] ?? 1.0;
 // 상한은 '성장'에만 적용: 생성 때 이미 상한보다 높았던 값은 깎지 않는다 (상한 = max(등급 상한, 현재값))
@@ -856,7 +884,8 @@ async function applyPlaus(env, players, acts, judge, slots) {
   }
   return out;
 }
-// 설정 보강: 기존 설정 뒤에 100자를 덧붙이고 심사관이 일관성만 다시 매긴다(위력 등급은 그대로). 5승마다 1회(첫 번째는 무료)
+// 설정 보강: 기존 설정 뒤에 100자를 덧붙이고 심사관이 일관성만 다시 매긴다(위력 등급은 그대로). 100승마다 1회(첫 번째는 무료)
+const REFINE_EVERY = 100;
 const SYS_COHERENCE = `당신은 텍스트 RPG 캐릭터 심사관입니다. 캐릭터 설정의 내적 일관성만 평가합니다. 앞뒤가 맞고 능력의 한계·약점·대가가 구체적이면 높음(80~100), 짧거나 막연하면 중간(40~60), "무엇이든 다 한다"·모순·근거 없는 전능은 낮음(5~25). 덧붙인 문장이 기존 설정과 모순되면 낮춥니다. 반드시 이 JSON 하나만 출력: {"coherence":0,"reason":"한 문장"}`;
 async function refineChar(id, body, env, ip) {
   const c = await loadChar(env, id, body.token);
@@ -864,8 +893,8 @@ async function refineChar(id, body, env, ip) {
   const text = clip(body.text, 100);
   if (!text) return json({ error: 'bad_request' }, 400);
   const used = c.refineCount || 0;
-  const useKey = (c.wins || 0) < used * 5 && !!body.useKey && (c.bag?.key || 0) > 0 && c.keyDay !== today();   // 설정 보강 열쇠: 5승 대기를 바로 풂 (하루 1회)
-  if ((c.wins || 0) < used * 5 && !useKey) return json({ error: 'refine_cooldown', needWins: used * 5 }, 409);
+  const useKey = (c.wins || 0) < used * REFINE_EVERY && !!body.useKey && (c.bag?.key || 0) > 0 && c.keyDay !== today();   // 설정 보강 열쇠: 100승 대기를 바로 풂 (하루 1회)
+  if ((c.wins || 0) < used * REFINE_EVERY && !useKey) return json({ error: 'refine_cooldown', needWins: used * REFINE_EVERY }, 409);
   const mod = await moderate(env, text);
   if (!mod.ok) return json({ error: 'policy', reason: mod.reason, label: mod.label }, 400);
   const info = clip(c.info + ' ' + text, 400);
@@ -885,6 +914,7 @@ const TIER_CAPS = {
   '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 },
   '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 },
   '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 },
+  '???': { hp: 8000, atk: 1000, def: 65, spd: 130, acc: 99, eva: 55 },
 };
 const capsOf = c => TIER_CAPS[c.stats?.tier] || TIER_CAPS['신화'];
 const rebirthReady = c => { const cap = capsOf(c); return c.stats.hp >= cap.hp && c.stats.atk >= cap.atk; };
@@ -897,7 +927,8 @@ function applyReward(c, rw) {
   if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(cap[rw.bonus.stat] || rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);   // 옛 형식 호환
   c.rebirthReady = rebirthReady(c);
 }
-// 환생: HP·ATK 상한 도달 시. 다음 등급 하한 위력으로 기본 능력치를 다시 뽑고(성향 배분은 유지, 흔들림 없음) 환생 횟수당 +10%. 신화는 최상위라 불가
+// 환생: HP·ATK 상한 도달 시. 다음 등급 하한 위력으로 기본 능력치를 다시 뽑고(성향 배분은 유지, 흔들림 없음) 환생 횟수당 +10%. ??? 는 최상위라 불가, 신화 → ??? 는 1000승 이상
+const SECRET_WINS = 1000;   // 300 이면 신화 상한(약 286승)과 같은 시점이라 약 12시간에 전원 도달 → 1000 (약 35시간 추정)
 async function rebirthChar(id, body, env) {
   const c = await loadChar(env, id, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
@@ -905,10 +936,12 @@ async function rebirthChar(id, body, env) {
   const idx = TIERS.findIndex(t => t[0] === c.stats.tier);
   if (idx < 0 || idx >= TIERS.length - 1) return json({ error: 'max_tier' }, 409);
   const [name, lo] = TIERS[idx + 1];
+  if (name === '???' && (c.wins || 0) < SECRET_WINS) return json({ error: 'need_wins', needWins: SECRET_WINS }, 409);   // ??? 는 신화를 끝까지 키운 캐릭터만
   const alloc = c.alloc || allocFromStats(c);                        // 옛 캐릭터는 현재 능력치 비율에서 성향을 역산
   const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
-  const fresh = buildStats(alloc, c.stats.coherence, 1, lo + 2);
-  for (const k of ['hp', 'atk']) fresh[k] = Math.round(fresh[k] * bonus);
+  const fresh = buildStats(alloc, c.stats.coherence, 1, name === '???' ? lo : lo + 2);
+  const prevCap = capsOf(c);
+  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus), Math.round(prevCap[k] * 0.65));   // 환생 직후 너무 약해지지 않게 직전 등급 상한의 65% 가 하한
   fresh.stability = Math.round(Math.min(PLAUS_CAP[name], Math.max(0.55 + n * 0.03, Math.max(fresh.stability, c.stats.stability || 0))) * 1000) / 1000;   // 개연성은 유지하되 환생 횟수만큼 하한 상승
   for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
   const prevTier = c.stats.tier;
@@ -930,6 +963,9 @@ const isBusy = s => typeof s.busy === 'number' && Date.now() - s.busy < BUSY_STA
 const scoreOf = c => Math.round((c.wins || 0) + (c.pvpWins || 0) * 2);   // 자동 생사결 승 = pvpWins 0.5 → 총 2점
 async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, Date.now(), c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
 
+// 일관성이 낮으면(막연한 전능·모순) 위력 상한: 50 미만 → 평범까지(30), 70 미만 → 숙련까지(50)
+// 2026-10 밸런스: '낮은 등급에서 시작해 환생으로 키워 가기' — 생성은 평범·숙련만(위력 상한 50). 시뮬레이션(200만 회) 평범 약 66% · 숙련 약 34%
+const JUDGE_SCALE = 0.8, CREATE_MAX = 50, cohCap = coh => coh < 50 ? 30 : coh < 70 ? 50 : 100;
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
@@ -945,10 +981,10 @@ async function createChar(body, env, ip) {
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
-  const luck = rollTier(Math.round(num(parsed.power, 0, 100, 20)));
+  const luck = rollTier(Math.round(num(parsed.power, 0, 95, 15) * JUDGE_SCALE));   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
   const c = {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
-    stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, num(parsed.coherence, 0, 100, 50) < 60 ? 45 : 100, judgedBy === 'local' ? 50 : 100), true),
+    stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, CREATE_MAX, cohCap(num(parsed.coherence, 0, 100, 50)), judgedBy === 'local' ? 50 : 100), true),
     powerReason: clip(parsed.powerReason, 120), luck, alloc: parsed.alloc || null, rebirths: 0,
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
@@ -966,19 +1002,19 @@ async function getChar(id, token, env) {
 
 // ─── 꿈 조각(재화) · 꿈 시장(상점) ─────────────────────────────────────
 // 영구 능력치는 팔지 않는다(등급 상한·PvP 공정성). 전부 '그 전투에서만' 효과 + 꾸미기 + 도전. 온라인 대전에는 가방을 못 가져간다
-const DREAM_MAX = 600, STACK = 5, BAG_SLOTS = 3, BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'];
+const DREAM_MAX = 9999, STACK = 5, BAG_SLOTS = 3, BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'];
 const ITEMS = {
-  tea: { name: '깨어남의 차', price: 25, kind: 'bag', desc: '필살기 게이지 1칸 찬 채로 전투 시작' },
-  sight: { name: '또렷한 시선', price: 35, kind: 'bag', desc: '이번 전투 명중 +8 (등급 상한까지)' },
-  guard: { name: '단단한 꿈', price: 35, kind: 'bag', desc: '이번 전투 방어 +8%p (등급 상한까지)' },
-  bandage: { name: '꿈결 붕대', price: 40, kind: 'bag', desc: '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)' },
-  smoke: { name: '연막 구름', price: 25, kind: 'bag', desc: '도망 성공 확률 +25%p, 붙잡혀도 손실 절반' },
-  map: { name: '꿈길 지도', price: 20, kind: 'use', desc: 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기' },
-  nightmare: { name: '악몽 초대장', price: 40, kind: 'use', desc: '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음' },
-  insurance: { name: '깨지 않는 꿈', price: 60, kind: 'use', max: 1, desc: 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)' },
-  key: { name: '설정 보강 열쇠', price: 100, kind: 'use', desc: '설정 보강의 5승 대기를 바로 풂 (하루 1회)' },
-  relic: { name: '꿈의 유물', price: 120, kind: 'relic', desc: '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 60)' },
-  star: { name: '별 표식', price: [300, 600, 1000], kind: 'star', desc: '순위표 이름 옆 장식 (3단계)' },
+  tea: { name: '깨어남의 차', price: 125, kind: 'bag', desc: '필살기 게이지 1칸 찬 채로 전투 시작' },
+  sight: { name: '또렷한 시선', price: 175, kind: 'bag', desc: '이번 전투 명중 +8 (등급 상한까지)' },
+  guard: { name: '단단한 꿈', price: 175, kind: 'bag', desc: '이번 전투 방어 +8%p (등급 상한까지)' },
+  bandage: { name: '꿈결 붕대', price: 200, kind: 'bag', desc: '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)' },
+  smoke: { name: '연막 구름', price: 125, kind: 'bag', desc: '도망 성공 확률 +25%p, 붙잡혀도 손실 절반' },
+  map: { name: '꿈길 지도', price: 100, kind: 'use', desc: 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기' },
+  nightmare: { name: '악몽 초대장', price: 200, kind: 'use', desc: '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음' },
+  insurance: { name: '깨지 않는 꿈', price: 300, kind: 'use', max: 1, desc: 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)' },
+  key: { name: '설정 보강 열쇠', price: 1500, kind: 'use', desc: '설정 보강의 100승 대기를 바로 풂 (하루 1회)' },
+  relic: { name: '꿈의 유물', price: 600, kind: 'relic', desc: '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 300)' },
+  star: { name: '별 표식', price: [1500, 3000, 6000], kind: 'star', desc: '순위표 이름 옆 장식 (3단계)' },
 };
 function earnDream(c, amount) { const before = c.dream || 0; c.dream = Math.min(DREAM_MAX, before + Math.max(0, Math.round(amount))); return c.dream - before; }
 function dailyFirst(c) { if (c.firstWinDay === today()) return 0; c.firstWinDay = today(); return 20; }
@@ -1015,7 +1051,7 @@ async function buyItem(id, body, env) {
   const c = await updateChar(env, id, x => {
     const have = x.dream || 0; let price = it.price;
     if (it.kind === 'star') { const lv = x.stars || 0; if (lv >= 3) { err = 'max_item'; return; } price = it.price[lv]; }
-    if (it.kind === 'relic' && x.relic) price = 60;
+    if (it.kind === 'relic' && x.relic) price = 300;
     if (have < price) { err = 'no_dream'; return; }
     if (it.kind === 'bag' || it.kind === 'use') { x.bag ||= {}; const n = x.bag[key] || 0; if (n >= (it.max || STACK)) { err = 'max_item'; return; } x.bag[key] = n + 1; }
     else if (it.kind === 'relic') x.relic = relic;
@@ -1328,12 +1364,13 @@ async function storyFight(id, body, env) {
   const content = await loadContent(env, c, run.chapter, run.src), nc = content.nodes?.[node.id] || {};
   const en = (node.type === 'boss' ? nc.boss : nc.enemy) || {}, scale = Math.sqrt(c.stats.mult || 1);
   const boss = node.type === 'boss', mirror = node.enemyTier === 'mirror';
-  // 체력이 장면을 넘어 이어지므로 일반 전투보다 약하게: 잡몹 0.8 · 거울 0.85 · 보스 1.15 (장마다 +0.1, 최대 2.0), 6번 장면에서 설득에 성공했으면 보스 ×0.85
-  const tier = boss ? Math.min(2, 1.15 + 0.1 * (run.chapter - 1)) * (run.flags?.bossWeak ? 0.85 : 1) : mirror ? 0.85 : 0.8;
+  // 체력이 장면을 넘어 이어지므로 일반 전투보다 약하게: 잡몹 0.8 · 거울 0.85 · 보스 1.0 (장마다 +0.1, 최대 2.0), 6번 장면에서 설득에 성공했으면 보스 ×0.85
+  const tier = boss ? Math.min(2, 1.0 + 0.1 * (run.chapter - 1)) * (run.flags?.bossWeak ? 0.85 : 1) : mirror ? 0.85 : 0.8;
+  const bossHeal = boss ? Math.min(c.stats.hp - run.hp, Math.round(c.stats.hp * 0.5)) : 0;   // 보스 직전 숨 고르기: 최대 HP 50% 회복 (시뮬레이션: 새 평범 캐릭터 1장 클리어 8% → 44%)
   const alloc = mirror ? mirrorAlloc(c.alloc || allocFromStats(c)) : { atk: 20, hp: 20, def: 15, spd: 15, acc: 15, eva: 15 };
   const foe = { id: 'enemy-story', name: clip(en.name, 20) || '꿈의 그림자', fiction: boss ? '악몽' : mirror ? '그림자' : '꿈의 적', info: clip(en.desc, 120), stats: buildStats(alloc, 70, tier * scale), ult: { name: boss ? '악몽의 손길' : '꿈의 일격', effect: '꿈의 힘을 실어 몰아친다', style: 'burst' }, tier };
   foe.stats.tier = boss ? '초인' : '숙련';
-  const st = { id: uid(), charId: c.id, mode: 'story', storyNode: node.id, boss, chapter: run.chapter, me: { char: c, hp: Math.max(1, run.hp), gauge: run.gauge || 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null, intro: String(nc.situation || '').slice(0, 300) };
+  const st = { id: uid(), charId: c.id, mode: 'story', storyNode: node.id, boss, chapter: run.chapter, me: { char: c, hp: Math.max(1, run.hp + Math.max(0, bossHeal)), gauge: run.gauge || 0, guard: false }, bossHeal: Math.max(0, bossHeal) || undefined, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null, intro: String(nc.situation || '').slice(0, 300) };
   await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
   await updateChar(env, c.id, x => { if (x.story?.run) { x.story.run.battleId = st.id; x.story.run.gauge = 0; } }, c);
   return json({ battle: st });
@@ -1395,7 +1432,7 @@ function pickEnemy(c, { nightmare = false } = {}) {
     const easy = ENEMIES.map((e, i) => [e[6], i]).filter(([t]) => t <= 1);
     return makeEnemy(easy[Math.floor(rnd() * easy.length)][1], scale * EASY_SCALE, '평범');
   }
-  const rec = c.wins - c.losses;                                     // 이기고 있으면 강적이 더 자주
+  const rec = Math.max(0, (c.wins || 0) - (c.losses || 0) - EASY_FIRST);   // 이기고 있으면 강적이 더 자주 (처음 쉬운 3전은 빼고 — 안 그러면 4전째에 강적 확률이 확 뛰어 승률 51%)
   const weights = ENEMIES.map(e => { const t = e[6]; return 1 / (1 + Math.abs(t - (1 + Math.max(0, Math.min(3, rec)) * 0.25)) * 3); });
   let r = rnd() * weights.reduce((s, w) => s + w, 0), idx = 0;
   for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { idx = i; break; } }
@@ -1460,14 +1497,14 @@ function rollReward(c, foe, mode) {
   return r;
 }
 // 도망: 성공 확률 = 내 속도·회피가 상대보다 높을수록 ↑, 등급이 높을수록 ↓(체면·추격). 실패하면 패배로 기록되고 HP·ATK 를 조금 잃는다(등급이 높을수록 잃는 양이 큼)
-const TIER_IDX = { '평범': 0, '숙련': 1, '초인': 2, '전설': 3, '신화': 4 };
+const TIER_IDX = { '평범': 0, '숙련': 1, '초인': 2, '전설': 3, '신화': 4, '???': 5 };
 function escapeRoll(me, foe, bonus = 0) {
   const t = TIER_IDX[me.char.stats.tier] ?? 0, ft = TIER_IDX[foe.char.stats.tier] ?? 1;
   const p = 0.75 + (me.char.stats.spd - foe.char.stats.spd) / 120 + me.char.stats.eva / 200 - t * 0.06 + (ft - t) * 0.04 - (me.hp < me.char.stats.hp * 0.3 ? 0.1 : 0);
   const chance = Math.min(0.95, Math.max(0.2, p + bonus));
   const ok = rnd() < chance;
   if (ok) return { ok, chance: Math.round(chance * 100) };
-  const sev = (1 + t * 0.6) * (bonus ? 0.5 : 1);                             // 등급별 손실 배율 (평범 1 → 신화 3.4), 연막 구름이면 절반
+  const sev = (1 + t * 0.6) * (bonus ? 0.5 : 1);                             // 등급별 손실 배율 (평범 1 → 신화 3.4 → ??? 4.0), 연막 구름이면 절반
   const hp = Math.round(me.char.stats.hp * (0.02 + rnd() * 0.04) * sev), atk = Math.round(me.char.stats.atk * (0.01 + rnd() * 0.03) * sev);
   return { ok, chance: Math.round(chance * 100), penalty: { hp, atk } };
 }
