@@ -96,12 +96,13 @@ const USERS_MIN = 1, IP_CAP_MIN = 20, IP_CAP_MAX = 1200;   // 이용자 수 = �
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Device, X-Session, X-Token' };
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Device, X-Session, X-Token, X-Admin-Key' };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
 const today = () => new Date().toISOString().slice(0, 10);
 const clip = (s, n) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, n);
 const num = (v, lo, hi, d = 0) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
 const rnd = () => Math.random();
+const own = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);   // 'constructor' 같은 상속 키를 값으로 쓰지 않게
 const uid = () => crypto.randomUUID();
 
 const MAX_BODY = 64 * 1024;
@@ -146,7 +147,7 @@ export async function handleRpg(request, env, path) {
   let mm;
   if (path === '/api/rpg/quota' && m === 'GET') return json(pubQuota(await quota(env, who)));
   if (path === '/api/rpg/aitest' && m === 'GET') {   // 운영자 점검: 특정 제공자로 서술 1회 (RPG_ADMIN_KEY 시크릿 필요, 한도에 포함)
-    if (!env.RPG_ADMIN_KEY || url.searchParams.get('key') !== env.RPG_ADMIN_KEY) return json({ error: 'forbidden' }, 403);
+    if (!env.RPG_ADMIN_KEY || (request.headers.get('X-Admin-Key') || url.searchParams.get('key')) !== env.RPG_ADMIN_KEY) return json({ error: 'forbidden' }, 403);
     const pv = PROVIDERS.find(x => x.id === url.searchParams.get('provider'));
     if (!pv) return json({ error: 'no_provider', ids: PROVIDERS.map(x => x.id) }, 404);
     const t0 = Date.now();
@@ -156,7 +157,7 @@ export async function handleRpg(request, env, path) {
   if (path === '/api/rpg/leaderboard' && m === 'GET') return leaderboard(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/auth/google' && m === 'POST') return authGoogle(body, env);
   if (path === '/api/rpg/auth/logout' && m === 'POST') { await env.DB.prepare('DELETE FROM rpg_sessions WHERE token = ?').bind(String(body.session || '')).run(); return json({ ok: true }); }
-  if (path === '/api/rpg/me' && m === 'GET') return me(env, url.searchParams.get('session'));
+  if (path === '/api/rpg/me' && m === 'GET') return me(env, request.headers.get('X-Session') || url.searchParams.get('session'));
   if (path === '/api/rpg/auth/delete' && m === 'POST') return deleteAccount(body, env);
   if (path === '/api/rpg/prefs' && m === 'GET') return prefsGet(env, request.headers.get('X-Session') || url.searchParams.get('session'));
   if (path === '/api/rpg/prefs' && m === 'POST') return prefsSet(body, env);
@@ -189,12 +190,12 @@ export async function handleRpg(request, env, path) {
     if (sub === 'narrate' && m === 'POST') return narrateBattle(id, body, env);
     if (sub === 'reroll' && m === 'POST') return rerollBattle(id, body, env);
   }
-  if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env, false, who);
-  if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env, who);
+  if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env, false, who, ip);
+  if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env, who, ip);
   if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave|narrate))?$/))) {
     const [, code, sub] = mm;
     if (!sub && m === 'GET') return getRoom(code, qtok, env);
-    if (sub === 'join' && m === 'POST') return joinRoom(code, body, env, who);
+    if (sub === 'join' && m === 'POST') return joinRoom(code, body, env, who, ip);
     if (sub === 'start' && m === 'POST') return startRoom(code, body, env);
     if (sub === 'action' && m === 'POST') return roomAction(code, body, env, who);
     if (sub === 'leave' && m === 'POST') return leaveRoom(code, body, env, who);
@@ -728,7 +729,7 @@ function resolveRound(players, acts, judge = {}) {
   for (const k of order) {
     const me = players[k]; if (me.hp <= 0) continue;
     const act = acts[k] || { type: 'attack' }, j = judge[k] || {};
-    const fit = num(j.fit, 0, 1, 0.5), diff = DIFF_MOD[j.difficulty] ?? 0, allowed = j.allowed !== false;
+    const fit = num(j.fit, 0, 1, 0.5), diff = own(DIFF_MOD, j.difficulty) ? DIFF_MOD[j.difficulty] : 0, allowed = j.allowed !== false;
     if (act.type === 'defend') { me.gauge = Math.min(ULT_COST, me.gauge + 2); events.push({ who: k, type: 'defend' }); continue; }
     if (act.type === 'item') { events.push({ who: k, type: 'item', heal: act.heal || 0, item: act.item || '꿈결 붕대' }); continue; }   // 회복은 호출 전에 적용됨
     const others = aliveSlots(players).filter(x => x !== k);
@@ -737,7 +738,7 @@ function resolveRound(players, acts, judge = {}) {
     const foe = players[tk];
     const isUlt = act.type === 'ult' && me.gauge >= ULT_COST;
     if (act.type === 'ult' && !isUlt) events.push({ who: k, type: 'ult_fail' });
-    const s = me.char.stats, t = foe.char.stats, style = ULT_STYLES[me.char.ult?.style] || ULT_STYLES.burst;
+    const s = me.char.stats, t = foe.char.stats, style = own(ULT_STYLES, me.char.ult?.style) ? ULT_STYLES[me.char.ult.style] : ULT_STYLES.burst;
     const acc = s.acc + (isUlt && style.accBonus ? style.accBonus : 0);
     const dmod = diff <= -1 ? -1 : (!allowed ? DIFF_MOD.hard : diff);   // 불가능 → 자동 실패, 불허 → 기본 공격 + 어려움
     const chance = dmod <= -1 ? 0 : Math.min(0.95, Math.max(0.05, (acc - t.eva) / 100 * s.stability + dmod));
@@ -746,7 +747,7 @@ function resolveRound(players, acts, judge = {}) {
     if (hit) {
       dmg = s.atk * (isUlt ? style.mult : 1) * (0.9 + rnd() * 0.2) * (crit ? 1.5 : 1) * (0.85 + fit * 0.3);
       dmg *= 1 - t.def / 100; if (foe.guard) dmg *= 0.5;
-      dmg = Math.max(1, Math.round(dmg));
+      dmg = Number.isFinite(dmg) ? Math.max(1, Math.round(dmg)) : 1;   // 어떤 값이 깨져도 HP 가 NaN·null 이 되지 않게
       foe.hp = Math.max(0, foe.hp - dmg);
       if (isUlt && style.heal) me.hp = Math.min(me.char.stats.hp, me.hp + Math.round(dmg * style.heal));
       if (isUlt && style.guard) me.guardNext = true;
@@ -789,7 +790,7 @@ async function runRound(env, ip, players, acts, ctx = {}) {
     ? { allowed: false, difficulty: 'hard', fit: 0.3, verdict: `선언이 이용 정책(${acts[k].policy})에 어긋나 심사하지 않습니다. 기본 공격으로 처리합니다.`, policy: true }
     : { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
   let usedAi = false, quotaBlocked = null, provider = null;
-  const clampJudge = p => ({ allowed: p.allowed !== false, difficulty: DIFF_MOD[p.difficulty] !== undefined ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: cleanVerdict(p.verdict) });
+  const clampJudge = p => ({ allowed: p.allowed !== false, difficulty: own(DIFF_MOD, p.difficulty) ? p.difficulty : 'normal', fit: num(p.fit, 0, 1, 0.5), verdict: cleanVerdict(p.verdict) });
   const needJudge = slots.some(k => acts[k]?.text);
   if (needJudge) {
     const user = slots.map(k => charLine(k, players[k], acts[k] || { type: 'attack' }, names)).join('\n\n');
@@ -857,11 +858,17 @@ async function loadChar(env, id, token) {
 }
 // 전적·보상 반영: 방·전투·cron 이 들고 있던 스냅샷이 아니라 지금 DB 에 있는 최신 JSON 에 적용해 저장한다
 //   (스냅샷으로 덮어쓰면 그 사이 다른 곳(PvE·cron·다른 방)에서 얻은 승수·보상이 지워진다). 캐릭터가 삭제됐으면 fallback 에만 적용(저장 안 됨)
+//   낙관적 잠금: 읽을 때의 updated 와 같을 때만 저장하고, 그 사이 다른 요청이 저장했으면 새로 읽어 fn 을 다시 적용 (fn 은 다시 불려도 되게 작성)
 async function updateChar(env, id, fn, fallback = null) {
-  let c = null;
-  try { const row = await env.DB.prepare('SELECT json FROM rpg_chars WHERE id = ?').bind(String(id)).first(); if (row) c = JSON.parse(row.json); } catch {}
-  if (!c) { if (fallback) fn(fallback); return fallback; }
-  fn(c); await saveChar(env, c); return c;
+  for (let i = 0; i < 8; i++) {
+    let row = null;
+    try { row = await env.DB.prepare('SELECT json, updated FROM rpg_chars WHERE id = ?').bind(String(id)).first(); } catch {}
+    if (!row) { if (fallback) fn(fallback); return fallback; }
+    const c = JSON.parse(row.json); fn(c);
+    if (await saveChar(env, c, row.updated ?? 0)) return c;
+    await new Promise(r => setTimeout(r, 10 + Math.random() * 40 * (i + 1)));
+  }
+  throw new Error('busy');
 }
 // 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
 // 개연성(stability): 선언으로 쌓인다 — 적합도 ≥ 0.8 이고 쉬움/보통 판정이면 +0.3%p, 불허·불가면 −0.5%p. 등급별 상한, 하한은 0.55 + 환생 횟수 × 0.03
@@ -965,12 +972,25 @@ function allocFromStats(c) {
 const BUSY_STALE_MS = 90e3, sleep = ms => new Promise(r => setTimeout(r, ms));
 const isBusy = s => typeof s.busy === 'number' && Date.now() - s.busy < BUSY_STALE_MS;
 // 승점 = PvE 승 1점 + PvP 승 3점 (순위표). 컬럼에 같이 써서 정렬 쿼리가 JSON 을 열지 않게 한다
-const scoreOf = c => Math.round((c.wins || 0) + (c.pvpWins || 0) * 2);   // 자동 생사결 승 = pvpWins 0.5 → 총 2점
-async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, Date.now(), c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
+const scoreOf = c => Math.max(0, Math.round((c.wins || 0) + (c.pvpWins || 0) * 2 - (c.pvpCapped || 0) * 3));   // pvpCapped: 하루 상한을 넘긴 온라인 승리(전적엔 남고 승점엔 안 들어감)   // 자동 생사결 승 = pvpWins 0.5 → 총 2점
+async function saveChar(env, c, prev) {
+  const ver = Math.max(Date.now(), (prev || 0) + 1);   // 같은 밀리초에 두 번 저장돼도 버전이 겹치지 않게
+  const r = await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ? AND COALESCE(updated, 0) = ?').bind(JSON.stringify(c), scoreOf(c), c.name, ver, c.id, prev || 0).run();
+  lbCache.at = 0; return r.meta.changes === 1;
+}   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
 
 // 일관성이 낮으면(막연한 전능·모순) 위력 상한: 50 미만 → 평범까지(30), 70 미만 → 숙련까지(50)
 // 2026-10 밸런스: '낮은 등급에서 시작해 환생으로 키워 가기' — 생성은 거의 평범·숙련(약 66% · 34%), 초인 이상은 CREATE_RARITY 로 아주 드물게
 const JUDGE_SCALE = 0.8, cohCap = coh => coh < 50 ? 30 : coh < 70 ? 50 : 100;
+// 클라이언트가 보낸 '로컬 심사' 는 조작될 수 있으므로: 6개 성향 숫자·문자열 길이만 받고, 일관성 70·필살기 종류는 목록 안, 글은 검열
+async function cleanLocalJudge(env, l) {
+  const alloc = {}; for (const k of ['atk', 'hp', 'def', 'spd', 'acc', 'eva']) alloc[k] = num(l.alloc?.[k], 0, 100, 16.6);
+  const u = l.ult && typeof l.ult === 'object' ? l.ult : {};
+  const out = { concept: clip(l.concept, LEN.fiction), alloc, coherence: num(l.coherence, 0, 70, 40), power: num(l.power, 0, 95, 15), powerReason: clip(l.powerReason, 120),
+    ult: { name: clip(u.name, LEN.ultName), effect: clip(u.effect, LEN.ultEffect), style: own(ULT_STYLES, u.style) ? u.style : 'burst' } };
+  if (!(await moderate(env, [out.concept, out.ult.name, out.ult.effect, out.powerReason].join('\n'))).ok) return null;   // 위반이면 기본 심사로
+  return out;
+}
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
@@ -980,7 +1000,7 @@ async function createChar(body, env, ip) {
   const r = await aiCall(env, ip, SYS_JUDGE, `이름: ${name}\n설정: ${setting}`, 0.2);
   let parsed, judgedBy = r.provider;
   if (r.ok) parsed = r.parsed;
-  else if (body.local && typeof body.local === 'object') { parsed = body.local; judgedBy = 'local'; }   // 서버 AI 소진 → 클라이언트 크롬 내장 AI 의 심사 결과 (buildStats 가 예산·범위를 강제)
+  else if (body.local && typeof body.local === 'object') { parsed = await cleanLocalJudge(env, body.local); judgedBy = 'local'; }   // 서버 AI 소진 → 클라이언트 크롬 내장 AI 의 심사 결과 (정해진 모양만 받고, 일관성 상한 70·위력 상한 50)
   else if (r.reason === 'failed') return json({ error: 'ai_failed', quota: pubQuota(await quota(env, ip)) }, 502);
   else return json({ error: 'quota', reason: r.reason, quota: pubQuota(await quota(env, ip)) }, 429);
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
@@ -991,7 +1011,7 @@ async function createChar(body, env, ip) {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
     stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, cohCap(num(parsed.coherence, 0, 100, 50)), judgedBy === 'local' ? 50 : 100), true),
     powerReason: clip(parsed.powerReason, 120), luck, alloc: parsed.alloc || null, rebirths: 0,
-    ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
+    ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: own(ULT_STYLES, ult.style) ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),
   };
   const token = uid();
@@ -1174,7 +1194,7 @@ function condAfter(x, st, now = Date.now()) {
 async function buyItem(id, body, env) {
   const c0 = await loadChar(env, id, body.token);
   if (!c0) return json({ error: 'forbidden' }, 403);
-  const key = String(body.item || ''), it = ITEMS[key];
+  const key = String(body.item || ''), it = own(ITEMS, key) ? ITEMS[key] : null;
   if (!it) return json({ error: 'bad_request' }, 400);
   let relic = null;
   if (it.kind === 'relic') {
@@ -1185,6 +1205,7 @@ async function buyItem(id, body, env) {
   }
   let err = null, paid = 0;
   const c = await updateChar(env, id, x => {
+    err = null; paid = 0;
     const have = x.dream || 0; let price = it.price;
     if (it.kind === 'star') { const lv = x.stars || 0; if (lv >= 3) { err = 'max_item'; return; } price = it.price[lv]; }
     if (it.kind === 'relic' && x.relic) price = 300;
@@ -1211,7 +1232,7 @@ async function rerollBattle(id, body, env) {
   if (!c) return json({ error: 'forbidden' }, 403);
   if (st.mode !== 'pve' || st.log.length || st.rerolled || st.status !== 'playing' || isBusy(st)) return json({ error: 'bad_request' }, 409);
   let bad = false;
-  await updateChar(env, c.id, x => { if (!((x.bag?.map || 0) > 0)) { bad = true; return; } x.bag.map--; }, c);
+  await updateChar(env, c.id, x => { bad = false; if (!((x.bag?.map || 0) > 0)) { bad = true; return; } x.bag.map--; }, c);
   if (bad) return json({ error: 'no_item' }, 409);
   const foe = pickEnemy(c, { nightmare: !!st.nightmare });
   st.foe = { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }; st.rerolled = true;
@@ -1471,9 +1492,9 @@ async function storyAct(id, body, env, who) {
       const user = `[p1] ${c.name} (${c.fiction}) — 설정: ${c.info}${c.relic ? ` / 소지품: ${c.relic} (평범한 물건)` : ''}\n상황: ${String(nc.situation || '').slice(0, 300)}\n행동: 선언: "${text}"`;
       const r = await safeAi(env, who, SYS_JUDGE_ACTION, user, 0.2);
       const p1 = r.ok && r.parsed?.p1;
-      if (p1) j = { allowed: p1.allowed !== false, difficulty: DIFF_MOD[p1.difficulty] !== undefined ? p1.difficulty : 'normal', fit: num(p1.fit, 0, 1, 0.5), verdict: cleanVerdict(p1.verdict) };
+      if (p1) j = { allowed: p1.allowed !== false, difficulty: own(DIFF_MOD, p1.difficulty) ? p1.difficulty : 'normal', fit: num(p1.fit, 0, 1, 0.5), verdict: cleanVerdict(p1.verdict) };
     }
-    const p = clampP(optionChance(c, opt) + (DIFF_MOD[j.difficulty] ?? 0) + (j.fit - 0.5) * 0.3);
+    const p = clampP(optionChance(c, opt) + (own(DIFF_MOD, j.difficulty) ? DIFF_MOD[j.difficulty] : 0) + (j.fit - 0.5) * 0.3);
     ok = j.allowed && rnd() < p; judge = { ...j, chance: Math.round(p * 100) };
     plaus = plausDelta({ text }, j);
   } else if (!opt) return json({ error: 'bad_request' }, 400);
@@ -1617,7 +1638,7 @@ async function createBattle(body, env) {
   const nightmare = mode === 'pve' && !!body.nightmare;
   if (items.length || nightmare) {   // 가져갈 물건은 전투 시작 때 차감 (최신 DB 값 기준)
     let bad = false;
-    c = await updateChar(env, c.id, x => { const b = x.bag || {}; if (items.some(k => !(b[k] > 0)) || (nightmare && !(b.nightmare > 0))) { bad = true; return; } for (const k of items) b[k]--; if (nightmare) b.nightmare--; x.bag = b; }, c);
+    c = await updateChar(env, c.id, x => { bad = false; const b = x.bag || {}; if (items.some(k => !(b[k] > 0)) || (nightmare && !(b.nightmare > 0))) { bad = true; return; } for (const k of items) b[k]--; if (nightmare) b.nightmare--; x.bag = b; }, c);
     if (bad) return json({ error: 'no_item' }, 409);
   }
   if (mode !== 'auto') foe = pickEnemy(c, { nightmare });
@@ -1733,6 +1754,7 @@ async function battleTurn(id, body, env, ip) {
       } else {
         x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
         // 깨지 않는 꿈: AI 전투에서 지면 자동으로 써서 캐릭터를 지킨다 (HP·ATK 최대치 −5%)
+        st.saved = undefined;
         if (st.mode === 'pve' && !st.nightmare && (x.bag?.insurance || 0) > 0) { x.bag.insurance--; x.stats.hp = Math.round(x.stats.hp * 0.95); x.stats.atk = Math.round(x.stats.atk * 0.95); st.saved = true; }
       }
       condAfter(x, st);   // 흔적: 부상·흉터·피로·연승·상대 기억
@@ -1766,24 +1788,25 @@ async function saveRoom(env, code, s, v) {
 }
 const slotOf = (s, t) => Number(Object.keys(s.tokens).find(k => s.tokens[k] === t)) || 0;
 function pub(s, slot) {
-  const { tokens, who, ...rest } = s;
+  const { tokens, who, ips, ...rest } = s;
+  rest.p = {}; for (const k in s.p) { const pl = s.p[k], ch = pl.char || {}; rest.p[k] = { ...pl, char: { name: ch.name, fiction: ch.fiction, stats: ch.stats, ult: ch.ult, tier: ch.tier, relic: ch.relic } }; }
   rest.log = s.log.map((l, i) => i < s.log.length - 2 && l.narrateUser ? { ...l, narrateUser: undefined } : l);   // 최근 2라운드만 로컬 서술 프롬프트 포함 (폴링 응답 크기)
   const moves = {}; for (const k in s.p) moves[k] = !!s.moves[k];
   const firstAt = Math.min(...Object.values(s.moves).map(m => m.at || Infinity));
   return { ...rest, you: slot, moves, myMove: s.moves[slot] || null, waitingSince: Number.isFinite(firstAt) ? firstAt : null, max: ROOM_MAX };
 }
-async function createRoom(body, env, isPublic = false, who = null) {
+async function createRoom(body, env, isPublic = false, who = null, ip = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_rooms WHERE updated < ?').bind(Date.now() - ROOM_TTL).run();
   const code = code6(), rt = uid(), now = Date.now();
-  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, who: { 1: who }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined };
+  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, who: { 1: who }, ips: { 1: ip }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined };
   await env.DB.prepare('INSERT INTO rpg_rooms (code, created, updated, state) VALUES (?, ?, ?, ?)').bind(code, now, now, JSON.stringify(s)).run();
   return json({ code, roomToken: rt, slot: 1, state: pub(s, 1) });
 }
 // 랜덤 대전(1:1): 최근 2분 안에 만들어진 공개 대기 방 중 하나에 들어가 바로 시작. 없으면 공개 방을 만들고 기다린다 (방장 시작 불필요)
 const MATCH_FRESH_MS = 2 * 60e3;
-async function matchRoom(body, env, who = null) {
+async function matchRoom(body, env, who = null, ip = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   const rows = await env.DB.prepare('SELECT code, state, updated FROM rpg_rooms WHERE updated > ? ORDER BY updated ASC LIMIT 30').bind(Date.now() - MATCH_FRESH_MS).all();
@@ -1797,14 +1820,14 @@ async function matchRoom(body, env, who = null) {
   }
   for (const [row, s, k] of open) {
     const rt = uid(), slot = k === 1 ? 2 : 1;
-    s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who;
+    s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who; (s.ips ||= {})[slot] = ip;
     s.status = 'playing'; s.round = 1;   // 둘이 모이면 바로 시작
     if (await saveRoom(env, s.code, s, row.updated)) return json({ code: s.code, roomToken: rt, slot, state: pub(s, slot), matched: true });
     // 동시에 다른 사람이 들어갔으면 다음 방으로
   }
-  return createRoom(body, env, true, who);
+  return createRoom(body, env, true, who, ip);
 }
-async function joinRoom(code, body, env, who = null) {
+async function joinRoom(code, body, env, who = null, ip = null) {
   const c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   const r = await loadRoom(env, code);
@@ -1817,7 +1840,7 @@ async function joinRoom(code, body, env, who = null) {
   if (s.public) return json({ error: 'no_room' }, 404);   // 랜덤 매칭용 공개 방은 코드로 못 들어감
   if (Object.keys(s.p).length >= ROOM_MAX) return json({ error: 'full' }, 409);
   const slot = [1, 2, 3, 4, 5, 6].find(k => !s.p[k]), rt = uid();
-  s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who;
+  s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who; (s.ips ||= {})[slot] = ip;
   if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
   return json({ code, roomToken: rt, slot, state: pub(s, slot) });
 }
@@ -1890,10 +1913,12 @@ async function settleRoom(env, ip, code, s, v, slot) {
   const left = aliveSlots(s.p);
   if (left.length <= 1) {
     s.status = 'finished'; s.winner = left[0] || 0;
-    for (const k in s.p) {   // 입장 때 스냅샷이 아니라 지금 DB 의 캐릭터에 전적을 더한다 (방에 있는 동안 PvE·cron 으로 바뀐 것을 지우지 않게)
+    const who = Object.values(s.who || {}), ips = Object.values(s.ips || {});
+    s.unranked = !s.log.length ? 'no_round' : (new Set(who).size < who.length || new Set(ips).size < ips.length) ? 'same_player' : undefined;
+    if (!s.unranked) for (const k in s.p) {   // 입장 때 스냅샷이 아니라 지금 DB 의 캐릭터에 전적을 더한다 (방에 있는 동안 PvE·cron 으로 바뀐 것을 지우지 않게)
       // 모두 쓰러지면 무승부: 마지막 라운드까지 서 있던 사람은 무승부로 기록, 그 전에 쓰러졌거나 기권한 사람은 패배
       const won = s.winner === Number(k), draw = s.winner === 0 && alive.includes(Number(k)) && !s.p[k].left;
-      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c)); } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
+      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; if (!dayCount(c, 'pvpScore', 10)) c.pvpCapped = (c.pvpCapped || 0) + 1; earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c)); } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
     }
   } else s.round++;
   s.moves = {}; delete s.busy;

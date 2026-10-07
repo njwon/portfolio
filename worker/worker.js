@@ -46,7 +46,8 @@ export default {
       }
       return jsonResponse({ error: 'Not Found' }, 404);
     } catch (err) {
-      return jsonResponse({ error: err.message }, 500);
+      console.error(err);   // 내부 오류 내용은 로그에만 (응답에 D1 오류문 등이 새지 않게)
+      return jsonResponse({ error: err?.message === 'busy' ? 'retry' : 'server' }, err?.message === 'busy' ? 409 : 500);
     }
   },
 };

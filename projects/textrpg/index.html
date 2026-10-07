@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://blog-api.njwon19.workers.dev https://accounts.google.com http://127.0.0.1:* http://localhost:*; frame-src https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
     <title>DREAM RPG | 노정원 프로젝트</title>
     <meta name="description" content="노정원이 만든 브라우저 텍스트 RPG DREAM RPG. AI 게임 마스터가 캐릭터를 심사하고 전투를 판정하며, 온라인 대전(2~6명, 공격 대상 선택)을 지원합니다. API 키 없이 무료로 플레이.">
     <meta name="author" content="노정원">
@@ -633,7 +634,9 @@ const Snd = (() => {
 })();
 
     // ── 설정 ─────────────────────────────────────────────────────────
-    const API = new URLSearchParams(location.search).get('api') || 'https://blog-api.njwon19.workers.dev';   // ?api=http://127.0.0.1:8787 로 로컬 테스트
+    // ?api= 로 서버를 바꾸는 건 내 컴퓨터(localhost)에서만 — 배포된 사이트에서 허용하면 링크 하나로 캐릭터 토큰·로그인 세션이 남의 서버로 샌다
+    const LOCAL_DEV = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || location.protocol === 'file:';
+    const API = (LOCAL_DEV && new URLSearchParams(location.search).get('api')) || 'https://blog-api.njwon19.workers.dev';
     const MIN_INTERVAL_MS = 2000;                // 클라이언트 단 연타 방지
     const $ = id => document.getElementById(id);
     const screens = ['s-create', 's-home', 's-battle', 's-story', 's-lobby', 's-online'];
@@ -657,6 +660,8 @@ const Snd = (() => {
     function showCoach(id) { document.querySelectorAll('.coach').forEach(c => { c.hidden = c.closest('.screen').id !== id || !!lsGet(COACH_KEY(c.dataset.coach)); }); }
     document.addEventListener('click', e => { const b = e.target.closest('[data-coach-ok]'); if (!b) return; const c = b.closest('.coach'); lsSet(COACH_KEY(c.dataset.coach), '1'); c.hidden = true; });
     const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const narr = s => String(s ?? '').replace(/<(?!br\s*\/?>)/gi, '&lt;');   // 서술: <br> 만 허용 (서버가 이미 이스케이프하지만 한 겹 더)
+    const n0 = v => Number.isFinite(Number(v)) ? Number(v) : 0;            // 서버가 준 숫자 칸은 숫자로만 그림
     const ULT_COST = 3;
 
     // ── 무료 한도 (클라이언트 단 강제: 서버가 준 남은 횟수가 0이면 AI 가 필요한 버튼 잠금) ──
@@ -737,14 +742,14 @@ const Snd = (() => {
         if (!nano.ready || entry.ai || !entry.narrateUser || narrating.has(key)) return;
         narrating.add(key);
         const bubble = document.getElementById('gm-' + key);
-        if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(내 크롬 AI가 서술 중…)</span>';
+        if (bubble) bubble.innerHTML = narr(entry.narration) + ' <span class="hint">(내 크롬 AI가 서술 중…)</span>';
         try {
             const P = await prompts(); const r = looseJson(await nanoAsk(P.narrate, entry.narrateUser));
             if (!r?.narration) throw new Error('empty');
             entry.narration = esc(r.narration).replace(/&lt;br\s*\/?&gt;/gi, '<br>').slice(0, 1500); entry.ai = 'local'; delete entry.narrateUser;
-            if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(크롬 내장 AI 서술)</span>';
+            if (bubble) bubble.innerHTML = narr(entry.narration) + ' <span class="hint">(크롬 내장 AI 서술)</span>';
             api(postPath, { ...body, narration: entry.narration }).catch(() => {});
-        } catch { if (bubble) bubble.innerHTML = entry.narration + ' <span class="hint">(AI 서술 없음)</span>'; }
+        } catch { if (bubble) bubble.innerHTML = narr(entry.narration) + ' <span class="hint">(AI 서술 없음)</span>'; }
         finally { narrating.delete(key); }
     }
     // localStorage 는 시크릿 모드·저장소 차단 환경에서 던질 수 있어 전부 감싼다 (막히면 그 탭 안에서만 기억)
@@ -1033,7 +1038,7 @@ const Snd = (() => {
         const order = entry.order || (entry.first ? [entry.first === 'a' ? 1 : 2, entry.first === 'a' ? 2 : 1] : []);
         out += msg('dice', '주사위', `순서 ${order.map(k => esc(names[k])).join(' → ')}<br>${eventsHtml(names, entry.events, sec)}`);
         const key = label.replace(/\s+/g, '');
-        out += `<div class="msg gm"><span class="who">게임 마스터</span><div class="bubble" id="gm-${key}">${entry.narration}${entry.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : entry.ai ? '' : ' <span class="hint">(AI 서술 없음)</span>'}</div></div>`;
+        out += `<div class="msg gm"><span class="who">게임 마스터</span><div class="bubble" id="gm-${key}">${narr(entry.narration)}${entry.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : entry.ai ? '' : ' <span class="hint">(AI 서술 없음)</span>'}</div></div>`;
         return out;
     }
 
@@ -1320,7 +1325,7 @@ const Snd = (() => {
         for (const r of s.log) if (r.round > renderedRounds) { logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r, Object.fromEntries(slotsOf(s).map(k => [k, isSecret(s.p[k].char)])))); renderedRounds = r.round; }   // 라운드 번호 기준 (서버가 로그를 40개로 자르므로 개수 기준이면 41라운드부터 안 그려짐)
         for (const r of s.log) {
             const key = `라운드${r.round}`, bubble = document.getElementById('gm-' + key);
-            if (r.ai && bubble && !narrating.has(key) && !bubble.innerHTML.startsWith(r.narration)) bubble.innerHTML = r.narration + (r.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : '');   // 다른 플레이어의 크롬 AI 가 채운 서술
+            if (r.ai && bubble && !narrating.has(key) && !bubble.innerHTML.startsWith(narr(r.narration))) bubble.innerHTML = narr(r.narration) + (r.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : '');   // 다른 플레이어의 크롬 AI 가 채운 서술
             else if (!r.ai && r.narrateUser) narrateLocally(r, key, `/api/rpg/rooms/${room.code}/narrate`, { token: room.token, round: r.round });
         }
         // 상태줄 + 건너뛰기
@@ -1333,7 +1338,8 @@ const Snd = (() => {
             stopPoll(); $('oResult').style.display = ''; $('oBtns').style.display = 'none';   // 결과 상자의 돌아가기만 남김 (나가기와 중복이었음)
             if (!room.done) { room.done = true; saveSess(null); refreshLeaderboard(true); Snd.play(s.winner === my ? 'win' : 'lose'); }
             const winner = s.p[s.winner];
-            $('oResult').innerHTML = (s.winner === 0 || !winner ? `모두 쓰러졌다… 무승부 <span class="hint">(${mine.left ? '기권했으므로 패배로 기록' : '무승부로 기록 — 먼저 쓰러졌거나 기권한 사람은 패배'})</span>` : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(winner.char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
+            const unr = s.unranked === 'no_round' ? '<br><span class="hint">한 라운드도 끝나지 않아 전적·승점에 기록하지 않았습니다.</span>' : s.unranked === 'same_player' ? '<br><span class="hint">같은 사람(계정·기기·IP)끼리의 대전이라 전적·승점에 기록하지 않았습니다.</span>' : '';
+            $('oResult').innerHTML = unr + (s.winner === 0 || !winner ? `모두 쓰러졌다… 무승부 <span class="hint">(${mine.left ? '기권했으므로 패배로 기록' : '무승부로 기록 — 먼저 쓰러졌거나 기권한 사람은 패배'})</span>` : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(winner.char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
             $('btnOBack').addEventListener('click', leaveRoom);
             $('oStatus').textContent = '';
         } else if (!iAmAlive) $('oStatus').textContent = `${mine.left ? '기권했습니다' : '쓰러졌습니다'}. 남은 ${alive.length}명의 싸움을 지켜보는 중… (라운드 ${s.round})`;
@@ -1392,8 +1398,8 @@ const Snd = (() => {
     function renderLeaderboard() {
         const d = lbData;
         if (!d) { if (lbErr) document.querySelectorAll('[data-lb]').forEach(el => setHtml(el, '<h3><span>순위표</span></h3><span class="hint">순위표를 불러오지 못했습니다. 네트워크를 확인하고 잠시 뒤 다시 열어 주세요.</span>')); return; }
-        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name"><b>${esc(r.name)}</b>${r.stars ? ` <span class="stars" aria-label="별 표식 ${r.stars}개">${'★'.repeat(r.stars)}</span>` : ''}${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint tier">${esc(r.tier || '')} <span class="fic">${esc(r.fiction || '')}</span></td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
-        const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${d.mine.rank}</b>위 / ${d.total}명 · 승점 ${d.mine.score}` : '내 순위 — 첫 승리 후 집계') : '';
+        const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${n0(r.rank)}</td><td class="name"><b>${esc(r.name)}</b>${n0(r.stars) > 0 ? ` <span class="stars" aria-label="별 표식 ${Math.min(3, n0(r.stars))}개">${'★'.repeat(Math.min(3, n0(r.stars)))}</span>` : ''}${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint tier">${esc(r.tier || '')} <span class="fic">${esc(r.fiction || '')}</span></td><td class="n">${n0(r.wins)}승 ${n0(r.losses)}패</td><td class="n"><b>${n0(r.score)}</b></td></tr>`).join('');
+        const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${n0(d.mine.rank)}</b>위 / ${n0(d.total)}명 · 승점 ${n0(d.mine.score)}` : '내 순위 — 첫 승리 후 집계') : '';
         const html = `<h3><span>순위표 <span class="hint">(승점: AI전 승 1 · 자동 생사결 승 2 · 온라인 승 3)</span></span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
         document.querySelectorAll('[data-lb]').forEach(el => setHtml(el, html));
     }
@@ -1447,7 +1453,7 @@ const Snd = (() => {
         await loadMe(ACCT); if (me) goHome(); else show('s-create');
         renderAccount(); refreshLeaderboard(true); return true;
     }
-    async function refreshAcctChars() { const d = await api('/api/rpg/me?session=' + encodeURIComponent(gSession)); gUser = d.user; acctChars = d.chars || []; }
+    async function refreshAcctChars() { const d = await api('/api/rpg/me', null, { 'X-Session': gSession }); gUser = d.user; acctChars = d.chars || []; }
     async function logout() {
         if (!(await dropPlay())) return;                       // 방 나가기를 취소하면 로그아웃도 취소
         const t = gSession; gSession = null; gUser = null; acctChars = []; lsDel(GSESS);
