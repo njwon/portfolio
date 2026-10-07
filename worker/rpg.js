@@ -941,7 +941,7 @@ async function rebirthChar(id, body, env) {
   const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
   const fresh = buildStats(alloc, c.stats.coherence, 1, name === '???' ? lo : lo + 2);
   const prevCap = capsOf(c);
-  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus), Math.round(prevCap[k] * 0.65));   // 환생 직후 너무 약해지지 않게 직전 등급 상한의 65% 가 하한
+  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus), Math.round(prevCap[k] * 0.85));   // 환생 직후 하한 = 직전 등급 상한의 85% (시뮬레이션: 65% 면 직전 등급 상한 캐릭터에게 PvP 4~7% 승, 85% 면 32~48%)
   fresh.stability = Math.round(Math.min(PLAUS_CAP[name], Math.max(0.55 + n * 0.03, Math.max(fresh.stability, c.stats.stability || 0))) * 1000) / 1000;   // 개연성은 유지하되 환생 횟수만큼 하한 상승
   for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
   const prevTier = c.stats.tier;
@@ -1364,11 +1364,13 @@ async function storyFight(id, body, env) {
   const content = await loadContent(env, c, run.chapter, run.src), nc = content.nodes?.[node.id] || {};
   const en = (node.type === 'boss' ? nc.boss : nc.enemy) || {}, scale = Math.sqrt(c.stats.mult || 1);
   const boss = node.type === 'boss', mirror = node.enemyTier === 'mirror';
-  // 체력이 장면을 넘어 이어지므로 일반 전투보다 약하게: 잡몹 0.8 · 거울 0.85 · 보스 1.0 (장마다 +0.1, 최대 2.0), 6번 장면에서 설득에 성공했으면 보스 ×0.85
-  const tier = boss ? Math.min(2, 1.0 + 0.1 * (run.chapter - 1)) * (run.flags?.bossWeak ? 0.85 : 1) : mirror ? 0.85 : 0.8;
+  // 적은 AI 전투처럼 내 현재 능력치에 맞춘다(matchToPlayer): 잡몹 1.0 · 거울 1.05 · 보스 1.2 (장마다 +0.05, 최대 1.5), 설득에 성공했으면 보스 ×0.85
+  //   시뮬레이션(3000회): 1장 클리어 — 새 평범 69% · 평범 20승 87% · 숙련 막 환생 77% · 숙련 상한 96% (예전엔 20승만 넘어도 100%)
+  const tier = boss ? Math.min(1.5, 1.2 + 0.05 * (run.chapter - 1)) * (run.flags?.bossWeak ? 0.85 : 1) : mirror ? 1.05 : 1.0;
   const bossHeal = boss ? Math.min(c.stats.hp - run.hp, Math.round(c.stats.hp * 0.5)) : 0;   // 보스 직전 숨 고르기: 최대 HP 50% 회복 (시뮬레이션: 새 평범 캐릭터 1장 클리어 8% → 44%)
   const alloc = mirror ? mirrorAlloc(c.alloc || allocFromStats(c)) : { atk: 20, hp: 20, def: 15, spd: 15, acc: 15, eva: 15 };
-  const foe = { id: 'enemy-story', name: clip(en.name, 20) || '꿈의 그림자', fiction: boss ? '악몽' : mirror ? '그림자' : '꿈의 적', info: clip(en.desc, 120), stats: buildStats(alloc, 70, tier * scale), ult: { name: boss ? '악몽의 손길' : '꿈의 일격', effect: '꿈의 힘을 실어 몰아친다', style: 'burst' }, tier };
+  const foe = { id: 'enemy-story', name: clip(en.name, 20) || '꿈의 그림자', fiction: boss ? '악몽' : mirror ? '그림자' : '꿈의 적', info: clip(en.desc, 120), stats: buildStats(alloc, 70, 1), ult: { name: boss ? '악몽의 손길' : '꿈의 일격', effect: '꿈의 힘을 실어 몰아친다', style: 'burst' }, tier };
+  matchToPlayer(foe, c, tier);
   foe.stats.tier = boss ? '초인' : '숙련';
   const st = { id: uid(), charId: c.id, mode: 'story', storyNode: node.id, boss, chapter: run.chapter, me: { char: c, hp: Math.max(1, run.hp + Math.max(0, bossHeal)), gauge: run.gauge || 0, guard: false }, bossHeal: Math.max(0, bossHeal) || undefined, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null, intro: String(nc.situation || '').slice(0, 300) };
   await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
