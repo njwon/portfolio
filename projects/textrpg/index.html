@@ -282,6 +282,11 @@
                 <span id="quotaShort">확인 중…</span>
                 <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div></details>
             </div>
+            <div class="row" id="imgQuotaRow" style="margin-top:6px" hidden>
+                <span>오늘 몽상 시각화</span>
+                <div class="bar" aria-hidden="true"><i id="imgBar" style="background:#69c9fa"></i></div>
+                <span id="imgShort"></span>
+            </div>
             <div id="quotaWarn"></div>
         </div>
 
@@ -673,8 +678,19 @@ const Snd = (() => {
 
     // ── 무료 한도 (클라이언트 단 강제: 서버가 준 남은 횟수가 0이면 AI 가 필요한 버튼 잠금) ──
     let quotaState = null, lastCall = 0;
+    // 오늘 몽상 시각화 (턴 그림): 내 몫 막대 + 공용 고화질 남은 장수
+    function applyImgQuota(iq) {
+        if (!iq) return;
+        $('imgQuotaRow').hidden = false;
+        $('imgBar').style.width = Math.round(iq.left / iq.limit * 100) + '%';
+        $('imgShort').textContent = `내 몫 ${iq.left}/${iq.limit}장 · 고화질 ${iq.flux.left}장 남음${imgPref() ? '' : ' (꺼짐)'}`;
+        $('imgShort').title = '고화질(FLUX)은 모두가 같이 쓰는 하루 몫이에요. 다 쓰면 빠른 기본 그림으로 그립니다.';
+        imgQuotaState = iq;
+    }
+    let imgQuotaState = null;
     function applyQuota(q) {
         if (!q) return;
+        if (q.img) applyImgQuota(q.img);
         quotaState = q;
         const cap = q.global.capacity || q.global.budget, pct = Math.round(Math.min(1, q.global.estCalls / cap) * 100);
         $('quotaBar').style.width = pct + '%';
@@ -1660,8 +1676,10 @@ const Snd = (() => {
         logEl.appendChild(fig); const atEnd = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 200; if (atEnd) logEl.scrollTop = logEl.scrollHeight;
         try {
             const r = await fetch(API + path, { headers: { 'X-Device': deviceId(), 'X-Token': tokenHdr, ...(gSession ? { 'X-Session': gSession } : {}) } });
-            if (r.status === 429) { imgQuotaHit = true; fig.innerHTML = '<figcaption>오늘 그림 한도(80장)를 다 썼어요. 내일 다시 그려 드릴게요.</figcaption>'; return; }
+            if (r.status === 429) { imgQuotaHit = true; if (imgQuotaState) applyImgQuota({ ...imgQuotaState, left: 0 }); fig.innerHTML = '<figcaption>오늘 그림 한도(80장)를 다 썼어요. 내일 다시 그려 드릴게요.</figcaption>'; return; }
             if (!r.ok) { fig.remove(); return; }
+            const left = r.headers.get('X-Image-Left'), fl = r.headers.get('X-Flux-Left');
+            if (left !== null && imgQuotaState) applyImgQuota({ ...imgQuotaState, left: Number(left), flux: { ...imgQuotaState.flux, left: Number(fl ?? imgQuotaState.flux.left) } });
             const url = URL.createObjectURL(await r.blob());
             fig.innerHTML = `<img alt="이번 턴 장면 — AI 가 서술을 바탕으로 그린 그림" src="${url}"><figcaption>AI 그림 · 실제 판정과 다를 수 있음</figcaption>`;
             fig.querySelector('img').addEventListener('load', () => { if (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 600) logEl.scrollTop = logEl.scrollHeight; }, { once: true });
@@ -1695,7 +1713,7 @@ const Snd = (() => {
     $('vSfx').addEventListener('change', () => Snd.play('hit'));
     $('vAmb').addEventListener('input', e => { sndCfg.amb = +e.target.value; Snd.setVol('amb', sndCfg.amb / 100); saveSnd(); });
     $('vAmb').addEventListener('change', () => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(sndCfg.amb > 0 ? lastAmb : null); });
-    $('imgOn').addEventListener('change', e => { lsSet('dreamrpg.img', e.target.checked ? '1' : '0'); pushPrefs(); });
+    $('imgOn').addEventListener('change', e => { lsSet('dreamrpg.img', e.target.checked ? '1' : '0'); pushPrefs(); if (imgQuotaState) applyImgQuota(imgQuotaState); });
     $('cueOnly').addEventListener('change', e => { sndCfg.cueOnly = e.target.checked; Snd.setCueOnly(sndCfg.cueOnly); saveSnd(); });
 
     // ── 계정 탈퇴 (설정 창): '탈퇴'를 직접 입력해야 버튼이 켜진다 ──

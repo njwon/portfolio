@@ -96,7 +96,7 @@ const USERS_MIN = 1, IP_CAP_MIN = 20, IP_CAP_MAX = 1200;   // 이용자 수 = �
 const ROOM_TTL = 3 * 3600e3, BATTLE_TTL = 6 * 3600e3;
 const LEN = { name: 20, setting: 200, text: 120, fiction: 30, ultName: 24, ultEffect: 100 };
 
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Device, X-Session, X-Token, X-Admin-Key' };
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Device, X-Session, X-Token, X-Admin-Key', 'Access-Control-Expose-Headers': 'X-Image-Model, X-Image-Left, X-Flux-Left' };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS } });
 const today = () => new Date().toISOString().slice(0, 10);
 const clip = (s, n) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, n);
@@ -145,7 +145,7 @@ export async function handleRpg(request, env, path) {
   //   (MAC 주소는 브라우저·서버 어디서도 볼 수 없다. 기기 ID 는 저장소를 지우면 새로 생기므로 IP 당 하루 DEV_PER_IP 개까지만 인정)
   const who = await identity(env, request, ip, body);
   let mm;
-  if (path === '/api/rpg/quota' && m === 'GET') return json(pubQuota(await quota(env, who)));
+  if (path === '/api/rpg/quota' && m === 'GET') return json({ ...pubQuota(await quota(env, who)), img: await imgQuota(env, who) });
   if (path === '/api/rpg/aitest' && m === 'GET') {   // 운영자 점검: 특정 제공자로 서술 1회 (RPG_ADMIN_KEY 시크릿 필요, 한도에 포함)
     if (!env.RPG_ADMIN_KEY || (request.headers.get('X-Admin-Key') || url.searchParams.get('key')) !== env.RPG_ADMIN_KEY) return json({ error: 'forbidden' }, 403);
     const pv = PROVIDERS.find(x => x.id === url.searchParams.get('provider'));
@@ -357,10 +357,21 @@ function sceneCues(events) {
   return c.join(', ');
 }
 let imgTable = false;
+async function ensureImgTable(env) { if (!imgTable) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_img (day TEXT NOT NULL, who TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, who))').run(); imgTable = true; } }
+// 오늘 몽상 시각화: 내 몫(하루 IMG_DAILY 장)과 모두가 같이 쓰는 고화질(FLUX) 남은 장수
+async function imgQuota(env, who) {
+  await ensureImgTable(env);
+  const day = today();
+  const mine = (await env.DB.prepare('SELECT n FROM rpg_img WHERE day = ? AND who = ?').bind(day, who).first())?.n ?? 0;
+  const fluxN = (await env.DB.prepare("SELECT n FROM rpg_img WHERE day = ? AND who = '__flux'").bind(day).first())?.n ?? 0;
+  const used = (await env.DB.prepare('SELECT neurons FROM rpg_quota WHERE day = ?').bind(day).first())?.neurons ?? 0;
+  const byBudget = Math.max(0, Math.floor((DAILY_BUDGET - FLUX_RESERVE - used) / FLUX_COST));
+  return { limit: IMG_DAILY, left: Math.max(0, IMG_DAILY - mine), flux: { limit: FLUX_DAILY, left: Math.max(0, Math.min(FLUX_DAILY - fluxN, byBudget)) } };
+}
 async function drawScene(env, who, entry) {
   if (!entry) return json({ error: 'not_found' }, 404);
   if (!env.AI) return json({ error: 'no_image' }, 503);
-  if (!imgTable) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_img (day TEXT NOT NULL, who TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, who))').run(); imgTable = true; }
+  await ensureImgTable(env);
   const day = today(), row = await env.DB.prepare('SELECT n FROM rpg_img WHERE day = ? AND who = ?').bind(day, who).first();
   if ((row?.n ?? 0) >= IMG_DAILY) return json({ error: 'img_quota', limit: IMG_DAILY }, 429);
   const scene = cleanScene(entry.scene) || 'two dream warriors clashing in a surreal neon dreamscape, dynamic action';
@@ -380,14 +391,16 @@ async function drawScene(env, who, entry) {
         env.DB.prepare("INSERT INTO rpg_img (day, who, n) VALUES (?, '__flux', 1) ON CONFLICT(day, who) DO UPDATE SET n = n + 1").bind(day),
         env.DB.prepare('INSERT INTO rpg_quota (day, neurons, requests) VALUES (?, ?, 0) ON CONFLICT(day) DO UPDATE SET neurons = neurons + ?').bind(day, FLUX_COST, FLUX_COST),
       ]);
-      return new Response(Uint8Array.from(atob(out.image), ch => ch.charCodeAt(0)), { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'flux', ...CORS } });
+      const iq = await imgQuota(env, who);
+      return new Response(Uint8Array.from(atob(out.image), ch => ch.charCodeAt(0)), { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'flux', 'X-Image-Left': String(iq.left), 'X-Flux-Left': String(iq.flux.left), ...CORS } });
     } catch (e) { failedAt.flux = { at: Date.now(), until: Date.now() + PROVIDER_COOLDOWN, why: String(e?.message || e).slice(0, 120) }; }   // 실패하면 10분 동안 SDXL 로
   }
   try {
     const out = await env.AI.run(IMG_MODEL, { prompt, negative_prompt: IMG_NEG, width: 768, height: 512, num_steps: 4 });
     const body = out instanceof ReadableStream || out instanceof Uint8Array || out instanceof ArrayBuffer ? out : out?.image ? Uint8Array.from(atob(out.image), ch => ch.charCodeAt(0)) : null;
     if (!body) throw new Error('empty');
-    return new Response(body, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'sdxl', ...CORS } });
+    const iq = await imgQuota(env, who);
+    return new Response(body, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'sdxl', 'X-Image-Left': String(iq.left), 'X-Flux-Left': String(iq.flux.left), ...CORS } });
   } catch (e) {
     await env.DB.prepare('UPDATE rpg_img SET n = MAX(0, n - 1) WHERE day = ? AND who = ?').bind(day, who).run();   // 실패는 세지 않음
     return json({ error: 'no_image' }, 503);
