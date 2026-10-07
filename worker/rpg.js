@@ -1106,7 +1106,9 @@ async function createChar(body, env, ip) {
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
-  const luck = rollTier(Math.round((num(parsed.power, 0, 95, 15) + 3 * (up.power || 0)) * JUDGE_SCALE), CREATE_RARITY);   // 선계 강화 '꿈의 깊이': 심사 위력 +3/단계   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
+  const boost = acct?.gift?.rar || null, rarity = boost ? Object.fromEntries(Object.entries(CREATE_RARITY).map(([t, x]) => [t, Math.min(1, x * (boost[t] || 1))])) : CREATE_RARITY;   // 등선 선물: 상위 등급 확률 배율
+  const luck = rollTier(Math.round((num(parsed.power, 0, 95, 15) + 3 * (up.power || 0)) * JUDGE_SCALE), rarity);
+  if (boost) luck.boost = boost;   // 선계 강화 '꿈의 깊이': 심사 위력 +3/단계   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
   const c = {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
     stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, cohCap(num(parsed.coherence, 0, 100, 50)), judgedBy === 'local' ? 50 : 100), true),
@@ -1121,7 +1123,7 @@ async function createChar(body, env, ip) {
   if (acct && Object.keys(up).length) c.ascBonus = { ...up };
   // 등선 선물(일회성): 최소 등급 보장 · 시작 HP·ATK 보정 · 꿈 조각 · 아이템. 쓰면 계정에서 비운다
   const gift = acct?.gift;
-  if (gift && (gift.dream || gift.minTier || gift.statPct || Object.keys(gift.items || {}).length)) {
+  if (gift && (gift.dream || gift.minTier || gift.statPct || Object.keys(gift.items || {}).length || Object.keys(gift.rar || {}).length)) {
     const want = gift.minTier && TIERS.find(t => t[0] === gift.minTier);
     if (want && (TIER_IDX[c.stats.tier] ?? 0) < (TIER_IDX[gift.minTier] ?? 0)) {
       const keep = { stability: c.stats.stability, coherence: c.stats.coherence };
@@ -1806,19 +1808,22 @@ const ASC_UP = {
   dream: { name: '꿈 조각 유산', max: 5, cost: [1, 2, 3, 4, 5], desc: '새 캐릭터 시작 꿈 조각 +150' },
 };
 // 등급별 등선 보상: 선기(기본) + 다음 캐릭터 일회성 선물. 높은 등급일수록 훨씬 크다. 선기 = 등급 기본값 + 환생 횟수 + 100승마다 1
+//   rar: 다음 캐릭터 생성 때 상위 등급 희귀 배율(CREATE_RARITY)을 곱함 — 시뮬레이션: ??? 등선 뒤에도 심사 80 의 전설 0.08% → 0.28%, 심사 95 의 전설 3.1% → 7.3% (희귀함은 유지)
 const ASC_TIER = {
-  '평범': { qi: 1 }, '숙련': { qi: 3 },
-  '초인': { qi: 6, gift: { dream: 300 } },
-  '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련' } },
-  '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10 } },
-  '???': { qi: 25, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15 } },
+  '평범': { qi: 1 },
+  '숙련': { qi: 3, gift: { rar: { '초인': 1.5 } } },
+  '초인': { qi: 6, gift: { dream: 300, rar: { '초인': 2, '전설': 1.5 } } },
+  '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련', rar: { '초인': 2.5, '전설': 2, '신화': 1.5 } } },
+  '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10, rar: { '초인': 3, '전설': 3, '신화': 2 } } },
+  '???': { qi: 25, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15, rar: { '초인': 4, '전설': 4, '신화': 3 } } },
 };
 const qiOf = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + (c.rebirths || 0) + Math.floor((c.wins || 0) / 100);
 // 선물은 쌓인다: 꿈 조각·아이템은 더하고, 최소 등급·능력 보정은 큰 쪽
 function mergeGift(g = {}, add = {}) {
   const items = { ...(g.items || {}) }; for (const [k, n] of Object.entries(add.items || {})) items[k] = Math.min(own(ITEMS, k) ? (ITEMS[k].max || STACK) : 1, (items[k] || 0) + n);
   const minTier = [g.minTier, add.minTier].filter(Boolean).sort((a, b) => (TIER_IDX[b] ?? 0) - (TIER_IDX[a] ?? 0))[0];
-  return { dream: (g.dream || 0) + (add.dream || 0), items, minTier, statPct: Math.max(g.statPct || 0, add.statPct || 0) };
+  const rar = { ...(g.rar || {}) }; for (const [t, x] of Object.entries(add.rar || {})) rar[t] = Math.max(rar[t] || 1, x);   // 확률 배율은 곱하지 않고 큰 쪽만 (여러 번 등선해도 폭주하지 않게)
+  return { dream: (g.dream || 0) + (add.dream || 0), items, minTier, statPct: Math.max(g.statPct || 0, add.statPct || 0), rar };
 }
 let acctTable = false;
 async function ensureAcctTable(env) { if (!acctTable) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_accounts (sub TEXT PRIMARY KEY, json TEXT NOT NULL, updated INTEGER NOT NULL)').run(); acctTable = true; } }
