@@ -851,8 +851,10 @@ const capsOf = c => TIER_CAPS[c.stats?.tier] || TIER_CAPS['신화'];
 const rebirthReady = c => { const cap = capsOf(c); return c.stats.hp >= cap.hp && c.stats.atk >= cap.atk; };
 function applyReward(c, rw) {
   const cap = capsOf(c);
-  c.stats.hp = Math.min(cap.hp, c.stats.hp + rw.hp); c.stats.atk = Math.min(cap.atk, c.stats.atk + rw.atk);
-  for (const k in (rw.stats || {})) c.stats[k] = Math.min(cap[k], (c.stats[k] || 0) + rw.stats[k]);
+  // 상한은 '성장'에만 적용 (개연성 clampPlaus 와 같은 규칙): 생성·환생 때 이미 상한보다 높던 값은 승리해도 깎지 않는다 (예전엔 평범 속도 80 → 이기면 60 으로 떨어짐)
+  const grow = (k, add) => { const cur = c.stats[k] || 0; c.stats[k] = Math.min(Math.max(cap[k], cur), cur + add); };
+  grow('hp', rw.hp); grow('atk', rw.atk);
+  for (const k in (rw.stats || {})) grow(k, rw.stats[k]);
   if (rw.bonus) c.stats[rw.bonus.stat] = Math.min(cap[rw.bonus.stat] || rw.bonus.max, (c.stats[rw.bonus.stat] || 0) + rw.bonus.amount);   // 옛 형식 호환
   c.rebirthReady = rebirthReady(c);
 }
@@ -1066,6 +1068,11 @@ async function battleTurn(id, body, env, ip) {
     }, c);
     st.me.char = fresh;
     if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, fresh);
+    // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 생사결 상대와의 전투는 기록만
+    if (st.winner === 2 && st.mode !== 'auto') {
+      const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
+      if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
+    }
   } else st.turn++;
   await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ?').bind(JSON.stringify(st), Date.now(), id).run();
   return json({ battle: st, quota: pubQuota(await quota(env, ip)), quotaBlocked: t.quotaBlocked });
@@ -1212,8 +1219,9 @@ async function settleRoom(env, ip, code, s, v, slot) {
   if (left.length <= 1) {
     s.status = 'finished'; s.winner = left[0] || 0;
     for (const k in s.p) {   // 입장 때 스냅샷이 아니라 지금 DB 의 캐릭터에 전적을 더한다 (방에 있는 동안 PvE·cron 으로 바뀐 것을 지우지 않게)
-      const won = s.winner === Number(k);
-      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
+      // 모두 쓰러지면 무승부: 마지막 라운드까지 서 있던 사람은 무승부로 기록, 그 전에 쓰러졌거나 기권한 사람은 패배
+      const won = s.winner === Number(k), draw = s.winner === 0 && alive.includes(Number(k)) && !s.p[k].left;
+      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
     }
   } else s.round++;
   s.moves = {}; delete s.busy;
