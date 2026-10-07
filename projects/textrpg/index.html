@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://blog-api.njwon19.workers.dev https://accounts.google.com http://127.0.0.1:* http://localhost:*; frame-src https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://blog-api.njwon19.workers.dev https://accounts.google.com http://127.0.0.1:* http://localhost:*; frame-src https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'">
     <title>DREAM RPG | 노정원 프로젝트</title>
     <meta name="description" content="노정원이 만든 브라우저 텍스트 RPG DREAM RPG. AI 게임 마스터가 캐릭터를 심사하고 전투를 판정하며, 온라인 대전(2~6명, 공격 대상 선택)을 지원합니다. API 키 없이 무료로 플레이.">
     <meta name="author" content="노정원">
@@ -224,6 +224,9 @@
         .cond-list li { border-left: 2px solid #ea36af; padding: 2px 0 2px 10px; margin: 4px 0; font-size: 0.875rem; }
         .cond-list li.good { border-color: #75fa69; }
         .cond-list li.mild { border-color: #fae069; }
+        figure.scene { margin: 10px 0 4px; }
+        figure.scene img { display: block; width: 100%; max-width: 640px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 6px; border: 0.5px dashed #555; background: #262626; }
+        figure.scene figcaption { font-size: 0.75rem; opacity: .75; margin-top: 2px; }
         .perm { display: inline-block; font-size: 0.75rem; font-weight: bold; padding: 0 6px; border-radius: 4px; border: 1px solid #fae069; color: #fae069; margin-left: 4px; }
         .danger-zone { margin-top: 22px; padding-top: 12px; border-top: 0.5px dashed #555; }
 
@@ -483,6 +486,10 @@
             <label>배경음 <input type="range" id="vAmb" min="0" max="100" value="0" aria-label="배경음 크기"></label>
             <label><input type="checkbox" id="cueOnly"> 알림음만 (내 차례·결과·입장만, 타격음 끔)</label>
             <p class="hint" style="margin:4px 0 0">소리는 화면 표시와 함께만 나며, 소리만으로 알리는 정보는 없습니다. iPhone 은 무음 스위치가 켜져 있으면 들리지 않아요.</p>
+        </fieldset>
+        <fieldset><legend>턴 그림</legend>
+            <label><input type="checkbox" id="imgOn"> 턴이 끝날 때마다 장면 그림 보기 (AI)</label>
+            <p class="hint" style="margin:4px 0 0">무료 AI 가 그 턴의 서술을 그림으로 그립니다(한 장 약 2~25초, 하루 80장까지). 그리는 동안에도 계속 싸울 수 있어요. 분위기 그림이라 실제 판정과 다를 수 있어요.</p>
         </fieldset>
         <fieldset><legend>글자 크기</legend>
             <label><input type="radio" name="size" value="m"> 보통</label>
@@ -777,7 +784,7 @@ const Snd = (() => {
         }
         return data;
     }
-    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', nothing_to_cure: '지금은 고칠 흔적이 없습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
+    const errMsg = e => ({ quota: '오늘 무료 한도가 다 찼습니다. AI 마다 정해진 시각에 다시 찹니다 (위 \'자세히\'에서 충전 시각 확인).', ai_reject: '심사관이 설정을 이해하지 못했습니다. 조금 더 구체적으로 써 주세요.', ai_failed: 'AI 서버 응답 실패. 잠시 후 다시.', retry: '동시에 처리 중입니다. 다시 눌러주세요.', forbidden: '캐릭터 인증이 맞지 않습니다. 초기화해 주세요.', no_room: '방이 없거나 만료됐습니다 (3시간).', no_battle: '전투가 만료됐습니다 (6시간).', no_auto: '자동 생사결에 참가한 다른 캐릭터가 아직 없습니다.', not_ready: '아직 HP·ATK 가 등급 상한에 닿지 않았습니다.', refine_cooldown: '설정 보강은 100승마다 1회입니다.', max_tier: '??? 는 최고 등급이라 환생할 수 없습니다.', need_wins: '??? 로 환생하려면 1000승이 필요합니다.', dead: '이미 쓰러져서 행동할 수 없습니다.', too_early: '60초가 지나야 건너뛸 수 있습니다.', started: '이미 시작된 방입니다.', full: '방이 가득 찼습니다 (최대 6명).', need_players: '2명 이상 모여야 시작할 수 있습니다.', not_host: '방장만 시작할 수 있습니다.', net: '서버에 연결할 수 없습니다. 네트워크를 확인하세요.', owned: '이 캐릭터는 다른 계정에 속해 있어 추가할 수 없습니다.', rate: '요청이 너무 잦습니다. 1분 뒤 다시 시도하세요.', auth_disabled: 'Google 로그인이 아직 설정되지 않았습니다.', bad_aud: '이 사이트용 Google 토큰이 아닙니다.', too_large: '입력이 너무 깁니다.', bad_token: 'Google 로그인 확인에 실패했습니다. 다시 시도하세요.', no_dream: '꿈 조각이 모자랍니다.', max_item: '더 가질 수 없습니다.', no_item: '그 물건이 없습니다.', ip_name: '실존 작품의 이름은 유물로 쓸 수 없습니다.', nothing_to_cure: '지금은 고칠 흔적이 없습니다.', img_quota: '오늘 그림 한도를 다 썼습니다.', bad_request: '지금은 할 수 없는 동작입니다.', policy: `이용 정책에 맞지 않는 내용(${e.data?.label || '성적·혐오·자해 등'})이라 심사관이 받지 않았습니다. 다른 설정으로 써 주세요.` }[e.message] || '오류: ' + e.message);
     // 진행 중인 전투·방을 기억해 새로고침·앱 전환 뒤에도 그 자리로 돌아간다
     const SESS = 'dreamrpg.session';
     const saveSess = v => v ? lsSet(SESS, JSON.stringify(v)) : lsDel(SESS);
@@ -854,12 +861,13 @@ const Snd = (() => {
     const openK = new Set();
     document.addEventListener('toggle', e => { const k = e.target.dataset?.k; if (k) e.target.open ? openK.add(k) : openK.delete(k); }, true);
     // 전투 카드: 싸우는 데 필요한 것(HP·게이지·필살기 이름)만 보이고, 능력치는 접어 둔다
-    function cardHtml(p, isEnemy, key, hide = false) {
-        const c = p.char, sec = hide || isSecret(c), pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100))), low = p.hp > 0 && pct <= 30;
+    // unk: 처음 만난 상대 — 능력치·HP 수치·필살기를 ??? 로 (한 번 싸운 뒤부터 보임). ultSeen: 이번 전투에서 필살기를 썼으면 이름만 드러남
+    function cardHtml(p, isEnemy, key, hide = false, unk = false, ultSeen = false) {
+        const c = p.char, sec = hide || unk || isSecret(c), ultName = unk && !ultSeen ? Q : esc(c.ult.name), pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100))), low = p.hp > 0 && pct <= 30;
         return `<h3>${esc(c.name)} <span class="hint">(${esc(c.fiction)})${c.tier && c.tier > 1.2 ? ' ★강적' : ''}</span></h3>
             <div class="hpbar${isEnemy ? ' enemy' : low ? ' low' : ''}" aria-hidden="true"><i style="width:${pct}%"></i></div>
-            <div class="meta">HP <b>${sec ? Q : p.hp}</b>/${sec ? Q : c.stats.hp}${low ? ' (위험)' : p.hp <= 0 ? ' (쓰러짐)' : ''} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · <b>방어 중</b>' : ''}<br>필살기 <b>${esc(c.ult.name)}</b></div>
-            ${key ? `<details class="more" data-k="${esc(key)}"${openK.has(key) ? ' open' : ''}><summary>능력치·필살기 보기</summary><div class="meta">${sec ? statLine({ stats: { tier: '???' } }) : statLine(c)}<br>필살기(${ultStyle(c.ult)[0]} — ${ultStyle(c.ult)[1]}): ${esc(c.ult.effect)}</div></details>` : ''}`;
+            <div class="meta">HP <b>${sec ? Q : p.hp}</b>/${sec ? Q : c.stats.hp}${low ? ' (위험)' : p.hp <= 0 ? ' (쓰러짐)' : ''} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · <b>방어 중</b>' : ''}<br>필살기 <b>${ultName}</b>${unk ? ' <span class="hint">(처음 만난 상대)</span>' : ''}</div>
+            ${key ? `<details class="more" data-k="${esc(key)}"${openK.has(key) ? ' open' : ''}><summary>능력치·필살기 보기</summary><div class="meta">${sec ? statLine({ stats: { tier: '???' } }) : statLine(c)}<br>${unk ? '필살기(???): ??? <span class="hint">— 처음 만난 상대라 아직 모릅니다. 한 번 싸우고 나면 보여요.</span>' : `필살기(${ultStyle(c.ult)[0]} — ${ultStyle(c.ult)[1]}): ${esc(c.ult.effect)}`}</div></details>` : ''}`;
     }
     // 캐릭터 탭: 모든 수치에 한 줄 설명을 붙여 늘 보이게
     // 성향: 심사관이 설정을 읽고 나눈 능력 비중(합 100). 기본 능력치가 모두 이 비중에서 나온다
@@ -1046,7 +1054,8 @@ const Snd = (() => {
     let battle = null, busy = false;
     function renderBattle() {
         const hideFoe = isSecret(battle.me.char) && battle.mode !== 'auto';   // ??? 의 상대는 내 능력치로 만들어지므로 상대 수치도 가림
-        setHtml($('bMe'), cardHtml(battle.me, false, 'bme')); setHtml($('bFoe'), cardHtml(battle.foe, true, 'bfoe', hideFoe));
+        setHtml($('bMe'), cardHtml(battle.me, false, 'bme')); const unkFoe = !battle.memo, ultSeen = battle.log.some(l => l.events?.some(e => e.who === 2 && e.type === 'ult'));   // 처음 만난 상대는 ??? (한 번 싸운 뒤부터 보임)
+        setHtml($('bFoe'), cardHtml(battle.foe, true, 'bfoe', hideFoe, unkFoe, ultSeen));
         $('ultLeft').textContent = battle.me.gauge >= ULT_COST ? '준비됨' : `${battle.me.gauge}/${ULT_COST}`;
         $('btnUlt').disabled = busy || battle.me.gauge < ULT_COST; $('btnAttack').disabled = $('btnDefend').disabled = $('btnRun').disabled = busy;
         const pl = battle.status === 'playing';
@@ -1171,6 +1180,7 @@ const Snd = (() => {
             battle = cur = d.battle; const last = battle.log[battle.log.length - 1];
             logLine($('bLog'), roundHtml(`턴 ${last.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, last, battleSec()));
             Snd.playRound(last.events.map(e => ({ ...e, ko: e.killed })));
+            attachScene($('bLog'), `/api/rpg/battles/${battle.id}/image?turn=${last.turn}`, myToken);
             $('bAction').value = ''; $('bStatus').textContent = d.quotaBlocked && !nano.ready ? '오늘 AI 한도가 소진돼 사실만 기록됩니다.' : '';
             narrateLocally(last, `턴${last.turn}`, `/api/rpg/battles/${battle.id}/narrate`, { token: myToken, turn: last.turn });
             if (battle.status === 'finished') { endBattle(); refreshLeaderboard(true); }
@@ -1322,7 +1332,8 @@ const Snd = (() => {
         ['btnOAttack', 'btnODefend', 'btnOUlt'].forEach(id => $(id).style.display = playing && iAmAlive ? '' : 'none');
         // 로그
         const names = namesOf(s);
-        for (const r of s.log) if (r.round > renderedRounds) { logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r, Object.fromEntries(slotsOf(s).map(k => [k, isSecret(s.p[k].char)])))); renderedRounds = r.round; }   // 라운드 번호 기준 (서버가 로그를 40개로 자르므로 개수 기준이면 41라운드부터 안 그려짐)
+        const firstDraw = renderedRounds === 0;
+        for (const r of s.log) if (r.round > renderedRounds) { logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r, Object.fromEntries(slotsOf(s).map(k => [k, isSecret(s.p[k].char)])))); renderedRounds = r.round; if (!firstDraw && r === s.log[s.log.length - 1]) attachScene($('oLog'), `/api/rpg/rooms/${room.code}/image?round=${r.round}`, room.token); }   // 라운드 번호 기준 (서버가 로그를 40개로 자르므로 개수 기준이면 41라운드부터 안 그려짐)
         for (const r of s.log) {
             const key = `라운드${r.round}`, bubble = document.getElementById('gm-' + key);
             if (r.ai && bubble && !narrating.has(key) && !bubble.innerHTML.startsWith(narr(r.narration))) bubble.innerHTML = narr(r.narration) + (r.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : '');   // 다른 플레이어의 크롬 AI 가 채운 서술
@@ -1639,12 +1650,30 @@ const Snd = (() => {
     });
     $('btnStHome').addEventListener('click', () => goHome());
 
+    // ── 턴 그림: 서버가 그린 PNG 를 토큰 헤더로 받아 blob URL 로 붙인다 (img src 로는 헤더를 못 보냄) ──
+    const imgPref = () => lsGet('dreamrpg.img') !== '0';   // 기본 켜짐
+    let imgQuotaHit = false;
+    async function attachScene(logEl, path, tokenHdr) {
+        if (!imgPref() || imgQuotaHit) return;
+        const fig = document.createElement('figure'); fig.className = 'scene';
+        fig.innerHTML = '<figcaption>장면을 그리는 중… (길면 30초, 그동안 계속 싸워도 돼요)</figcaption>';
+        logEl.appendChild(fig); const atEnd = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 200; if (atEnd) logEl.scrollTop = logEl.scrollHeight;
+        try {
+            const r = await fetch(API + path, { headers: { 'X-Device': deviceId(), 'X-Token': tokenHdr, ...(gSession ? { 'X-Session': gSession } : {}) } });
+            if (r.status === 429) { imgQuotaHit = true; fig.innerHTML = '<figcaption>오늘 그림 한도(80장)를 다 썼어요. 내일 다시 그려 드릴게요.</figcaption>'; return; }
+            if (!r.ok) { fig.remove(); return; }
+            const url = URL.createObjectURL(await r.blob());
+            fig.innerHTML = `<img alt="이번 턴 장면 — AI 가 서술을 바탕으로 그린 그림" src="${url}"><figcaption>AI 그림 · 실제 판정과 다를 수 있음</figcaption>`;
+            fig.querySelector('img').addEventListener('load', () => { if (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 600) logEl.scrollTop = logEl.scrollHeight; }, { once: true });
+        } catch { fig.remove(); }
+    }
+
     // ── 소리 설정 (이 브라우저에 저장. 저장된 '켜짐'은 첫 클릭·키 입력 때 오디오를 연다 — 브라우저 자동 재생 정책) ──
     const SND_KEY = 'dreamrpg.snd';
     const sndCfg = (() => { const d = { on: false, sfx: 70, amb: 0, cueOnly: false }; try { return { ...d, ...JSON.parse(lsGet(SND_KEY) || '{}') }; } catch { return d; } })();
     const saveSnd = () => { lsSet(SND_KEY, JSON.stringify(sndCfg)); pushPrefs(); };
     // 계정 설정 동기화: 바꿀 때마다 브라우저에 저장하고, 로그인 중이면 계정에도 (0.8초 묶어서) 저장. 로그인하면 계정 값을 받아 적용 (계정에 없으면 지금 브라우저 값을 올림)
-    const curPrefs = () => ({ fx: document.documentElement.dataset.fx, size: document.documentElement.dataset.size || 'm', snd: { ...sndCfg } });
+    const curPrefs = () => ({ fx: document.documentElement.dataset.fx, size: document.documentElement.dataset.size || 'm', snd: { ...sndCfg }, img: imgPref() });
     let prefTimer = null;
     function pushPrefs() { if (!gUser || !gSession) return; clearTimeout(prefTimer); prefTimer = setTimeout(() => api('/api/rpg/prefs', { session: gSession, prefs: curPrefs() }).catch(() => {}), 800); }
     function armSound() { const unlock = () => { if (sndCfg.on) Snd.setOn(true).then(() => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(lastAmb); }); }; document.addEventListener('pointerdown', unlock, { once: true, capture: true }); document.addEventListener('keydown', unlock, { once: true, capture: true }); }
@@ -1652,6 +1681,7 @@ const Snd = (() => {
         const d = document.documentElement;
         if (pr.fx) { const fx = pr.fx === 'high' ? 'high' : 'off'; d.dataset.fx = fx; lsSet('dreamrpg.fx', fx); }
         if (pr.size) { d.dataset.size = pr.size; lsSet('dreamrpg.size', pr.size); }
+        if (typeof pr.img === 'boolean') lsSet('dreamrpg.img', pr.img ? '1' : '0');
         if (pr.snd) { const wasOn = Snd.state.on; Object.assign(sndCfg, pr.snd); lsSet(SND_KEY, JSON.stringify(sndCfg)); Snd.setVol('sfx', sndCfg.sfx / 100); Snd.setVol('amb', sndCfg.amb / 100); Snd.setCueOnly(sndCfg.cueOnly); if (!sndCfg.on && wasOn) Snd.setOn(false); else if (sndCfg.on && !wasOn) armSound(); }
     }
     async function syncPrefs() {
@@ -1665,6 +1695,7 @@ const Snd = (() => {
     $('vSfx').addEventListener('change', () => Snd.play('hit'));
     $('vAmb').addEventListener('input', e => { sndCfg.amb = +e.target.value; Snd.setVol('amb', sndCfg.amb / 100); saveSnd(); });
     $('vAmb').addEventListener('change', () => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(sndCfg.amb > 0 ? lastAmb : null); });
+    $('imgOn').addEventListener('change', e => { lsSet('dreamrpg.img', e.target.checked ? '1' : '0'); pushPrefs(); });
     $('cueOnly').addEventListener('change', e => { sndCfg.cueOnly = e.target.checked; Snd.setCueOnly(sndCfg.cueOnly); saveSnd(); });
 
     // ── 계정 탈퇴 (설정 창): '탈퇴'를 직접 입력해야 버튼이 켜진다 ──
@@ -1746,6 +1777,7 @@ const Snd = (() => {
     $('btnSettings').addEventListener('click', () => {
         $('acctBox').hidden = !gUser; if (gUser) { $('acctName').textContent = gUser.name || gUser.email || ''; $('acctCount').textContent = acctChars.length; }
         $('delConfirm').value = ''; $('btnDeleteAcct').disabled = true; $('delStatus').textContent = '';
+        $('imgOn').checked = imgPref();
         $('sndOn').checked = sndCfg.on; $('vSfx').value = sndCfg.sfx; $('vAmb').value = sndCfg.amb; $('cueOnly').checked = sndCfg.cueOnly;
         document.querySelectorAll('#dlgSettings input[name="fx"]').forEach(r => r.checked = r.value === document.documentElement.dataset.fx);
         document.querySelectorAll('#dlgSettings input[name="size"]').forEach(r => r.checked = r.value === (document.documentElement.dataset.size || 'm'));

@@ -52,7 +52,7 @@ const MODELS = [
   { name: '@cf/meta/llama-3.1-8b-instruct-fp8', nin: 0.152 / 0.011 / 1000, nout: 0.287 / 0.011 / 1000 },
 ];
 let modelIdx = 0;
-const MAX_TOKENS = 380;
+const MAX_TOKENS = 440;   // 서술 + 영어 장면 한 줄(scene)
 // 무료 제공자 체인: 앞에서부터 남은 횟수가 있는 곳을 쓴다. 키는 워커 시크릿(wrangler secret put <key>) — 없으면 건너뜀.
 //   2026-09-15 실제 키로 호출해 확인한 값(응답 헤더·오류) 기준. 한도는 모델별로 따로 계산되는 곳이 많아 모델 단위로 항목을 둔다.
 //   · Gemini API: 모델별 RPD 독립. 2.5-flash-lite 는 신규 계정 불가 → 3.5/3.1 flash-lite. Gemma 4 는 <thought> 를 끌 수 없어 max_tokens 크게 + 잘라냄(약 12초).
@@ -182,17 +182,18 @@ export async function handleRpg(request, env, path) {
     if (sub === 'quit' && m === 'POST') return storyQuit(id, body, env);
   }
   if (path === '/api/rpg/battles' && m === 'POST') return createBattle(body, env);
-  if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave|narrate|reroll))?$/))) {
+  if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave|narrate|reroll|image))?$/))) {
     const [, id, sub] = mm;
     if (!sub && m === 'GET') return getBattle(id, qtok, env);
     if (sub === 'turn' && m === 'POST') return battleTurn(id, body, env, who);
     if (sub === 'leave' && m === 'POST') return leaveBattle(id, body, env);
     if (sub === 'narrate' && m === 'POST') return narrateBattle(id, body, env);
     if (sub === 'reroll' && m === 'POST') return rerollBattle(id, body, env);
+    if (sub === 'image' && m === 'GET') return battleImage(id, qtok, Number(url.searchParams.get('turn')), env, who);
   }
   if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env, false, who, ip);
   if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env, who, ip);
-  if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave|narrate))?$/))) {
+  if ((mm = path.match(/^\/api\/rpg\/rooms\/([A-Z0-9]{6})(?:\/(join|action|start|leave|narrate|image))?$/))) {
     const [, code, sub] = mm;
     if (!sub && m === 'GET') return getRoom(code, qtok, env);
     if (sub === 'join' && m === 'POST') return joinRoom(code, body, env, who, ip);
@@ -200,6 +201,7 @@ export async function handleRpg(request, env, path) {
     if (sub === 'action' && m === 'POST') return roomAction(code, body, env, who);
     if (sub === 'leave' && m === 'POST') return leaveRoom(code, body, env, who);
     if (sub === 'narrate' && m === 'POST') return narrateRoom(code, body, env);
+    if (sub === 'image' && m === 'GET') return roomImage(code, qtok, Number(url.searchParams.get('round')), env, who);
   }
   return json({ error: 'Not Found' }, 404);
 }
@@ -333,6 +335,76 @@ async function aiCall(env, ip, system, user, temperature) {
     }
   }
   return { ok: false, reason: tried ? 'failed' : 'exhausted' };
+}
+
+// ─── 턴 그림: 1순위 FLUX.2 klein 4B (장면 반영이 정확, 768×512 약 16~24초·260KB, 약 52뉴런) → 2순위 SDXL Lightning (2026-10 베타·$0, 약 1.7초·64KB, 반영은 약함) ───
+//   FLUX 는 텍스트 AI 와 같은 하루 무료 뉴런을 쓰므로: 텍스트 몫이 FLUX_RESERVE 넘게 남아 있을 때만, 하루 FLUX_DAILY 장까지. 쓴 만큼 rpg_quota 에 기록(전체 예산 DAILY_BUDGET 안에서만)
+//   게임 마스터가 낸 영어 장면 한 줄(scene) + 규칙 엔진 결과(필살기·크리티컬·쓰러짐)로 프롬프트를 만든다. 저장하지 않고 요청 때마다 그려 보낸다(브라우저가 하루 캐시)
+//   사람(계정·기기·IP)마다 하루 IMG_DAILY 장. 모델이 없어지거나 유료로 바뀌어 실패하면 503 → 클라이언트는 그림 칸만 숨긴다
+const IMG_MODEL = '@cf/bytedance/stable-diffusion-xl-lightning', IMG_DAILY = 80;
+const FLUX_MODEL = '@cf/black-forest-labs/flux-2-klein-4b', FLUX_COST = 52, FLUX_DAILY = 40, FLUX_RESERVE = 3000;
+const IMG_STYLE = 'dreamlike surreal dark fantasy illustration, neon green and magenta glitch lighting, cinematic composition, digital painting';
+const IMG_NEG = 'text, letters, words, watermark, signature, logo, nsfw, nude, naked, sexual, gore, blood, deformed hands, lowres, blurry';
+const IMG_BAN = /\b(nude|naked|nsfw|sex\w*|porn\w*|erotic|gore|gory|blood\w*|breasts?|nipples?|underwear|lingerie|corpse|decapitat\w*|dismember\w*)\b/gi;
+function cleanScene(v) { return String(v || '').replace(/[^\x20-\x7E]/g, ' ').replace(IMG_BAN, '').replace(/\s+/g, ' ').replace(/(\s*,\s*)+/g, ', ').replace(/^[\s,]+|[\s,]+$/g, '').slice(0, 300); }
+function sceneCues(events) {
+  const c = [];
+  if (events?.some(e => e.type === 'ult' && e.hit)) c.push('unleashing a powerful glowing special attack');
+  if (events?.some(e => e.crit)) c.push('a critical blow with a bright impact flash');
+  if (events?.some(e => e.killed)) c.push('one fighter collapsing defeated');
+  if (events?.some(e => e.type === 'defend')) c.push('a fighter raising a defensive guard');
+  if (events?.some(e => e.type === 'item')) c.push('a fighter tending wounds with a glowing bandage');
+  return c.join(', ');
+}
+let imgTable = false;
+async function drawScene(env, who, entry) {
+  if (!entry) return json({ error: 'not_found' }, 404);
+  if (!env.AI) return json({ error: 'no_image' }, 503);
+  if (!imgTable) { await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_img (day TEXT NOT NULL, who TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, who))').run(); imgTable = true; }
+  const day = today(), row = await env.DB.prepare('SELECT n FROM rpg_img WHERE day = ? AND who = ?').bind(day, who).first();
+  if ((row?.n ?? 0) >= IMG_DAILY) return json({ error: 'img_quota', limit: IMG_DAILY }, 429);
+  const scene = cleanScene(entry.scene) || 'two dream warriors clashing in a surreal neon dreamscape, dynamic action';
+  const prompt = [scene, sceneCues(entry.events), IMG_STYLE].filter(Boolean).join(', ').slice(0, 900);
+  if (!(await moderate(env, prompt)).ok) return json({ error: 'no_image' }, 503);
+  await env.DB.prepare('INSERT INTO rpg_img (day, who, n) VALUES (?, ?, 1) ON CONFLICT(day, who) DO UPDATE SET n = n + 1').bind(day, who).run();
+  // 1순위 FLUX (예산 여유가 있을 때만)
+  const used = (await env.DB.prepare('SELECT neurons FROM rpg_quota WHERE day = ?').bind(day).first())?.neurons ?? 0;
+  const fluxN = (await env.DB.prepare("SELECT n FROM rpg_img WHERE day = ? AND who = '__flux'").bind(day).first())?.n ?? 0;
+  if (fluxN < FLUX_DAILY && used + FLUX_COST <= DAILY_BUDGET - FLUX_RESERVE && !paused('flux')) {
+    try {
+      const form = new FormData(); form.append('prompt', prompt + ', no text, no watermark'); form.append('width', '768'); form.append('height', '512');
+      const fr = new Response(form);
+      const out = await env.AI.run(FLUX_MODEL, { multipart: { body: fr.body, contentType: fr.headers.get('content-type') } });
+      if (!out?.image) throw new Error('empty');
+      await env.DB.batch([
+        env.DB.prepare("INSERT INTO rpg_img (day, who, n) VALUES (?, '__flux', 1) ON CONFLICT(day, who) DO UPDATE SET n = n + 1").bind(day),
+        env.DB.prepare('INSERT INTO rpg_quota (day, neurons, requests) VALUES (?, ?, 0) ON CONFLICT(day) DO UPDATE SET neurons = neurons + ?').bind(day, FLUX_COST, FLUX_COST),
+      ]);
+      return new Response(Uint8Array.from(atob(out.image), ch => ch.charCodeAt(0)), { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'flux', ...CORS } });
+    } catch (e) { failedAt.flux = { at: Date.now(), until: Date.now() + PROVIDER_COOLDOWN, why: String(e?.message || e).slice(0, 120) }; }   // 실패하면 10분 동안 SDXL 로
+  }
+  try {
+    const out = await env.AI.run(IMG_MODEL, { prompt, negative_prompt: IMG_NEG, width: 768, height: 512, num_steps: 4 });
+    const body = out instanceof ReadableStream || out instanceof Uint8Array || out instanceof ArrayBuffer ? out : out?.image ? Uint8Array.from(atob(out.image), ch => ch.charCodeAt(0)) : null;
+    if (!body) throw new Error('empty');
+    return new Response(body, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'sdxl', ...CORS } });
+  } catch (e) {
+    await env.DB.prepare('UPDATE rpg_img SET n = MAX(0, n - 1) WHERE day = ? AND who = ?').bind(day, who).run();   // 실패는 세지 않음
+    return json({ error: 'no_image' }, 503);
+  }
+}
+async function battleImage(id, token, turn, env, who) {
+  const row = await env.DB.prepare('SELECT state FROM rpg_battles WHERE id = ?').bind(id).first();
+  if (!row) return json({ error: 'no_battle' }, 404);
+  const st = JSON.parse(row.state);
+  if (!(await loadChar(env, st.charId, token))) return json({ error: 'forbidden' }, 403);
+  return drawScene(env, who, st.log.find(l => l.turn === turn));
+}
+async function roomImage(code, token, round, env, who) {
+  const r = await loadRoom(env, code);
+  if (!r) return json({ error: 'no_room' }, 404);
+  if (!slotOf(r.s, token)) return json({ error: 'forbidden' }, 403);
+  return drawScene(env, who, r.s.log.find(l => l.round === round));
 }
 
 // ─── 자동 생사결 ─────────────────────────────────────────────────
@@ -493,6 +565,7 @@ function cleanPrefs(p) {
   const o = {};
   if (['off', 'low', 'high'].includes(p?.fx)) o.fx = p.fx === 'high' ? 'high' : 'off';   // '은은하게'(low)는 없앰 → 끄기
   if (['m', 'l'].includes(p?.size)) o.size = p.size;
+  if (typeof p?.img === 'boolean') o.img = p.img;
   const sd = p?.snd; if (sd && typeof sd === 'object') o.snd = { on: !!sd.on, sfx: Math.round(num(sd.sfx, 0, 100, 70)), amb: Math.round(num(sd.amb, 0, 100, 0)), cueOnly: !!sd.cueOnly };
   return o;
 }
@@ -664,7 +737,8 @@ const SYS_JUDGE_ACTION = `당신은 텍스트 RPG의 심사관입니다. 여러 
 const SYS_NARRATE = `당신은 텍스트 RPG 게임 마스터입니다. 전투 1라운드의 결과가 이미 계산되어 주어집니다. 결과를 바꾸지 말고 서술만 하세요.
 주어진 사실(행동 순서, 심사관 판정, 누가 누구를 노렸는지, 명중/빗나감/크리티컬/방어/피해, 쓰러진 사람)을 정확히 반영해 4~7문장으로 생생하게. 현재 라운드 번호와 직전 라운드 요약이 주어지면 그 흐름을 이어서 서술하세요(2라운드 이후엔 전투 시작 장면을 다시 쓰지 말 것). 플레이어가 말로 선언한 행동을 그대로 살려서 묘사하고, 캐릭터 설정을 근거로 왜 그렇게 됐는지 언급. 줄바꿈은 <br>. 새로운 수치를 만들지 마세요. 성적 묘사·혐오 표현·실존 인물 비방은 쓰지 않습니다(전투 묘사는 만화 수준으로).
 캐릭터에 '상태'(부상·피로·기세·흉터)나 '플레이어와의 관계'(요즘 자주 만난 상대·숙적·공포)가 주어지면 서술에 자연스럽게 한 번쯤 녹이세요(예: 다친 왼팔이 욱신거려 주먹이 무뎌진다, "또 너냐, 요즘 자주 보는군"). 수치는 말하지 마세요.
-반드시 이 JSON 하나만 출력: {"narration":"..."}`;
+scene 에는 이번 라운드의 가장 인상적인 순간을 그림으로 그릴 수 있게 영어 한 문장(40단어 이내)으로: 인물은 이름 대신 겉모습·역할로(예: a young boxer, a towering ice giant), 배경·동작·빛을 구체적으로. 글자·숫자·실존 인물·기존 작품 캐릭터·선정적이거나 잔인한 묘사는 넣지 마세요.
+반드시 이 JSON 하나만 출력: {"scene":"...","narration":"..."}`;
 
 // ─── 규칙 엔진 ───────────────────────────────────────────────────────
 // 동일 예산: 모든 캐릭터는 alloc(합 100)을 같은 공식으로 스탯화한다. 설정이 아무리 세도 예산은 같다.
@@ -807,12 +881,13 @@ async function runRound(env, ip, players, acts, ctx = {}) {
   const head = ctx.round ? `현재 ${ctx.round}라운드${ctx.round === 1 ? ' (전투 시작)' : ' (전투는 이미 진행 중 — "첫 라운드"·"전투가 시작되자" 같은 표현 금지)'}${ctx.prev ? `\n직전 라운드 요약: ${ctx.prev}` : ''}\n\n` : '';
   const narrateUser = head + slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
     + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
-  if (ctx.noNarrate) return { events: res.events, order: res.order, judge, narration: templateNarration(names, res.events, ''), usedAi: 'skip', provider, quotaBlocked };
+  if (ctx.noNarrate) return { events: res.events, order: res.order, judge, narration: templateNarration(names, res.events, ''), usedAi: 'skip', provider, quotaBlocked, scene: '' };
   const r2 = await safeAi(env, ip, SYS_NARRATE, narrateUser, 0.9);
-  if (r2.ok) { provider = provider || r2.provider; if (r2.parsed?.narration) { narration = safeHtml(r2.parsed.narration); usedAi = true; } }
+  let scene = '';
+  if (r2.ok) { provider = provider || r2.provider; if (r2.parsed?.narration) { narration = safeHtml(r2.parsed.narration); usedAi = true; } scene = cleanScene(r2.parsed?.scene); }
   else quotaBlocked = quotaBlocked || r2.reason;
   // 서술을 못 얻었으면 클라이언트 로컬 AI 가 이어받을 수 있게 프롬프트를 남긴다 (서술이 채워지면 제거)
-  return { events: res.events, order: res.order, judge, narration, usedAi, provider, quotaBlocked, narrateUser: usedAi ? undefined : narrateUser };
+  return { events: res.events, order: res.order, judge, narration, usedAi, provider, quotaBlocked, scene, narrateUser: usedAi ? undefined : narrateUser };
 }
 // 클라이언트 로컬 AI 서술을 로그에 채움 (서버 서술이 없던 항목만, 먼저 온 것이 이김)
 async function fillNarration(entry, narration, env) {
@@ -1737,7 +1812,7 @@ async function battleTurn(id, body, env, ip) {
   const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '', noNarrate: st.mode === 'story' && !st.boss });   // 스토리 잡몹 전투는 서술 AI 생략 (챕터당 호출 예산)
   delete actMe.local;
   const plaus = await applyPlaus(env, { 1: st.me }, { 1: actMe }, t.judge, [1]);
-  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, plaus });
+  st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, plaus, scene: t.scene || undefined });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
@@ -1906,7 +1981,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
     const t = await runRound(env, payers.length ? payers : ip, s.p, s.moves, { round: s.round, prev: prevLog ? factsText(nm, prevLog.events).replace(/\n/g, ' / ') : '' });
     const acts = {}; for (const k in s.moves) { const { local, ...a } = s.moves[k]; acts[k] = a; }
     const plaus = await applyPlaus(env, s.p, acts, t.judge, Object.keys(acts).map(Number));
-    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, resolver: slot, plaus });
+    s.log.push({ round: s.round, acts, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, scene: t.scene || undefined, narrateUser: t.narrateUser, resolver: slot, plaus });
     if (s.log.length > 40) s.log.shift();
     quotaBlocked = t.quotaBlocked;
   }
