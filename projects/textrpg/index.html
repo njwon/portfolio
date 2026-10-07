@@ -298,7 +298,7 @@
                 <summary>심사는 어떻게 하나요?</summary>
                 <p class="hint">AI 심사관이 설정을 읽어 성향·일관성·<b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화)을 매기고, 서버가 등급에 따라 능력치를 정합니다. "뭐든 다 한다" 같은 막연한 설정은 개연성이 낮아 기술이 자주 빗나갑니다. 성적·혐오·자해·실존 인물 비방 등 이용 정책에 어긋나는 설정·선언은 심사 전에 걸러집니다.</p>
             </details>
-            <details class="more"><summary>순위표 보기</summary><div class="lb" data-lb></div></details>
+            <details class="more" open><summary>순위표</summary><div class="lb" data-lb></div></details>
         </section>
 
         <!-- 2. 홈: 요약 카드 + 탭 -->
@@ -391,6 +391,7 @@
             <p class="status" id="bStatus" role="status"></p>
             <div class="result" id="bResult" role="status" style="display:none"></div>
             <div class="btn-row" id="bEnd" style="display:none"><button id="btnBattleBack">돌아가기</button></div>
+            <div class="lb" data-lb id="bLb" style="display:none"></div>
         </section>
 
         <!-- 3-1. 꿈 이야기 -->
@@ -443,6 +444,7 @@
             </div>
             <div class="btn-row" id="oBtns"><button id="btnOAttack">공격</button><button id="btnODefend">방어</button><button id="btnOUlt">필살기 <span class="hint" id="oUlt"></span></button><button id="btnOSkip" class="ghost" style="display:none">안 낸 사람 건너뛰기</button><button id="btnOLeave" class="ghost">나가기</button></div>
             <div class="result" id="oResult" role="status" style="display:none"></div>
+            <details class="more"><summary>순위표</summary><div class="lb" data-lb></div></details>
         </section>
     </div>
 
@@ -477,6 +479,16 @@
         <fieldset><legend>글자 크기</legend>
             <label><input type="radio" name="size" value="m"> 보통</label>
             <label><input type="radio" name="size" value="l"> 크게</label>
+        </fieldset>
+        <fieldset id="acctBox" hidden><legend>계정</legend>
+            <p class="hint" style="margin:0 0 6px">로그인한 계정: <b id="acctName"></b></p>
+            <details class="more"><summary>계정 탈퇴</summary>
+                <p class="hint">계정 정보와 이 계정에 연결된 캐릭터 <b id="acctCount">0</b>개, 꿈 이야기, 전투·자동 생사결 기록, 순위표 기록이 서버에서 <b>영구히</b> 지워집니다. 되돌릴 수 없습니다. 로그인하지 않고 만든 이 기기의 손님 캐릭터는 남습니다.</p>
+                <label for="delConfirm" style="display:block;margin:6px 0">확인을 위해 <b>탈퇴</b>라고 입력하세요</label>
+                <input type="text" id="delConfirm" autocomplete="off">
+                <button type="button" id="btnDeleteAcct" class="ghost danger full" style="margin-top:8px" disabled>계정과 캐릭터 영구 삭제</button>
+                <p class="hint" id="delStatus" role="status"></p>
+            </details>
         </fieldset>
         <p class="hint">설정은 이 브라우저에 저장됩니다.</p>
     </dialog>
@@ -1048,7 +1060,7 @@ const Snd = (() => {
     });
     function enterBattle(b) {
         battle = b; busy = false; saveSess({ battle: b.id });
-        $('bLog').innerHTML = ''; $('bAction').value = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
+        $('bLog').innerHTML = ''; $('bLb').style.display = 'none'; $('bAction').value = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
         if (battle.intro) logLine($('bLog'), `<span class="st-scene">${esc(battle.intro)}</span>`);
         logLine($('bLog'), `<b>${esc(battle.foe.char.name)}</b>(${esc(battle.foe.char.fiction)})이(가) 나타났다!${battle.mode === 'auto' ? ' <span class="hint">— 자동 생사결 참가자의 캐릭터 (AI 조종)</span>' : ''}<br><span class="hint">${esc(battle.foe.char.info)}</span>`);
         for (const l of battle.log) logLine($('bLog'), roundHtml(`턴 ${l.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, l));   // 재접속이면 지난 턴 복원
@@ -1073,6 +1085,7 @@ const Snd = (() => {
         else html = `당신은 쓰러졌다… 꿈에서 깨어납니다.<br><span class="hint">${gUser ? '이 캐릭터는 이 기기에서 내려갑니다. 계정의 다른 캐릭터를 고르거나 새로 만들 수 있습니다.' : '로그인하지 않은 캐릭터는 지면 사라집니다. 돌아가기를 누르면 새 캐릭터를 만듭니다.'}</span>`;
         $('bResult').innerHTML = html;
         $('btnBattleBack').textContent = b.mode === 'story' && !b.deleted ? '꿈 이야기로' : '돌아가기';
+        $('bLb').style.display = '';
         $('bEnd').style.display = '';
     }
     async function turn(type) {
@@ -1303,15 +1316,16 @@ const Snd = (() => {
         saveSess(null); return false;
     }
 
-    // ── 순위표 (승점 = PvE 승 1 + PvP 승 3). 홈·전투·온라인 화면 아래에 같은 표를 그린다 ──
-    let lbData = null, lbAt = 0;
+    // ── 순위표 (승점 = AI전 1 · 자동 생사결 2 · 온라인 3). 만들기 화면(펼침)·홈 순위 탭·전투 결과·대전 방에 같은 표를 그린다 ──
+    let lbData = null, lbAt = 0, lbErr = false;
     async function refreshLeaderboard(force = false) {
         if (!force && Date.now() - lbAt < 20000) return renderLeaderboard();
-        try { lbData = await api('/api/rpg/leaderboard' + (me ? '?charId=' + me.id : '')); lbAt = Date.now(); } catch {}
+        try { lbData = await api('/api/rpg/leaderboard' + (me ? '?charId=' + me.id : '')); lbAt = Date.now(); lbErr = false; } catch { lbErr = true; }
         renderLeaderboard();
     }
     function renderLeaderboard() {
-        const d = lbData; if (!d) return;
+        const d = lbData;
+        if (!d) { if (lbErr) document.querySelectorAll('[data-lb]').forEach(el => setHtml(el, '<h3><span>순위표</span></h3><span class="hint">순위표를 불러오지 못했습니다. 네트워크를 확인하고 잠시 뒤 다시 열어 주세요.</span>')); return; }
         const rows = d.rows.map(r => `<tr${me && r.id === me.id ? ' class="me"' : ''}><td class="n">${r.rank}</td><td class="name"><b>${esc(r.name)}</b>${r.stars ? ` <span class="stars" aria-label="별 표식 ${r.stars}개">${'★'.repeat(r.stars)}</span>` : ''}${r.owner ? ` <span class="hint">${esc(r.owner)}</span>` : ''}</td><td class="hint tier">${esc(r.tier || '')} <span class="fic">${esc(r.fiction || '')}</span></td><td class="n">${r.wins}승 ${r.losses}패</td><td class="n"><b>${r.score}</b></td></tr>`).join('');
         const mineLine = me ? (d.mine && d.mine.score > 0 ? `내 순위 <b>${d.mine.rank}</b>위 / ${d.total}명 · 승점 ${d.mine.score}` : '내 순위 — 첫 승리 후 집계') : '';
         const html = `<h3><span>순위표 <span class="hint">(승점: AI전 승 1 · 자동 생사결 승 2 · 온라인 승 3)</span></span><span class="hint">${mineLine}</span></h3>` + (rows ? `<table><tr><th>#</th><th>캐릭터</th><th>등급</th><th>전적</th><th>승점</th></tr>${rows}</table>` : '<span class="hint">아직 승리한 캐릭터가 없습니다. PvE 승 1점 · PvP 승 3점.</span>');
@@ -1556,6 +1570,21 @@ const Snd = (() => {
     $('vAmb').addEventListener('change', () => { lastAmb = AMB_OF[curScreen()]; Snd.ambient(sndCfg.amb > 0 ? lastAmb : null); });
     $('cueOnly').addEventListener('change', e => { sndCfg.cueOnly = e.target.checked; Snd.setCueOnly(sndCfg.cueOnly); saveSnd(); });
 
+    // ── 계정 탈퇴 (설정 창): '탈퇴'를 직접 입력해야 버튼이 켜진다 ──
+    $('delConfirm').addEventListener('input', e => { $('btnDeleteAcct').disabled = e.target.value.trim() !== '탈퇴'; });
+    $('btnDeleteAcct').addEventListener('click', async () => {
+        if (!gUser || $('delConfirm').value.trim() !== '탈퇴') return;
+        if (!(await dropPlay())) return;
+        $('btnDeleteAcct').disabled = true; $('delStatus').textContent = '지우는 중…';
+        try {
+            const d = await api('/api/rpg/auth/delete', { session: gSession, confirm: '탈퇴' });
+            gSession = null; gUser = null; acctChars = []; lsDel(GSESS); lsDel(ACCT);
+            $('dlgSettings').close();
+            await loadMe(GUEST); renderAccount(); if (me) goHome(); else show('s-create'); refreshLeaderboard(true); refreshQuota();
+            alert(`탈퇴했습니다. 계정과 캐릭터 ${d.deletedChars}개를 지웠습니다.`);
+        } catch (e) { $('delStatus').textContent = errMsg(e); $('btnDeleteAcct').disabled = false; }
+    });
+
     // ── 처음 안내 · 도움말 ───────────────────────────────────────────
     //   첫 방문(캐릭터 없음)에만 저절로 열린다. 5장, 언제든 건너뛰기, Esc 로 닫힘, 닫으면 누르던 버튼으로 포커스가 돌아간다(<dialog> 기본 동작)
     const TUT = 'dreamrpg.tutorial';
@@ -1608,7 +1637,7 @@ const Snd = (() => {
             ['온라인 대전', '사람끼리 2~6명이 싸워요. 이기면 승점 3점을 받지만 능력치는 오르지 않아요.', '', '첫 제출 뒤 60초가 지나면 누구나 \'건너뛰기\'를 누를 수 있고, 건너뛰어진 사람은 자동 방어. 3번 연속이면 기권. 도중에 나가면 기권 패배. 마지막 라운드에 모두 쓰러지면 무승부(그 전에 쓰러졌거나 기권한 사람은 패배). 랜덤 대전은 2분 안에 만들어진 방끼리만 짝지어짐. 방은 3시간 동안 아무 일이 없으면 사라짐.'],
             ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 성장 탭의 꿈 시장에서 그 전투에서만 효과가 있는 물건, 꾸미기, 보험을 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 600. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
-            ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
+            ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
             ['오늘 무료 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
         ]],
     ];
@@ -1617,6 +1646,8 @@ const Snd = (() => {
     $('tierOdds').innerHTML = tierOddsHtml();
     $('btnHelp').addEventListener('click', () => { $('tierTable').innerHTML = tierTableHtml(me?.stats?.tier); $('dlgHelp').showModal(); });   // 내 등급 줄을 강조
     $('btnSettings').addEventListener('click', () => {
+        $('acctBox').hidden = !gUser; if (gUser) { $('acctName').textContent = gUser.name || gUser.email || ''; $('acctCount').textContent = acctChars.length; }
+        $('delConfirm').value = ''; $('btnDeleteAcct').disabled = true; $('delStatus').textContent = '';
         $('sndOn').checked = sndCfg.on; $('vSfx').value = sndCfg.sfx; $('vAmb').value = sndCfg.amb; $('cueOnly').checked = sndCfg.cueOnly;
         document.querySelectorAll('#dlgSettings input[name="fx"]').forEach(r => r.checked = r.value === document.documentElement.dataset.fx);
         document.querySelectorAll('#dlgSettings input[name="size"]').forEach(r => r.checked = r.value === (document.documentElement.dataset.size || 'm'));

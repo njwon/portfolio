@@ -18,6 +18,7 @@
  *   POST /api/rpg/auth/google                    { credential, charId?, token? } → Google ID 토큰 검증 → { session, user, chars }  (캐릭터를 계정에 연결)
  *   GET  /api/rpg/me?session=                    → { user, chars }   (다른 기기에서 캐릭터 복구)
  *   POST /api/rpg/auth/logout                    { session }
+ *   POST /api/rpg/auth/delete                    { session, confirm: '탈퇴' }  (계정 탈퇴: 계정·계정 캐릭터·기록 전부 삭제)
  *   POST /api/rpg/chars/:id/link                 { token, session }  (기존 캐릭터를 로그인 계정에 연결)
  *   POST /api/rpg/chars/:id/delete               { token, session }  (계정 캐릭터 삭제)
  *   GET  /api/rpg/prompts                        → 클라이언트 로컬 AI 가 쓸 시스템 프롬프트 (서버와 동일)
@@ -156,6 +157,7 @@ export async function handleRpg(request, env, path) {
   if (path === '/api/rpg/auth/google' && m === 'POST') return authGoogle(body, env);
   if (path === '/api/rpg/auth/logout' && m === 'POST') { await env.DB.prepare('DELETE FROM rpg_sessions WHERE token = ?').bind(String(body.session || '')).run(); return json({ ok: true }); }
   if (path === '/api/rpg/me' && m === 'GET') return me(env, url.searchParams.get('session'));
+  if (path === '/api/rpg/auth/delete' && m === 'POST') return deleteAccount(body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/link$/)) && m === 'POST') return linkChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/delete$/)) && m === 'POST') return deleteChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/auto$/)) && m === 'POST') return setAuto(mm[1], body, env);
@@ -457,6 +459,28 @@ async function deleteChar(id, body, env) {
   if (row?.user_sub !== sub) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ?').bind(id).run(); lbCache.at = 0;
   return json({ ok: true });
+}
+// 계정 탈퇴: 본인 세션 + 확인 문구('탈퇴')가 있어야. 계정 정보·세션·계정 캐릭터와 그 꿈 이야기·전투·자동 생사결 기록·한도 버킷을 모두 지운다
+//   (진행 중인 대전 방의 사본은 방 만료(3시간) 때 함께 사라진다. 손님 캐릭터는 계정과 무관해서 남는다)
+async function deleteAccount(body, env) {
+  const sub = await sessionUser(env, body.session);
+  if (!sub) return json({ error: 'forbidden' }, 403);
+  if (body.confirm !== '탈퇴') return json({ error: 'bad_request' }, 400);
+  await ensureStoryTable(env);
+  const ids = ((await env.DB.prepare('SELECT id FROM rpg_chars WHERE user_sub = ?').bind(sub).all())?.results || []).map(r => r.id);
+  const stmts = [];
+  for (const id of ids) stmts.push(
+    env.DB.prepare('DELETE FROM rpg_battles WHERE char_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM rpg_story WHERE char_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM rpg_auto_log WHERE a_id = ? OR b_id = ?').bind(id, id));
+  stmts.push(
+    env.DB.prepare('DELETE FROM rpg_chars WHERE user_sub = ?').bind(sub),
+    env.DB.prepare('DELETE FROM rpg_sessions WHERE sub = ?').bind(sub),
+    env.DB.prepare('DELETE FROM rpg_ip_bucket WHERE ip = ?').bind('acct:' + sub),
+    env.DB.prepare('DELETE FROM rpg_users WHERE sub = ?').bind(sub));
+  await env.DB.batch(stmts);
+  lbCache.at = 0;
+  return json({ ok: true, deletedChars: ids.length });
 }
 async function me(env, session) {
   const sub = await sessionUser(env, session);
