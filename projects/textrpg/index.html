@@ -268,7 +268,7 @@
         <!-- 무료 한도: 한 줄 요약 + 자세히 (서버 값을 그대로 표시, 0이면 모든 AI 버튼 잠금) -->
         <div class="quota" id="quota">
             <div class="row">
-                <span>오늘 무료 몽상</span>
+                <span>오늘 몽상</span>
                 <div class="bar" aria-hidden="true"><i id="quotaBar"></i></div>
                 <span id="quotaShort">확인 중…</span>
                 <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div></details>
@@ -414,7 +414,7 @@
         <!-- 4. 온라인 대전 로비 -->
         <section class="screen" id="s-lobby" aria-labelledby="h-lobby">
             <h2 id="h-lobby" tabindex="-1">온라인 대전 <span class="hint">(2~6명)</span></h2>
-            <div class="coach" data-coach="lobby" hidden><p><b>랜덤 대전</b>은 지금 기다리는 사람과 바로 1:1로 붙습니다. 친구와 하려면 <b>방 만들기</b>로 6자리 코드를 받아 알려 주세요. 라운드마다 무료 몽상 1회가 듭니다.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
+            <div class="coach" data-coach="lobby" hidden><p><b>랜덤 대전</b>은 지금 기다리는 사람과 바로 1:1로 붙습니다. 친구와 하려면 <b>방 만들기</b>로 6자리 코드를 받아 알려 주세요. 라운드마다 몽상 1회가 듭니다.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
             <div class="btn-row"><button id="btnMatch">랜덤 대전 (1:1)</button><button id="btnRoomCreate" class="ghost">방 만들기 (2~6명)</button></div>
             <div class="div-group" style="margin-top:16px">
                 <label for="roomCodeInput">받은 코드로 참가</label>
@@ -454,7 +454,7 @@
         <div class="tut-step" hidden><h2 id="tut-h1">① 캐릭터 만들기</h2><p>이름과 200자 이내의 설정을 씁니다. 심사관이 설정을 읽고 <b>위력 등급</b>(평범 → 숙련 → 초인 → 전설 → 신화 → ???)과 <b>개연성</b>을 매깁니다.</p><p class="eg">좋은 예) 대장간 집 딸. 망치를 다뤄 힘이 세지만 발이 느리다. 불 앞에서는 기운이 난다.</p><p>할 수 있는 것과 <b>못 하는 것</b>을 같이 쓸수록 개연성이 높아 기술이 잘 맞습니다. "뭐든 다 한다"는 오히려 불리해요.</p></div>
         <div class="tut-step" hidden><h2 id="tut-h2">② 전투: 선언 → 판정 → 주사위</h2><ol><li>이번 턴에 할 행동을 한 줄로 씁니다 (비우면 기본 공격).</li><li><b>공격 · 방어 · 필살기</b> 중 하나를 누릅니다.</li><li>심사관이 <b>적합도</b>(설정에 맞는가)와 <b>난이도</b>를 매깁니다.</li><li>주사위로 명중·피해가 정해지고, 게임 마스터가 서술합니다.</li></ol><p class="hint">방어는 피해를 절반으로 줄이고 필살기 게이지를 2칸 채웁니다. 게이지 3칸이면 필살기! AI 상대에게 <b>지면 캐릭터가 사라지니</b>(로그인한 계정 캐릭터는 남음) 위험하면 <b>도망</b>을 고려하세요.</p></div>
         <div class="tut-step" hidden><h2 id="tut-h3">③ 성장</h2><p>이기면 HP·ATK 가 오르고, 가끔 방어·속도·명중·회피도 오릅니다. 등급마다 성장 상한이 있어서, HP·ATK 가 상한에 닿으면 <b>환생</b>으로 다음 등급에 올라갈 수 있습니다.</p><p>100승마다 한 번 <b>설정 보강</b>으로 설정에 문장을 덧붙여 개연성을 다시 심사받을 수 있습니다. 이런 기능은 홈의 <b>성장</b> 탭에 모여 있어요.</p></div>
-        <div class="tut-step" hidden><h2 id="tut-h4">④ 함께 하기</h2><ul><li><b>온라인 대전</b> — 사람끼리 2~6명. 승점 3점.</li><li><b>자동 생사결</b> — 참가해 두면 접속하지 않아도 매시간 자동으로 싸웁니다.</li><li><b>꿈 이야기</b> — 내 설정으로 지어지는 7장면짜리 꿈. 져도 캐릭터는 남아요.</li><li><b>Google 로그인</b> — 캐릭터를 계정에 저장해 다른 기기에서도 이어 합니다.</li></ul><p class="hint">AI 는 하루 무료 한도(위의 '오늘 무료 몽상')가 있습니다. 다 쓰면 판정은 계속되지만 서술이 빠집니다.</p></div>
+        <div class="tut-step" hidden><h2 id="tut-h4">④ 함께 하기</h2><ul><li><b>온라인 대전</b> — 사람끼리 2~6명. 승점 3점.</li><li><b>자동 생사결</b> — 참가해 두면 접속하지 않아도 매시간 자동으로 싸웁니다.</li><li><b>꿈 이야기</b> — 내 설정으로 지어지는 7장면짜리 꿈. 져도 캐릭터는 남아요.</li><li><b>Google 로그인</b> — 캐릭터를 계정에 저장해 다른 기기에서도 이어 합니다.</li></ul><p class="hint">AI 는 하루 무료 한도(위의 '오늘 몽상')가 있습니다. 다 쓰면 판정은 계속되지만 서술이 빠집니다.</p></div>
         <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></div>
         <p class="sr-only" id="tutCount" aria-live="polite"></p>
         <div class="dlg-foot"><button type="button" class="mini ghost" id="tutSkip">건너뛰기</button><span><button type="button" class="ghost" id="tutPrev" disabled>이전</button><button type="button" id="tutNext">다음</button></span></div>
@@ -875,7 +875,9 @@ const Snd = (() => {
     function goHome() {
         const s = me.stats;
         setHtml($('homeSummary'), `<h3>${esc(me.name)} <span class="hint">(${esc(me.fiction)})</span></h3>
-            <div class="meta">위력 <b>${esc(s.tier || '')}</b> · ${isSecret(me) ? 'HP ??? · ATK ??? · 개연성 ???' : `HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}%`} · 전적 ${me.wins}승 ${me.losses}패${me.draws ? ` ${me.draws}무` : ''}${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''} · 꿈 조각 <b>${me.dream || 0}</b></div>`);
+            <div class="meta">위력 <b>${esc(s.tier || '')}</b> · ${isSecret(me) ? 'HP ??? · ATK ??? · 개연성 ???' : `HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}%`} · 전적 ${me.wins}승 ${me.losses}패${me.draws ? ` ${me.draws}무` : ''}${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''} · 꿈 조각 <b>${me.dream || 0}</b></div>
+            <div class="hpbar" aria-hidden="true" style="margin-top:8px"><i style="width:${tierProgress(me).pct}%;background:#fae069"></i></div>
+            <div class="hint">${tierProgress(me).text}</div>`);
         setHtml($('homeCard'), charDetailHtml(me));
         setHtml($('growCard'), growHtml(me));
         // 환생: HP·ATK 가 등급 상한에 닿았고 ??? 가 아니면 버튼 표시 (신화 → ??? 는 1000승 이상)
@@ -891,12 +893,24 @@ const Snd = (() => {
     const capsOf = c => c.caps || TIER_CAPS[c.stats.tier] || TIER_CAPS['신화'];
     const rebirthReady = c => c.rebirthReady ?? (c.stats.hp >= capsOf(c).hp && c.stats.atk >= capsOf(c).atk);
     const nextTier = t => TIER_ORDER[Math.min(TIER_ORDER.length - 1, TIER_ORDER.indexOf(t) + 1)];
+    // 다음 등급까지 진행도: 환생엔 HP·ATK 둘 다 상한이 필요 → 두 진행도(각 최대 100%)의 평균. ??? 도 이 % 는 보인다
+    function tierProgress(c) {
+        const cap = capsOf(c), s = c.stats, pct = Math.floor((Math.min(1, s.hp / cap.hp) + Math.min(1, s.atk / cap.atk)) / 2 * 100);
+        const top = s.tier === '???', nx = top ? null : nextTier(s.tier);
+        const winsLeft = s.tier === '신화' ? Math.max(0, 1000 - (c.wins || 0)) : 0;
+        const text = top ? (pct >= 100 ? '상한에 닿음' : `상한까지 ${100 - pct}% 남음`)
+            : pct >= 100 ? (winsLeft ? `${nx} 환생까지 ${winsLeft}승 남음` : `${nx}(으)로 환생 가능`)
+            : `다음 등급(${nx})까지 ${100 - pct}% 남음${winsLeft ? ` · 그리고 ${winsLeft}승` : ''}`;
+        return { pct, text };
+    }
     // 성장 탭: 상한까지 얼마나 왔는지 막대로
     function growHtml(c) {
         const cap = capsOf(c), s = c.stats, pct = k => Math.min(100, Math.round(s[k] / cap[k] * 100));
         const rows = STATS.filter(([k]) => k in cap).map(([k, l]) => `<span>${l}${k === 'hp' || k === 'atk' ? '<span aria-hidden="true">*</span>' : ''}</span><div class="hpbar${pct(k) >= 100 ? ' max' : ''}" aria-hidden="true"><i style="width:${pct(k)}%"></i></div><span class="n">${isSecret(c) ? '???/???' : `${s[k]}/${cap[k]}`}${pct(k) >= 100 ? ' 최대' : ''}</span>`).join('');
         const ready = rebirthReady(c), last = s.tier === '???';
+        const tp = tierProgress(c);
         return `<h3>성장 <span class="hint">(${esc(s.tier || '')} 등급의 상한까지)</span></h3>
+            <p style="margin:0 0 6px"><b>${tp.text}</b> <span class="hint">(진행 ${tp.pct}%)</span></p>
             <p class="meta" style="margin:0">이길 때마다 HP·ATK 는 꼭 오르고, 방어·속도·명중·회피는 가끔 오릅니다. <b>* HP와 ATK</b>가 둘 다 최대에 닿으면 다음 등급으로 <b>환생</b>할 수 있습니다.</p>
             <div class="grow">${rows}</div>
             ${last ? '' : nextTier(s.tier) === '???' ? `<p class="hint" style="margin:6px 0 0">다음 등급(???) 상한: ???</p>` : `<p class="hint" style="margin:6px 0 0">다음 등급(${nextTier(s.tier)}) 상한: HP ${TIER_CAPS[nextTier(s.tier)].hp} · ATK ${TIER_CAPS[nextTier(s.tier)].atk} · 개연성 ${PLAUS_CAP[nextTier(s.tier)]}%</p>`}
@@ -1661,7 +1675,7 @@ const Snd = (() => {
             ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 성장 탭의 꿈 시장에서 그 전투에서만 효과가 있는 물건, 꾸미기, 보험을 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
             ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
-            ['오늘 무료 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
+            ['오늘 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
         ]],
     ];
     $('glossary').innerHTML = GLOSSARY.map(([group, items]) => `<h4>${esc(group)}</h4><dl>${items.map(([t, easy, eg, calc]) =>
