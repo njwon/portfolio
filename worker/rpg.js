@@ -676,8 +676,11 @@ const POWER_TIER = p => p <= 30 ? '평범' : p <= 50 ? '숙련' : p <= 70 ? '초
 const TIERS = [['평범', 0, 30], ['숙련', 31, 50], ['초인', 51, 70], ['전설', 71, 85], ['신화', 86, 97], ['???', 98, 100]];
 // 등급 주사위 가중치: 위로 올라가기 ×0.2, 아래로 내려가기 ×1.8 (2026-10 하향: 첫 심사가 후하다는 피드백). ??? 는 거기에 ×0.03 더 — 생성 때 1% 미만
 const TIER_UP = 0.2, TIER_DOWN = 1.8, SECRET_W = 0.03;
-function rollTier(P) {
-  const w = TIERS.map(([n, lo, hi]) => { const c = (lo + hi) / 2, base = Math.exp(-0.5 * Math.pow((c - P) / 14, 2)); return base * (lo > P ? TIER_UP : hi < P ? TIER_DOWN : 1) * (n === '???' ? SECRET_W : 1); });
+// 생성 전용 희귀 배율: 초인·전설·신화는 심사 위력이 아주 높을 때만 아주 낮은 확률로, ??? 는 생성 불가(환생으로만)
+//   AI 심사 95 → 초인 20% · 전설 3% · 신화 0.06% / 심사 50 → 초인 0.1% / 가정 분포 전체 → 초인 0.11% · 전설 0.003% · 신화 <0.001%
+const CREATE_RARITY = { '초인': 0.02, '전설': 0.003, '신화': 0.0005, '???': 0 };
+function rollTier(P, rar = null) {
+  const w = TIERS.map(([n, lo, hi]) => { const c = (lo + hi) / 2, base = Math.exp(-0.5 * Math.pow((c - P) / 14, 2)); return base * (lo > P ? TIER_UP : hi < P ? TIER_DOWN : 1) * (n === '???' ? SECRET_W : 1) * (rar?.[n] ?? 1); });
   const sum = w.reduce((a, b) => a + b, 0), probs = w.map(x => x / sum);
   let r = rnd(), idx = probs.length - 1;
   for (let i = 0; i < probs.length; i++) { r -= probs[i]; if (r <= 0) { idx = i; break; } }
@@ -687,7 +690,7 @@ function rollTier(P) {
   else if (lo > P) power = lo + Math.round(rnd() * (hi - lo) * 0.5);                          // 올라감: 그 등급의 아래쪽 절반
   else power = hi - Math.round(rnd() * (hi - lo) * 0.5);                                      // 내려감: 그 등급의 위쪽 절반
   power = Math.max(lo, Math.min(hi, power));
-  return { judged: P, power, tier: name, table: TIERS.map(([n], i) => ({ tier: n, p: Math.round(probs[i] * 100) })), moved: lo > P ? 'up' : hi < P ? 'down' : 'same' };
+  return { judged: P, power, tier: name, table: TIERS.map(([n], i) => ({ tier: n, p: probs[i] >= 0.01 ? Math.round(probs[i] * 100) : Math.round(probs[i] * 10000) / 100 })), moved: lo > P ? 'up' : hi < P ? 'down' : 'same' };
 }
 function buildStats(alloc, coherence, tier = 1, power = 20, jitter = false) {
   const a = {}; let sum = 0;
@@ -964,8 +967,8 @@ const scoreOf = c => Math.round((c.wins || 0) + (c.pvpWins || 0) * 2);   // 자�
 async function saveChar(env, c) { await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ?').bind(JSON.stringify(c), scoreOf(c), c.name, Date.now(), c.id).run(); lbCache.at = 0; }   // 승점이 바뀌었을 수 있으니 순위표 캐시 비움
 
 // 일관성이 낮으면(막연한 전능·모순) 위력 상한: 50 미만 → 평범까지(30), 70 미만 → 숙련까지(50)
-// 2026-10 밸런스: '낮은 등급에서 시작해 환생으로 키워 가기' — 생성은 평범·숙련만(위력 상한 50). 시뮬레이션(200만 회) 평범 약 66% · 숙련 약 34%
-const JUDGE_SCALE = 0.8, CREATE_MAX = 50, cohCap = coh => coh < 50 ? 30 : coh < 70 ? 50 : 100;
+// 2026-10 밸런스: '낮은 등급에서 시작해 환생으로 키워 가기' — 생성은 거의 평범·숙련(약 66% · 34%), 초인 이상은 CREATE_RARITY 로 아주 드물게
+const JUDGE_SCALE = 0.8, cohCap = coh => coh < 50 ? 30 : coh < 70 ? 50 : 100;
 async function createChar(body, env, ip) {
   const name = clip(body.name, LEN.name), setting = clip(body.setting, LEN.setting);
   if (!name || !setting) return json({ error: 'bad_request' }, 400);
@@ -981,10 +984,10 @@ async function createChar(body, env, ip) {
   // 심사관이 형식을 어기거나 거절해도 플레이어를 막지 않는다: 균등 배분 + 낮은 일관성(불명확한 설정)으로 진행
   if (!parsed || !parsed.alloc) parsed = { concept: parsed?.concept, alloc: null, coherence: 30, ult: parsed?.ult, fallback: true };
   const ult = parsed.ult || {};
-  const luck = rollTier(Math.round(num(parsed.power, 0, 95, 15) * JUDGE_SCALE));   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
+  const luck = rollTier(Math.round(num(parsed.power, 0, 95, 15) * JUDGE_SCALE), CREATE_RARITY);   // AI 심사관이 후한 편이라 서버가 0.8배로 깎는다
   const c = {
     id: uid(), name, info: setting, fiction: clip(parsed.concept, LEN.fiction) || (parsed.fallback ? '정체불명의 몽상가' : '이름 없는 몽상가'), judged: parsed.fallback ? false : judgedBy,
-    stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, CREATE_MAX, cohCap(num(parsed.coherence, 0, 100, 50)), judgedBy === 'local' ? 50 : 100), true),
+    stats: buildStats(parsed.alloc, parsed.coherence, 1, Math.min(luck.power, cohCap(num(parsed.coherence, 0, 100, 50)), judgedBy === 'local' ? 50 : 100), true),
     powerReason: clip(parsed.powerReason, 120), luck, alloc: parsed.alloc || null, rebirths: 0,
     ult: { name: clip(ult.name, LEN.ultName) || '혼신의 일격', effect: clip(ult.effect, LEN.ultEffect) || '온 힘을 담은 한 방', style: ULT_STYLES[ult.style] ? ult.style : 'burst' },
     wins: 0, losses: 0, created: Date.now(),

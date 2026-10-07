@@ -505,7 +505,7 @@
         <h3>등급표</h3>
         <p style="margin:0 0 6px">등급이 높을수록 이길 때 <b>더 많이</b>, 더 <b>높이까지</b> 자랍니다. 대신 도망치기 어렵고 붙잡히면 많이 잃어요.</p>
         <div id="tierTable"></div>
-        <details class="calc"><summary>등급은 어떻게 정해지나요? (등급 주사위 확률)</summary><p style="margin:4px 0">심사관이 매긴 위력 점수를 중심으로 주사위를 굴립니다. 점수가 등급 경계 근처면 위·아래 등급이 나올 수 있는데, 올라가기는 어렵고 내려가기는 쉽습니다. 처음 만들 때는 <b>평범이나 숙련만</b> 나옵니다(심사 점수 0.8배, 위력 상한 50). 그 위 등급은 이겨서 키우고 환생해서 올라가요. 일관성이 50 미만이면 평범까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.</p><div id="tierOdds"></div></details>
+        <details class="calc"><summary>등급은 어떻게 정해지나요? (등급 주사위 확률)</summary><p style="margin:4px 0">심사관이 매긴 위력 점수를 중심으로 주사위를 굴립니다. 점수가 등급 경계 근처면 위·아래 등급이 나올 수 있는데, 올라가기는 어렵고 내려가기는 쉽습니다. 처음 만들 때는 거의 <b>평범이나 숙련</b>이 나옵니다(심사 점수 0.8배). 초인·전설·신화는 심사 위력이 아주 높을 때만 아주 낮은 확률로 나오고, 보통은 이겨서 키우고 환생해서 올라가요. 일관성이 50 미만이면 평범까지, 70 미만이면 숙련까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.</p><div id="tierOdds"></div></details>
         <h3>용어</h3>
         <p class="hint" style="margin:0 0 4px">숫자가 궁금하면 각 항목의 '자세한 계산'을 펼쳐 보세요.</p>
         <div id="glossary"></div>
@@ -815,10 +815,10 @@ const Snd = (() => {
     const powerMult = p => p <= 30 ? 0.6 + p / 30 * 0.4 : p <= 97 ? 1 + Math.pow((p - 30) / 70, 2) * 2 : 3 + (p - 98) * 0.25;
     // 등급 주사위 확률표 (서버 rollTier 와 같은 식: 정규분포 σ14, 위 등급 ×0.35 · 아래 등급 ×1.5)
     function tierOdds(P) {
-        const w = TIER_RANGE.map(([n, lo, hi]) => Math.exp(-0.5 * Math.pow(((lo + hi) / 2 - P) / 14, 2)) * (lo > P ? 0.2 : hi < P ? 1.8 : 1) * (n === '???' ? 0.03 : 1));
+        const RAR = { '초인': 0.02, '전설': 0.003, '신화': 0.0005, '???': 0 };   // 서버 CREATE_RARITY 와 같음 (생성 때만)
+        const w = TIER_RANGE.map(([n, lo, hi]) => Math.exp(-0.5 * Math.pow(((lo + hi) / 2 - P) / 14, 2)) * (lo > P ? 0.2 : hi < P ? 1.8 : 1) * (n === '???' ? 0.03 : 1) * (RAR[n] ?? 1));
         const sum = w.reduce((a, b) => a + b, 0), pr = w.map(x => x / sum * 100);
-        const up = pr.slice(2).reduce((a, b) => a + b, 0); pr[1] += up; for (let i = 2; i < pr.length; i++) pr[i] = 0;   // 생성 위력 상한 50: 초인 이상이 나와도 숙련으로
-        return pr.map(v => v > 0 && v < 1 ? '<1' : Math.round(v));
+        return pr.map(v => v >= 1 ? Math.round(v) : v >= 0.01 ? v.toFixed(2) : v > 0 ? '<0.01' : 0);
     }
     function tierTableHtml(cur) {
         const f = x => (Math.round(x * 100) / 100).toFixed(2).replace(/0$/, '');
@@ -872,7 +872,7 @@ const Snd = (() => {
             <p class="meta" style="margin:0">${esc(c.info)}</p>
             <details class="more" style="margin-top:8px"><summary>심사 기록</summary><div class="meta">
                 ${c.powerReason ? `심사관: ${esc(c.powerReason)}<br>` : ''}
-                ${c.luck?.table ? `등급 주사위 (심사 위력 ${c.luck.judged}): ${c.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(c.luck.tier)}</b>${c.luck.moved === 'up' ? ' ↑ 상승!' : c.luck.moved === 'down' ? ' ↓ 하락' : ''}${c.luck.tier !== s.tier ? ` → 최종 <b>${esc(s.tier)}</b> (처음 만들 때는 숙련까지만 — 그 위는 환생으로)` : ''}<br>` : ''}
+                ${c.luck?.table ? `등급 주사위 (심사 위력 ${c.luck.judged}): ${c.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(c.luck.tier)}</b>${c.luck.moved === 'up' ? ' ↑ 상승!' : c.luck.moved === 'down' ? ' ↓ 하락' : ''}${c.luck.tier !== s.tier ? ` → 최종 <b>${esc(s.tier)}</b> (일관성 50 미만이면 평범까지, 70 미만이면 숙련까지)` : ''}<br>` : ''}
                 일관성 ${sec ? Q : s.coherence} (개연성의 바탕)${c.rebirths ? ` · 환생 ${c.rebirths}회 (+${c.rebirths * 10}%)` : ''}</div></details>`;
     }
     function goHome() {
@@ -1475,7 +1475,10 @@ const Snd = (() => {
         if (!me) return;
         const d = me.dream || 0, bag = me.bag || {};
         $('walletHint').textContent = `꿈 조각 ${d}`;
-        setHtml($('shopList'), SHOP.map(k => {
+        // 가격 낮은 순 (유물은 바꾸기 가격, 별 표식은 다음 단계 가격, 같으면 원래 순서)
+        const curPrice = k => { const pr = ITEM_INFO[k][1]; if (k === 'star') return (me.stars || 0) >= 3 ? Infinity : pr[me.stars || 0]; if (k === 'relic' && me.relic) return 300; return pr; };
+        const order = SHOP.map((k, i) => [k, i]).sort((a, b) => curPrice(a[0]) - curPrice(b[0]) || a[1] - b[1]).map(([k]) => k);
+        setHtml($('shopList'), order.map(k => {
             const [name, price, desc, max] = ITEM_INFO[k];
             let pr = price, full = (bag[k] || 0) >= (max || 5), extra = '';
             if (k === 'star') { const lv = me.stars || 0; full = lv >= 3; pr = full ? 0 : price[lv]; extra = lv ? ` <span class="stars">${'★'.repeat(lv)}</span>` : ''; }
@@ -1650,7 +1653,7 @@ const Snd = (() => {
     //   [용어, 쉬운 설명, 예시(선택), 자세한 계산(선택)]
     const GLOSSARY = [
         ['능력치', [
-            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 그 위에 거의 나오지 않는 ??? 가 있어요. 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'. 처음 만들 때는 평범이나 숙련만 나오고(심사 점수 0.8배, 위력 상한 50), 그 위 등급은 승리와 환생으로 올라갑니다. 일관성이 50 미만이면 평범까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.'],
+            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 그 위에 거의 나오지 않는 ??? 가 있어요. 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'. 처음 만들 때는 거의 평범이나 숙련이 나오고(심사 점수 0.8배), 초인 0.1%·전설·신화는 그보다 훨씬 드물게 심사 위력이 아주 높을 때만 나옵니다. 보통은 승리와 환생으로 올라갑니다. 일관성이 50 미만이면 평범까지, 70 미만이면 숙련까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.'],
             ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 보상 배율(아래 \'승리 보상\'). 상한은 등급마다 달라요: 평범 1500 ~ 신화 6000, ??? 는 ???.'],
             ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 맞으면 10% 확률로 크리티컬(1.5배), 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 보상 배율. 상한: 평범 200 ~ 신화 800, ??? 는 ???.'],
             ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임. 이기면 35% 확률로 +1%. 상한: 평범 20% ~ 신화 60%, ??? 는 ???.'],
