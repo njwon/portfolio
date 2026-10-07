@@ -161,18 +161,29 @@ export async function handleRpg(request, env, path) {
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/auto$/)) && m === 'POST') return setAuto(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/rebirth$/)) && m === 'POST') return rebirthChar(mm[1], body, env);
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/refine$/)) && m === 'POST') return refineChar(mm[1], body, env, who);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/buy$/)) && m === 'POST') return buyItem(mm[1], body, env);
   if (path === '/api/rpg/auto' && m === 'GET') return autoInfo(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
   const qtok = request.headers.get('X-Token') || url.searchParams.get('token');   // 토큰은 헤더로 (쿼리는 로그에 남으므로 호환용)
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})$/)) && m === 'GET') return getChar(mm[1], qtok, env);
+  if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/story(?:\/(prepare|start|act|fight|quit))?$/))) {
+    const [, id, sub] = mm;
+    if (!sub && m === 'GET') return storyInfo(id, qtok, env);
+    if (sub === 'prepare' && m === 'POST') return prepareStory(id, body, env, who);
+    if (sub === 'start' && m === 'POST') return startStory(id, body, env);
+    if (sub === 'act' && m === 'POST') return storyAct(id, body, env, who);
+    if (sub === 'fight' && m === 'POST') return storyFight(id, body, env);
+    if (sub === 'quit' && m === 'POST') return storyQuit(id, body, env);
+  }
   if (path === '/api/rpg/battles' && m === 'POST') return createBattle(body, env);
-  if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave|narrate))?$/))) {
+  if ((mm = path.match(/^\/api\/rpg\/battles\/([\w-]{36})(?:\/(turn|leave|narrate|reroll))?$/))) {
     const [, id, sub] = mm;
     if (!sub && m === 'GET') return getBattle(id, qtok, env);
     if (sub === 'turn' && m === 'POST') return battleTurn(id, body, env, who);
     if (sub === 'leave' && m === 'POST') return leaveBattle(id, body, env);
     if (sub === 'narrate' && m === 'POST') return narrateBattle(id, body, env);
+    if (sub === 'reroll' && m === 'POST') return rerollBattle(id, body, env);
   }
   if (path === '/api/rpg/rooms' && m === 'POST') return createRoom(body, env, false, who);
   if (path === '/api/rpg/match' && m === 'POST') return matchRoom(body, env, who);
@@ -345,7 +356,7 @@ async function recordAutoResult(env, st, c) {
   // 상대(AI 조종)도 전적에 반영 — 이기면 cron 자동 전투와 똑같이 보상도 받는다 (부재 중 성장)
   await updateChar(env, st.foeId, f => {
     if (st.winner === 1) { f.losses++; f.autoLosses = (f.autoLosses || 0) + 1; }
-    else { f.wins++; f.autoWins = (f.autoWins || 0) + 1; f.pvpWins = (f.pvpWins || 0) + 0.5; applyReward(f, rollReward(f, c, 'auto')); }
+    else { f.wins++; f.autoWins = (f.autoWins || 0) + 1; f.pvpWins = (f.pvpWins || 0) + 0.5; applyReward(f, rollReward(f, c, 'auto')); if (dayCount(f, 'cron', 5)) earnDream(f, 3); }
   });
 }
 // cron: 참가자 최대 30명을 섞어 짝지어 최대 40라운드 자동 전투 (템플릿 서술만, AI 호출 없음)
@@ -364,7 +375,7 @@ export async function runAutoBattles(env) {
       if (!winner) continue;
       // 목록을 읽은 뒤 끝난 온라인 전투·방의 결과를 덮어쓰지 않게, 지금 DB 에 있는 JSON 에 델타만 적용 (보너스 능력치도 온라인 승리와 동일)
       await updateChar(env, X.id, c => {
-        if (X === winner) { c.wins++; c.autoWins = (c.autoWins || 0) + 1; c.pvpWins = (c.pvpWins || 0) + 0.5; applyReward(c, rollReward(c, (X === A ? B : A).c, 'auto')); }
+        if (X === winner) { c.wins++; c.autoWins = (c.autoWins || 0) + 1; c.pvpWins = (c.pvpWins || 0) + 0.5; applyReward(c, rollReward(c, (X === A ? B : A).c, 'auto')); if (dayCount(c, 'cron', 5)) earnDream(c, 3); }
         else { c.losses++; c.autoLosses = (c.autoLosses || 0) + 1; }
       });
     }
@@ -381,7 +392,7 @@ let lbCache = { at: 0, rows: [] };
 async function leaderboard(env, charId) {
   if (Date.now() - lbCache.at > 20e3) {
     const r = await env.DB.prepare('SELECT c.id, c.name, c.score, c.json, u.name AS owner FROM rpg_chars c LEFT JOIN rpg_users u ON u.sub = c.user_sub WHERE c.score > 0 ORDER BY c.score DESC, c.created ASC LIMIT 20').all();
-    lbCache = { at: Date.now(), rows: (r?.results || []).map((row, i) => { const c = JSON.parse(row.json); return { rank: i + 1, id: row.id, name: c.name, owner: row.owner || null, score: row.score, tier: c.stats?.tier || null, fiction: c.fiction, wins: c.wins || 0, losses: c.losses || 0, pvpWins: c.pvpWins || 0 }; }) };
+    lbCache = { at: Date.now(), rows: (r?.results || []).map((row, i) => { const c = JSON.parse(row.json); return { rank: i + 1, id: row.id, name: c.name, owner: row.owner || null, score: row.score, tier: c.stats?.tier || null, fiction: c.fiction, wins: c.wins || 0, losses: c.losses || 0, pvpWins: c.pvpWins || 0, stars: c.stars || 0 }; }) };
   }
   let mine = null;
   if (charId) {
@@ -662,6 +673,7 @@ function resolveRound(players, acts, judge = {}) {
     const act = acts[k] || { type: 'attack' }, j = judge[k] || {};
     const fit = num(j.fit, 0, 1, 0.5), diff = DIFF_MOD[j.difficulty] ?? 0, allowed = j.allowed !== false;
     if (act.type === 'defend') { me.gauge = Math.min(ULT_COST, me.gauge + 2); events.push({ who: k, type: 'defend' }); continue; }
+    if (act.type === 'item') { events.push({ who: k, type: 'item', heal: act.heal || 0, item: act.item || '꿈결 붕대' }); continue; }   // 회복은 호출 전에 적용됨
     const others = aliveSlots(players).filter(x => x !== k);
     if (!others.length) break;
     const tk = others.includes(Number(act.target)) ? Number(act.target) : others[Math.floor(rnd() * others.length)];
@@ -695,19 +707,20 @@ function factsText(names, events) {
     const n = names[e.who];
     if (e.type === 'defend') return `${n}: 방어 태세 (받는 피해 절반, 게이지 +2)`;
     if (e.type === 'ult_fail') return `${n}: 필살기를 쓰려 했으나 게이지 부족 → 기본 공격`;
+    if (e.type === 'item') return `${n}: ${e.item} 사용 → HP ${e.heal} 회복`;
     const k = e.type === 'ult' ? '필살기' : '공격', d = DIFF_KO[e.difficulty] || '보통';
     return e.hit ? `${n} → ${names[e.target]}: ${k} 명중(${e.chance}%, 난이도 ${d})${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (상대 방어로 절반)' : ''} → 피해 ${e.dmg}${e.killed ? ' — ' + names[e.target] + ' 쓰러짐' : ''}` : `${n} → ${names[e.target]}: ${k} 실패(명중률 ${e.chance}%, 난이도 ${d})`;
   }).join('\n');
 }
-function templateNarration(names, events) {
-  return factsText(names, events).replace(/\n/g, '<br>') + '<br>(게임 마스터의 목소리가 닿지 않아 사실만 기록합니다)';
+function templateNarration(names, events, note = '(게임 마스터의 목소리가 닿지 않아 사실만 기록합니다)') {
+  return factsText(names, events).replace(/\n/g, '<br>') + (note ? '<br>' + note : '');
 }
 
 // 한 라운드 = 심사관(AI, 짧음) → 규칙 엔진 → 게임 마스터 서술(AI). 어느 AI 호출이든 실패/한도면 그 단계만 기본값으로 진행.
 const actLabel = t => t === 'defend' ? '방어' : t === 'ult' ? '필살기' : '공격';
 function charLine(k, p, act, names) {
   const tgt = act.target && names[act.target] ? ` → 대상: ${names[act.target]}` : '';
-  return `[p${k}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info} / 필살기 ${p.char.ult?.name || '혼신의 일격'}: ${p.char.ult?.effect || '온 힘을 담은 한 방'}
+  return `[p${k}] ${p.char.name} (${p.char.fiction}) — 설정: ${p.char.info}${p.char.relic ? ` / 소지품: ${p.char.relic} (평범한 물건, 능력을 주지 않음)` : ''} / 필살기 ${p.char.ult?.name || '혼신의 일격'}: ${p.char.ult?.effect || '온 힘을 담은 한 방'}
 행동: ${actLabel(act.type)}${tgt} / 선언: "${act.text || '기본 공격'}"`;
 }
 // ctx: { round, prev } — 라운드 번호와 직전 라운드 요약을 GM 에게 넘겨 "첫 라운드"라고 반복하지 않게 한다
@@ -736,6 +749,7 @@ async function runRound(env, ip, players, acts, ctx = {}) {
   const head = ctx.round ? `현재 ${ctx.round}라운드${ctx.round === 1 ? ' (전투 시작)' : ' (전투는 이미 진행 중 — "첫 라운드"·"전투가 시작되자" 같은 표현 금지)'}${ctx.prev ? `\n직전 라운드 요약: ${ctx.prev}` : ''}\n\n` : '';
   const narrateUser = head + slots.map(k => `${charLine(k, players[k], acts[k] || { type: 'attack' }, names)}\n심사관 판정: ${judge[k].allowed ? '' : '불허 — '}${judge[k].verdict || '기본 공격'}`).join('\n\n')
     + `\n\n행동 순서: ${res.order.map(k => names[k]).join(' → ')}\n[확정된 결과]\n${factsText(names, res.events)}\n남은 HP: ${slots.map(k => `${names[k]} ${players[k].hp}/${players[k].char.stats.hp}`).join(', ')}`;
+  if (ctx.noNarrate) return { events: res.events, order: res.order, judge, narration: templateNarration(names, res.events, ''), usedAi: 'skip', provider, quotaBlocked };
   const r2 = await safeAi(env, ip, SYS_NARRATE, narrateUser, 0.9);
   if (r2.ok) { provider = provider || r2.provider; if (r2.parsed?.narration) { narration = safeHtml(r2.parsed.narration); usedAi = true; } }
   else quotaBlocked = quotaBlocked || r2.reason;
@@ -826,7 +840,8 @@ async function refineChar(id, body, env, ip) {
   const text = clip(body.text, 100);
   if (!text) return json({ error: 'bad_request' }, 400);
   const used = c.refineCount || 0;
-  if ((c.wins || 0) < used * 5) return json({ error: 'refine_cooldown', needWins: used * 5 }, 409);
+  const useKey = (c.wins || 0) < used * 5 && !!body.useKey && (c.bag?.key || 0) > 0 && c.keyDay !== today();   // 설정 보강 열쇠: 5승 대기를 바로 풂 (하루 1회)
+  if ((c.wins || 0) < used * 5 && !useKey) return json({ error: 'refine_cooldown', needWins: used * 5 }, 409);
   const mod = await moderate(env, text);
   if (!mod.ok) return json({ error: 'policy', reason: mod.reason, label: mod.label }, 400);
   const info = clip(c.info + ' ' + text, 400);
@@ -835,7 +850,7 @@ async function refineChar(id, body, env, ip) {
   const coh = Math.round(num(r.parsed?.coherence, 0, 100, c.stats.coherence)), reason = cleanVerdict(r.parsed?.reason).slice(0, 200);
   const before = c.stats.stability;
   // 설정 재심사는 생성 때처럼 등급 상한 없이(하한만)
-  const out = await updateChar(env, c.id, x => { x.info = info; x.stats.coherence = coh; x.stats.stability = Math.round(Math.min(1, Math.max(plausFloor(x), 0.55 + coh / 100 * 0.45)) * 1000) / 1000; x.refineCount = (x.refineCount || 0) + 1; x.refineLog = [...(x.refineLog || []), { text, coherence: coh, reason, at: Date.now() }].slice(-10); });
+  const out = await updateChar(env, c.id, x => { x.info = info; x.stats.coherence = coh; x.stats.stability = Math.round(Math.min(1, Math.max(plausFloor(x), 0.55 + coh / 100 * 0.45)) * 1000) / 1000; x.refineCount = (x.refineCount || 0) + 1; if (useKey) { x.bag.key = Math.max(0, (x.bag?.key || 0) - 1); x.keyDay = today(); } x.refineLog = [...(x.refineLog || []), { text, coherence: coh, reason, at: Date.now() }].slice(-10); });
   return json({ ok: true, char: publicChar(out), coherence: coh, reason, before, after: out.stats.stability, quota: pubQuota(await quota(env, ip)) });
 }
 
@@ -873,7 +888,7 @@ async function rebirthChar(id, body, env) {
   fresh.stability = Math.round(Math.min(PLAUS_CAP[name], Math.max(0.55 + n * 0.03, Math.max(fresh.stability, c.stats.stability || 0))) * 1000) / 1000;   // 개연성은 유지하되 환생 횟수만큼 하한 상승
   for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
   const prevTier = c.stats.tier;
-  await updateChar(env, c.id, x => { x.stats = fresh; x.alloc = alloc; x.rebirths = n; x.rebirthReady = false; x.rebirthLog = [...(x.rebirthLog || []), { from: prevTier, to: name, at: Date.now() }].slice(-10); });
+  await updateChar(env, c.id, x => { earnDream(x, 50); x.stats = fresh; x.alloc = alloc; x.rebirths = n; x.rebirthReady = false; x.rebirthLog = [...(x.rebirthLog || []), { from: prevTier, to: name, at: Date.now() }].slice(-10); });
   const out = await loadChar(env, id, body.token);
   return json({ ok: true, char: publicChar(out), from: prevTier, to: name, bonus: Math.round((bonus - 1) * 100) });
 }
@@ -925,35 +940,445 @@ async function getChar(id, token, env) {
   return c ? json({ char: publicChar(c) }) : json({ error: 'forbidden' }, 403);
 }
 
+// ─── 꿈 조각(재화) · 꿈 시장(상점) ─────────────────────────────────────
+// 영구 능력치는 팔지 않는다(등급 상한·PvP 공정성). 전부 '그 전투에서만' 효과 + 꾸미기 + 도전. 온라인 대전에는 가방을 못 가져간다
+const DREAM_MAX = 600, STACK = 5, BAG_SLOTS = 3, BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'];
+const ITEMS = {
+  tea: { name: '깨어남의 차', price: 25, kind: 'bag', desc: '필살기 게이지 1칸 찬 채로 전투 시작' },
+  sight: { name: '또렷한 시선', price: 35, kind: 'bag', desc: '이번 전투 명중 +8 (등급 상한까지)' },
+  guard: { name: '단단한 꿈', price: 35, kind: 'bag', desc: '이번 전투 방어 +8%p (등급 상한까지)' },
+  bandage: { name: '꿈결 붕대', price: 40, kind: 'bag', desc: '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)' },
+  smoke: { name: '연막 구름', price: 25, kind: 'bag', desc: '도망 성공 확률 +25%p, 붙잡혀도 손실 절반' },
+  map: { name: '꿈길 지도', price: 20, kind: 'use', desc: 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기' },
+  nightmare: { name: '악몽 초대장', price: 40, kind: 'use', desc: '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음' },
+  insurance: { name: '깨지 않는 꿈', price: 60, kind: 'use', max: 1, desc: 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)' },
+  key: { name: '설정 보강 열쇠', price: 100, kind: 'use', desc: '설정 보강의 5승 대기를 바로 풂 (하루 1회)' },
+  relic: { name: '꿈의 유물', price: 120, kind: 'relic', desc: '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 60)' },
+  star: { name: '별 표식', price: [300, 600, 1000], kind: 'star', desc: '순위표 이름 옆 장식 (3단계)' },
+};
+function earnDream(c, amount) { const before = c.dream || 0; c.dream = Math.min(DREAM_MAX, before + Math.max(0, Math.round(amount))); return c.dream - before; }
+function dailyFirst(c) { if (c.firstWinDay === today()) return 0; c.firstWinDay = today(); return 20; }
+// 하루 횟수 제한 (온라인 3승 · cron 5승 · 스토리 3장 등)
+function dayCount(c, key, limit) {
+  const d = today(); if (!c.dayCount || c.dayCount.day !== d) c.dayCount = { day: d };
+  const n = c.dayCount[key] || 0; if (n >= limit) return false;
+  c.dayCount[key] = n + 1; return true;
+}
+// 가방 효과는 전투 상태 안의 캐릭터 사본에만 (DB 의 영구 능력치는 그대로)
+function applyBag(st, items) {
+  if (!items.length) return;
+  const me = st.me, c = me.char = JSON.parse(JSON.stringify(me.char)), cap = capsOf(c);
+  const up = (k, n) => { c.stats[k] = Math.min(Math.max(cap[k], c.stats[k]), c.stats[k] + n); };
+  if (items.includes('sight')) up('acc', 8);
+  if (items.includes('guard')) up('def', 8);
+  if (items.includes('tea')) me.gauge = 1;
+  st.items = { bandage: items.includes('bandage') ? 1 : 0, smoke: items.includes('smoke') ? 1 : 0 };
+  st.bagUsed = items;
+}
+async function buyItem(id, body, env) {
+  const c0 = await loadChar(env, id, body.token);
+  if (!c0) return json({ error: 'forbidden' }, 403);
+  const key = String(body.item || ''), it = ITEMS[key];
+  if (!it) return json({ error: 'bad_request' }, 400);
+  let relic = null;
+  if (it.kind === 'relic') {
+    relic = clip(body.name, 12);
+    if (!relic) return json({ error: 'bad_request' }, 400);
+    if (STORY_BANNED.some(b => relic.includes(b))) return json({ error: 'ip_name' }, 400);
+    const m = await moderate(env, relic); if (!m.ok) return json({ error: 'policy', reason: m.reason, label: m.label }, 400);
+  }
+  let err = null, paid = 0;
+  const c = await updateChar(env, id, x => {
+    const have = x.dream || 0; let price = it.price;
+    if (it.kind === 'star') { const lv = x.stars || 0; if (lv >= 3) { err = 'max_item'; return; } price = it.price[lv]; }
+    if (it.kind === 'relic' && x.relic) price = 60;
+    if (have < price) { err = 'no_dream'; return; }
+    if (it.kind === 'bag' || it.kind === 'use') { x.bag ||= {}; const n = x.bag[key] || 0; if (n >= (it.max || STACK)) { err = 'max_item'; return; } x.bag[key] = n + 1; }
+    else if (it.kind === 'relic') x.relic = relic;
+    else if (it.kind === 'star') x.stars = (x.stars || 0) + 1;
+    x.dream = have - price; paid = price;
+  }, c0);
+  if (err) return json({ error: err }, 409);
+  return json({ ok: true, paid, char: publicChar(c) });
+}
+async function rerollBattle(id, body, env) {
+  const row = await env.DB.prepare('SELECT state, updated FROM rpg_battles WHERE id = ?').bind(id).first();
+  if (!row) return json({ error: 'no_battle' }, 404);
+  const st = JSON.parse(row.state);
+  const c = await loadChar(env, st.charId, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  if (st.mode !== 'pve' || st.log.length || st.rerolled || st.status !== 'playing' || isBusy(st)) return json({ error: 'bad_request' }, 409);
+  let bad = false;
+  await updateChar(env, c.id, x => { if (!((x.bag?.map || 0) > 0)) { bad = true; return; } x.bag.map--; }, c);
+  if (bad) return json({ error: 'no_item' }, 409);
+  const foe = pickEnemy(c, { nightmare: !!st.nightmare });
+  st.foe = { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }; st.rerolled = true;
+  const upd = await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ? AND updated = ?').bind(JSON.stringify(st), Date.now(), id, row.updated).run();
+  if (upd.meta.changes !== 1) return json({ error: 'retry' }, 409);
+  return json({ battle: st });
+}
+
+// ─── 꿈 이야기 (스토리 모드) ─────────────────────────────────────────
+// 숫자는 코드가, 이야기는 AI 가: 장면 순서·판정·보상은 아래 뼈대가 정하고, AI 는 챕터마다 한 번만 불려 그 캐릭터의 설정으로 빈칸(글)만 채운다.
+//   2026-10 실측(gemma-4, 8건): 형식 통과 8/8, 수치·실존 IP 누출 0, 평균 25초·약 50뉴런. llama-3.1-8b 는 깨진 출력이라 쓰지 않는다
+//   생성 실패·한도 소진이면 손으로 쓴 '막차 정류장'으로 대신한다. 스토리 승리는 승점에 넣지 않는다. 지는 건 '꿈에서 깸'(캐릭터 유지) — 단 '생사결 꿈'을 켜면 손님 캐릭터는 사라진다
+const STORY = [
+  { id: 'n1', type: 'intro', options: [{ id: 'n1_a' }, { id: 'n1_b' }] },
+  { id: 'n2', type: 'battle', enemyTier: 0.8 },
+  { id: 'n3', type: 'choice', free: 'n3_atk', options: [{ id: 'n3_atk', check: 'ATK' }, { id: 'n3_agi', check: 'AGI' }, { id: 'n3_pay', check: 'cost' }] },
+  { id: 'n4', type: 'fork', options: [{ id: 'n4_rest' }, { id: 'n4_event', check: 'random' }] },
+  { id: 'n5', type: 'battle', enemyTier: 'mirror' },
+  { id: 'n6', type: 'choice', free: 'n6_talk', options: [{ id: 'n6_talk', check: 'TALK' }, { id: 'n6_pass' }] },
+  { id: 'n7', type: 'boss' },
+];
+const CHECK_KO = { ATK: 'ATK 판정', AGI: '속도·회피 판정', cost: '대가: HP 10%, 반드시 성공', random: '운', TALK: '개연성 판정' };
+const EFFECT_KO = { n3_ok: '다음 전투 게이지 +1 · 꿈 조각 +5', n3_fail: 'HP −8%', n3_pay: 'HP −10% · 다음 전투 게이지 +1', n4_rest: 'HP +30%', n4_ok: '꿈 조각 +10', n4_fail: 'HP −10%', n6_ok: '보스 약화 · 꿈 조각 +5' };
+const STORY_PUBLIC = STORY.map(n => ({ id: n.id, type: n.type, free: !!n.free, options: n.options?.map(o => ({ id: o.id, check: o.check ? CHECK_KO[o.check] : null })) }));
+const SLOT_HINT = {
+  n1_a: '무엇인가를 살펴본다(판정 없음)', n1_b: '곧장 앞으로 나아간다(판정 없음)',
+  n3_atk: '힘으로 밀어붙여 해결', n3_agi: '빠르고 날렵하게 피해 가며 해결', n3_pay: '소중한 무언가(기억·체력)를 대가로 내주고 확실히 해결',
+  n4_rest: '잠시 쉬어 간다', n4_event: '낯선 무언가를 따라가 본다',
+  n6_talk: '보스의 부하/사자를 말로 설득한다(성공하면 보스가 약해짐)', n6_pass: '설득하지 않고 지나간다',
+};
+// 같은 캐릭터라도 챕터마다 다른 소재를 코드가 골라 건넨다 (프롬프트에 예시 문장을 넣으면 그 문장이 그대로 반복됐음)
+const STORY_MOTIFS = {
+  place: ['바닷속 도시', '하늘을 떠도는 섬', '끝나지 않는 학교 복도', '눈 내리는 사막', '거대한 시계 속', '버려진 놀이공원', '책 속의 마을', '달 뒷면의 정원', '물에 잠긴 지하철역', '종이로 접은 숲'],
+  obstacle: ['무너진 다리', '거꾸로 흐르는 강', '말을 거는 그림자 벽', '잠긴 오르골 상자', '멈추지 않는 회전목마', '깨진 거울 미로', '끝없이 이어진 계단', '안개 낀 시장 골목', '거대한 모래시계', '잠든 거인의 손바닥'],
+  fork: [['작은 등불 여관', '속삭이는 우물'], ['따뜻한 기차 칸', '낯선 축제 천막'], ['구름 위 벤치', '먼지 쌓인 도서관'], ['조용한 온실', '빛나는 골목 상점'], ['오래된 다락방', '물 위의 등대']],
+};
+const pick = a => a[Math.floor(rnd() * a.length)];
+const pickMotifs = () => ({ place: pick(STORY_MOTIFS.place), obstacle: pick(STORY_MOTIFS.obstacle), fork: pick(STORY_MOTIFS.fork) });
+const SYS_CHAPTER = `당신은 꿈속 텍스트 RPG 'DREAM RPG'의 이야기 작가입니다. 한 캐릭터를 위한 짧은 꿈 챕터(7장면)의 글만 씁니다.
+장면 순서·종류·선택지 개수·판정·보상·수치는 게임 코드가 이미 정했습니다. 당신은 주어진 JSON 틀의 빈 문자열("")만 한국어로 채웁니다.
+규칙:
+1) 틀의 키를 바꾸거나 더하거나 빼지 마세요. 선택지를 새로 만들지 마세요. 뼈대의 선택지 설명은 '뜻'일 뿐이니 label 에 그대로 베끼지 말고, 그 장면의 소재와 이 캐릭터에 맞는 구체적 행동으로 쓰세요.
+2) 숫자를 쓰지 마세요: 피해량·확률·%·HP·능력치·보상·아이템 개수·레벨 없음. 새 아이템·보상·능력을 만들지 마세요. 결과 문장에서 무언가를 얻거나 줍거나 회복하지 마세요(보상과 회복은 코드가 따로 알려 줍니다). 결과 문장은 분위기와 행동만.
+3) 길이: situation 300자 이내(2~3문장), label 40자 이내(행동 한 구절), result/success/fail/win/lose 120자 이내(한 문장), enemy/boss desc 한 문장, setting 300자 이내.
+4) 캐릭터 설정의 약점·대가·배경·특기를 배경과 모든 장면에 엮으세요. 특히 마지막 보스(n7)는 그 캐릭터의 약점을 형상화한 존재여야 하고 weaknessLink 에 어떤 약점과 이어지는지 한 문장. n5 의 적은 캐릭터 자신을 비춘 거울 같은 그림자.
+5) 실존 인물, 애니메이션·만화·게임·영화 등 기존 작품의 캐릭터 이름·기술 이름·고유 설정을 쓰지 마세요. 캐릭터 설정에 그런 이름이 있어도 그대로 옮기지 말고 일반 묘사로 바꿉니다. 플레이어 캐릭터는 '당신'으로 부르세요.
+6) 성적 묘사·혐오 표현·잔혹한 묘사 금지(전투는 만화 수준). 꿈답게 몽환적이되 쉬운 문장. 패배(lose)·실패(fail) 문장에서 꿈이 끝나거나 죽는다고 쓰지 마세요.
+설명 없이 완성된 JSON 하나만 출력하세요.`;
+function chapterTemplate() {
+  const nodes = {};
+  for (const n of STORY) {
+    if (n.type === 'battle' || n.type === 'boss') nodes[n.id] = { situation: '', [n.type === 'boss' ? 'boss' : 'enemy']: n.type === 'boss' ? { name: '', desc: '', weaknessLink: '' } : { name: '', desc: '' }, win: '', lose: '' };
+    else { const options = {}; for (const o of n.options) options[o.id] = o.check ? { label: '', success: '', fail: '' } : { label: '', result: '' }; nodes[n.id] = { situation: '', options }; }
+  }
+  return { title: '', setting: '', nodes };
+}
+const TYPE_KO = { intro: '도입(선택, 판정 없음)', battle: '전투', choice: '선택', fork: '갈림길', boss: '보스 전투' };
+function chapterUser(c, chapter, mo) {
+  const lines = STORY.map(n => {
+    let d = `${n.id}: ${TYPE_KO[n.type]}`;
+    if (n.type === 'battle') d += n.enemyTier === 'mirror' ? ' — 상대는 당신을 닮은 그림자' : ' — 평범한 꿈속 적';
+    if (n.type === 'boss') d += ' — 캐릭터의 약점을 형상화한 강한 보스';
+    if (n.id === 'n3') d += ` (장애물 소재: ${mo.obstacle})`;
+    if (n.id === 'n4') d += ` (갈림길 소재: ${mo.fork[0]} / ${mo.fork[1]})`;
+    if (n.options) d += '\n' + n.options.map(o => `   - ${o.id}: ${SLOT_HINT[o.id]}${o.check ? ' → 성공/실패 문장 필요' : ' → 결과 문장 하나'}`).join('\n');
+    return d;
+  });
+  return `[캐릭터]\n이름: ${c.name}\n설정: ${c.info}${c.relic ? `\n소지품: ${c.relic}` : ''}\n\n[챕터 ${chapter}${chapter > 1 ? ' — 앞 장보다 더 깊은 꿈' : ''}]\n무대 소재: ${mo.place}\n\n[장면 뼈대]\n${lines.join('\n')}\n\n[채울 JSON 틀 — 빈 문자열만 채워서 그대로 출력]\n${JSON.stringify(chapterTemplate())}`;
+}
+// 생성 결과 검사 (scratchpad 실험의 validate.js 이식): ok / fixable(자동 수정) / reject
+const CH_LIMIT = { title: 30, setting: 300, situation: 300, label: 40, result: 120, success: 120, fail: 120, win: 120, lose: 120, desc: 120, weaknessLink: 120, name: 20 };
+const STORY_BANNED = ['고죠', '사토루', '무하한', '무량공처', '육안', '영역전개', '주술회전', '료멘', '스쿠나', '이타도리', '탄지로', '네즈코', '귀멸', '루피', '조로', '원피스', '나루토', '사스케', '카카시', '리바이', '미카사', '에렌', '진격', '손오공', '베지터', '드래곤볼', '카메하메하', '키리토', '토도로키', '에반게리온', '피카츄', '포켓몬', '마리오', '젤다', '해리 포터', '호그와트', '아이언맨', '스파이더맨', '배트맨', '슈퍼맨', '사이타마', '원펀맨', '토토로', '도라에몽'];
+const CH_MECH = [/\d/, /[０-９]/, /%|퍼센트/, /\bHP\b|\bMP\b|EXP|경험치|레벨\s*업|골드/i, /데미지|대미지/, /(공격력|방어력|체력|속도|회피|명중)\s*(이|가|을|를)?\s*(\+|증가|상승|올라|감소|떨어)/, /(두|세|네)\s*배/];
+const CH_CONTRA = [/꿈에서 (깨어|깹)/, /게임 ?오버/, /죽(습니다|었다|고 맙)/];
+const CH_INVENT = [/얻(습니다|는다|게 됩|었|어)/, /획득/, /손에 넣/, /보상/, /아이템/, /물약|포션/, /회복(됩|합|했|한다)/];
+function chExtract(text) {
+  const t = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/```(?:json)?/g, '');
+  const m = t.match(/\{[\s\S]*\}/); if (!m) return null;
+  try { return JSON.parse(m[0]); } catch {}
+  try { return JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1').replace(new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(31) + ']+', 'g'), ' ')); } catch { return null; }
+}
+function chSchema(tpl, got, p, errs) {
+  if (typeof tpl === 'string') { if (typeof got !== 'string') errs.push(`${p}: 문자열 아님`); else if (!got.trim()) errs.push(`${p}: 비어 있음`); return; }
+  if (!got || typeof got !== 'object' || Array.isArray(got)) { errs.push(`${p}: 객체 아님`); return; }
+  for (const k of Object.keys(tpl)) if (!(k in got)) errs.push(`${p}.${k}: 빠짐`); else chSchema(tpl[k], got[k], `${p}.${k}`, errs);
+  for (const k of Object.keys(got)) if (!(k in tpl)) errs.push(`${p}.${k}: 추가 키`);
+}
+function* chLeaves(o, p = '') { if (typeof o === 'string') yield [p, o]; else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) yield* chLeaves(v, p ? `${p}.${k}` : k); }
+function validateChapter(text) {
+  const r = { schema: [], length: [], mech: [], invent: [], ip: [], contra: [], foreign: 0, hanja: 0, korean: 0, grade: 'reject' };
+  const j = chExtract(text); if (!j) return r;
+  r.parsed = j; chSchema(chapterTemplate(), j, '$', r.schema);
+  let ko = 0, letters = 0;
+  for (const [p, v] of chLeaves(j)) {
+    const leaf = p.split('.').pop(), lim = CH_LIMIT[leaf];
+    if (lim && [...v].length > lim) r.length.push(p);
+    if (CH_MECH.some(re => re.test(v))) r.mech.push(p);
+    if (!p.includes('n4_rest') && CH_INVENT.some(re => re.test(v)) && !/label$/.test(leaf)) r.invent.push(p);
+    if (STORY_BANNED.some(b => v.includes(b))) r.ip.push(p);
+    if (/(fail|lose|result)$/.test(leaf) && CH_CONTRA.some(re => re.test(v))) r.contra.push(p);
+    ko += (v.match(/[가-힣]/g) || []).length; letters += (v.match(/[가-힣A-Za-z぀-ヿ一-鿿]/g) || []).length;
+    if (/\([一-鿿]+\)/.test(v)) r.hanja++;
+    if (/[぀-ヿ一-鿿]/.test(v.replace(/\([一-鿿]+\)/g, ''))) r.foreign++;
+  }
+  r.korean = letters ? ko / letters : 0;
+  const fatal = r.schema.some(e => !/비어 있음/.test(e)) || r.ip.length || r.mech.length || r.korean < 0.85 || r.foreign;
+  r.grade = fatal ? 'reject' : (r.length.length || r.invent.length || r.contra.length || r.hanja || r.schema.length) ? 'fixable' : 'ok';
+  return r;
+}
+function autofixChapter(j, r) {
+  const out = JSON.parse(JSON.stringify(j));
+  const set = (p, fn) => { const ks = p.replace(/^\$\./, '').split('.'); let o = out; for (const k of ks.slice(0, -1)) o = o[k]; const k = ks[ks.length - 1]; o[k] = fn(String(o[k] ?? ''), k); };
+  for (const [p] of [...chLeaves(out)]) set(p, v => v.replace(/\([一-鿿]+\)/g, ''));
+  for (const p of r.length) set(p.replace(/^\$\./, ''), (v, k) => { const lim = CH_LIMIT[k], t = [...v].slice(0, lim).join(''); const cut = t.lastIndexOf('다.'); return cut > lim * 0.5 ? t.slice(0, cut + 2) : t.slice(0, lim - 1) + '…'; });
+  for (const p of r.contra) set(p, () => '힘이 빠진 채 비틀거리지만, 꿈은 아직 끝나지 않았습니다.');
+  for (const p of r.invent) set(p, () => '무언가 손끝에 스쳤지만, 꿈은 아무것도 남기지 않았습니다.');
+  for (const p of r.schema.filter(e => /비어 있음/.test(e)).map(e => e.split(':')[0].replace(/^\$\./, ''))) set(p, (v, k) => k === 'label' ? '조심스럽게 다가간다' : '꿈이 조용히 다음 장면으로 흘러갑니다.');
+  return out;
+}
+// 대체 챕터: 손으로 쓴 '막차 정류장' (생성 실패·한도 소진 시)
+const FALLBACK_CHAPTER = { title: '막차 정류장', setting: '시간표에 없는 몽행 0번 버스가 당신을 태우고 잠의 가장자리를 달립니다. 창밖으로 지나간 하루의 조각들이 가로등처럼 스쳐 가고, 종점에는 아무도 이름을 모르는 정류장이 있습니다.', nodes: {
+  n1: { situation: '덜컹, 버스가 멈춥니다. 문이 열리자 안개 낀 정류장과 깜빡이는 시간표가 보입니다. 운전석은 비어 있습니다.', options: { n1_a: { label: '깜빡이는 시간표를 들여다본다', result: '시간표의 글자가 당신의 이름으로 바뀌었다가 다시 흐려집니다.' }, n1_b: { label: '안개 속으로 곧장 내린다', result: '발밑의 보도블록이 물결처럼 출렁이며 당신을 앞으로 이끕니다.' } } },
+  n2: { situation: '개찰구 앞에 잿빛 제복을 입은 누군가가 길을 막습니다. "표를 보여 주시죠."', enemy: { name: '잿빛 검표원', desc: '구멍 뚫는 집게를 무기처럼 쥔, 표 없는 승객을 쫓는 검표원입니다.' }, win: '검표원은 집게를 떨어뜨리고 연기처럼 흩어집니다. 개찰구가 저절로 열립니다.', lose: '검표원의 집게가 당신의 표를 찢고, 정류장이 멀어지기 시작합니다.' },
+  n3: { situation: '광장 한가운데 시계탑의 바늘이 거꾸로 돕니다. 바늘이 한 칸 물러날 때마다 가로등이 하나씩 꺼지고, 꺼진 자리에서 낮은 숨소리가 들립니다.', options: { n3_atk: { label: '바늘을 붙잡아 억지로 멈춘다', success: '바늘이 비명을 지르며 멈추고, 꺼졌던 가로등이 하나둘 다시 켜집니다.', fail: '바늘에 밀려 넘어지고, 손바닥이 얼얼하게 저립니다.' }, n3_agi: { label: '꺼진 가로등 사이로 몰래 지나간다', success: '숨소리의 주인이 눈치채기 전에 광장을 빠져나갑니다.', fail: '발소리에 숨소리가 멈추고, 무언가 당신의 발목을 스칩니다.' }, n3_pay: { label: '탑 문에 오늘의 기억 하나를 내놓는다', success: '오늘 아침의 기억이 흐려지는 대신, 탑 문이 조용히 열립니다.', fail: '탑 문은 기억을 받지 않고 굳게 닫혀 있습니다.' } } },
+  n4: { situation: '길이 두 갈래로 나뉩니다. 한쪽에는 불 켜진 작은 여관이, 다른 쪽에는 기억을 사고판다는 전당포가 보입니다.', options: { n4_rest: { label: '꿈 여관에서 잠시 눈을 붙인다', result: '꿈속의 꿈에서 잠깐 쉬고 나니 몸이 한결 가볍습니다.' }, n4_event: { label: '기억 전당포의 문을 두드린다', success: '주인이 당신의 잊힌 꿈 한 조각을 값으로 쳐 줍니다.', fail: '주인이 고개를 젓고, 문틈의 찬바람에 기운이 빠집니다.' } } },
+  n5: { situation: '전당포 거울 속에서 당신과 똑같이 생긴 그림자가 걸어 나옵니다. 그림자는 당신이 망설였던 순간들을 하나씩 읊습니다.', enemy: { name: '거울 몽상가', desc: '당신의 모습을 하고 당신과 반대로 움직이는 그림자입니다.' }, win: '그림자는 웃으며 거울 속으로 돌아가고, 거울에 금이 갑니다.', lose: '그림자가 당신의 자리를 차지하고, 당신은 거울 속에 갇힙니다.' },
+  n6: { situation: '종점으로 가는 계단에 이름을 잃은 아이가 앉아 있습니다. 아이는 종점의 파수꾼이 보낸 심부름꾼이라고 말합니다.', options: { n6_talk: { label: '아이에게 이름을 찾아 주겠다고 약속한다', success: '아이가 처음으로 웃으며 파수꾼의 약점을 귓속말로 알려 줍니다.', fail: '아이는 고개를 저으며 계단 위로 사라집니다.' }, n6_pass: { label: '아이를 지나쳐 계단을 오른다', result: '등 뒤에서 아이의 작은 한숨이 들립니다.' } } },
+  n7: { situation: '종점 정류장, 눈꺼풀이 없는 거대한 파수꾼이 당신을 내려다봅니다. "잠든 자는 여기서 내릴 수 없다."', boss: { name: '눈꺼풀 없는 파수꾼', desc: '한 번도 잠든 적 없는, 깨어 있음 그 자체의 악몽입니다.', weaknessLink: '쉬지 못하고 버티는 당신의 피로가 이 파수꾼을 키웠습니다.' }, win: '파수꾼의 눈이 마침내 감기고, 첫차의 불빛이 정류장을 비춥니다.', lose: '파수꾼의 시선에 묶여 몸이 굳고, 꿈이 하얗게 바랩니다.' },
+} };
+let storyTable = false;
+async function ensureStoryTable(env) {
+  if (storyTable) return;
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpg_story (char_id TEXT NOT NULL, chapter INTEGER NOT NULL, content TEXT, created INTEGER NOT NULL, PRIMARY KEY (char_id, chapter))').run();
+  storyTable = true;
+}
+// 챕터 생성 전용 호출: gemma-4(Workers AI)만 쓴다. 한도는 다른 호출과 같이 센다(사용자 몫 1, 전체 뉴런은 실측)
+async function storyAi(env, who, system, user, temperature) {
+  const q = await quota(env, who);
+  const cf = q.providers.find(p => p.id === 'cf');
+  if (q.ip.remaining <= 0) return { ok: false, reason: 'ip' };
+  if (!cf?.configured || cf.remaining <= 1 || paused('cf')) return { ok: false, reason: 'exhausted' };
+  await bump(env, q.day, who, 'cf', +1, q._bucket);
+  try {
+    const res = await env.AI.run(MODELS[0].name, { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: 4000, temperature, enable_thinking: false, reasoning: { effort: 'none' }, chat_template_kwargs: { enable_thinking: false } });
+    let text = typeof res === 'string' ? res : (res.response ?? res.choices?.[0]?.message?.content ?? res.output_text ?? '');
+    if (text && typeof text === 'object') text = JSON.stringify(text);
+    await record(env, res?.usage, MODELS[0]);
+    return { ok: true, text: String(text || '') };
+  } catch (e) { await bump(env, q.day, who, 'cf', -1, q._bucket); return { ok: false, reason: 'failed' }; }
+}
+async function loadContent(env, c, chapter, src) {
+  if (src === 'fallback') return FALLBACK_CHAPTER;
+  await ensureStoryTable(env);
+  const row = await env.DB.prepare('SELECT content FROM rpg_story WHERE char_id = ? AND chapter = ?').bind(c.id, chapter).first();
+  try { return row?.content ? JSON.parse(row.content) : FALLBACK_CHAPTER; } catch { return FALLBACK_CHAPTER; }
+}
+const clampP = p => Math.min(0.95, Math.max(0.05, p));
+function optionChance(c, o) {
+  const s = c.stats, cap = capsOf(c), r = (a, b) => Math.min(1, a / b);
+  if (!o.check || o.check === 'cost') return 1;
+  if (o.check === 'random') return 0.6;
+  if (o.check === 'ATK') return clampP(0.45 + (r(s.atk, cap.atk) - 0.5) * 0.4);
+  if (o.check === 'AGI') return clampP(0.55 + ((r(s.spd, cap.spd) + r(s.eva, cap.eva)) / 2 - 0.5) * 0.4);
+  if (o.check === 'TALK') return clampP(0.5 + ((s.stability ?? 0.75) - 0.75) * 0.8);
+  return 1;
+}
+async function storyState(env, c) {
+  await ensureStoryTable(env);
+  const s = c.story || {}, run = s.run || null, ch = run ? run.chapter : (s.next || 1);
+  let content = null, ready = false;
+  if (run) content = await loadContent(env, c, run.chapter, run.src);
+  else { const row = await env.DB.prepare('SELECT content FROM rpg_story WHERE char_id = ? AND chapter = ?').bind(c.id, ch).first(); ready = !!row?.content; }
+  const node = run ? STORY[run.node] : null, odds = {};
+  if (node?.options) for (const o of node.options) if (o.check) odds[o.id] = Math.round(optionChance(c, o) * 100);
+  return { story: { next: s.next || 1, clears: s.clears || 0, deaths: s.deaths || 0, last: s.last || null, chapter: ch, ready, run, content, odds, nodes: STORY_PUBLIC, effects: EFFECT_KO }, char: publicChar(c) };
+}
+async function storyInfo(id, token, env) {
+  const c = await loadChar(env, id, token);
+  return c ? json(await storyState(env, c)) : json({ error: 'forbidden' }, 403);
+}
+async function prepareStory(id, body, env, who) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  await ensureStoryTable(env);
+  const ch = c.story?.next || 1;
+  const row = await env.DB.prepare('SELECT content, created FROM rpg_story WHERE char_id = ? AND chapter = ?').bind(c.id, ch).first();
+  if (row?.content) return json({ status: 'ready', chapter: ch });
+  if (row && Date.now() - row.created < 90e3) return json({ status: 'generating', chapter: ch });   // 다른 요청이 생성 중 (중복 생성 방지)
+  await env.DB.prepare('INSERT INTO rpg_story (char_id, chapter, content, created) VALUES (?, ?, NULL, ?) ON CONFLICT(char_id, chapter) DO UPDATE SET created = excluded.created').bind(c.id, ch, Date.now()).run();
+  const mo = pickMotifs();
+  let content = null, why = '';
+  for (let attempt = 0; attempt < 2 && !content; attempt++) {   // 실패하면 한 번만 다시 (온도 낮춰서). 그래도 안 되면 대체 챕터
+    const r = await storyAi(env, who, SYS_CHAPTER, chapterUser(c, ch, mo), attempt ? 0.7 : 0.9);
+    if (!r.ok) { why = r.reason; break; }
+    const v = validateChapter(r.text);
+    if (v.grade === 'reject') { why = 'invalid'; continue; }
+    const fixed = v.grade === 'fixable' ? autofixChapter(v.parsed, v) : v.parsed;
+    const all = [...chLeaves(fixed)].map(([, t]) => t).join('\n');
+    if (!(await moderate(env, all.slice(0, 6000))).ok) { why = 'policy'; continue; }
+    content = fixed;
+  }
+  if (!content) {
+    await env.DB.prepare('DELETE FROM rpg_story WHERE char_id = ? AND chapter = ? AND content IS NULL').bind(c.id, ch).run();
+    return json({ status: 'fallback', chapter: ch, reason: why, quota: pubQuota(await quota(env, who)) });
+  }
+  await env.DB.prepare('UPDATE rpg_story SET content = ? WHERE char_id = ? AND chapter = ?').bind(JSON.stringify(content), c.id, ch).run();
+  return json({ status: 'ready', chapter: ch, quota: pubQuota(await quota(env, who)) });
+}
+async function startStory(id, body, env) {
+  const c0 = await loadChar(env, id, body.token);
+  if (!c0) return json({ error: 'forbidden' }, 403);
+  await ensureStoryTable(env);
+  const ch = c0.story?.next || 1;
+  const row = await env.DB.prepare('SELECT content FROM rpg_story WHERE char_id = ? AND chapter = ?').bind(c0.id, ch).first();
+  const src = row?.content ? 'ai' : 'fallback';
+  const c = await updateChar(env, c0.id, x => {
+    x.story ||= { next: 1, clears: 0, deaths: 0 };
+    if (x.story.run) return;   // 이미 진행 중이면 그대로 이어감
+    x.story.run = { chapter: ch, src, node: 0, hp: x.stats.hp, gauge: 0, flags: {}, shards: 0, hardcore: !!body.hardcore, log: [], started: Date.now() };
+  }, c0);
+  return json(await storyState(env, c));
+}
+// 회차 끝: 클리어면 모은 조각 전부, 아니면 절반만 지갑으로
+function endRun(x, why) {
+  const run = x.story?.run; if (!run) return 0;
+  const keep = earnDream(x, why === 'clear' ? run.shards : Math.floor(run.shards / 2));
+  if (why !== 'clear') x.story.deaths = (x.story.deaths || 0) + 1;
+  x.story.last = { chapter: run.chapter, why, shards: keep, at: Date.now() };
+  x.story.run = null;
+  return keep;
+}
+// 장 클리어 보상: 하루 3장까지는 승리 보상 2배 + 꿈 조각 60, 그 뒤엔 0.3배 + 15 (생사결 꿈이면 조각 1.5배). 승점은 없음
+function clearChapter(x, run) {
+  const full = dayCount(x, 'story', 3);
+  const rw = rollReward(x, { stats: { tier: '초인' } }, 'pve');
+  if (full) { rw.hp *= 2; rw.atk *= 2; } else { rw.hp = Math.round(rw.hp * 0.3); rw.atk = Math.round(rw.atk * 0.3); rw.stats = {}; rw.tags = []; }
+  applyReward(x, rw);
+  run.shards += Math.round((full ? 60 : 15) * (run.hardcore ? 1.5 : 1));
+  x.story.clears = (x.story.clears || 0) + 1; x.story.next = Math.max(x.story.next || 1, run.chapter + 1);
+  const shards = endRun(x, 'clear');
+  return { hp: rw.hp, atk: rw.atk, tags: rw.tags, shards, full, chapter: run.chapter };
+}
+async function storyAct(id, body, env, who) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  const run = c.story?.run, node = run && STORY[run.node];
+  if (!node || !node.options) return json({ error: 'bad_request' }, 409);
+  const content = await loadContent(env, c, run.chapter, run.src), nc = content.nodes?.[node.id] || {};
+  const text = clip(body.text, LEN.text);
+  let opt = node.options.find(o => o.id === body.option), judge = null, ok = true, plaus = 0;
+  if (text && node.free) {   // 자유 선언: 심사관(AI 1회)이 난이도·적합도 → 대표 선택지의 판정에 보정
+    opt = node.options.find(o => o.id === node.free);
+    let j = { allowed: true, difficulty: 'normal', fit: 0.5, verdict: '' };
+    const m = await moderate(env, text);
+    if (!m.ok) j = { allowed: false, difficulty: 'impossible', fit: 0.2, verdict: `이용 정책(${m.label})에 어긋나 받지 않습니다.`, policy: true };
+    else {
+      const user = `[p1] ${c.name} (${c.fiction}) — 설정: ${c.info}${c.relic ? ` / 소지품: ${c.relic} (평범한 물건)` : ''}\n상황: ${String(nc.situation || '').slice(0, 300)}\n행동: 선언: "${text}"`;
+      const r = await safeAi(env, who, SYS_JUDGE_ACTION, user, 0.2);
+      const p1 = r.ok && r.parsed?.p1;
+      if (p1) j = { allowed: p1.allowed !== false, difficulty: DIFF_MOD[p1.difficulty] !== undefined ? p1.difficulty : 'normal', fit: num(p1.fit, 0, 1, 0.5), verdict: cleanVerdict(p1.verdict) };
+    }
+    const p = clampP(optionChance(c, opt) + (DIFF_MOD[j.difficulty] ?? 0) + (j.fit - 0.5) * 0.3);
+    ok = j.allowed && rnd() < p; judge = { ...j, chance: Math.round(p * 100) };
+    plaus = plausDelta({ text }, j);
+  } else if (!opt) return json({ error: 'bad_request' }, 400);
+  else if (opt.check) ok = rnd() < optionChance(c, opt);
+  const oc = nc.options?.[opt.id] || {};
+  const line = String((opt.check ? (ok ? oc.success : oc.fail) : oc.result) || '').slice(0, 200);
+  const out = await updateChar(env, c.id, x => {
+    const r = x.story?.run; if (!r || r.node !== run.node) return;   // 다른 탭에서 이미 진행됨
+    const max = x.stats.hp, hurt = f => { r.hp = Math.max(1, r.hp - Math.round(max * f)); };
+    let eff = '';
+    if (opt.id === 'n3_atk' || opt.id === 'n3_agi') { if (ok) { r.gauge = 1; r.shards += 5; eff = EFFECT_KO.n3_ok; } else { hurt(0.08); eff = EFFECT_KO.n3_fail; } }
+    if (opt.id === 'n3_pay') { hurt(0.10); r.gauge = 1; r.flags.offered = true; eff = EFFECT_KO.n3_pay; }
+    if (opt.id === 'n4_rest') { r.hp = Math.min(max, r.hp + Math.round(max * 0.3)); eff = EFFECT_KO.n4_rest; }
+    if (opt.id === 'n4_event') { if (ok) { r.shards += 10; eff = EFFECT_KO.n4_ok; } else { hurt(0.10); eff = EFFECT_KO.n4_fail; } }
+    if (opt.id === 'n6_talk' && ok) { r.flags.bossWeak = true; r.shards += 5; eff = EFFECT_KO.n6_ok; }
+    if (plaus) x.stats.stability = clampPlaus(x, (x.stats.stability ?? 0.75) + plaus);
+    r.log.push({ node: node.id, label: text ? `“${text}”` : (oc.label || ''), text: line, ok: opt.check ? ok : null, effect: eff, judge, plaus: plaus || undefined });
+    if (r.log.length > 20) r.log.shift();
+    r.node++;
+  }, c);
+  return json(await storyState(env, out));
+}
+function mirrorAlloc(a) { const o = {}; for (const k of ['atk', 'hp', 'def', 'spd', 'acc', 'eva']) o[k] = Math.max(5, 35 - (Number(a?.[k]) || 16.6)); return o; }
+async function storyFight(id, body, env) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  const run = c.story?.run, node = run && STORY[run.node];
+  if (!node || (node.type !== 'battle' && node.type !== 'boss')) return json({ error: 'bad_request' }, 409);
+  if (run.battleId) { const row = await env.DB.prepare('SELECT state FROM rpg_battles WHERE id = ?').bind(run.battleId).first(); if (row) return json({ battle: JSON.parse(row.state) }); }
+  const content = await loadContent(env, c, run.chapter, run.src), nc = content.nodes?.[node.id] || {};
+  const en = (node.type === 'boss' ? nc.boss : nc.enemy) || {}, scale = Math.sqrt(c.stats.mult || 1);
+  const boss = node.type === 'boss', mirror = node.enemyTier === 'mirror';
+  // 체력이 장면을 넘어 이어지므로 일반 전투보다 약하게: 잡몹 0.8 · 거울 0.85 · 보스 1.15 (장마다 +0.1, 최대 2.0), 6번 장면에서 설득에 성공했으면 보스 ×0.85
+  const tier = boss ? Math.min(2, 1.15 + 0.1 * (run.chapter - 1)) * (run.flags?.bossWeak ? 0.85 : 1) : mirror ? 0.85 : 0.8;
+  const alloc = mirror ? mirrorAlloc(c.alloc || allocFromStats(c)) : { atk: 20, hp: 20, def: 15, spd: 15, acc: 15, eva: 15 };
+  const foe = { id: 'enemy-story', name: clip(en.name, 20) || '꿈의 그림자', fiction: boss ? '악몽' : mirror ? '그림자' : '꿈의 적', info: clip(en.desc, 120), stats: buildStats(alloc, 70, tier * scale), ult: { name: boss ? '악몽의 손길' : '꿈의 일격', effect: '꿈의 힘을 실어 몰아친다', style: 'burst' }, tier };
+  foe.stats.tier = boss ? '초인' : '숙련';
+  const st = { id: uid(), charId: c.id, mode: 'story', storyNode: node.id, boss, chapter: run.chapter, me: { char: c, hp: Math.max(1, run.hp), gauge: run.gauge || 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null, intro: String(nc.situation || '').slice(0, 300) };
+  await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
+  await updateChar(env, c.id, x => { if (x.story?.run) { x.story.run.battleId = st.id; x.story.run.gauge = 0; } }, c);
+  return json({ battle: st });
+}
+async function storyBattleEnd(env, st, c) {
+  const run0 = c.story?.run, content = await loadContent(env, c, run0?.chapter, run0?.src), nc = content.nodes?.[st.storyNode] || {};
+  let reward = null, hardcoreDeath = false;
+  const out = await updateChar(env, c.id, x => {
+    const run = x.story?.run; if (!run || run.battleId !== st.id) return;
+    run.battleId = null;
+    if (st.winner === 1) {
+      run.hp = Math.max(1, st.me.hp); run.log.push({ node: st.storyNode, label: '전투', text: String(nc.win || '').slice(0, 200), ok: true });
+      run.node++;
+      if (st.boss) reward = clearChapter(x, run);
+    } else { run.log.push({ node: st.storyNode, label: '전투', text: String(nc.lose || '').slice(0, 200), ok: false }); hardcoreDeath = !!run.hardcore; endRun(x, 'dead'); }
+  }, c);
+  st.me.char = out; st.storyResult = { reward, text: st.winner === 1 ? nc.win : nc.lose, ended: !out?.story?.run, last: out?.story?.last || null };
+  if (hardcoreDeath) {   // 생사결 꿈: 손님 캐릭터는 사라진다 (계정 캐릭터는 남음)
+    const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
+    if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
+  }
+}
+async function storyQuit(id, body, env) {
+  const c = await loadChar(env, id, body.token);
+  if (!c) return json({ error: 'forbidden' }, 403);
+  const bid = c.story?.run?.battleId;
+  if (bid) await env.DB.prepare('DELETE FROM rpg_battles WHERE id = ?').bind(bid).run();
+  const out = await updateChar(env, c.id, x => { endRun(x, 'quit'); }, c);
+  return json(await storyState(env, out));
+}
+
 // ─── AI 상대 전투 ──────────────────────────────────────────────────
 // 상대는 같은 예산 공식으로 만들되 tier 로 강함을 조절 (1.0 보통, 1.3 강적, 1.8 보스). 설정은 서술용.
 const ENEMIES = [
   ['노정원', '평범한 고등학생', { atk: 15, hp: 25, def: 10, spd: 20, acc: 20, eva: 10 }, 80, ['업어치기', '온 힘을 다해 메친다', 'burst'], '대한민국의 평범한 고등학생. 컴퓨터를 배우고 유도를 한다.', 0.9],
-  ['탄지로 가마도', '물의 호흡 귀살대', { atk: 20, hp: 20, def: 10, spd: 20, acc: 20, eva: 10 }, 85, ['히노카미 카구라', '불꽃의 춤으로 베어낸다', 'burst'], '여동생을 되돌리기 위해 귀살대가 된 소년. 물과 불의 호흡을 쓴다.', 1],
-  ['미카사 아커만', '무쌍의 병사', { atk: 20, hp: 15, def: 5, spd: 30, acc: 25, eva: 5 }, 80, ['입체기동 참격', '순간적으로 후방을 벤다', 'precise'], '엘런을 지키기 위해 무엇이든 하는 병사.', 1],
-  ['키리토', '검의 플레이어', { atk: 22, hp: 18, def: 8, spd: 22, acc: 20, eva: 10 }, 75, ['스타버스트 스트림', '쌍검 16연격', 'burst'], 'VRMMO 세계의 최강자. 쌍검 스킬을 쓴다.', 1],
-  ['루피', '고무고무 해적', { atk: 22, hp: 28, def: 12, spd: 15, acc: 13, eva: 10 }, 70, ['기어 세컨드', '혈류를 가속해 연속 타격', 'burst'], '고무 인간. 타격에 강하지만 베기에 약하다.', 1.1],
-  ['조로', '삼도류 검사', { atk: 28, hp: 20, def: 10, spd: 14, acc: 18, eva: 10 }, 75, ['오의: 삼천세계', '세 자루 검의 연속 베기', 'burst'], '세계 최강의 검사를 목표로 하는 검사. 길을 잘 잃는다.', 1.1],
-  ['이누마키 토게', '말의 저주사', { atk: 25, hp: 12, def: 5, spd: 18, acc: 30, eva: 10 }, 65, ['폭발해', '한 마디로 적을 폭파하지만 목이 상한다', 'precise'], '주술어로 적을 조종하거나 제압한다. 남용하면 자신도 다친다.', 1],
-  ['토도로키 쇼토', '얼음과 불의 계승자', { atk: 24, hp: 18, def: 14, spd: 12, acc: 20, eva: 12 }, 80, ['빙염 충돌', '얼음과 불을 동시에 발산', 'shield'], '양쪽 능력을 깨달은 히어로.', 1.2],
-  ['리바이 아커만', '인류 최강의 병사', { atk: 24, hp: 14, def: 6, spd: 30, acc: 20, eva: 6 }, 85, ['회오리 참격', '회전하며 순간에 베어낸다', 'precise'], '냉철한 판단과 검술의 최고 병사.', 1.3],
-  ['손오공', '사이어인의 전사', { atk: 30, hp: 25, def: 10, spd: 15, acc: 12, eva: 8 }, 70, ['카메하메하', '에너지 파동', 'burst'], '지구를 수호하는 싸움꾼. 끝없이 수련한다.', 1.4],
-  ['유우타 오코츠', '특급 주술사', { atk: 25, hp: 20, def: 10, spd: 15, acc: 15, eva: 15 }, 75, ['리카 소환', '리카의 힘으로 큰 피해와 회복', 'drain'], '사랑과 저주를 안고 싸우는 주술사.', 1.4],
-  ['고죠 사토루', '천상천하 유아독존', { atk: 25, hp: 15, def: 20, spd: 15, acc: 15, eva: 10 }, 60, ['무량공처', '영역 전개로 상대를 무력화', 'shield'], '최강의 주술사. 무한으로 접촉을 막지만 오만하다.', 1.8],
+  ['잿빛 검표원', '꿈 열차의 검표원', { atk: 20, hp: 20, def: 10, spd: 20, acc: 20, eva: 10 }, 85, ['검표 찌르기', '표에 구멍을 뚫듯 정확히 찌른다', 'burst'], '시간표에 없는 열차를 지키는 검표원. 규칙에는 엄격하지만 규칙 밖의 일에는 서툴다.', 1],
+  ['줄 타는 경비병', '성벽 사이를 나는 병사', { atk: 20, hp: 15, def: 5, spd: 30, acc: 25, eva: 5 }, 80, ['비행 참격', '줄을 타고 순식간에 뒤를 벤다', 'precise'], '꿈의 성벽 사이에 줄을 걸고 날아다니는 경비병. 줄이 끊기면 땅에서는 느리다.', 1],
+  ['거울 속 쌍검사', '비친 모습의 검객', { atk: 22, hp: 18, def: 8, spd: 22, acc: 20, eva: 10 }, 75, ['거울 연격', '양손의 검으로 쉴 새 없이 벤다', 'burst'], '거울에서 걸어 나온 쌍검사. 상대의 움직임을 따라 하지만 처음 보는 수에는 늦다.', 1],
+  ['물렁 인형 선장', '고무 인형 해적', { atk: 22, hp: 28, def: 12, spd: 15, acc: 13, eva: 10 }, 70, ['튕김 주먹', '몸을 늘였다 튕기며 연타한다', 'burst'], '타격을 튕겨 내는 고무 인형 선장. 날붙이에는 약하다.', 1.1],
+  ['길 잃은 세 칼 검객', '세 자루 검의 방랑자', { atk: 28, hp: 20, def: 10, spd: 14, acc: 18, eva: 10 }, 75, ['세 갈래 베기', '세 자루 검을 한꺼번에 휘두른다', 'burst'], '꿈의 미로를 헤매는 검객. 검은 강하지만 길을 늘 잃는다.', 1.1],
+  ['침묵의 주문사', '말로 묶는 주술사', { atk: 25, hp: 12, def: 5, spd: 18, acc: 30, eva: 10 }, 65, ['명령어: 멈춰', '한 마디로 상대를 묶지만 목이 상한다', 'precise'], '말 한마디로 꿈을 비튼다. 많이 말할수록 목소리를 잃는다.', 1],
+  ['서리불 쌍둥이', '얼음과 불의 아이', { atk: 24, hp: 18, def: 14, spd: 12, acc: 20, eva: 12 }, 80, ['서리불 충돌', '얼음과 불을 함께 쏟아 막아선다', 'shield'], '한쪽은 얼음, 한쪽은 불을 다루는 쌍둥이. 둘이 떨어지면 힘이 반으로 준다.', 1.2],
+  ['바람 칼날 병사', '가장 빠른 꿈의 병사', { atk: 24, hp: 14, def: 6, spd: 30, acc: 20, eva: 6 }, 85, ['회오리 베기', '회전하며 순간에 베어낸다', 'precise'], '냉철하고 빠른 검의 병사. 오래 버티는 싸움은 싫어한다.', 1.3],
+  ['잠들지 않는 수련자', '끝없이 단련하는 무도가', { atk: 30, hp: 25, def: 10, spd: 15, acc: 12, eva: 8 }, 70, ['기공 파동', '모은 기를 한 번에 쏘아낸다', 'burst'], '꿈속에서도 수련을 멈추지 않는 무도가. 싸움이 길어질수록 신이 난다.', 1.4],
+  ['그림자 연인의 주술사', '저주를 안은 주술사', { atk: 25, hp: 20, def: 10, spd: 15, acc: 15, eva: 15 }, 75, ['그림자 포옹', '그림자 연인이 상대를 삼키고 힘을 나눠 준다', 'drain'], '사랑했던 이의 그림자를 데리고 다니는 주술사. 그림자가 지치면 혼자 남는다.', 1.4],
+  ['무한 복도의 문지기', '끝나지 않는 복도의 주인', { atk: 25, hp: 15, def: 20, spd: 15, acc: 15, eva: 10 }, 60, ['닫히지 않는 문', '끝없는 복도로 상대를 가둔다', 'shield'], '닿을 수 없는 복도 끝에 선 문지기. 너무 자신만만해 빈틈을 보인다.', 1.8],
 ];
-function makeEnemy(i, scale = 1) {
+function makeEnemy(i, scale = 1, label = null) {
   const [name, fiction, alloc, coherence, ult, info, tier] = ENEMIES[i];
   const e = { id: 'enemy-' + i, name, fiction, info, stats: buildStats(alloc, coherence, tier * scale), ult: { name: ult[0], effect: ult[1], style: ult[2] }, tier };
-  e.stats.tier = tier >= 1.4 ? '전설' : tier >= 1.1 ? '초인' : tier >= 1 ? '숙련' : '평범';   // 표시용 등급은 원래 강적 등급대로
+  e.stats.tier = label || (tier >= 1.4 ? '전설' : tier >= 1.1 ? '초인' : tier >= 1 ? '숙련' : '평범');   // 표시용 등급은 원래 강적 등급대로
   return e;
 }
-function pickEnemy(c) {
+// 처음 EASY_FIRST 전은 약한 상대만(강함 ×0.85): 시뮬레이션상 새 캐릭터의 첫 전투 승률이 약 49% 라 손님 캐릭터가 평균 1.4승 만에 사라졌다
+const EASY_FIRST = 3, EASY_SCALE = 0.85;
+function pickEnemy(c, { nightmare = false } = {}) {
+  const scale = Math.sqrt(c.stats.mult || 1);                       // 강한 캐릭터에겐 상대도 조금 강하게 (배율의 제곱근 → 여전히 압도적)
+  if (!nightmare && (c.wins || 0) + (c.losses || 0) < EASY_FIRST) {
+    const easy = ENEMIES.map((e, i) => [e[6], i]).filter(([t]) => t <= 1);
+    return makeEnemy(easy[Math.floor(rnd() * easy.length)][1], scale * EASY_SCALE, '평범');
+  }
   const rec = c.wins - c.losses;                                     // 이기고 있으면 강적이 더 자주
   const weights = ENEMIES.map(e => { const t = e[6]; return 1 / (1 + Math.abs(t - (1 + Math.max(0, Math.min(3, rec)) * 0.25)) * 3); });
-  let r = rnd() * weights.reduce((s, w) => s + w, 0);
-  const scale = Math.sqrt(c.stats.mult || 1);                       // 강한 캐릭터에겐 상대도 조금 강하게 (배율의 제곱근 → 여전히 압도적)
-  for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) return makeEnemy(i, scale); }
-  return makeEnemy(0, scale);
+  let r = rnd() * weights.reduce((s, w) => s + w, 0), idx = 0;
+  for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { idx = i; break; } }
+  if (!nightmare) return makeEnemy(idx, scale);
+  // 악몽 초대장: 강함 ×(1.5 + 0.25 × 내 등급 단계). 이기면 꿈 조각 2.5배
+  const e = makeEnemy(idx, scale * (1.5 + 0.25 * (TIER_IDX[c.stats.tier] ?? 0)));
+  e.name = '악몽 · ' + e.name; e.nightmare = true; return e;
 }
 // 상대 AI: 게이지 차면 필살기(HP 낮을수록 더 자주), 내 HP 가 낮고 상대 게이지가 차 있으면 가끔 방어
 function enemyDecide(e, me) {
@@ -963,7 +1388,7 @@ function enemyDecide(e, me) {
 }
 
 async function createBattle(body, env) {
-  const c = await loadChar(env, body.charId, body.token);
+  let c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_battles WHERE updated < ?').bind(Date.now() - BATTLE_TTL).run();
   let foe, mode = body.mode === 'auto' ? 'auto' : 'pve', foeId = null;
@@ -971,8 +1396,17 @@ async function createBattle(body, env) {
     const row = await env.DB.prepare('SELECT id, json FROM rpg_chars WHERE auto = 1 AND id != ? ORDER BY RANDOM() LIMIT 1').bind(c.id).first();
     if (!row) return json({ error: 'no_auto' }, 404);
     foe = JSON.parse(row.json); foeId = row.id; foe.tier = 1;
-  } else foe = pickEnemy(c);
+  }
+  const items = [...new Set((Array.isArray(body.items) ? body.items : []).filter(k => BAG_ITEMS.includes(k)))].slice(0, BAG_SLOTS);
+  const nightmare = mode === 'pve' && !!body.nightmare;
+  if (items.length || nightmare) {   // 가져갈 물건은 전투 시작 때 차감 (최신 DB 값 기준)
+    let bad = false;
+    c = await updateChar(env, c.id, x => { const b = x.bag || {}; if (items.some(k => !(b[k] > 0)) || (nightmare && !(b.nightmare > 0))) { bad = true; return; } for (const k of items) b[k]--; if (nightmare) b.nightmare--; x.bag = b; }, c);
+    if (bad) return json({ error: 'no_item' }, 409);
+  }
+  if (mode !== 'auto') foe = pickEnemy(c, { nightmare });
   const st = { id: uid(), charId: c.id, mode, foeId, me: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null };
+  applyBag(st, items); if (nightmare) st.nightmare = true;
   await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
   return json({ battle: st });
 }
@@ -1003,13 +1437,13 @@ function rollReward(c, foe, mode) {
 }
 // 도망: 성공 확률 = 내 속도·회피가 상대보다 높을수록 ↑, 등급이 높을수록 ↓(체면·추격). 실패하면 패배로 기록되고 HP·ATK 를 조금 잃는다(등급이 높을수록 잃는 양이 큼)
 const TIER_IDX = { '평범': 0, '숙련': 1, '초인': 2, '전설': 3, '신화': 4 };
-function escapeRoll(me, foe) {
+function escapeRoll(me, foe, bonus = 0) {
   const t = TIER_IDX[me.char.stats.tier] ?? 0, ft = TIER_IDX[foe.char.stats.tier] ?? 1;
   const p = 0.75 + (me.char.stats.spd - foe.char.stats.spd) / 120 + me.char.stats.eva / 200 - t * 0.06 + (ft - t) * 0.04 - (me.hp < me.char.stats.hp * 0.3 ? 0.1 : 0);
-  const chance = Math.min(0.95, Math.max(0.2, p));
+  const chance = Math.min(0.95, Math.max(0.2, p + bonus));
   const ok = rnd() < chance;
   if (ok) return { ok, chance: Math.round(chance * 100) };
-  const sev = 1 + t * 0.6;                                                 // 등급별 손실 배율 (평범 1 → 신화 3.4)
+  const sev = (1 + t * 0.6) * (bonus ? 0.5 : 1);                             // 등급별 손실 배율 (평범 1 → 신화 3.4), 연막 구름이면 절반
   const hp = Math.round(me.char.stats.hp * (0.02 + rnd() * 0.04) * sev), atk = Math.round(me.char.stats.atk * (0.01 + rnd() * 0.03) * sev);
   return { ok, chance: Math.round(chance * 100), penalty: { hp, atk } };
 }
@@ -1024,8 +1458,12 @@ async function leaveBattle(id, body, env) {
   const del = await env.DB.prepare('DELETE FROM rpg_battles WHERE id = ? AND updated = ?').bind(id, row.updated).run();
   if (del.meta.changes !== 1) return json({ error: 'retry' }, 409);
   let result = { ok: true, escaped: true };
+  if (st.mode === 'story') {   // 스토리 전투에서 도망 = 꿈에서 깸 (이번 회차 끝, 조각 절반)
+    const out = await updateChar(env, c0.id, x => { if (x.story?.run?.battleId === st.id) endRun(x, 'fled'); }, c0);
+    return json({ ok: true, escaped: true, story: true, char: publicChar(out), message: '꿈에서 깨어났습니다. 이번 회차에서 모은 꿈 조각은 절반만 남습니다.' });
+  }
   if (st.status === 'playing' && st.log.length) {                         // 한 턴이라도 싸운 뒤의 도망만 판정 (시작 직후엔 자유)
-    const r = escapeRoll(st.me, st.foe);
+    const r = escapeRoll(st.me, st.foe, st.items?.smoke ? 0.25 : 0);
     if (!r.ok) {
       const c = await updateChar(env, c0.id, x => {
         x.losses++; x.stats.hp = Math.max(200, x.stats.hp - r.penalty.hp); x.stats.atk = Math.max(20, x.stats.atk - r.penalty.atk);
@@ -1045,33 +1483,49 @@ async function battleTurn(id, body, env, ip) {
   if (!c) return json({ error: 'forbidden' }, 403);
   if (st.status !== 'playing') return json({ battle: st });
   if (isBusy(st)) return json({ error: 'retry' }, 409);   // 다른 요청(다른 탭·더블 클릭)이 이 턴을 처리 중
+  if (body.type === 'item' && !(st.items?.bandage > 0)) return json({ error: 'no_item' }, 409);
   // 낙관적 잠금: 같은 턴을 두 번 처리하지 않게 — busy 표시를 같이 써서, 처리 중(AI 서술 수 초) 들어온 요청도 막는다
   st.busy = Date.now();
   const lock = await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ? AND updated = ?').bind(JSON.stringify(st), st.busy, id, row.updated).run();
   if (lock.meta.changes !== 1) return json({ error: 'retry' }, 409);
   delete st.busy;
-  const actMe = { ...await parseActSafe(body, env), target: 2, local: body.local }, actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
+  let actMe;
+  if (body.type === 'item') {   // 꿈결 붕대: 이번 턴 행동 대신 최대 HP 25% 회복
+    st.items.bandage--; const heal = Math.max(0, Math.min(st.me.char.stats.hp - st.me.hp, Math.round(st.me.char.stats.hp * 0.25)));
+    st.me.hp += heal; actMe = { type: 'item', text: '', heal, item: '꿈결 붕대', target: 2 };
+  } else actMe = { ...await parseActSafe(body, env), target: 2, local: body.local };
+  const actFoe = { ...enemyDecide(st.foe, st.me), target: 1 };
   const prevLog = st.log[st.log.length - 1];
-  const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '' });
+  const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '', noNarrate: st.mode === 'story' && !st.boss });   // 스토리 잡몹 전투는 서술 AI 생략 (챕터당 호출 예산)
   delete actMe.local;
   const plaus = await applyPlaus(env, { 1: st.me }, { 1: actMe }, t.judge, [1]);
   st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, plaus });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
+    if (st.mode === 'story') await storyBattleEnd(env, st, c);
+    else {
     const fresh = await updateChar(env, c.id, x => {   // AI 서술을 기다리는 동안 다른 곳(cron·방)이 저장한 전적 위에 적용
       if (st.winner === 1) {
         x.wins++;
         st.reward = rollReward(x, st.foe.char, st.mode); applyReward(x, st.reward);
         if (st.mode === 'auto') { x.autoWins = (x.autoWins || 0) + 1; x.pvpWins = (x.pvpWins || 0) + 0.5; }
-      } else { x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1; }
+        // 꿈 조각: AI 전투 10 + 4 × 상대 등급(악몽이면 ×2.5), 자동 생사결 상대 12, 하루 첫 승 +20
+        const base = st.mode === 'auto' ? 12 : (10 + 4 * (TIER_IDX[st.foe.char.stats?.tier] ?? 1)) * (st.nightmare ? 2.5 : 1);
+        st.dream = earnDream(x, base + dailyFirst(x));
+      } else {
+        x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
+        // 깨지 않는 꿈: AI 전투에서 지면 자동으로 써서 캐릭터를 지킨다 (HP·ATK 최대치 −5%)
+        if (st.mode === 'pve' && !st.nightmare && (x.bag?.insurance || 0) > 0) { x.bag.insurance--; x.stats.hp = Math.round(x.stats.hp * 0.95); x.stats.atk = Math.round(x.stats.atk * 0.95); st.saved = true; }
+      }
     }, c);
     st.me.char = fresh;
     if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, fresh);
-    // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 생사결 상대와의 전투는 기록만
-    if (st.winner === 2 && st.mode !== 'auto') {
+    // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 생사결 상대와의 전투·악몽 초대장·깨지 않는 꿈은 예외
+    if (st.winner === 2 && st.mode === 'pve' && !st.nightmare && !st.saved) {
       const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
       if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
+    }
     }
   } else st.turn++;
   await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ?').bind(JSON.stringify(st), Date.now(), id).run();
@@ -1221,7 +1675,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
     for (const k in s.p) {   // 입장 때 스냅샷이 아니라 지금 DB 의 캐릭터에 전적을 더한다 (방에 있는 동안 PvE·cron 으로 바뀐 것을 지우지 않게)
       // 모두 쓰러지면 무승부: 마지막 라운드까지 서 있던 사람은 무승부로 기록, 그 전에 쓰러졌거나 기권한 사람은 패배
       const won = s.winner === Number(k), draw = s.winner === 0 && alive.includes(Number(k)) && !s.p[k].left;
-      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
+      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c)); } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
     }
   } else s.round++;
   s.moves = {}; delete s.busy;

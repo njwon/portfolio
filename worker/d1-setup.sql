@@ -111,3 +111,11 @@ CREATE TABLE IF NOT EXISTS rpg_auto_log (
 );
 CREATE INDEX IF NOT EXISTS idx_rpg_auto_a ON rpg_auto_log(a_id, created);
 CREATE INDEX IF NOT EXISTS idx_rpg_auto_b ON rpg_auto_log(b_id, created);
+-- DREAM RPG: 꿈 이야기 — 캐릭터별로 AI 가 지은 챕터 글 (rpg.js ensureStoryTable 이 없으면 만든다)
+CREATE TABLE IF NOT EXISTS rpg_story (
+  char_id TEXT NOT NULL,
+  chapter INTEGER NOT NULL,
+  content TEXT,
+  created INTEGER NOT NULL,
+  PRIMARY KEY (char_id, chapter)
+);
