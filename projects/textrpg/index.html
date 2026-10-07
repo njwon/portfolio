@@ -219,6 +219,7 @@
         .shop-item:first-child { border-top: none; }
         .shop-item .meta { font-size: 0.8125rem; }
         .stars { color: #fae069; letter-spacing: 1px; }
+        .perm { display: inline-block; font-size: 0.75rem; font-weight: bold; padding: 0 6px; border-radius: 4px; border: 1px solid #fae069; color: #fae069; margin-left: 4px; }
         .danger-zone { margin-top: 22px; padding-top: 12px; border-top: 0.5px dashed #555; }
 
         /* 상황별 1회 안내 (닫으면 다시 안 뜸, 도움말 → 처음 안내 다시 보기로 되살림) */
@@ -354,7 +355,7 @@
                 </div>
                 <div class="card" id="shopCard">
                     <h3>꿈 시장 <span class="hint" id="walletHint"></span></h3>
-                    <p class="meta" style="margin:4px 0 6px">꿈 조각은 이기거나 꿈 이야기를 깨면 모입니다 . 능력치를 영구히 올리는 물건은 없고, 전부 그 전투에서만 효과가 있습니다.</p>
+                    <p class="meta" style="margin:4px 0 6px">꿈 조각은 이기거나 꿈 이야기를 깨면 모입니다. 능력치를 영구히 올리는 물건은 없습니다. 소모품은 쓰면 사라지고 그 전투에서만 효과가 있으며, <span class="perm">영구</span> 표시가 붙은 것은 사면 계속 남거나 캐릭터를 영구히 바꿉니다.</p>
                     <div id="shopList"></div>
                     <p class="hint" id="shopStatus" role="status"></p>
                 </div>
@@ -1452,6 +1453,8 @@ const Snd = (() => {
         insurance: ['깨지 않는 꿈', 300, 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)', 1], key: ['설정 보강 열쇠', 1500, '설정 보강의 100승 대기를 바로 풂 (하루 1회)'],
         relic: ['꿈의 유물', 600, '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 300)'], star: ['별 표식', [1500, 3000, 6000], '순위표 이름 옆 장식 (3단계)'],
     };
+    // 영구: 사면 계속 남음(유물·별 표식) 또는 쓰면 설정이 영구히 바뀜(설정 보강 열쇠)
+    const PERM = { relic: '바꾸기 전까지 계속 지님', star: '한 번 사면 계속 남음', key: '이 열쇠로 하는 설정 보강은 설정을 영구히 바꿈 (열쇠는 1회용)' };
     const BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'], SHOP = ['tea', 'sight', 'guard', 'bandage', 'smoke', 'map', 'nightmare', 'insurance', 'key', 'relic', 'star'];
     const bagSel = new Set(); let useNightmare = false;
     function renderBag() {
@@ -1475,7 +1478,7 @@ const Snd = (() => {
             if (k === 'star') { const lv = me.stars || 0; full = lv >= 3; pr = full ? 0 : price[lv]; extra = lv ? ` <span class="stars">${'★'.repeat(lv)}</span>` : ''; }
             if (k === 'relic') { full = false; if (me.relic) pr = 300; extra = me.relic ? ` — 지금: <b>${esc(me.relic)}</b>` : ''; }
             const cnt = k === 'relic' || k === 'star' ? '' : ` <span class="hint">보유 ${bag[k] || 0}${max ? '/' + max : ''}</span>`;
-            return `<div class="shop-item"><div><b>${name}</b>${cnt}${extra}<div class="meta">${desc}</div>${k === 'relic' ? `<input type="text" id="relicName" maxlength="12" placeholder="예) 할아버지의 망치" style="margin-top:6px;padding:.5rem" aria-label="유물 이름">` : ''}</div><button type="button" class="mini" data-buy="${k}"${full || d < pr ? ' disabled' : ''}>${full ? '최대' : (k === 'relic' && me.relic ? '바꾸기 ' : '') + pr + ' 조각'}</button></div>`;
+            return `<div class="shop-item"><div><b>${name}</b>${PERM[k] ? ' <span class="perm" title="' + PERM[k] + '">영구</span>' : ''}${cnt}${extra}<div class="meta">${desc}${PERM[k] ? `<br><span class="hint">영구: ${PERM[k]}</span>` : ''}</div>${k === 'relic' ? `<input type="text" id="relicName" maxlength="12" placeholder="예) 할아버지의 망치" style="margin-top:6px;padding:.5rem" aria-label="유물 이름">` : ''}</div><button type="button" class="mini" data-buy="${k}"${full || d < pr ? ' disabled' : ''}>${full ? '최대' : (k === 'relic' && me.relic ? '바꾸기 ' : '') + pr + ' 조각'}</button></div>`;
         }).join(''));
     }
     $('shopList').addEventListener('click', async e => {
@@ -1671,7 +1674,7 @@ const Snd = (() => {
             ['자동 생사결', '참가해 두면 내가 접속하지 않아도 다른 참가자와 자동으로 싸워서 기록과 보상이 쌓여요.', '', '매시 정각에 참가자 최대 30명을 무작위로 둘씩 짝지어 최대 40라운드. 끝까지 승부가 안 나면 기록 없음. AI 서술 없이 규칙 엔진만 사용(체력이 낮으면 방어, 게이지가 차면 필살기). 이기면 승점 2 · 보상 1.3배, 지면 패배 기록만. 다른 사람이 \'다른 플레이어의 캐릭터와 전투\'로 내 캐릭터와 싸워 내가 이겨도 보상을 받음.'],
             ['승점 · 순위표', '이기면 점수를 얻고, 점수가 높을수록 순위가 올라가요. 사람과 싸워 이기면 더 많이 받아요.', '', 'AI 상대 승리 1점 · 자동 생사결 승리 2점(부재 중 자동 전투, 다른 플레이어 캐릭터와 전투 모두) · 온라인 대전 승리 3점. 순위표에는 승점 1점 이상인 상위 20명, 승점이 같으면 먼저 만든 캐릭터가 위.'],
             ['온라인 대전', '사람끼리 2~6명이 싸워요. 이기면 승점 3점을 받지만 능력치는 오르지 않아요.', '', '첫 제출 뒤 60초가 지나면 누구나 \'건너뛰기\'를 누를 수 있고, 건너뛰어진 사람은 자동 방어. 3번 연속이면 기권. 도중에 나가면 기권 패배. 마지막 라운드에 모두 쓰러지면 무승부(그 전에 쓰러졌거나 기권한 사람은 패배). 랜덤 대전은 2분 안에 만들어진 방끼리만 짝지어짐. 방은 3시간 동안 아무 일이 없으면 사라짐.'],
-            ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 성장 탭의 꿈 시장에서 그 전투에서만 효과가 있는 물건, 꾸미기, 보험을 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
+            ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 성장 탭의 꿈 시장에서 그 전투에서만 효과가 있는 소모품과 보험, 그리고 영구히 남는 꾸미기(꿈의 유물·별 표식)와 설정 보강 열쇠(설정을 영구히 바꿈)를 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 생사결 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
             ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
             ['오늘 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
