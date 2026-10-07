@@ -820,6 +820,7 @@ const Snd = (() => {
     function tierTableHtml(cur) {
         const f = x => (Math.round(x * 100) / 100).toFixed(2).replace(/0$/, '');
         const rows = TIER_RANGE.map(([n, lo, hi], i) => { const c = TIER_CAPS[n];
+            if (n === '???') return `<tr${n === cur ? ' class="me"' : ''}><th scope="row">???${n === cur ? ' <span class="hint">(나)</span>' : ''}</th><td>???</td><td>???</td><td>???</td><td>???</td><td>???</td><td>???</td></tr>`;
             return `<tr${n === cur ? ' class="me"' : ''}><th scope="row">${n}${n === cur ? ' <span class="hint">(나)</span>' : ''}</th><td>${lo}~${hi}</td><td>×${f(powerMult(lo))}~${f(powerMult(hi))}</td><td>${c.hp} / ${c.atk}</td><td>${c.def}% / ${c.spd} / ${c.acc} / ${c.eva}</td><td>${PLAUS_CAP[n]}%</td><td>−${i * 6}%p · ×${f(1 + i * 0.6)}</td></tr>`; }).join('');
         return `<div class="tbl"><table class="tiers"><thead><tr><th scope="col">등급</th><th scope="col">위력 점수</th><th scope="col">성장 배율</th><th scope="col">HP / ATK 상한</th><th scope="col">방어 / 속도 / 명중 / 회피 상한</th><th scope="col">개연성 상한</th><th scope="col">도망 확률 · 실패 손실</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
@@ -832,34 +833,36 @@ const Snd = (() => {
     const ultStyle = u => ULT_STYLE[u?.style] || ULT_STYLE.burst;
     const STATS = [['hp', 'HP', v => v], ['atk', 'ATK', v => v], ['def', '방어', v => v + '%'], ['spd', '속도', v => v], ['acc', '명중', v => v], ['eva', '회피', v => v], ['stability', '개연성', v => Math.round(v * 100) + '%']];
     const tip = (k, html) => `<span title="${esc(STAT_TIP[k])}">${html}</span>`;
-    function statLine(c) { const s = c.stats; return `${s.tier ? tip('tier', `위력 <b>${esc(s.tier)}</b>${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''}`) + ' · ' : ''}${tip('hp', `HP ${s.hp}`)} · ${tip('atk', `ATK ${s.atk}`)} · ${tip('def', `방어 ${s.def}%`)} · ${tip('spd', `속도 ${s.spd}`)} · ${tip('acc', `명중 ${s.acc}`)} · ${tip('eva', `회피 ${s.eva}`)} · ${tip('stability', `개연성 ${Math.round(s.stability * 100)}%`)}`; }
+    // ??? 등급은 모든 수치를 ??? 로 가린다 (본인·상대·전투 기록·등급표 모두). 서버 값은 그대로, 보이는 것만
+    const Q = '???', isSecret = c => c?.stats?.tier === '???';
+    function statLine(c) { const s = c.stats; if (isSecret(c)) return `위력 <b>???</b> · HP ??? · ATK ??? · 방어 ??? · 속도 ??? · 명중 ??? · 회피 ??? · 개연성 ???`; return `${s.tier ? tip('tier', `위력 <b>${esc(s.tier)}</b>${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''}`) + ' · ' : ''}${tip('hp', `HP ${s.hp}`)} · ${tip('atk', `ATK ${s.atk}`)} · ${tip('def', `방어 ${s.def}%`)} · ${tip('spd', `속도 ${s.spd}`)} · ${tip('acc', `명중 ${s.acc}`)} · ${tip('eva', `회피 ${s.eva}`)} · ${tip('stability', `개연성 ${Math.round(s.stability * 100)}%`)}`; }
     // 필살기 게이지: 모양(■□)과 숫자를 같이 — 색·기호만으로 상태를 알리지 않는다
     function gaugeHtml(g) { return `게이지 <span aria-hidden="true">${'■'.repeat(g) + '□'.repeat(ULT_COST - g)}</span> ${g}/${ULT_COST}${g >= ULT_COST ? ' <b>필살기 준비됨</b>' : ''}`; }
     // 펼친 '능력치 보기' 상자는 HP 가 바뀌어 카드를 다시 그려도 펼친 채로 둔다
     const openK = new Set();
     document.addEventListener('toggle', e => { const k = e.target.dataset?.k; if (k) e.target.open ? openK.add(k) : openK.delete(k); }, true);
     // 전투 카드: 싸우는 데 필요한 것(HP·게이지·필살기 이름)만 보이고, 능력치는 접어 둔다
-    function cardHtml(p, isEnemy, key) {
-        const c = p.char, pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100))), low = p.hp > 0 && pct <= 30;
+    function cardHtml(p, isEnemy, key, hide = false) {
+        const c = p.char, sec = hide || isSecret(c), pct = Math.max(0, Math.min(100, Math.round(p.hp / c.stats.hp * 100))), low = p.hp > 0 && pct <= 30;
         return `<h3>${esc(c.name)} <span class="hint">(${esc(c.fiction)})${c.tier && c.tier > 1.2 ? ' ★강적' : ''}</span></h3>
             <div class="hpbar${isEnemy ? ' enemy' : low ? ' low' : ''}" aria-hidden="true"><i style="width:${pct}%"></i></div>
-            <div class="meta">HP <b>${p.hp}</b>/${c.stats.hp}${low ? ' (위험)' : p.hp <= 0 ? ' (쓰러짐)' : ''} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · <b>방어 중</b>' : ''}<br>필살기 <b>${esc(c.ult.name)}</b></div>
-            ${key ? `<details class="more" data-k="${esc(key)}"${openK.has(key) ? ' open' : ''}><summary>능력치·필살기 보기</summary><div class="meta">${statLine(c)}<br>필살기(${ultStyle(c.ult)[0]} — ${ultStyle(c.ult)[1]}): ${esc(c.ult.effect)}</div></details>` : ''}`;
+            <div class="meta">HP <b>${sec ? Q : p.hp}</b>/${sec ? Q : c.stats.hp}${low ? ' (위험)' : p.hp <= 0 ? ' (쓰러짐)' : ''} · ${gaugeHtml(p.gauge ?? 0)}${p.guard ? ' · <b>방어 중</b>' : ''}<br>필살기 <b>${esc(c.ult.name)}</b></div>
+            ${key ? `<details class="more" data-k="${esc(key)}"${openK.has(key) ? ' open' : ''}><summary>능력치·필살기 보기</summary><div class="meta">${sec ? statLine({ stats: { tier: '???' } }) : statLine(c)}<br>필살기(${ultStyle(c.ult)[0]} — ${ultStyle(c.ult)[1]}): ${esc(c.ult.effect)}</div></details>` : ''}`;
     }
     // 캐릭터 탭: 모든 수치에 한 줄 설명을 붙여 늘 보이게
     // 성향: 심사관이 설정을 읽고 나눈 능력 비중(합 100). 기본 능력치가 모두 이 비중에서 나온다
-    function allocHtml(a) {
+    function allocHtml(a, sec = false) {
         const K = [['hp', 'HP'], ['atk', 'ATK'], ['def', '방어'], ['spd', '속도'], ['acc', '명중'], ['eva', '회피']];
         const sum = K.reduce((t, [k]) => t + (Number(a[k]) || 0), 0) || 1;
-        return `<h3 style="margin-top:14px">성향 <span class="hint">(심사관이 설정을 읽고 나눈 능력 비중)</span></h3><div class="grow">${K.map(([k, l]) => { const v = Math.round((Number(a[k]) || 0) / sum * 100); return `<span>${l}</span><div class="hpbar" aria-hidden="true"><i style="width:${Math.min(100, v * 2)}%"></i></div><span class="n">${v}%</span>`; }).join('')}</div>`;
+        return `<h3 style="margin-top:14px">성향 <span class="hint">(심사관이 설정을 읽고 나눈 능력 비중)</span></h3><div class="grow">${K.map(([k, l]) => { const v = Math.round((Number(a[k]) || 0) / sum * 100); return `<span>${l}</span><div class="hpbar" aria-hidden="true"><i style="width:${Math.min(100, v * 2)}%"></i></div><span class="n">${sec ? Q : v + '%'}</span>`; }).join('')}</div>`;
     }
     function charDetailHtml(c) {
-        const s = c.stats;
-        const rows = STATS.map(([k, l, f]) => `<div><dt>${l} <b>${f(s[k])}</b></dt><dd>${STAT_SHORT[k]}</dd></div>`).join('');
+        const s = c.stats, sec = isSecret(c);
+        const rows = STATS.map(([k, l, f]) => `<div><dt>${l} <b>${sec ? Q : f(s[k])}</b></dt><dd>${STAT_SHORT[k]}</dd></div>`).join('');
         return `<h3>능력치</h3>
-            <p class="meta" style="margin:0 0 6px">위력 등급 <b>${esc(s.tier || '')}</b>${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} — ${STAT_SHORT.tier}</p>
+            <p class="meta" style="margin:0 0 6px">위력 등급 <b>${esc(s.tier || '')}</b>${sec ? ' (×???)' : s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''} — ${STAT_SHORT.tier}</p>
             <dl class="slist">${rows}</dl>
-            ${c.alloc ? allocHtml(c.alloc) : ''}
+            ${c.alloc ? allocHtml(c.alloc, sec) : ''}
             <h3 style="margin-top:14px">필살기 · ${esc(c.ult.name)} <span class="hint">(${ultStyle(c.ult)[0]}형)</span></h3>
             <p class="meta" style="margin:0">${esc(c.ult.effect)}<br><b>${ultStyle(c.ult)[0]}형</b>: ${ultStyle(c.ult)[1]}<br><span class="hint">게이지 3칸이 차야 쓸 수 있습니다 (공격 +1칸, 방어 +2칸).</span></p>
             <h3 style="margin-top:14px">설정</h3>
@@ -867,12 +870,12 @@ const Snd = (() => {
             <details class="more" style="margin-top:8px"><summary>심사 기록</summary><div class="meta">
                 ${c.powerReason ? `심사관: ${esc(c.powerReason)}<br>` : ''}
                 ${c.luck?.table ? `등급 주사위 (심사 위력 ${c.luck.judged}): ${c.luck.table.map(t => `${esc(t.tier)} ${t.p}%`).join(' · ')} → <b>${esc(c.luck.tier)}</b>${c.luck.moved === 'up' ? ' ↑ 상승!' : c.luck.moved === 'down' ? ' ↓ 하락' : ''}${c.luck.tier !== s.tier ? ` → 최종 <b>${esc(s.tier)}</b> (처음 만들 때는 숙련까지만 — 그 위는 환생으로)` : ''}<br>` : ''}
-                일관성 ${s.coherence} (개연성의 바탕)${c.rebirths ? ` · 환생 ${c.rebirths}회 (+${c.rebirths * 10}%)` : ''}</div></details>`;
+                일관성 ${sec ? Q : s.coherence} (개연성의 바탕)${c.rebirths ? ` · 환생 ${c.rebirths}회 (+${c.rebirths * 10}%)` : ''}</div></details>`;
     }
     function goHome() {
         const s = me.stats;
         setHtml($('homeSummary'), `<h3>${esc(me.name)} <span class="hint">(${esc(me.fiction)})</span></h3>
-            <div class="meta">위력 <b>${esc(s.tier || '')}</b> · HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}% · 전적 ${me.wins}승 ${me.losses}패${me.draws ? ` ${me.draws}무` : ''}${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''} · 꿈 조각 <b>${me.dream || 0}</b></div>`);
+            <div class="meta">위력 <b>${esc(s.tier || '')}</b> · ${isSecret(me) ? 'HP ??? · ATK ??? · 개연성 ???' : `HP ${s.hp} · ATK ${s.atk} · 개연성 ${Math.round(s.stability * 100)}%`} · 전적 ${me.wins}승 ${me.losses}패${me.draws ? ` ${me.draws}무` : ''}${me.rebirths ? ` · 환생 ${me.rebirths}회` : ''} · 꿈 조각 <b>${me.dream || 0}</b></div>`);
         setHtml($('homeCard'), charDetailHtml(me));
         setHtml($('growCard'), growHtml(me));
         // 환생: HP·ATK 가 등급 상한에 닿았고 ??? 가 아니면 버튼 표시 (신화 → ??? 는 1000승 이상)
@@ -891,12 +894,12 @@ const Snd = (() => {
     // 성장 탭: 상한까지 얼마나 왔는지 막대로
     function growHtml(c) {
         const cap = capsOf(c), s = c.stats, pct = k => Math.min(100, Math.round(s[k] / cap[k] * 100));
-        const rows = STATS.filter(([k]) => k in cap).map(([k, l]) => `<span>${l}${k === 'hp' || k === 'atk' ? '<span aria-hidden="true">*</span>' : ''}</span><div class="hpbar${pct(k) >= 100 ? ' max' : ''}" aria-hidden="true"><i style="width:${pct(k)}%"></i></div><span class="n">${s[k]}/${cap[k]}${pct(k) >= 100 ? ' 최대' : ''}</span>`).join('');
+        const rows = STATS.filter(([k]) => k in cap).map(([k, l]) => `<span>${l}${k === 'hp' || k === 'atk' ? '<span aria-hidden="true">*</span>' : ''}</span><div class="hpbar${pct(k) >= 100 ? ' max' : ''}" aria-hidden="true"><i style="width:${pct(k)}%"></i></div><span class="n">${isSecret(c) ? '???/???' : `${s[k]}/${cap[k]}`}${pct(k) >= 100 ? ' 최대' : ''}</span>`).join('');
         const ready = rebirthReady(c), last = s.tier === '???';
         return `<h3>성장 <span class="hint">(${esc(s.tier || '')} 등급의 상한까지)</span></h3>
             <p class="meta" style="margin:0">이길 때마다 HP·ATK 는 꼭 오르고, 방어·속도·명중·회피는 가끔 오릅니다. <b>* HP와 ATK</b>가 둘 다 최대에 닿으면 다음 등급으로 <b>환생</b>할 수 있습니다.</p>
             <div class="grow">${rows}</div>
-            ${last ? '' : `<p class="hint" style="margin:6px 0 0">다음 등급(${nextTier(s.tier)}) 상한: HP ${TIER_CAPS[nextTier(s.tier)].hp} · ATK ${TIER_CAPS[nextTier(s.tier)].atk} · 개연성 ${PLAUS_CAP[nextTier(s.tier)]}%</p>`}
+            ${last ? '' : nextTier(s.tier) === '???' ? `<p class="hint" style="margin:6px 0 0">다음 등급(???) 상한: ???</p>` : `<p class="hint" style="margin:6px 0 0">다음 등급(${nextTier(s.tier)}) 상한: HP ${TIER_CAPS[nextTier(s.tier)].hp} · ATK ${TIER_CAPS[nextTier(s.tier)].atk} · 개연성 ${PLAUS_CAP[nextTier(s.tier)]}%</p>`}
             <details class="more"><summary>등급별 수치 전체 보기</summary>${tierTableHtml(s.tier)}</details>
             <p class="hint" style="margin:6px 0 0">${last ? '??? 는 최고 등급입니다.' : ready && s.tier === '신화' && (c.wins || 0) < 1000 ? `상한에 닿았습니다. ??? 로 환생하려면 1000승이 필요합니다 (지금 ${c.wins || 0}승).` : ready ? `환생 준비 완료! 아래 버튼으로 ${nextTier(s.tier)} 등급이 됩니다 (능력치는 새 등급 기본값으로, 성향·전적·필살기는 그대로, 환생마다 영구 +10%).` : `환생까지 HP ${pct('hp')}% · ATK ${pct('atk')}%`}</p>`;
     }
@@ -944,21 +947,21 @@ const Snd = (() => {
 
     // ── 전투 로그 렌더 (공통) ────────────────────────────────────────
     function logLine(el, html) { const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 60; const d = document.createElement('div'); d.innerHTML = html; el.appendChild(d); if (atEnd || el.childElementCount === 1) el.scrollTop = el.scrollHeight; }   // 위로 올려 지난 턴을 읽는 중이면 끌어내리지 않음
-    function eventsHtml(names, ev) {
+    function eventsHtml(names, ev, sec = {}) {
         return ev.map(e => {
-            const n = esc(names[e.who]);
+            const n = esc(names[e.who]), hid = sec[e.who] || sec[e.target], v = x => hid ? Q : x;
             if (e.type === 'defend') return `${n} 방어 태세`;
             if (e.type === 'ult_fail') return `${n} 게이지 부족 → 기본 공격`;
-            if (e.type === 'item') return `${n} ${esc(e.item || '물건')} 사용 → HP ${e.heal} 회복`;
+            if (e.type === 'item') return `${n} ${esc(e.item || '물건')} 사용 → HP ${v(e.heal)} 회복`;
             const k = e.type === 'ult' ? '필살기' : '공격';
             const t = e.target && names[e.target] ? ` → ${esc(names[e.target])}` : '';
-            return e.hit ? `${n}${t} ${k} <b>명중</b> (명중률 ${e.chance}%)${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (방어 ½)' : ''} → 피해 <b>${e.dmg}</b>${e.fit !== undefined && Math.abs(e.fit - 0.5) > 0.15 ? (e.fit > 0.5 ? ' ↑설정에 맞아 피해 증가' : ' ↓설정과 안 맞아 피해 감소') : ''}${e.killed ? ' — 쓰러짐' : ''}` : `${n}${t} ${k} 빗나감 (명중률 ${e.chance}%)`;
+            return e.hit ? `${n}${t} ${k} <b>명중</b> (명중률 ${v(e.chance)}%)${e.crit ? ' 크리티컬!' : ''}${e.guarded ? ' (방어 ½)' : ''} → 피해 <b>${v(e.dmg)}</b>${e.fit !== undefined && Math.abs(e.fit - 0.5) > 0.15 ? (e.fit > 0.5 ? ' ↑설정에 맞아 피해 증가' : ' ↓설정과 안 맞아 피해 감소') : ''}${e.killed ? ' — 쓰러짐' : ''}` : `${n}${t} ${k} 빗나감 (명중률 ${v(e.chance)}%)`;
         }).join('<br>');
     }
     const DIFF_KO = { easy: '쉬움', normal: '보통', hard: '어려움', impossible: '불가', denied: '불허' };
     const DIFF_TIP = { easy: '명중률 +10%', normal: '보정 없음', hard: '명중률 −15%', impossible: '설정상 불가능 — 명중률 0%', denied: '설정에 없거나 정책 위반 — 기본 공격으로 처리' };
     const msg = (cls, who, html) => `<div class="msg ${cls}"><span class="who">${who}</span><div class="bubble">${html}</div></div>`;
-    function roundHtml(label, names, entry) {
+    function roundHtml(label, names, entry, sec = {}) {
         let out = `<div class="round">— ${label} —</div>`;
         for (const k of Object.keys(entry.acts).map(Number).sort((a, b) => a - b)) {
             const act = entry.acts[k], j = entry.judge?.[k];
@@ -971,7 +974,7 @@ const Snd = (() => {
             }
         }
         const order = entry.order || (entry.first ? [entry.first === 'a' ? 1 : 2, entry.first === 'a' ? 2 : 1] : []);
-        out += msg('dice', '주사위', `순서 ${order.map(k => esc(names[k])).join(' → ')}<br>${eventsHtml(names, entry.events)}`);
+        out += msg('dice', '주사위', `순서 ${order.map(k => esc(names[k])).join(' → ')}<br>${eventsHtml(names, entry.events, sec)}`);
         const key = label.replace(/\s+/g, '');
         out += `<div class="msg gm"><span class="who">게임 마스터</span><div class="bubble" id="gm-${key}">${entry.narration}${entry.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : entry.ai ? '' : ' <span class="hint">(AI 서술 없음)</span>'}</div></div>`;
         return out;
@@ -980,7 +983,8 @@ const Snd = (() => {
     // ── AI 상대 전투 ──────────────────────────────────────────────────
     let battle = null, busy = false;
     function renderBattle() {
-        setHtml($('bMe'), cardHtml(battle.me, false, 'bme')); setHtml($('bFoe'), cardHtml(battle.foe, true, 'bfoe'));
+        const hideFoe = isSecret(battle.me.char) && battle.mode !== 'auto';   // ??? 의 상대는 내 능력치로 만들어지므로 상대 수치도 가림
+        setHtml($('bMe'), cardHtml(battle.me, false, 'bme')); setHtml($('bFoe'), cardHtml(battle.foe, true, 'bfoe', hideFoe));
         $('ultLeft').textContent = battle.me.gauge >= ULT_COST ? '준비됨' : `${battle.me.gauge}/${ULT_COST}`;
         $('btnUlt').disabled = busy || battle.me.gauge < ULT_COST; $('btnAttack').disabled = $('btnDefend').disabled = $('btnRun').disabled = busy;
         const pl = battle.status === 'playing';
@@ -1060,12 +1064,13 @@ const Snd = (() => {
         try { await api(`/api/rpg/chars/${me.id}/auto`, { token: myToken, on: e.target.checked }); refreshAuto(); }
         catch (err) { e.target.checked = !e.target.checked; alert(errMsg(err)); }
     });
+    const battleSec = () => ({ 1: isSecret(battle.me.char), 2: isSecret(battle.foe.char) || (isSecret(battle.me.char) && battle.mode !== 'auto') });
     function enterBattle(b) {
         battle = b; busy = false; saveSess({ battle: b.id });
         $('bLog').innerHTML = ''; $('bLb').style.display = 'none'; $('bAction').value = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
         if (battle.intro) logLine($('bLog'), `<span class="st-scene">${esc(battle.intro)}</span>`);
         logLine($('bLog'), `<b>${esc(battle.foe.char.name)}</b>(${esc(battle.foe.char.fiction)})이(가) 나타났다!${battle.mode === 'auto' ? ' <span class="hint">— 자동 생사결 참가자의 캐릭터 (AI 조종)</span>' : ''}<br><span class="hint">${esc(battle.foe.char.info)}</span>`);
-        for (const l of battle.log) logLine($('bLog'), roundHtml(`턴 ${l.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, l));   // 재접속이면 지난 턴 복원
+        for (const l of battle.log) logLine($('bLog'), roundHtml(`턴 ${l.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, l, battleSec()));   // 재접속이면 지난 턴 복원
         if (battle.log.length) logLine($('bLog'), '<span class="hint">— 이어서 진행합니다 —</span>');
         renderBattle(); show('s-battle');
     }
@@ -1078,9 +1083,9 @@ const Snd = (() => {
         let html;
         if (b.mode === 'story') {
             const sr = b.storyResult || {}, cr = sr.reward;
-            html = won ? (cr ? `악몽을 물리쳤다! 제${cr.chapter}장 클리어<br><span class="hint">보상: HP 최대치 +${cr.hp} · ATK +${cr.atk}${tags(cr)} · 꿈 조각 +${cr.shards}${cr.full ? '' : ' (오늘 3장을 넘게 깨서 보상 감소)'} — 다음 장이 열렸습니다</span>` : `이겼다!<br><span class="hint">${esc(sr.text || '')}</span>`)
+            html = won ? (cr ? `악몽을 물리쳤다! 제${cr.chapter}장 클리어<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${cr.hp} · ATK +${cr.atk}${tags(cr)}`} · 꿈 조각 +${cr.shards}${cr.full ? '' : ' (오늘 3장을 넘게 깨서 보상 감소)'} — 다음 장이 열렸습니다</span>` : `이겼다!<br><span class="hint">${esc(sr.text || '')}</span>`)
                 : b.deleted ? '당신은 쓰러졌다… 생사결 꿈이었기에 캐릭터가 사라집니다.' : `당신은 쓰러졌다… 꿈에서 깹니다.<br><span class="hint">${esc(sr.text || '')} 캐릭터는 그대로이고, 이번 회차에 모은 꿈 조각은 절반(+${sr.last?.shards ?? 0})만 남았습니다.</span>`;
-        } else if (won) html = `적이 쓰러졌다! 승리!${rw ? `<br><span class="hint">보상: HP 최대치 +${rw.hp} · ATK +${rw.atk}${tags(rw)}${b.dream ? ` · 꿈 조각 +${b.dream}` : ''} — 홈의 성장 탭에서 상한까지 얼마나 왔는지 볼 수 있습니다</span>` : ''}`;
+        } else if (won) html = `적이 쓰러졌다! 승리!${rw ? `<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${rw.hp} · ATK +${rw.atk}${tags(rw)}`}${b.dream ? ` · 꿈 조각 +${b.dream}` : ''} — 홈의 성장 탭에서 상한까지 얼마나 왔는지 볼 수 있습니다</span>` : ''}`;
         else if (b.mode === 'auto') html = `당신은 쓰러졌다…<br><span class="hint">자동 생사결 참가자와의 전투라 패배 기록만 남고 캐릭터는 그대로입니다.</span>`;
         else if (b.saved) html = `당신은 쓰러졌다… 그러나 깨지 않는 꿈이 대신 깨졌습니다.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 5% 줄었습니다.</span>`;
         else if (b.nightmare) html = `악몽에 삼켜졌다…<br><span class="hint">악몽 초대장으로 들어간 꿈이라 캐릭터는 그대로입니다.</span>`;
@@ -1100,7 +1105,7 @@ const Snd = (() => {
             const d = await api(`/api/rpg/battles/${b.id}/turn`, { token: myToken, type, text, local });
             if (battle !== b) return;   // 기다리는 사이 캐릭터 교체·로그아웃으로 전투를 버렸으면 무시
             battle = cur = d.battle; const last = battle.log[battle.log.length - 1];
-            logLine($('bLog'), roundHtml(`턴 ${last.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, last));
+            logLine($('bLog'), roundHtml(`턴 ${last.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, last, battleSec()));
             Snd.playRound(last.events.map(e => ({ ...e, ko: e.killed })));
             $('bAction').value = ''; $('bStatus').textContent = d.quotaBlocked && !nano.ready ? '오늘 AI 한도가 소진돼 사실만 기록됩니다.' : '';
             narrateLocally(last, `턴${last.turn}`, `/api/rpg/battles/${battle.id}/narrate`, { token: myToken, turn: last.turn });
@@ -1253,7 +1258,7 @@ const Snd = (() => {
         ['btnOAttack', 'btnODefend', 'btnOUlt'].forEach(id => $(id).style.display = playing && iAmAlive ? '' : 'none');
         // 로그
         const names = namesOf(s);
-        for (const r of s.log) if (r.round > renderedRounds) { logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r)); renderedRounds = r.round; }   // 라운드 번호 기준 (서버가 로그를 40개로 자르므로 개수 기준이면 41라운드부터 안 그려짐)
+        for (const r of s.log) if (r.round > renderedRounds) { logLine($('oLog'), roundHtml(`라운드 ${r.round}`, names, r, Object.fromEntries(slotsOf(s).map(k => [k, isSecret(s.p[k].char)])))); renderedRounds = r.round; }   // 라운드 번호 기준 (서버가 로그를 40개로 자르므로 개수 기준이면 41라운드부터 안 그려짐)
         for (const r of s.log) {
             const key = `라운드${r.round}`, bubble = document.getElementById('gm-' + key);
             if (r.ai && bubble && !narrating.has(key) && !bubble.innerHTML.startsWith(r.narration)) bubble.innerHTML = r.narration + (r.ai === 'local' ? ' <span class="hint">(크롬 내장 AI 서술)</span>' : '');   // 다른 플레이어의 크롬 AI 가 채운 서술
@@ -1526,7 +1531,7 @@ const Snd = (() => {
         const node = s.nodes[run.node], nc = c.nodes?.[node.id] || {}, max = me.stats.hp, pct = Math.max(0, Math.min(100, Math.round(run.hp / max * 100)));
         setHtml($('stHead'), `<h3>${esc(c.title)} <span class="hint">제${run.chapter}장${run.src === 'fallback' ? ' · 손으로 쓴 꿈' : ''}${run.hardcore ? ' · 생사결 꿈' : ''}</span></h3>
             <div class="hpbar${pct <= 30 ? ' low' : ''}" aria-hidden="true"><i style="width:${pct}%"></i></div>
-            <div class="meta">HP <b>${run.hp}</b>/${max}${pct <= 30 ? ' (위험)' : ''} · 장면 ${run.node + 1}/7 · 이번 회차 꿈 조각 ${run.shards}${run.gauge ? ' · 다음 전투 게이지 +1' : ''}${run.flags?.bossWeak ? ' · 보스 약화됨' : ''}</div>`);
+            <div class="meta">HP <b>${isSecret(me) ? Q : run.hp}</b>/${isSecret(me) ? Q : max}${pct <= 30 ? ' (위험)' : ''} · 장면 ${run.node + 1}/7 · 이번 회차 꿈 조각 ${run.shards}${run.gauge ? ' · 다음 전투 게이지 +1' : ''}${run.flags?.bossWeak ? ' · 보스 약화됨' : ''}</div>`);
         const last = run.log[run.log.length - 1], en = node.type === 'boss' ? nc.boss : nc.enemy;
         setHtml($('stNode'), `${run.node === 0 ? `<p class="st-scene">${esc(c.setting)}</p>` : ''}${last ? `<div class="st-result${last.ok === false ? ' fail' : ''}"><b>${esc(last.label)}</b> → ${esc(last.text)}${last.effect ? ` <span class="hint">(${esc(last.effect)})</span>` : ''}${last.judge ? `<br><span class="hint">심사관: ${esc(last.judge.verdict || '')} · 난이도 ${DIFF_KO[last.judge.difficulty] || '보통'} · 적합 ${Math.round(last.judge.fit * 100)}% → 성공 확률 ${last.judge.chance}%</span>` : ''}</div>` : ''}
             <p class="st-scene">${esc(nc.situation || '')}</p>${en ? `<p class="meta"><b>${esc(en.name)}</b> — ${esc(en.desc || '')}${en.weaknessLink ? `<br><span class="hint">${esc(en.weaknessLink)}</span>` : ''}</p>` : ''}`);
@@ -1627,12 +1632,12 @@ const Snd = (() => {
     const GLOSSARY = [
         ['능력치', [
             ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 그 위에 거의 나오지 않는 ??? 가 있어요. 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'. 처음 만들 때는 평범이나 숙련만 나오고(심사 점수 0.8배, 위력 상한 50), 그 위 등급은 승리와 환생으로 올라갑니다. 일관성이 50 미만이면 평범까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.'],
-            ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 보상 배율(아래 \'승리 보상\'). 상한은 등급마다 달라요: 평범 1500 ~ ??? 8000.'],
-            ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 맞으면 10% 확률로 크리티컬(1.5배), 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 보상 배율. 상한: 평범 200 ~ ??? 1000.'],
-            ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임. 이기면 35% 확률로 +1%. 상한: 평범 20% ~ ??? 65%.'],
-            ['속도', '누가 먼저 움직일지 정해요. 빠를수록 도망도 잘 칩니다.', '', '행동 순서 = 속도 + 주사위(0~30), 높은 쪽이 먼저. 도망 성공 확률에도 더해짐. 상한: 평범 60 ~ ??? 130. 등급과 상관없이 성향으로만 정해짐.'],
+            ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 보상 배율(아래 \'승리 보상\'). 상한은 등급마다 달라요: 평범 1500 ~ 신화 6000, ??? 는 ???.'],
+            ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 맞으면 10% 확률로 크리티컬(1.5배), 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 보상 배율. 상한: 평범 200 ~ 신화 800, ??? 는 ???.'],
+            ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임. 이기면 35% 확률로 +1%. 상한: 평범 20% ~ 신화 60%, ??? 는 ???.'],
+            ['속도', '누가 먼저 움직일지 정해요. 빠를수록 도망도 잘 칩니다.', '', '행동 순서 = 속도 + 주사위(0~30), 높은 쪽이 먼저. 도망 성공 확률에도 더해짐. 상한: 평범 60 ~ 신화 120, ??? 는 ???. 등급과 상관없이 성향으로만 정해짐.'],
             ['명중', '내 공격이 맞을 가능성이에요.', '', '명중 확률 = (명중 − 상대 회피) ÷ 100 × 개연성 + 난이도 보정(쉬움 +10% / 어려움 −15% / 불가 0%). 5~95% 사이로 제한. 맞으면 10% 확률로 크리티컬. 상한: 평범 85 ~ 신화 99.'],
-            ['회피', '상대 공격을 피하는 솜씨예요. 상대의 명중을 깎아요.', '', '상대 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐. 상한: 평범 20 ~ ??? 55.'],
+            ['회피', '상대 공격을 피하는 솜씨예요. 상대의 명중을 깎아요.', '', '상대 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐. 상한: 평범 20 ~ 신화 50, ??? 는 ???.'],
             ['개연성', '내 캐릭터가 "말이 되는" 정도예요. 설정이 앞뒤가 맞을수록 높고, 높을수록 공격이 잘 맞아요.', '"뭐든 다 할 수 있다"보다 "힘은 세지만 발이 느리다"가 개연성이 높아요.', '설정의 일관성(0~100)에서 나온 명중 계수 0.55~1.0 (명중 확률에 곱해짐). 설정에 맞는 선언(적합 80% 이상 + 난이도 쉬움·보통)마다 +0.3%p, 불허·불가 판정이면 −0.5%p. 등급별 상한: 평범 85% ~ 신화 100% (오를 때만 적용 — 처음부터 높으면 깎지 않음). 환생마다 바닥 +3%p.'],
             ['일관성', '심사관이 보기에 설정이 얼마나 앞뒤가 맞는지에 대한 점수예요. 개연성은 이 점수에서 출발해요.', '', '0~100. 설정 보강으로 다시 심사받을 수 있음.'],
         ]],
