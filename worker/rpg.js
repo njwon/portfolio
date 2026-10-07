@@ -1436,10 +1436,20 @@ function pickEnemy(c, { nightmare = false } = {}) {
   const weights = ENEMIES.map(e => { const t = e[6]; return 1 / (1 + Math.abs(t - (1 + Math.max(0, Math.min(3, rec)) * 0.25)) * 3); });
   let r = rnd() * weights.reduce((s, w) => s + w, 0), idx = 0;
   for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { idx = i; break; } }
-  if (!nightmare) return makeEnemy(idx, scale);
-  // 악몽 초대장: 강함 ×(1.5 + 0.25 × 내 등급 단계). 이기면 꿈 조각 2.5배
-  const e = makeEnemy(idx, scale * (1.5 + 0.25 * (TIER_IDX[c.stats.tier] ?? 0)));
-  e.name = '악몽 · ' + e.name; e.nightmare = true; return e;
+  const e = makeEnemy(idx, scale);
+  // 적을 내 현재 능력치에 맞춘다: HP·ATK = 내 값 × 적 강함(0.9~1.8) × (0.72 − 0.18 × 성장도), 방어·속도·명중·회피 = 내 값
+  //   예전엔 등급 배율의 제곱근으로만 커져서 숙련 이후 승률 96~100% (긴장감 없음). 배율 지수만 올려선 안 바뀜(m^1.0 도 97~100%) — 플레이어 HP·ATK 는 상한까지 4~8배 크기 때문
+  //   시뮬레이션(평범→신화 상한, 100명): 등급 막 올라옴 81~87% → 상한 근처 93~95%, 신화 상한까지 약 19시간. 악몽 초대장은 ×1.3 (승률 62~78%)
+  matchToPlayer(e, c, ENEMIES[idx][6] * (nightmare ? NIGHTMARE_X : 1));
+  if (nightmare) { e.name = '악몽 · ' + e.name; e.nightmare = true; }
+  return e;
+}
+const ENEMY_K0 = 0.72, ENEMY_KG = 0.18, NIGHTMARE_X = 1.3;
+const growthOf = c => { const cap = capsOf(c); return Math.max(0, Math.min(1, (c.stats.hp / cap.hp + c.stats.atk / cap.atk) / 2)); };
+function matchToPlayer(e, c, t) {
+  const k = t * (ENEMY_K0 - ENEMY_KG * growthOf(c));
+  e.stats.hp = Math.max(1, Math.round(c.stats.hp * k)); e.stats.atk = Math.max(1, Math.round(c.stats.atk * k));
+  for (const s of ['def', 'spd', 'acc', 'eva']) e.stats[s] = c.stats[s];
 }
 // 상대 AI: 게이지 차면 필살기(HP 낮을수록 더 자주), 내 HP 가 낮고 상대 게이지가 차 있으면 가끔 방어
 function enemyDecide(e, me) {
