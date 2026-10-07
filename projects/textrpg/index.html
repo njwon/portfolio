@@ -224,8 +224,14 @@
         dialog h2 { margin: 0 0 10px; font-size: 1.25rem; }
         dialog h3 { margin: 20px 0 6px; font-size: 1.05rem; }
         dialog ol, dialog ul { padding-left: 1.3em; margin: 6px 0; }
-        dialog dl dt { font-weight: bold; margin-top: 8px; }
-        dialog dl dd { margin: 0 0 0 0; opacity: .9; font-size: 0.9375rem; }
+        dialog h4 { margin: 16px 0 2px; font-size: 0.875rem; opacity: .75; letter-spacing: .05em; }
+        dialog dl { margin: 0; }
+        dialog dl dt { font-weight: bold; margin-top: 10px; }
+        dialog dl dd { margin: 0; font-size: 0.9375rem; }
+        dialog dd .eg { display: block; border-left: 2px solid #75fa69; padding-left: 8px; margin-top: 4px; font-size: 0.875rem; opacity: .85; }
+        dialog details.calc { margin-top: 2px; font-size: 0.8125rem; color: #c8c8c8; }
+        dialog details.calc > summary { min-height: 28px; padding: 2px 0; color: #eee; opacity: .8; }
+        dialog details.calc[open] { border-left: 2px solid #555; padding-left: 8px; }
         dialog fieldset { border: 0.5px dashed #777; border-radius: 4px; margin: 8px 0; padding: 6px 12px 10px; }
         dialog fieldset label { display: inline-flex; align-items: center; gap: 6px; margin: 4px 14px 0 0; min-height: 32px; cursor: pointer; }
         .dlg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
@@ -419,7 +425,8 @@
         <h3>한 턴의 흐름</h3>
         <ol><li>행동을 글로 선언 (비우면 기본 공격)</li><li>공격 · 방어 · 필살기 선택</li><li>심사관: 허용 여부 · 난이도 · 적합도</li><li>주사위: 순서 · 명중 · 피해</li><li>게임 마스터 서술</li></ol>
         <h3>용어</h3>
-        <dl id="glossary"></dl>
+        <p class="hint" style="margin:0 0 4px">숫자가 궁금하면 각 항목의 '자세한 계산'을 펼쳐 보세요.</p>
+        <div id="glossary"></div>
         <form method="dialog" class="dlg-foot"><span></span><button>닫기</button></form>
     </dialog>
 
@@ -1152,26 +1159,38 @@
     $('tutNext').addEventListener('click', () => { if (tutStep === document.querySelectorAll('#dlgTut .tut-step').length - 1) $('dlgTut').close(); else tutGo(tutStep + 1); });
     $('tutSkip').addEventListener('click', () => $('dlgTut').close());
     $('dlgTut').addEventListener('close', () => { lsSet(TUT, '1'); if (!me && screens.every(id => id === 's-create' || !$(id).classList.contains('active'))) $('char-name').focus(); });
-    // 용어집: 화면에 나오는 모든 수치·기능의 뜻
+    // 용어집: 쉬운 설명을 먼저 보여 주고, 공식·수치는 항목마다 '자세한 계산'에 접어 둔다 (처음 보는 사람이 숫자 더미부터 마주치지 않게)
+    //   [용어, 쉬운 설명, 예시(선택), 자세한 계산(선택)]
     const GLOSSARY = [
-        ['위력 등급', STAT_TIP.tier.replace(/^위력 등급: /, '') + '. 평범 → 숙련 → 초인 → 전설 → 신화'],
-        ['HP', STAT_TIP.hp.replace(/^HP: /, '')], ['ATK', STAT_TIP.atk.replace(/^ATK: /, '')],
-        ['방어', STAT_TIP.def.replace(/^방어: /, '')], ['속도', STAT_TIP.spd.replace(/^속도: /, '')],
-        ['명중', STAT_TIP.acc.replace(/^명중: /, '')], ['회피', STAT_TIP.eva.replace(/^회피: /, '')],
-        ['개연성', STAT_TIP.stability.replace(/^개연성: /, '') + '. 설정에 맞게 선언하면 조금씩 오르고(+0.3%p), 불허·불가 판정이면 내려감(−0.5%p)'],
-        ['일관성', '심사관이 매긴 설정의 앞뒤 맞음 점수(0~100). 개연성의 바탕이 되며, 설정 보강으로 다시 심사받을 수 있음'],
-        ['적합도 (적합 %)', '이번 선언이 내 설정에 얼마나 맞는가. 높으면 피해 최대 ×1.15, 낮으면 ×0.85'],
-        ['난이도', '쉬움 명중률 +10% · 보통 보정 없음 · 어려움 −15% · 불가 0% · 불허 = 설정에 없거나 정책 위반이라 기본 공격으로 처리'],
-        ['필살기 · 게이지', '게이지 3칸이 차면 쓸 수 있는 강한 기술. 공격하면 +1칸, 방어하면 +2칸. 부족한데 누르면 기본 공격'],
-        ['방어 (행동)', '이번 턴 받는 피해를 절반으로 줄이고 게이지 +2칸'],
-        ['도망', '한 번이라도 싸운 뒤엔 속도·회피·등급으로 성공 확률을 굴림. 실패하면 패배로 기록되고 HP·ATK 를 잃음'],
-        ['환생', 'HP·ATK 가 등급 상한에 닿으면 다음 등급으로 다시 시작. 성향·전적·필살기 유지, 환생마다 영구 +10%, 개연성 바닥 +3%p'],
-        ['설정 보강', '설정에 100자까지 덧붙여 일관성만 다시 심사. 5승마다 1회, 첫 회 무료'],
-        ['자동 생사결', '참가해 두면 접속하지 않아도 서버가 매시간 참가자끼리 붙여 전적·보상이 쌓임 (AI 서술 없음)'],
-        ['승점 · 순위표', 'AI 상대 승리 1점, 온라인 대전 승리 3점'],
-        ['오늘 무료 몽상', '하루에 쓸 수 있는 AI 호출 횟수. 다 쓰면 판정·주사위는 계속되지만 캐릭터 생성과 서술이 멈춤'],
+        ['능력치', [
+            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 HP·ATK 성장폭이 커집니다.'],
+            ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 등급 배율. 최대 6000 (등급마다 상한이 따로 있음).'],
+            ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 크리티컬이면 1.5배, 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 배율, 최대 800.'],
+            ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임 (최대 60%). 이기면 35% 확률로 +1%.'],
+            ['속도', '누가 먼저 움직일지 정해요. 빠를수록 도망도 잘 칩니다.', '', '행동 순서 = 속도 + 주사위(0~30), 높은 쪽이 먼저. 도망 성공 확률에도 더해짐. 최대 120.'],
+            ['명중', '내 공격이 맞을 가능성이에요.', '', '명중 확률 = (명중 − 상대 회피) ÷ 100 × 개연성 + 난이도 보정(쉬움 +10% / 어려움 −15% / 불가 0%). 5~95% 사이로 제한. 최대 99.'],
+            ['회피', '상대 공격을 피하는 솜씨예요. 상대의 명중을 깎아요.', '', '상대 명중 확률에서 이만큼 뺌. 도망 성공 확률에도 더해짐. 최대 50.'],
+            ['개연성', '내 캐릭터가 "말이 되는" 정도예요. 설정이 앞뒤가 맞을수록 높고, 높을수록 공격이 잘 맞아요.', '"뭐든 다 할 수 있다"보다 "힘은 세지만 발이 느리다"가 개연성이 높아요.', '설정의 일관성(0~100)에서 나온 명중 계수 0.55~1.0 (명중 확률에 곱해짐). 설정에 맞는 선언(적합 80% 이상 + 난이도 쉬움·보통)마다 +0.3%p, 불허·불가 판정이면 −0.5%p. 등급별 상한: 평범 85% ~ 신화 100%. 환생마다 바닥 +3%p.'],
+            ['일관성', '심사관이 보기에 설정이 얼마나 앞뒤가 맞는지에 대한 점수예요. 개연성은 이 점수에서 출발해요.', '', '0~100. 설정 보강으로 다시 심사받을 수 있음.'],
+        ]],
+        ['전투', [
+            ['선언', '이번 턴에 할 행동을 글로 쓰는 거예요. 내 캐릭터다운 행동일수록 유리해요. 비워 두면 기본 공격이 나가요.', '복서라면 "왼손 잽으로 거리를 잰다"처럼.', ''],
+            ['적합도 (적합 %)', '선언이 내 캐릭터다운 행동인지예요. 높으면 더 세게, 낮으면 약하게 들어가요.', '', '피해에 ×0.85(전혀 안 맞음) ~ ×1.15(딱 맞음)이 곱해짐. 80% 이상이면 개연성도 조금 오름.'],
+            ['난이도', '심사관이 본 그 행동의 어려움이에요. 쉬우면 잘 맞고, 어려우면 잘 빗나가요.', '"불허"는 설정에 없는 행동이라 기본 공격으로 바뀌었다는 뜻이에요.', '명중률 보정: 쉬움 +10% · 보통 0 · 어려움 −15% · 불가 = 명중률 0%. 불허·불가는 개연성 −0.5%p.'],
+            ['필살기 · 게이지', '게이지가 3칸 차면 쓸 수 있는 큰 기술이에요. 공격하면 1칸, 방어하면 2칸 차요.', '', '게이지가 모자란데 누르면 기본 공격으로 처리됩니다.'],
+            ['방어 (행동)', '이번 턴은 막는 데 집중해요. 받는 피해가 절반이 되고 게이지가 2칸 차요.', '', ''],
+            ['도망', '싸움에서 빠져나가요. 빠르고 잘 피하는 캐릭터일수록 성공하기 쉬워요. 실패하면 진 것으로 기록되고 능력치가 조금 깎여요.', '', '한 턴도 싸우지 않았으면 항상 성공. 그 뒤엔 속도·회피·등급으로 성공 확률을 굴리고, 실패하면 패배 + HP·ATK 감소(등급이 높을수록 큼).'],
+        ]],
+        ['성장 · 그 밖', [
+            ['환생', '능력치가 지금 등급의 끝까지 자라면, 다음 등급으로 새로 태어날 수 있어요. 잠깐 약해지지만 더 높이 자랄 수 있어요.', '', 'HP·ATK 가 둘 다 등급 상한에 닿으면 가능. 능력치는 새 등급 기본값으로, 성향·전적·필살기는 유지. 환생마다 영구 +10%, 개연성 바닥 +3%p. 신화는 최고 등급이라 환생 불가.'],
+            ['설정 보강', '설정에 한 문장을 덧붙여 다시 평가받아요. 약점이나 한계를 잘 적으면 개연성이 올라요.', '', '100자까지. 일관성만 다시 심사하고 위력 등급은 그대로. 5승마다 1회, 첫 번째는 무료. 모순을 더하면 오히려 내려감.'],
+            ['자동 생사결', '참가해 두면 내가 접속하지 않아도 다른 참가자와 자동으로 싸워서 기록과 보상이 쌓여요.', '', '서버가 매시간 참가자끼리 붙임. AI 서술 없이 규칙 엔진만 사용.'],
+            ['승점 · 순위표', '이기면 점수를 얻고, 점수가 높을수록 순위가 올라가요. 사람과 싸워 이기면 더 많이 받아요.', '', 'AI 상대 승리 1점, 온라인 대전 승리 3점.'],
+            ['오늘 무료 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 온라인 대전은 라운드마다 1회.'],
+        ]],
     ];
-    $('glossary').innerHTML = GLOSSARY.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join('');
+    $('glossary').innerHTML = GLOSSARY.map(([group, items]) => `<h4>${esc(group)}</h4><dl>${items.map(([t, easy, eg, calc]) =>
+        `<dt>${esc(t)}</dt><dd>${esc(easy)}${eg ? `<span class="eg">${esc(eg)}</span>` : ''}${calc ? `<details class="calc"><summary>자세한 계산</summary>${esc(calc)}</details>` : ''}</dd>`).join('')}</dl>`).join('');
     $('btnHelp').addEventListener('click', () => {
         document.querySelectorAll('#dlgHelp input[name="fx"]').forEach(r => r.checked = r.value === document.documentElement.dataset.fx);
         document.querySelectorAll('#dlgHelp input[name="size"]').forEach(r => r.checked = r.value === (document.documentElement.dataset.size || 'm'));
