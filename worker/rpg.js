@@ -1948,8 +1948,14 @@ async function ascendChar(id, body, env) {
 
 const ENEMY_K0 = 0.72, ENEMY_KG = 0.18, NIGHTMARE_X = 1.3;
 const growthOf = c => { const cap = capsOf(c); return Math.max(0, Math.min(1, (c.stats.hp / cap.hp + c.stats.atk / cap.atk) / 2)); };
+// 2026-10 'PvE 로도 계정 키우는 맛': ① 등급이 높을수록 적이 강해진다(꿈의 압력) ② 선계 강화(타고난 몸·혼돈신체·등선 선물 시작 보정)는 적이 따라오지 않는 '가호'
+//   예전엔 적이 내 현재 능력치에 그대로 맞춰서 등급마다 승률이 78~90% 로 똑같고, 선계로 강해져도 AI 전투는 그대로였다
+//   시뮬레이션(등급별 성장 50%→95%): 강화 없음 평범 86→93% · 초인 71→84% · 신화 56→75% · ??? 53→69%, 가호 ×1.2 면 신화 79→90%, ×1.35(전부) 89→94%
+//   신화 상한까지 라운드: 강화 없음 2317 · 타고난 몸 5단 1903 · 전부 1526 (지금 2080). 처음 3전(쉬운 상대)은 그대로
+const PVE_DEPTH = { '평범': 0.92, '숙련': 1.0, '초인': 1.07, '전설': 1.13, '신화': 1.19, '???': 1.25 };
+const acctEdge = c => 1 + 0.5 * (0.05 * (c.ascBonus?.stat || 0) + (c.ascCap || 0) + (c.giftUsed?.statPct || 0) / 100);
 function matchToPlayer(e, c, t) {
-  const k = t * (ENEMY_K0 - ENEMY_KG * growthOf(c));
+  const k = t * (ENEMY_K0 - ENEMY_KG * growthOf(c)) * (PVE_DEPTH[c.stats?.tier] ?? 1) / acctEdge(c);
   e.stats.hp = Math.max(1, Math.round(c.stats.hp * k)); e.stats.atk = Math.max(1, Math.round(c.stats.atk * k));
   for (const s of ['def', 'spd', 'acc', 'eva']) e.stats[s] = c.stats[s];
 }
