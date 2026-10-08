@@ -130,14 +130,18 @@
         .quota details > summary { min-height: 0; padding: 0; font-size: 0.8125rem; opacity: .85; }
         .quota details[open] > summary { margin-bottom: 4px; }
         .quota .row > details { flex-basis: 100%; }
-        .modepick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border: 0; padding: 0; margin: 0 0 12px; }
+        .joinrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 12px; border: 0.5px dashed #888; border-radius: 4px; }
+        .joinrow label { flex: none; font-size: .9375rem; }
+        .joinrow input { flex: 1 1 140px; min-width: 0; min-height: 44px; }
+        .joinrow button { flex: none; width: auto; min-width: 88px; margin: 0; }
+        .modepick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; border: 0; padding: 0; margin: 0 0 12px; }
         .modepick label { display: flex; gap: 8px; align-items: flex-start; border: 0.5px dashed #888; border-radius: 4px; padding: 10px 12px; cursor: pointer; min-height: 44px; }
         .modepick label:has(input:checked) { border: 1px solid #75fa69; background: #75fa6912; }
         .modepick label:has(input:focus-visible) { outline: 2px solid #eee; outline-offset: 2px; }
         .modepick input { margin-top: 3px; flex: none; }
         .modepick b { display: block; }
         .modepick small { display: block; opacity: .75; font-size: .8125rem; }
-        @media (max-width: 640px) { .modepick { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .modepick { grid-template-columns: 1fr; } .joinrow label { flex-basis: 100%; } .joinrow input { flex-basis: 0; } }
         .lobby-pane { margin-bottom: 8px; }   /* 자세히는 각 막대 바로 밑 한 줄 (막대마다 따로 펼침) */
         #quotaWarn { margin-top: 6px; }
         #quotaWarn:empty { display: none; }
@@ -472,10 +476,14 @@
         <section class="screen" id="s-lobby" aria-labelledby="h-lobby">
             <h2 id="h-lobby" tabindex="-1">온라인 대전 <span class="hint">(2~6명)</span></h2>
             <div class="coach" data-coach="lobby" hidden><p><b>랜덤 대전</b>은 지금 기다리는 사람과 바로 1:1로 붙습니다. 친구와 하려면 <b>방 만들기</b>로 6자리 코드를 받아 알려 주세요. 라운드마다 몽상 1회가 듭니다.</p><button type="button" class="mini ghost" data-coach-ok>알겠어요</button></div>
+            <div class="joinrow">
+                <label for="roomCodeInput">받은 코드로 참가</label>
+                <input type="text" id="roomCodeInput" maxlength="6" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase;letter-spacing:.3em">
+                <button id="btnRoomJoin">참가</button>
+            </div>
             <fieldset class="modepick" id="lobbyMode"><legend class="sr-only">대전 방식</legend>
                 <label><input type="radio" name="lobbyMode" value="match" checked> <span><b>랜덤 대전</b><small>지금 기다리는 사람과 바로 1:1</small></span></label>
                 <label><input type="radio" name="lobbyMode" value="create"> <span><b>방 만들기</b><small>코드로 친구 초대 · 2~6명</small></span></label>
-                <label><input type="radio" name="lobbyMode" value="join"> <span><b>코드로 참가</b><small>받은 6자리 코드 입력</small></span></label>
             </fieldset>
             <div class="lobby-pane" data-pane="match">
                 <p class="meta">기다리는 사람이 있으면 바로 시작하고, 없으면 공개 방을 만들어 다음 사람을 기다립니다 (2분 안에 만들어진 방끼리만 연결). 생사결은 걸 수 없어요.</p>
@@ -494,13 +502,6 @@
                 </div>
                 <p class="meta">방을 만들면 6자리 코드가 나옵니다. 친구에게 알려 주고, 2명 이상 모이면 방장이 시작합니다.</p>
                 <div class="btn-row"><button id="btnRoomCreate">방 만들기</button></div>
-            </div>
-            <div class="lobby-pane" data-pane="join" hidden>
-                <div class="div-group">
-                    <label for="roomCodeInput">받은 코드</label>
-                    <input type="text" id="roomCodeInput" maxlength="6" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase;letter-spacing:.3em">
-                </div>
-                <div class="btn-row"><button id="btnRoomJoin">참가</button></div>
             </div>
             <div class="btn-row"><button id="btnLobbyBack" class="ghost">돌아가기</button></div>
             <p class="status" id="lobbyStatus" role="status"></p>
@@ -1406,7 +1407,7 @@ const Snd = (() => {
     }
     // 대전 방식 고르기(라디오): 고른 방식의 칸만 보이고, 마지막 선택은 기억
     function setLobbyMode(m) {
-        if (!['match', 'create', 'join'].includes(m)) m = 'match';
+        if (!['match', 'create'].includes(m)) m = 'match';
         document.querySelectorAll('input[name="lobbyMode"]').forEach(r => { r.checked = r.value === m; });
         document.querySelectorAll('.lobby-pane').forEach(p => { p.hidden = p.dataset.pane !== m; });
         lsSet('dreamrpg.lobbyMode', m);
