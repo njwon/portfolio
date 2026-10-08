@@ -1833,7 +1833,7 @@ const ASC_UP = {
   ward: { name: '생사결 호신부', max: 1, cost: [15], desc: '새 캐릭터마다 생사결 패배를 한 번 무효로 (대신 HP·ATK −10%)' },
   roster: { name: '꿈 명부 다시 짓기', repeat: true, cost: [5], desc: '지금 고른 캐릭터의 AI 전투 적 이름·설명을 새로 지음 (강함은 그대로)' },
   heaven: { name: '천상 칸', max: 1, cost: [40], need: '???', desc: '캐릭터 칸 +1 (최대 6칸)' },
-  body: { name: '혼돈신체', max: 3, cost: [120, 180, 250], need: '???', desc: '모든 계정 캐릭터(지금 있는 캐릭터 포함)의 HP·ATK 와 그 상한 +10% — 가장 강하고 가장 비쌈' },
+  body: { name: '혼돈신체', max: 3, cost: [120, 180, 250], need: '???', desc: '모든 계정 캐릭터(지금 있는 캐릭터 포함)의 HP·ATK 와 그 상한 +10%. 혼돈의 기운을 가지게 된다. 당신보다 강한 것은 없다.' },
   seed: { name: '천상의 씨앗', repeat: true, cost: [80], need: '???', desc: '다음 캐릭터가 최소 전설로 태어나고 5% 확률로 ??? — 한 번에 하나' },
   train: { name: '천상 수련', endless: true, cost: [10], desc: '능력치 없이 선인 칭호가 오름 (단계마다 비용 +10)' },
 };
