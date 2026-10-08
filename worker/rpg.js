@@ -376,7 +376,7 @@ async function imgQuota(env, who) {
   //   기본 그림(SDXL Lightning)은 무료 모델이라 서버 전체 제한이 없고, 실패해 쉬는 중일 때만 0
   const fluxLeft = env.AI && !paused('flux') ? Math.max(0, Math.min(FLUX_DAILY - fluxN, byBudget)) : 0, sdxlOk = !!env.AI && !paused('sdxl');
   const personal = Math.max(0, IMG_DAILY - mine), left = sdxlOk ? personal : Math.min(personal, fluxLeft);
-  return { limit: IMG_DAILY, left, personal, flux: { limit: FLUX_DAILY, left: fluxLeft }, sdxl: sdxlOk, resetsAt: Date.parse(day + 'T00:00:00Z') + 86400e3,
+  return { limit: IMG_DAILY, left, personal, used: mine, flux: { limit: FLUX_DAILY, left: fluxLeft, used: fluxN, byBudget, cost: FLUX_COST, paused: paused('flux') ? failedAt.flux.until : undefined }, sdxl: sdxlOk, sdxlPausedUntil: paused('sdxl') ? failedAt.sdxl.until : undefined, resetsAt: Date.parse(day + 'T00:00:00Z') + 86400e3,
     scope: String(who).startsWith('acct:') ? 'account' : String(who).startsWith('dev:') ? 'device' : 'ip' };
 }
 async function drawScene(env, who, entry) {

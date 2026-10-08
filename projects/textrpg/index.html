@@ -286,7 +286,7 @@
                 <span>오늘 몽상</span>
                 <div class="bar" aria-hidden="true"><i id="quotaBar"></i></div>
                 <span id="quotaShort">확인 중…</span>
-                <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div></details>
+                <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div><div id="quotaImg" style="margin-top:6px" hidden></div></details>
             </div>
             <div class="row" id="imgQuotaRow" style="margin-top:6px" hidden>
                 <span>오늘 몽상 시각화</span>
@@ -744,6 +744,13 @@ const Snd = (() => {
         $('imgShort').title = `내 몫${scope ? `(${scope})` : ''} 하루 ${iq.limit}장${iq.resetsAt ? ` · 매일 ${hm(iq.resetsAt)} 충전` : ''}\n고화질(FLUX)은 모두가 같이 쓰는 하루 ${iq.flux.limit}장 — 다 쓰면 기본 그림으로 그립니다.\n기본 그림은 무료 모델이라 서버 전체 제한은 없고, 실패해 쉬는 동안(10분)만 0 으로 셉니다.`;
         $('imgQuotaRow').classList.toggle('low', iq.left <= 5);
         imgQuotaState = iq;
+        // 자세히: 그림 한도도 글 AI 처럼 근거까지
+        const fl = iq.flux || {}, lines = [
+            `<b>그림</b> — 내 몫${scope ? `(${scope})` : ''} ${iq.left}/${iq.limit}장 남음${iq.used != null ? ` · 오늘 ${iq.used}장 그림` : ''}${iq.resetsAt ? ` · 매일 ${hm(iq.resetsAt)} 충전` : ''}${iq.personal != null && iq.left < iq.personal ? ` <span class="hint">(내 몫은 ${iq.personal}장이지만 서버 사정으로 지금은 ${iq.left}장)</span>` : ''}`,
+            `고화질(FLUX) 서버 전체 ${fl.left ?? '?'}/${fl.limit ?? '?'}장 남음${fl.used != null ? ` · 오늘 ${fl.used}장` : ''}${fl.paused ? ` · 실패해 ${hm(fl.paused)}까지 쉬는 중` : fl.byBudget != null && fl.byBudget < (fl.limit - (fl.used || 0)) ? ` · 글 AI 예산 몫을 지키느라 ${fl.byBudget}장까지만` : ''}`,
+            `기본 그림(SDXL Lightning, 무료 모델) ${iq.sdxl === false ? `실패해 ${iq.sdxlPausedUntil ? hm(iq.sdxlPausedUntil) + '까지 ' : ''}쉬는 중` : '정상 · 서버 전체 제한 없음'}`,
+            `<span class="hint">그림 한 장 = 내 몫 1장. 고화질이 남아 있으면 고화질로, 아니면 기본 그림으로 그립니다. 실패한 그림은 세지 않아요.${imgPref() ? '' : ' 지금은 설정에서 그림이 꺼져 있어요.'}</span>`];
+        $('quotaImg').hidden = false; $('quotaImg').innerHTML = lines.map(x => `<div>${x}</div>`).join('');
     }
     let imgQuotaState = null;
     function applyQuota(q) {
@@ -1910,7 +1917,10 @@ const Snd = (() => {
             if (r.status === 429) { imgQuotaHit = true; if (imgQuotaState) applyImgQuota({ ...imgQuotaState, left: 0 }); fig.innerHTML = '<figcaption>오늘 그림 한도(80장)를 다 썼어요. 내일 다시 그려 드릴게요.</figcaption>'; return; }
             if (!r.ok) { fig.remove(); return; }
             const left = r.headers.get('X-Image-Left'), fl = r.headers.get('X-Flux-Left');
-            if (left !== null && imgQuotaState) applyImgQuota({ ...imgQuotaState, left: Number(left), flux: { ...imgQuotaState.flux, left: Number(fl ?? imgQuotaState.flux.left) } });
+            if (left !== null && imgQuotaState) {   // 방금 그린 한 장을 사용량에도 반영 (남은 장수는 서버 값)
+                const q0 = imgQuotaState, used = (q0.used || 0) + 1, isFlux = r.headers.get('X-Image-Model') === 'flux';
+                applyImgQuota({ ...q0, left: Number(left), used, personal: Math.max(0, q0.limit - used), flux: { ...q0.flux, left: Number(fl ?? q0.flux.left), used: (q0.flux.used || 0) + (isFlux ? 1 : 0) } });
+            }
             const url = URL.createObjectURL(await r.blob());
             fig.innerHTML = `<img alt="이번 턴 장면 — AI 가 서술을 바탕으로 그린 그림" src="${url}"><figcaption>AI 그림 · 실제 판정과 다를 수 있음</figcaption>`;
             fig.querySelector('img').addEventListener('load', () => { if (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 600) logEl.scrollTop = logEl.scrollHeight; }, { once: true });
