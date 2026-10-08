@@ -371,7 +371,13 @@ async function imgQuota(env, who) {
   const fluxN = (await env.DB.prepare("SELECT n FROM rpg_img WHERE day = ? AND who = '__flux'").bind(day).first())?.n ?? 0;
   const used = (await env.DB.prepare('SELECT neurons FROM rpg_quota WHERE day = ?').bind(day).first())?.neurons ?? 0;
   const byBudget = Math.max(0, Math.floor((DAILY_BUDGET - FLUX_RESERVE - used) / FLUX_COST));
-  return { limit: IMG_DAILY, left: Math.max(0, IMG_DAILY - mine), flux: { limit: FLUX_DAILY, left: Math.max(0, Math.min(FLUX_DAILY - fluxN, byBudget)) } };
+  // 실제로 그릴 수 있는 장수 = 내 몫과 서버 여력 중 작은 쪽 (일반 AI 한도처럼):
+  //   고화질(FLUX)은 텍스트 AI 와 같은 무료 뉴런에서 하루 FLUX_DAILY 장까지(텍스트 몫 FLUX_RESERVE 보장) · 실패해 쉬는 중이면 0
+  //   기본 그림(SDXL Lightning)은 무료 모델이라 서버 전체 제한이 없고, 실패해 쉬는 중일 때만 0
+  const fluxLeft = env.AI && !paused('flux') ? Math.max(0, Math.min(FLUX_DAILY - fluxN, byBudget)) : 0, sdxlOk = !!env.AI && !paused('sdxl');
+  const personal = Math.max(0, IMG_DAILY - mine), left = sdxlOk ? personal : Math.min(personal, fluxLeft);
+  return { limit: IMG_DAILY, left, personal, flux: { limit: FLUX_DAILY, left: fluxLeft }, sdxl: sdxlOk, resetsAt: Date.parse(day + 'T00:00:00Z') + 86400e3,
+    scope: String(who).startsWith('acct:') ? 'account' : String(who).startsWith('dev:') ? 'device' : 'ip' };
 }
 async function drawScene(env, who, entry) {
   if (!entry) return json({ error: 'not_found' }, 404);
@@ -379,6 +385,7 @@ async function drawScene(env, who, entry) {
   await ensureImgTable(env);
   const day = today(), row = await env.DB.prepare('SELECT n FROM rpg_img WHERE day = ? AND who = ?').bind(day, who).first();
   if ((row?.n ?? 0) >= IMG_DAILY) return json({ error: 'img_quota', limit: IMG_DAILY }, 429);
+  if (paused('sdxl') && (paused('flux') || !env.AI)) return json({ error: 'no_image' }, 503);   // 두 모델 다 쉬는 중이면 몫을 쓰지 않고 바로
   const scene = cleanScene(entry.scene) || 'two dream warriors clashing in a surreal neon dreamscape, dynamic action';
   const prompt = [scene, sceneCues(entry.events), IMG_STYLE].filter(Boolean).join(', ').slice(0, 900);
   if (!(await moderate(env, prompt)).ok) return json({ error: 'no_image' }, 503);
@@ -407,6 +414,7 @@ async function drawScene(env, who, entry) {
     const iq = await imgQuota(env, who);
     return new Response(body, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'private, max-age=86400', 'X-Image-Model': 'sdxl', 'X-Image-Left': String(iq.left), 'X-Flux-Left': String(iq.flux.left), ...CORS } });
   } catch (e) {
+    failedAt.sdxl = { at: Date.now(), until: Date.now() + PROVIDER_COOLDOWN, why: String(e?.message || e).slice(0, 120) };   // 기본 그림도 실패하면 잠시 쉼 → 남은 장수에 반영
     await env.DB.prepare('UPDATE rpg_img SET n = MAX(0, n - 1) WHERE day = ? AND who = ?').bind(day, who).run();   // 실패는 세지 않음
     return json({ error: 'no_image' }, 503);
   }
@@ -2217,7 +2225,7 @@ async function battleTurn(id, body, env, ip) {
     }
   } else st.turn++;
   await env.DB.prepare('UPDATE rpg_battles SET state = ?, updated = ? WHERE id = ?').bind(JSON.stringify(st), Date.now(), id).run();
-  return json({ battle: st, quota: pubQuota(await quota(env, ip)), quotaBlocked: t.quotaBlocked });
+  return json({ battle: st, quota: { ...pubQuota(await quota(env, ip)), img: await imgQuota(env, ip) }, quotaBlocked: t.quotaBlocked });   // 그림 남은 장수도 턴마다 (다른 사람이 쓴 고화질 몫 반영)
 }
 
 // ─── 온라인 대전 (2~6명) ─────────────────────────────────────────────
@@ -2385,7 +2393,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
   } else s.round++;
   s.moves = {}; delete s.busy;
   if (!(await saveRoom(env, code, s, v2))) return json({ error: 'retry' }, 409);   // busy 중엔 아무도 쓰지 않으므로 실패는 90초 넘게 걸려 다른 요청이 넘겨받은 경우뿐
-  return json({ state: pub(s, slot), quota: pubQuota(await quota(env, ip)), quotaBlocked });
+  return json({ state: pub(s, slot), quota: { ...pubQuota(await quota(env, ip)), img: await imgQuota(env, ip) }, quotaBlocked });
 }
 async function leaveRoom(code, body, env, ip) {
   let r = await loadRoom(env, code);
