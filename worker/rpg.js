@@ -29,11 +29,11 @@
  *   POST /api/rpg/battles/:id/narrate            { token, turn, narration }   (서버 서술이 없던 턴에 클라이언트 로컬 AI 서술을 채움)
  *   GET  /api/rpg/battles/:id?token=             (재접속)
  *   POST /api/rpg/battles/:id/leave              { token }                    (도망: 속도·회피·등급으로 실패 확률 → 실패하면 능력치 손실 + 패배)
- *   POST /api/rpg/battles                        { charId, token, mode: 'auto' } → 자동 생사결에 참가한 다른 플레이어 캐릭터(AI 조종)와 전투
+ *   POST /api/rpg/battles                        { charId, token, mode: 'auto' } → 자동 비무에 참가한 다른 플레이어 캐릭터(AI 조종)와 전투 · stake: 1~3(생사결 — 지면 캐릭터 삭제, 보상 ×5/×8/×12)
  *   POST /api/rpg/chars/:id/refine               { token, text }              (설정 보강 100자 → 일관성 재심사 → 개연성 갱신. 100승마다 1회)
  *   POST /api/rpg/chars/:id/rebirth              { token }                    (HP·ATK 가 등급 상한이면 환생 → 다음 등급)
- *   POST /api/rpg/chars/:id/auto                 { token, on }                (자동 생사결 참가 on/off — 꺼져 있는 동안 서버가 매시간 참가자끼리 붙임)
- *   GET  /api/rpg/auto?charId=                   → { on, participants, recent: [...] } 부재 중 자동 생사결 결과
+ *   POST /api/rpg/chars/:id/auto                 { token, on }                (자동 비무 참가 on/off — 꺼져 있는 동안 서버가 매시간 참가자끼리 붙임)
+ *   GET  /api/rpg/auto?charId=                   → { on, participants, recent: [...] } 부재 중 자동 비무 결과
  *   POST /api/rpg/rooms                          { charId, token }            → { code, roomToken, state }
  *   POST /api/rpg/match                          { charId, token }            → 랜덤 대전: 기다리는 공개 방이 있으면 들어가 바로 시작, 없으면 공개 방을 만들고 대기
  *   POST /api/rpg/rooms/:code/join               { charId, token }            (같은 캐릭터가 다시 오면 기존 자리로 재접속)
@@ -424,9 +424,9 @@ async function roomImage(code, token, round, env, who) {
   return drawScene(env, who, r.s.log.find(l => l.round === round));
 }
 
-// ─── 자동 생사결 ─────────────────────────────────────────────────
+// ─── 자동 비무 ─────────────────────────────────────────────────
 // 캐릭터에 auto 를 켜 두면: ① 매시간(cron) 서버가 참가자끼리 무작위로 짝지어 규칙 엔진만으로(AI 없음) 싸우게 하고 결과를 남긴다
-//   ② 온라인인 사람은 '자동 생사결 상대' 메뉴로 참가자 중 한 명(AI 조종)과 실시간 전투를 한다. 승리는 순위 승점에 PvE 와 PvP 사이(2점)로 반영
+//   ② 온라인인 사람은 '자동 비무 상대' 메뉴로 참가자 중 한 명(AI 조종)과 실시간 전투를 한다. 승리는 순위 승점에 PvE 와 PvP 사이(2점)로 반영
 async function setAuto(id, body, env) {
   const c = await loadChar(env, id, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
@@ -552,7 +552,7 @@ async function deleteChar(id, body, env) {
   await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ?').bind(id).run(); lbCache.at = 0;
   return json({ ok: true });
 }
-// 계정 탈퇴: 본인 세션 + 확인 문구('탈퇴')가 있어야. 계정 정보·세션·계정 캐릭터와 그 꿈 이야기·전투·자동 생사결 기록·한도 버킷을 모두 지운다
+// 계정 탈퇴: 본인 세션 + 확인 문구('탈퇴')가 있어야. 계정 정보·세션·계정 캐릭터와 그 꿈 이야기·전투·자동 비무 기록·한도 버킷을 모두 지운다
 //   (진행 중인 대전 방의 사본은 방 만료(3시간) 때 함께 사라진다. 손님 캐릭터는 계정과 무관해서 남는다)
 async function deleteAccount(body, env) {
   const sub = await sessionUser(env, body.session);
@@ -965,7 +965,7 @@ async function updateChar(env, id, fn, fallback = null) {
   }
   throw new Error('busy');
 }
-// 승리 보상 적용 (PvE · 자동 생사결 온라인/cron 공통)
+// 승리 보상 적용 (PvE · 자동 비무 온라인/cron 공통)
 // 개연성(stability): 선언으로 쌓인다 — 적합도 ≥ 0.8 이고 쉬움/보통 판정이면 +0.3%p, 불허·불가면 −0.5%p. 등급별 상한, 하한은 0.55 + 환생 횟수 × 0.03
 const PLAUS_CAP = { '평범': 0.85, '숙련': 0.90, '초인': 0.95, '전설': 0.98, '신화': 1.0, '???': 1.0 };
 const plausFloor = c => 0.55 + (c.rebirths || 0) * 0.03 + (c.ascPlaus || 0);   // ascPlaus: 선계 강화 '단단한 꿈'
@@ -1067,7 +1067,7 @@ function allocFromStats(c) {
 const BUSY_STALE_MS = 90e3, sleep = ms => new Promise(r => setTimeout(r, ms));
 const isBusy = s => typeof s.busy === 'number' && Date.now() - s.busy < BUSY_STALE_MS;
 // 승점 = PvE 승 1점 + PvP 승 3점 (순위표). 컬럼에 같이 써서 정렬 쿼리가 JSON 을 열지 않게 한다
-const scoreOf = c => Math.max(0, Math.round((c.wins || 0) + (c.pvpWins || 0) * 2 - (c.pvpCapped || 0) * 3));   // pvpCapped: 하루 상한을 넘긴 온라인 승리(전적엔 남고 승점엔 안 들어감)   // 자동 생사결 승 = pvpWins 0.5 → 총 2점
+const scoreOf = c => Math.max(0, Math.round((c.wins || 0) + (c.pvpWins || 0) * 2 - (c.pvpCapped || 0) * 3));   // pvpCapped: 하루 상한을 넘긴 온라인 승리(전적엔 남고 승점엔 안 들어감)   // 자동 비무 승 = pvpWins 0.5 → 총 2점
 async function saveChar(env, c, prev) {
   const ver = Math.max(Date.now(), (prev || 0) + 1);   // 같은 밀리초에 두 번 저장돼도 버전이 겹치지 않게
   const r = await env.DB.prepare('UPDATE rpg_chars SET json = ?, score = ?, name = ?, updated = ? WHERE id = ? AND COALESCE(updated, 0) = ?').bind(JSON.stringify(c), scoreOf(c), c.name, ver, c.id, prev || 0).run();
@@ -1186,7 +1186,7 @@ function applyBag(st, items) {
 }
 // ─── 흔적: 전투의 영향이 캐릭터에 남는다 (부상 · 흉터 · 피로 · 기세 · 공포/극복 · 숙적 · 자주 만난 상대) ───
 //   숫자는 코드가: 효과·지속은 여기서 정하고 전투 사본에만 적용(DB 의 영구 능력치는 그대로). AI 심사관·게임 마스터에겐 '상태'·'관계' 문장으로만 전달해 서술에 녹인다
-//   AI 전투(pve)·자동 생사결 상대(auto)·꿈 이야기(story)에만. 온라인 대전·부재 중 자동 전투에는 적용하지 않는다(공정성·서술 없음)
+//   AI 전투(pve)·자동 비무 상대(auto)·꿈 이야기(story)에만. 온라인 대전·부재 중 자동 전투에는 적용하지 않는다(공정성·서술 없음)
 const PARTS = { arm: '팔', leg: '다리', head: '머리', body: '몸통' };
 const PART_HINT = { arm: '팔을 크게 휘두르거나 무거운 것을 다루기 어려움', leg: '빠르게 달리거나 뛰기 어려움', head: '어지러워 조준이 흔들림', body: '숨이 차고 맞으면 더 아픔' };
 // [경상, 중상] 효과: atk·spd 는 비율 감소, acc·def 는 값 감소, hp 는 전투 시작 HP 비율 감소, flee 는 도망 확률 감소
@@ -1714,7 +1714,7 @@ function makeEnemy(i, scale = 1, label = null, roster = null) {
 }
 // 처음 EASY_FIRST 전은 약한 상대만(강함 ×0.85): 시뮬레이션상 새 캐릭터의 첫 전투 승률이 약 49% 라 손님 캐릭터가 평균 1.4승 만에 사라졌다
 const EASY_FIRST = 3, EASY_SCALE = 0.85;
-function pickEnemy(c, { nightmare = false, roster = null } = {}) {
+function pickEnemy(c, { nightmare = false, roster = null, stakeX = 1 } = {}) {
   const scale = Math.sqrt(c.stats.mult || 1);                       // 강한 캐릭터에겐 상대도 조금 강하게 (배율의 제곱근 → 여전히 압도적)
   if (!nightmare && (c.wins || 0) + (c.losses || 0) < EASY_FIRST) {
     const easy = ENEMIES.map((e, i) => [e[6], i]).filter(([t]) => t <= 1);
@@ -1728,7 +1728,7 @@ function pickEnemy(c, { nightmare = false, roster = null } = {}) {
   // 적을 내 현재 능력치에 맞춘다: HP·ATK = 내 값 × 적 강함(0.9~1.8) × (0.72 − 0.18 × 성장도), 방어·속도·명중·회피 = 내 값
   //   예전엔 등급 배율의 제곱근으로만 커져서 숙련 이후 승률 96~100% (긴장감 없음). 배율 지수만 올려선 안 바뀜(m^1.0 도 97~100%) — 플레이어 HP·ATK 는 상한까지 4~8배 크기 때문
   //   시뮬레이션(평범→신화 상한, 100명): 등급 막 올라옴 81~87% → 상한 근처 93~95%, 신화 상한까지 약 19시간. 악몽 초대장은 ×1.3 (승률 62~78%)
-  matchToPlayer(e, c, ENEMIES[idx][6] * (nightmare ? NIGHTMARE_X : 1));
+  matchToPlayer(e, c, ENEMIES[idx][6] * (nightmare ? NIGHTMARE_X : 1) * stakeX);
   if (nightmare) { e.name = '악몽 · ' + e.name; e.nightmare = true; }
   return e;
 }
@@ -1905,6 +1905,38 @@ function enemyDecide(e, me) {
   return { type: 'attack', text: '' };
 }
 
+// ─── 생사결: 지면 캐릭터가 사라지는 대신 보상이 크다 (AI 전투·자동 비무·온라인 방) ─────────────
+//   시뮬레이션(평범 갓 생성 → 상한, 각 1만 명, 매칭 승률 ~80/66/49%): 1단 ×1·보상 ×5 상한 도달 32%, 2단 ×1.15·×8 17%, 3단 ×1.3·×12 13%
+//   손익분기(캐릭터 가치를 '보통 승리 보상 n번'으로 볼 때): 1단 29 · 2단 22 · 3단 16 — 키운 캐릭터일수록 걸 이유가 적고, 갓 만든 캐릭터는 크게 걸 만하다
+//   깨지 않는 꿈·악몽 초대장과 같이 쓸 수 없고, 처음 3전(쉬운 상대)엔 못 건다. 첫 턴 뒤 도망 = 패배
+const STAKES = { 1: { x: 1, mult: 5 }, 2: { x: 1.15, mult: 8 }, 3: { x: 1.3, mult: 12 } };
+const stakeOf = v => own(STAKES, String(v)) ? Number(v) : 0;
+// 생사결 패배로 사라짐: 손님 캐릭터는 그냥 삭제, 계정 캐릭터는 30승 이상이면 등선 기운의 절반을 남기고 명예의 전당(전사)에 오른다
+async function stakeDeath(env, c) {
+  const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(c.id).first();
+  const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ?').bind(c.id).run();
+  if (!del.meta.changes) return null;
+  await ensureStoryTable(env); await ensureFoesTable(env);
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM rpg_story WHERE char_id = ?').bind(c.id),
+    env.DB.prepare('DELETE FROM rpg_foes WHERE char_id = ?').bind(c.id),
+  ]);
+  lbCache.at = 0;
+  const out = { deleted: true };
+  if (row?.user_sub) {
+    const qi = (c.wins || 0) >= ASCEND_MIN_WINS ? Math.floor(qiOf(c) / 2) : 0;
+    await updateAcct(env, row.user_sub, a => { a.qi += qi; a.total = (a.total || 0) + qi; a.hall = [{ name: c.name, fiction: c.fiction, tier: c.stats?.tier, wins: c.wins || 0, losses: c.losses || 0, rebirths: c.rebirths || 0, qi, fell: true, at: Date.now() }, ...(a.hall || [])].slice(0, 30); });
+    out.qi = qi; out.fell = true;
+  }
+  return out;
+}
+// 생사결 승리 보상: 보통 승리 보상(능력치·꿈 조각)에 단계 배율
+function stakeReward(rw, mult) {
+  rw.hp *= mult; rw.atk *= mult; for (const k in rw.stats) rw.stats[k] *= Math.ceil(mult / 4);
+  rw.tags = [`생사결 ×${mult}`, ...rw.tags.filter(t => t === '대성공'), ...Object.keys(rw.stats).map(k => `${STAT_KO[k]} +${rw.stats[k]}${k === 'def' ? '%' : ''}`)];
+  return rw;
+}
+
 async function createBattle(body, env) {
   let c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
@@ -1926,15 +1958,22 @@ async function createBattle(body, env) {
     foe = JSON.parse(row.json); foeId = row.id; foe.tier = 1;
   }
   const items = [...new Set((Array.isArray(body.items) ? body.items : []).filter(k => BAG_ITEMS.includes(k)))].slice(0, BAG_SLOTS);
-  const nightmare = mode === 'pve' && !!body.nightmare;
+  const nightmare = mode === 'pve' && !!body.nightmare, stake = stakeOf(body.stake);
+  if (stake && (nightmare || (c.wins || 0) + (c.losses || 0) < EASY_FIRST)) return json({ error: 'stake_locked' }, 409);
   if (items.length || nightmare) {   // 가져갈 물건은 전투 시작 때 차감 (최신 DB 값 기준)
     let bad = false;
     c = await updateChar(env, c.id, x => { bad = false; const b = x.bag || {}; if (items.some(k => !(b[k] > 0)) || (nightmare && !(b.nightmare > 0))) { bad = true; return; } for (const k of items) b[k]--; if (nightmare) b.nightmare--; x.bag = b; }, c);
     if (bad) return json({ error: 'no_item' }, 409);
   }
-  if (mode !== 'auto') foe = pickEnemy(c, { nightmare, roster: await loadRoster(env, c.id) });
+  if (mode !== 'auto') foe = pickEnemy(c, { nightmare, roster: await loadRoster(env, c.id), stakeX: stake ? STAKES[stake].x : 1 });
+  if (mode !== 'auto' && stake) foe.name = '생사결 · ' + foe.name;
+  else if (stake) {   // 자동 비무 생사결: 상대 캐릭터가 약하면 내 수준의 생사결 상대만큼 끌어올린다 (약한 상대만 골라 거는 것 방지)
+    const k = STAKES[stake].x * 1.15 * (ENEMY_K0 - ENEMY_KG * growthOf(c));
+    foe.stats = { ...foe.stats, hp: Math.max(foe.stats.hp, Math.round(c.stats.hp * k)), atk: Math.max(foe.stats.atk, Math.round(c.stats.atk * k)) };
+    foe.name = '생사결 · ' + foe.name;
+  }
   const st = { id: uid(), charId: c.id, mode, foeId, me: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null };
-  applyBag(st, items); if (nightmare) st.nightmare = true;
+  applyBag(st, items); if (nightmare) st.nightmare = true; if (stake) st.stake = stake;
   applyCond(st, c);
   await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
   return json({ battle: st });
@@ -1954,7 +1993,7 @@ async function getBattle(id, token, env) {
   if (!(await loadChar(env, st.charId, token))) return json({ error: 'forbidden' }, 403);
   return json({ battle: st });
 }
-// 승리 보상: 기본 HP +(10~30) · ATK +(1~4) 에 내 배율(mult)·상대 등급·자동 생사결 여부를 곱하고, 10% 로 부가 능력치(방어/명중/회피) 보너스, 5% 로 대성공(2배)
+// 승리 보상: 기본 HP +(10~30) · ATK +(1~4) 에 내 배율(mult)·상대 등급·자동 비무 여부를 곱하고, 10% 로 부가 능력치(방어/명중/회피) 보너스, 5% 로 대성공(2배)
 // 승리 보상: HP·ATK 는 매번, 방어·속도·명중·회피는 각각 35% 확률로 +1(대성공이면 +2). 상한: 방어 60% · 속도 120 · 명중 99 · 회피 50
 const STAT_CAP = { def: 60, spd: 120, acc: 99, eva: 50 }, STAT_KO = { def: '방어', spd: '속도', acc: '명중', eva: '회피' };
 function rollReward(c, foe, mode) {
@@ -1992,6 +2031,12 @@ async function leaveBattle(id, body, env) {
     const out = await updateChar(env, c0.id, x => { if (x.story?.run?.battleId === st.id) endRun(x, 'fled'); }, c0);
     return json({ ok: true, escaped: true, story: true, char: publicChar(out), message: '꿈에서 깨어났습니다. 이번 회차에서 모은 꿈 조각은 절반만 남습니다.' });
   }
+  if (st.stake && st.status === 'playing' && st.log.length) {   // 생사결은 첫 턴 뒤 도망칠 수 없다 — 나가면 패배(캐릭터 사라짐)
+    const c = await updateChar(env, c0.id, x => { x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1; }, c0);
+    if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, { ...st, winner: 2 }, c);
+    const d = await stakeDeath(env, c);
+    return json({ ok: true, escaped: false, stakeLost: true, deleted: !!d?.deleted, qi: d?.qi || 0, message: `생사결에서 등을 보였다. ${c.name}은(는) 꿈에서 사라졌습니다.` });
+  }
   if (st.status === 'playing' && st.log.length) {                         // 한 턴이라도 싸운 뒤의 도망만 판정 (시작 직후엔 자유)
     const r = escapeRoll(st.me, st.foe, (st.items?.smoke ? 0.25 : 0) - (st.fleePenalty || 0), !!st.items?.smoke);
     if (!r.ok) {
@@ -1999,7 +2044,7 @@ async function leaveBattle(id, body, env) {
         x.losses++; x.stats.hp = Math.max(200, x.stats.hp - r.penalty.hp); x.stats.atk = Math.max(20, x.stats.atk - r.penalty.atk);
         if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
       }, c0);
-      if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, { ...st, winner: 2 }, c);   // 자동 생사결 상대에게 붙잡힘 = 상대 승리로 기록
+      if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, { ...st, winner: 2 }, c);   // 자동 비무 상대에게 붙잡힘 = 상대 승리로 기록
       result = { ok: true, escaped: false, chance: r.chance, penalty: r.penalty, char: publicChar(c), message: `도망치다 ${st.foe.char.name}에게 붙잡혔다! 패배 기록 · HP 최대치 -${r.penalty.hp} · ATK -${r.penalty.atk}` };
     } else result = { ok: true, escaped: true, chance: r.chance, message: `${st.foe.char.name}을(를) 따돌리고 도망쳤다. (성공 확률 ${r.chance}%)` };
   }
@@ -2039,23 +2084,26 @@ async function battleTurn(id, body, env, ip) {
     const fresh = await updateChar(env, c.id, x => {   // AI 서술을 기다리는 동안 다른 곳(cron·방)이 저장한 전적 위에 적용
       if (st.winner === 1) {
         x.wins++;
-        st.reward = rollReward(x, st.foe.char, st.mode); applyReward(x, st.reward);
+        st.reward = rollReward(x, st.foe.char, st.mode); if (st.stake) stakeReward(st.reward, STAKES[st.stake].mult); applyReward(x, st.reward);
         if (st.mode === 'auto') { x.autoWins = (x.autoWins || 0) + 1; x.pvpWins = (x.pvpWins || 0) + 0.5; }
-        // 꿈 조각: AI 전투 10 + 4 × 상대 등급(악몽이면 ×2.5), 자동 생사결 상대 12, 하루 첫 승 +20
+        // 꿈 조각: AI 전투 10 + 4 × 상대 등급(악몽이면 ×2.5), 자동 비무 상대 12, 하루 첫 승 +20
         const base = st.mode === 'auto' ? 12 : (10 + 4 * (TIER_IDX[st.foe.char.stats?.tier] ?? 1)) * (st.nightmare ? 2.5 : 1);
-        st.dream = earnDream(x, base + dailyFirst(x));
+        st.dream = earnDream(x, base * (st.stake ? STAKES[st.stake].mult : 1) + dailyFirst(x));
       } else {
         x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
         // 깨지 않는 꿈: AI 전투에서 지면 자동으로 써서 캐릭터를 지킨다 (HP·ATK 최대치 −5%)
         st.saved = undefined;
-        if (st.mode === 'pve' && !st.nightmare && (x.bag?.insurance || 0) > 0) { x.bag.insurance--; x.stats.hp = Math.round(x.stats.hp * 0.95); x.stats.atk = Math.round(x.stats.atk * 0.95); st.saved = true; }
+        if (st.mode === 'pve' && !st.nightmare && !st.stake && (x.bag?.insurance || 0) > 0) { x.bag.insurance--; x.stats.hp = Math.round(x.stats.hp * 0.95); x.stats.atk = Math.round(x.stats.atk * 0.95); st.saved = true; }
       }
       condAfter(x, st);   // 흔적: 부상·흉터·피로·연승·상대 기억
     }, c);
     st.me.char = publicChar(fresh);   // 화면용 요약(흔적·상한) 포함
     if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, fresh);
-    // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 생사결 상대와의 전투·악몽 초대장·깨지 않는 꿈은 예외
-    if (st.winner === 2 && st.mode === 'pve' && !st.nightmare && !st.saved) {
+    // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 비무 상대와의 전투·악몽 초대장·깨지 않는 꿈은 예외
+    if (st.winner === 2 && st.stake) {   // 생사결 패배: 계정 캐릭터도 사라진다
+      const d = await stakeDeath(env, fresh);
+      if (d) { st.deleted = true; st.fellQi = d.qi || 0; st.fell = !!d.fell; }
+    } else if (st.winner === 2 && st.mode === 'pve' && !st.nightmare && !st.saved) {
       const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
       if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
     }
@@ -2093,7 +2141,9 @@ async function createRoom(body, env, isPublic = false, who = null, ip = null) {
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_rooms WHERE updated < ?').bind(Date.now() - ROOM_TTL).run();
   const code = code6(), rt = uid(), now = Date.now();
-  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, who: { 1: who }, ips: { 1: ip }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined };
+  const stake = isPublic ? 0 : stakeOf(body.stake);   // 생사결 방은 코드로 초대한 방만 (랜덤 대전은 안 됨)
+  if (stake && (c.wins || 0) + (c.losses || 0) < EASY_FIRST) return json({ error: 'stake_locked' }, 409);
+  const s = { code, host: 1, p: { 1: { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 } }, tokens: { 1: rt }, who: { 1: who }, ips: { 1: ip }, round: 0, moves: {}, log: [], status: 'waiting', winner: null, public: isPublic || undefined, stake: stake || undefined };
   await env.DB.prepare('INSERT INTO rpg_rooms (code, created, updated, state) VALUES (?, ?, ?, ?)').bind(code, now, now, JSON.stringify(s)).run();
   return json({ code, roomToken: rt, slot: 1, state: pub(s, 1) });
 }
@@ -2132,6 +2182,8 @@ async function joinRoom(code, body, env, who = null, ip = null) {
   if (s.status !== 'waiting') return json({ error: 'started' }, 409);
   if (s.public) return json({ error: 'no_room' }, 404);   // 랜덤 매칭용 공개 방은 코드로 못 들어감
   if (Object.keys(s.p).length >= ROOM_MAX) return json({ error: 'full' }, 409);
+  if (s.stake && stakeOf(body.acceptStake) !== s.stake) return json({ error: 'stake_confirm', stake: s.stake }, 409);   // 생사결 방: 걸 각오를 확인받고 들어온다
+  if (s.stake && (c.wins || 0) + (c.losses || 0) < EASY_FIRST) return json({ error: 'stake_locked' }, 409);
   const slot = [1, 2, 3, 4, 5, 6].find(k => !s.p[k]), rt = uid();
   s.p[slot] = { char: c, hp: c.stats.hp, gauge: 0, guard: false, afk: 0 }; s.tokens[slot] = rt; (s.who ||= {})[slot] = who; (s.ips ||= {})[slot] = ip;
   if (!(await saveRoom(env, code, s, r.v))) return json({ error: 'retry' }, 409);
@@ -2211,7 +2263,17 @@ async function settleRoom(env, ip, code, s, v, slot) {
     if (!s.unranked) for (const k in s.p) {   // 입장 때 스냅샷이 아니라 지금 DB 의 캐릭터에 전적을 더한다 (방에 있는 동안 PvE·cron 으로 바뀐 것을 지우지 않게)
       // 모두 쓰러지면 무승부: 마지막 라운드까지 서 있던 사람은 무승부로 기록, 그 전에 쓰러졌거나 기권한 사람은 패배
       const won = s.winner === Number(k), draw = s.winner === 0 && alive.includes(Number(k)) && !s.p[k].left;
-      s.p[k].char = await updateChar(env, s.p[k].char.id, c => { if (won) { c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; if (!dayCount(c, 'pvpScore', 10)) c.pvpCapped = (c.pvpCapped || 0) + 1; earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c)); } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; } }, s.p[k].char);
+      const m = s.stake ? STAKES[s.stake].mult : 0;
+      const strongest = s.stake && won ? Object.keys(s.p).filter(j => j !== k).map(j => s.p[j].char).sort((a, b) => (TIER_IDX[b.stats?.tier] ?? 0) - (TIER_IDX[a.stats?.tier] ?? 0))[0] : null;
+      s.p[k].char = await updateChar(env, s.p[k].char.id, c => {
+        if (won) {
+          c.wins++; c.pvpWins = (c.pvpWins || 0) + 1; if (!dayCount(c, 'pvpScore', 10)) c.pvpCapped = (c.pvpCapped || 0) + 1;
+          // 생사결 방 승자: 진 사람 수만큼 걸린 판돈 — 능력치 보상(가장 높은 등급 상대 기준) × 단계 배율 × 진 사람 수(최대 3) · 꿈 조각 15 × 배율
+          if (m) { const rw = stakeReward(rollReward(c, strongest, 'pvp'), m * Math.min(3, Object.keys(s.p).length - 1)); applyReward(c, rw); s.p[k].reward = rw; s.p[k].dream = earnDream(c, 15 * m + dailyFirst(c)); }
+          else earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c));
+        } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; }
+      }, s.p[k].char);
+      if (m && !won && !draw) { const d = await stakeDeath(env, s.p[k].char); if (d) { s.p[k].deleted = true; s.p[k].fellQi = d.qi || 0; } }
     }
   } else s.round++;
   s.moves = {}; delete s.busy;
