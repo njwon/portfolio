@@ -171,6 +171,7 @@ export async function handleRpg(request, env, path) {
   if ((mm = path.match(/^\/api\/rpg\/chars\/([\w-]{36})\/foes\/prepare$/)) && m === 'POST') return prepareFoes(mm[1], body, env, who);
   if (path === '/api/rpg/account' && m === 'GET') return getAccount(env, request.headers.get('X-Session'));
   if (path === '/api/rpg/account/upgrade' && m === 'POST') return buyUpgrade(body, env);
+  if (path === '/api/rpg/account/exchange' && m === 'POST') return exchangeQi(body, env);
   if (path === '/api/rpg/auto' && m === 'GET') return autoInfo(env, url.searchParams.get('charId'));
   if (path === '/api/rpg/prompts' && m === 'GET') return json({ judgeChar: SYS_JUDGE, judgeAction: SYS_JUDGE_ACTION, narrate: SYS_NARRATE });
   if (path === '/api/rpg/chars' && m === 'POST') return createChar(body, env, who);
@@ -815,8 +816,12 @@ const aliveSlots = players => Object.keys(players).map(Number).filter(k => playe
 
 // 한 라운드 판정 (N명). players = { slot: {char, hp, gauge, guard} }, acts = { slot: {type, text, target} }, judge = { slot: {allowed, difficulty, fit} }
 // 대상(target)이 없거나 죽었으면 살아 있는 다른 사람 중 무작위. 행동 순서 = 속도 + 주사위.
+// 전투 템포: 높은 등급은 방어(최대 60%)·회피가 커서 한 판이 길어진다(시뮬레이션: 신화 상한 약 26라운드, ??? 약 35라운드 — 행동을 그만큼 입력해야 함)
+//   → 판에 있는 가장 높은 등급에 따라 양쪽 피해를 같은 배율로 올린다(대칭이라 승률은 −2~4%p 정도만): 신화 ×2.2 → 약 12라운드, ??? ×2.8 → 약 13라운드
+const TEMPO = { '평범': 1, '숙련': 1, '초인': 1.1, '전설': 1.4, '신화': 2.2, '???': 2.8 };
 function resolveRound(players, acts, judge = {}) {
   const slots = aliveSlots(players);
+  const tempo = Math.max(1, ...slots.filter(k => !String(players[k].char.id || '').startsWith('enemy')).map(k => TEMPO[players[k].char.stats?.tier] ?? 1));   // AI 적의 등급은 표시용이라 빼고, 실제 캐릭터 등급으로
   const order = slots.map(k => [k, players[k].char.stats.spd + rnd() * 30]).sort((x, y) => y[1] - x[1]).map(x => x[0]);
   const events = [];
   for (const k of slots) if ((acts[k] || {}).type === 'defend') players[k].guard = true;   // 방어 선언은 라운드 내내 유효
@@ -840,7 +845,7 @@ function resolveRound(players, acts, judge = {}) {
     let dmg = 0;
     if (hit) {
       dmg = s.atk * (isUlt ? style.mult : 1) * (0.9 + rnd() * 0.2) * (crit ? 1.5 : 1) * (0.85 + fit * 0.3);
-      dmg *= 1 - t.def / 100; if (foe.guard) dmg *= 0.5;
+      dmg *= (1 - t.def / 100) * tempo; if (foe.guard) dmg *= 0.5;
       dmg = Number.isFinite(dmg) ? Math.max(1, Math.round(dmg)) : 1;   // 어떤 값이 깨져도 HP 가 NaN·null 이 되지 않게
       foe.hp = Math.max(0, foe.hp - dmg);
       if (isUlt && style.heal) me.hp = Math.min(me.char.stats.hp, me.hp + Math.round(dmg * style.heal));
@@ -1168,15 +1173,18 @@ async function getChar(id, token, env) {
 
 // ─── 꿈 조각(재화) · 꿈 시장(상점) ─────────────────────────────────────
 // 영구 능력치는 팔지 않는다(등급 상한·PvP 공정성). 전부 '그 전투에서만' 효과 + 꾸미기 + 도전. 온라인 대전에는 가방을 못 가져간다
+// 2026-10 1년 경제 시뮬레이션 뒤 조정: 깨어남의 차 게이지 1 → 2 (1칸은 승률 −3~+1%p 로 효과 없음), 악몽 초대장 꿈 조각 2.5 → 4배 (200 내고 하루 +6 뿐),
+//   꿈 조각 → 선기 교환 3000 = 1 (하루 1번, 계정 캐릭터) — 꿈 조각이 쓸 곳이 없어 약 114일째부터 상한 9999 에 붙어 있었다
+const TEA_GAUGE = 2, NIGHTMARE_DREAM = 4, QI_EXCHANGE = 3000;
 const DREAM_MAX = 9999, STACK = 5, BAG_SLOTS = 3, BAG_ITEMS = ['tea', 'sight', 'guard', 'bandage', 'smoke'];
 const ITEMS = {
-  tea: { name: '깨어남의 차', price: 125, kind: 'bag', desc: '필살기 게이지 1칸 찬 채로 전투 시작' },
+  tea: { name: '깨어남의 차', price: 125, kind: 'bag', desc: '필살기 게이지 2칸 찬 채로 전투 시작 (첫 턴 공격하면 바로 필살기)' },
   sight: { name: '또렷한 시선', price: 175, kind: 'bag', desc: '이번 전투 명중 +8 (등급 상한까지)' },
   guard: { name: '단단한 꿈', price: 175, kind: 'bag', desc: '이번 전투 방어 +8%p (등급 상한까지)' },
   bandage: { name: '꿈결 붕대', price: 200, kind: 'bag', desc: '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)' },
   smoke: { name: '연막 구름', price: 125, kind: 'bag', desc: '도망 성공 확률 +25%p, 붙잡혀도 손실 절반' },
   map: { name: '꿈길 지도', price: 100, kind: 'use', desc: 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기' },
-  nightmare: { name: '악몽 초대장', price: 200, kind: 'use', desc: '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음' },
+  nightmare: { name: '악몽 초대장', price: 40, kind: 'use', desc: '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 4배. 져도 캐릭터는 남음' },   // 1년 시뮬레이션: 200 이면 4배여도 손해(판당 +50 정도) → 40
   // 1200: 생사결 1단 승리 꿈 조각(~100) × 패배 간격(~7판)보다 비싸게 — 매번 사서 생사결을 위험 없이 도는 것 방지
   insurance: { name: '깨지 않는 꿈', price: 1200, kind: 'use', max: 1, desc: '생사결에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%, 생사결 호신부가 먼저 쓰임)' },
   key: { name: '설정 보강 열쇠', price: 1500, kind: 'use', desc: '설정 보강의 100승 대기를 바로 풂 (하루 1회)' },
@@ -1201,7 +1209,7 @@ function applyBag(st, items) {
   const up = (k, n) => { c.stats[k] = Math.min(Math.max(cap[k], c.stats[k]), c.stats[k] + n); };
   if (items.includes('sight')) up('acc', 8);
   if (items.includes('guard')) up('def', 8);
-  if (items.includes('tea')) me.gauge = 1;
+  if (items.includes('tea')) me.gauge = TEA_GAUGE;
   st.items = { bandage: items.includes('bandage') ? 1 : 0, smoke: items.includes('smoke') ? 1 : 0 };
   st.bagUsed = items;
 }
@@ -1662,6 +1670,8 @@ async function storyAct(id, body, env, who) {
   return json(await storyState(env, out));
 }
 function mirrorAlloc(a) { const o = {}; for (const k of ['atk', 'hp', 'def', 'spd', 'acc', 'eva']) o[k] = Math.max(5, 35 - (Number(a?.[k]) || 16.6)); return o; }
+const STORY_BOSS_HEAL = 0.5, STORY_DEPTH = 0.5;   // 꿈 이야기는 꿈의 압력을 절반만 (1년 시뮬레이션: 그대로면 강화 없는 신화 1장 클리어 낮음, 빼면 강화 뒤 96% 로 너무 쉬움)
+const storyFoeTier = (boss, mirror, ch, weak) => boss ? Math.min(1.5, 1.2 + 0.05 * (ch - 1)) * (weak ? 0.85 : 1) : mirror ? 1.05 : 1.0;
 async function storyFight(id, body, env) {
   const c = await loadChar(env, id, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
@@ -1673,11 +1683,11 @@ async function storyFight(id, body, env) {
   const boss = node.type === 'boss', mirror = node.enemyTier === 'mirror';
   // 적은 AI 전투처럼 내 현재 능력치에 맞춘다(matchToPlayer): 잡몹 1.0 · 거울 1.05 · 보스 1.2 (장마다 +0.05, 최대 1.5), 설득에 성공했으면 보스 ×0.85
   //   시뮬레이션(3000회): 1장 클리어 — 새 평범 69% · 평범 20승 87% · 숙련 막 환생 77% · 숙련 상한 96% (예전엔 20승만 넘어도 100%)
-  const tier = boss ? Math.min(1.5, 1.2 + 0.05 * (run.chapter - 1)) * (run.flags?.bossWeak ? 0.85 : 1) : mirror ? 1.05 : 1.0;
-  const bossHeal = boss ? Math.min(c.stats.hp - run.hp, Math.round(c.stats.hp * 0.5)) : 0;   // 보스 직전 숨 고르기: 최대 HP 50% 회복 (시뮬레이션: 새 평범 캐릭터 1장 클리어 8% → 44%)
+  const tier = storyFoeTier(boss, mirror, run.chapter, run.flags?.bossWeak);
+  const bossHeal = boss ? Math.min(c.stats.hp - run.hp, Math.round(c.stats.hp * STORY_BOSS_HEAL)) : 0;   // 보스 직전 숨 고르기: 최대 HP 50% 회복 (시뮬레이션: 새 평범 캐릭터 1장 클리어 8% → 44%)
   const alloc = mirror ? mirrorAlloc(c.alloc || allocFromStats(c)) : { atk: 20, hp: 20, def: 15, spd: 15, acc: 15, eva: 15 };
   const foe = { id: 'enemy-story', name: clip(en.name, 20) || '꿈의 그림자', fiction: boss ? '악몽' : mirror ? '그림자' : '꿈의 적', info: clip(en.desc, 120), stats: buildStats(alloc, 70, 1), ult: { name: boss ? '악몽의 손길' : '꿈의 일격', effect: '꿈의 힘을 실어 몰아친다', style: 'burst' }, tier };
-  matchToPlayer(foe, c, tier);
+  matchToPlayer(foe, c, tier, STORY_DEPTH);
   foe.stats.tier = boss ? '초인' : '숙련';
   const st = { id: uid(), charId: c.id, mode: 'story', storyNode: node.id, boss, chapter: run.chapter, me: { char: c, hp: Math.max(1, run.hp + Math.max(0, bossHeal)), gauge: run.gauge || 0, guard: false }, bossHeal: Math.max(0, bossHeal) || undefined, foe: { char: foe, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null, intro: String(nc.situation || '').slice(0, 300) };
   applyCond(st, c);
@@ -1890,11 +1900,27 @@ const acctCharCount = async (env, sub) => (await env.DB.prepare('SELECT COUNT(*)
 async function accountView(env, sub) {
   const { a } = await loadAcct(env, sub);
   const upgrades = {}; for (const k in ASC_UP) upgrades[k] = { ...ASC_UP[k], price: upPrice(a, k), lock: upLock(a, k) };
-  return { account: { ...a, title: trainTitle(a.up?.train || 0), secretNeed: secretNeedOf(a.secret) }, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
+  return { account: { ...a, title: trainTitle(a.up?.train || 0), secretNeed: secretNeedOf(a.secret), exchangeToday: a.exDay === today(), exchangePrice: QI_EXCHANGE }, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
 }
 async function getAccount(env, session) {
   const sub = await sessionUser(env, session); if (!sub) return json({ error: 'forbidden' }, 403);
   return json(await accountView(env, sub));
+}
+// 꿈 조각 → 선기: 지금 계정 캐릭터의 꿈 조각 3000 으로 선기 1, 계정당 하루 1번
+async function exchangeQi(body, env) {
+  const sub = await sessionUser(env, body.session), c = await loadChar(env, body.charId, body.token);
+  if (!sub || !c) return json({ error: 'forbidden' }, 403);
+  const row = await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(c.id).first();
+  if (row?.user_sub !== sub) return json({ error: 'forbidden' }, 403);
+  const { a } = await loadAcct(env, sub);
+  if (a.exDay === today()) return json({ error: 'exchange_used' }, 409);
+  let paid = false;
+  const out = await updateChar(env, c.id, x => { paid = false; if ((x.dream || 0) >= QI_EXCHANGE) { x.dream -= QI_EXCHANGE; paid = true; } }, c);
+  if (!paid) return json({ error: 'no_dream' }, 409);
+  let dup = false;
+  await updateAcct(env, sub, x => { dup = x.exDay === today(); if (dup) return; x.exDay = today(); x.qi += 1; x.total = (x.total || 0) + 1; });
+  if (dup) { await updateChar(env, c.id, x => { x.dream = Math.min(DREAM_MAX, (x.dream || 0) + QI_EXCHANGE); }); return json({ error: 'exchange_used' }, 409); }   // 동시에 두 번 누름 → 되돌림
+  return json({ ...(await accountView(env, sub)), char: publicChar(out) });
 }
 async function buyUpgrade(body, env) {
   const sub = await sessionUser(env, body.session); if (!sub) return json({ error: 'forbidden' }, 403);
@@ -1958,8 +1984,8 @@ const growthOf = c => { const cap = capsOf(c); return Math.max(0, Math.min(1, (c
 //   신화 상한까지 라운드: 강화 없음 2317 · 타고난 몸 5단 1903 · 전부 1526 (지금 2080). 처음 3전(쉬운 상대)은 그대로
 const PVE_DEPTH = { '평범': 0.92, '숙련': 1.0, '초인': 1.07, '전설': 1.13, '신화': 1.19, '???': 1.25 };
 const acctEdge = c => 1 + 0.5 * (0.05 * (c.ascBonus?.stat || 0) + (c.ascCap || 0) + (c.giftUsed?.statPct || 0) / 100);
-function matchToPlayer(e, c, t) {
-  const k = t * (ENEMY_K0 - ENEMY_KG * growthOf(c)) * (PVE_DEPTH[c.stats?.tier] ?? 1) / acctEdge(c);
+function matchToPlayer(e, c, t, depth = 1) {
+  const k = t * (ENEMY_K0 - ENEMY_KG * growthOf(c)) * (1 + ((PVE_DEPTH[c.stats?.tier] ?? 1) - 1) * Number(depth)) / acctEdge(c);   // depth: 꿈의 압력 반영 비율 (AI 전투 1, 꿈 이야기 0.5)
   e.stats.hp = Math.max(1, Math.round(c.stats.hp * k)); e.stats.atk = Math.max(1, Math.round(c.stats.atk * k));
   for (const s of ['def', 'spd', 'acc', 'eva']) e.stats[s] = c.stats[s];
 }
@@ -2172,7 +2198,7 @@ async function battleTurn(id, body, env, ip) {
         st.reward = rollReward(x, st.foe.char, st.mode); if (st.stake) stakeReward(st.reward, STAKES[st.stake].mult); applyReward(x, st.reward);
         if (st.mode === 'auto') { x.autoWins = (x.autoWins || 0) + 1; x.pvpWins = (x.pvpWins || 0) + 0.5; }
         // 꿈 조각: AI 전투 10 + 4 × 상대 등급(악몽이면 ×2.5), 자동 비무 상대 12, 하루 첫 승 +20
-        const base = st.mode === 'auto' ? 12 : (10 + 4 * (TIER_IDX[st.foe.char.stats?.tier] ?? 1)) * (st.nightmare ? 2.5 : 1);
+        const base = st.mode === 'auto' ? 12 : (10 + 4 * (TIER_IDX[st.foe.char.stats?.tier] ?? 1)) * (st.nightmare ? NIGHTMARE_DREAM : 1);
         st.dream = earnDream(x, base * (st.stake ? STAKES[st.stake].mult : 1) + dailyFirst(x));
       } else {
         x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
