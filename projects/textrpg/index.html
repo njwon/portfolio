@@ -349,7 +349,7 @@
                     <p class="hint" id="stakeHint" style="margin:6px 0 0">AI 상대와 전투 · 다른 플레이어의 캐릭터와 전투에 적용돼요. 온라인 대전은 방 만들기에서 따로 고릅니다.</p>
                 </div>
                 <div class="choices">
-                    <button id="btnBattle" class="choice"><b>AI 상대와 전투</b><span class="sub">혼자 하는 1:1. 적은 내 설정으로 지어진 꿈속 존재들 · 처음 3전은 약한 상대만 나와요 (이기면 승점 1 · 능력치 상승, 지면 캐릭터가 사라짐 — 깨지 않는 꿈이 있으면 지켜 줌)</span><span class="sub" id="pveDepth"></span></button>
+                    <button id="btnBattle" class="choice"><b>AI 상대와 전투</b><span class="sub">혼자 하는 1:1. 적은 내 설정으로 지어진 꿈속 존재들 · 처음 3전은 약한 상대만 나와요 (이기면 승점 1 · 능력치 상승, 져도 패배 기록만 — 캐릭터를 걸려면 위의 생사결)</span><span class="sub" id="pveDepth"></span></button>
                     <button id="btnAutoFight" class="choice ghost"><b>다른 플레이어의 캐릭터와 전투</b><span class="sub">자동 비무 참가자의 캐릭터를 AI가 조종합니다 (이기면 승점 2 · 보상 1.3배, 져도 캐릭터 유지)</span></button>
                     <button id="btnOnline" class="choice ghost"><b>온라인 대전</b><span class="sub">사람끼리 2~6명, 랜덤 매칭 또는 코드로 초대 (이기면 승점 3, 능력치 보상은 없음)</span></button>
                 </div>
@@ -363,7 +363,7 @@
                 <div class="card" id="storyCard">
                     <h3>꿈 이야기 <span class="hint" id="storyHint"></span></h3>
                     <p class="meta" style="margin:4px 0 8px">내 설정으로 지어지는 7장면짜리 꿈입니다. 선택과 전투를 거쳐 마지막엔 <b>내 약점이 형상화된 악몽</b>과 싸웁니다. 져도 캐릭터는 남고(꿈에서 깸), 승점에는 들어가지 않습니다.</p>
-                    <label class="hint" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="storyHardcore" style="margin-top:3px"> <span>생사결 꿈 — 꿈 조각 1.5배, 대신 지면 (로그인하지 않은) 캐릭터가 사라짐</span></label>
+                    <label class="hint" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="storyHardcore" style="margin-top:3px"> <span id="storyHardText">생사결 꿈 — 클리어 보상 능력치 ×4 · 꿈 조각 ×2, 대신 지거나 전투에서 첫 턴 뒤 도망치면 캐릭터가 사라짐 (계정 캐릭터도)</span></label>
                     <div class="btn-row" style="margin:10px 0 0"><button id="btnStory">꿈 이야기 시작</button></div>
                     <p class="status" id="storyStatus" role="status"></p>
                 </div>
@@ -1163,7 +1163,7 @@ const Snd = (() => {
     const isAcctChar = () => gUser && me && acctChars.some(c => c.id === me.id);
     function stakeWarn(n, mode) {
         const i = STAKE_INFO[n];
-        return `생사결 ${n}단 — ${mode === 'auto' ? '상대가 약하면 생사결 수준까지 강해집니다' : '상대 ' + i.foe}.\n이기면 능력치·꿈 조각 보상 ×${i.mult}.\n지거나 첫 턴 뒤에 도망치면 「${me.name}」이(가) 사라집니다${isAcctChar() ? ' (계정 캐릭터도 삭제 — 30승 이상이면 등선 선기의 절반은 남음)' : ''}.\n${me.stakeWard > 0 ? '생사결 호신부가 있어 한 번은 막아 줍니다 (HP·ATK −10%).' : '깨지 않는 꿈은 지켜 주지 못합니다.'} 걸까요?`;
+        return `생사결 ${n}단 — ${mode === 'auto' ? '상대가 약하면 생사결 수준까지 강해집니다' : '상대 ' + i.foe}.\n이기면 능력치·꿈 조각 보상 ×${i.mult}.\n지거나 첫 턴 뒤에 도망치면 「${me.name}」이(가) 사라집니다${isAcctChar() ? ' (계정 캐릭터도 삭제 — 30승 이상이면 등선 선기의 절반은 남음)' : ''}.\n${me.stakeWard > 0 ? '생사결 호신부가 있어 한 번은 막아 줍니다 (HP·ATK −10%).' : me.bag?.insurance > 0 ? '깨지 않는 꿈이 있어 한 번은 막아 줍니다 (HP·ATK −5%).' : '지켜 줄 물건이 없습니다 (생사결 호신부·깨지 않는 꿈).'} 걸까요?`;
     }
     // 꿈의 압력(등급이 높을수록 AI 적이 강해짐) · 선계 가호(선계 강화는 적이 따라오지 않음) — 서버 PVE_DEPTH · acctEdge 와 같음
     const PVE_DEPTH = { '평범': 0.92, '숙련': 1.0, '초인': 1.07, '전설': 1.13, '신화': 1.19, '???': 1.25 };
@@ -1176,11 +1176,12 @@ const Snd = (() => {
         if (!me) return;
         $('pveDepth').textContent = pveDepthText(me);
         const locked = stakeLocked(); $('stakePick').disabled = locked; if (locked) $('stakePick').value = '0';
-        $('stakeCard').hidden = locked;   // 처음 3전(쉬운 상대) 동안은 안 보임 — 새 사용자에게 겁주지 않게
+        if (locked) { $('stakeCard').hidden = false; $('stakeCard').classList.remove('on'); $('stakeHint').textContent = `처음 3전(쉬운 상대)을 마치면 걸 수 있어요 (지금 ${(me.wins || 0) + (me.losses || 0)}/3전). 보통 전투는 져도 캐릭터가 사라지지 않아요.`; return; }
+        $('stakeCard').hidden = false;
         const n = Number($('stakePick').value) || 0;
         $('stakeCard').classList.toggle('on', n > 0);
         $('stakeHint').innerHTML = locked ? '처음 3전(쉬운 상대)을 마친 뒤에 걸 수 있어요.'
-            : n ? `<b>지면 캐릭터가 사라집니다</b>${isAcctChar() ? ' (계정 캐릭터도)' : ''}. 상대 ${STAKE_INFO[n].foe} · 보상 ×${STAKE_INFO[n].mult} · 첫 턴 뒤 도망 = 패배 · 악몽 초대장과 같이 못 씀`
+            : n ? `<b>지면 캐릭터가 사라집니다</b>${isAcctChar() ? ' (계정 캐릭터도)' : ''}. 상대 ${STAKE_INFO[n].foe} · 보상 ×${STAKE_INFO[n].mult} · 첫 턴 뒤 도망 = 패배 · 악몽 초대장과 같이 못 씀${me.stakeWard > 0 ? ' · 생사결 호신부 1회' : ''}${me.bag?.insurance > 0 ? ' · 깨지 않는 꿈 1회' : ''}`
             : 'AI 상대와 전투 · 다른 플레이어의 캐릭터와 전투에 적용돼요. 온라인 대전은 방 만들기에서 따로 고릅니다.';
     }
     $('stakePick').addEventListener('change', renderStake);
@@ -1266,15 +1267,16 @@ const Snd = (() => {
         else if (b.mode === 'story') {
             const sr = b.storyResult || {}, cr = sr.reward;
             html = won ? (cr ? `악몽을 물리쳤다! 제${cr.chapter}장 클리어<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${cr.hp} · ATK +${cr.atk}${tags(cr)}`} · 꿈 조각 +${cr.shards}${cr.full ? '' : ' (오늘 3장을 넘게 깨서 보상 감소)'} — 다음 장이 열렸습니다</span>` : `이겼다!<br><span class="hint">${esc(sr.text || '')}</span>`)
-                : b.deleted ? '당신은 쓰러졌다… 생사결 꿈이었기에 캐릭터가 사라집니다.' : `당신은 쓰러졌다… 꿈에서 깹니다.<br><span class="hint">${esc(sr.text || '')} 캐릭터는 그대로이고, 이번 회차에 모은 꿈 조각은 절반(+${sr.last?.shards ?? 0})만 남았습니다.</span>`;
+                : b.deleted ? `당신은 쓰러졌다… 생사결 꿈이었기에 캐릭터가 사라집니다.${b.fell ? `<br><span class="hint">명예의 전당에 전사로 올랐고${b.fellQi ? ` 선기 +${b.fellQi} 가 계정에 남았습니다` : ' (30승 미만이라 선기는 없음)'}.</span>` : ''}`
+                : b.warded ? `당신은 쓰러졌다… 그러나 ${b.warded === 'insurance' ? '깨지 않는 꿈이 대신 깨졌습니다 (HP·ATK −5%)' : '생사결 호신부가 대신 부서졌습니다 (HP·ATK −10%)'}.<br><span class="hint">캐릭터는 남고 이번 회차는 끝났습니다.</span>` : `당신은 쓰러졌다… 꿈에서 깹니다.<br><span class="hint">${esc(sr.text || '')} 캐릭터는 그대로이고, 이번 회차에 모은 꿈 조각은 절반(+${sr.last?.shards ?? 0})만 남았습니다.</span>`;
         } else if (won) html = `적이 쓰러졌다! 승리!${rw ? `<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${rw.hp} · ATK +${rw.atk}${tags(rw)}`}${b.dream ? ` · 꿈 조각 +${b.dream}` : ''} — 홈의 성장 탭에서 상한까지 얼마나 왔는지 볼 수 있습니다</span>` : ''}`;
-        else if (b.stake && b.warded) html = `생사결에서 쓰러졌다… 그러나 생사결 호신부가 대신 부서졌습니다.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 10% 줄었습니다.</span>`;
+        else if (b.stake && b.warded) html = `생사결에서 쓰러졌다… 그러나 ${b.warded === 'insurance' ? '깨지 않는 꿈이 대신 깨졌습니다' : '생사결 호신부가 대신 부서졌습니다'}.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 ${b.warded === 'insurance' ? 5 : 10}% 줄었습니다.</span>`;
         else if (b.stake) html = `생사결에서 쓰러졌다…<br><span class="hint">${esc(b.me.char?.name || '')}은(는) 꿈에서 영영 사라집니다.${b.fell ? ` 명예의 전당에 전사로 올랐고${b.fellQi ? ` 선기 +${b.fellQi} 가 계정에 남았습니다` : ' (30승 미만이라 선기는 없음)'}.` : ''}</span>`;
         else if (b.mode === 'spar') html = `연습 대결 패배.<br><span class="hint">연습이라 기록·보상 없이 캐릭터는 그대로입니다.</span>`;
         else if (b.mode === 'auto') html = `당신은 쓰러졌다…<br><span class="hint">자동 비무 참가자와의 전투라 패배 기록만 남고 캐릭터는 그대로입니다.</span>`;
         else if (b.saved) html = `당신은 쓰러졌다… 그러나 깨지 않는 꿈이 대신 깨졌습니다.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 5% 줄었습니다.</span>`;
         else if (b.nightmare) html = `악몽에 삼켜졌다…<br><span class="hint">악몽 초대장으로 들어간 꿈이라 캐릭터는 그대로입니다.</span>`;
-        else html = `당신은 쓰러졌다… 꿈에서 깨어납니다.<br><span class="hint">${gUser ? '이 캐릭터는 이 기기에서 내려갑니다. 계정의 다른 캐릭터를 고르거나 새로 만들 수 있습니다.' : '로그인하지 않은 캐릭터는 지면 사라집니다. 돌아가기를 누르면 새 캐릭터를 만듭니다.'}</span>`;
+        else html = `당신은 쓰러졌다… 꿈에서 깨어납니다.<br><span class="hint">패배 기록만 남고 캐릭터는 그대로입니다. (캐릭터를 거는 싸움은 생사결뿐)</span>`;
         $('bResult').innerHTML = html + (b.deleted ? '' : afterHtml(b.after));
         $('btnBattleBack').textContent = b.mode === 'story' && !b.deleted ? '꿈 이야기로' : '돌아가기';
         $('bLb').style.display = '';
@@ -1327,7 +1329,8 @@ const Snd = (() => {
     $('btnRun').addEventListener('click', async () => {
         if (!battle) return goHome();
         const story = battle.mode === 'story', b0mode = battle.mode, fought = battle.status === 'playing' && battle.log.length > 0;
-        if (story && !confirm('꿈에서 깰까요? 이번 회차가 끝나고, 모은 꿈 조각은 절반만 남습니다 (캐릭터는 그대로).')) return;
+        const hardStory = story && fought && storyState?.run?.hardcore;
+        if (story && !confirm(hardStory ? '생사결 꿈의 전투입니다. 지금 깨면 패배 — 캐릭터가 사라집니다. 그래도 깰까요?' : '꿈에서 깰까요? 이번 회차가 끝나고, 모은 꿈 조각은 절반만 남습니다 (캐릭터는 그대로).')) return;
         if (battle.stake && fought && !confirm('생사결에서는 도망칠 수 없습니다. 지금 나가면 패배 — 캐릭터가 사라집니다. 그래도 나갈까요?')) return;
         if (!story && b0mode !== 'spar' && !battle.stake && fought && !confirm(`도망칠까요? 성공 확률 약 ${escapeChance(battle.me, battle.foe, (battle.items?.smoke ? 0.25 : 0) - (battle.fleePenalty || 0))}%\n붙잡히면 패배로 기록되고 HP·ATK 최대치를 조금 잃습니다 (캐릭터는 남음).`)) return;
         const b = battle; battle = null; saveSess(null);
@@ -1335,7 +1338,7 @@ const Snd = (() => {
         try {
             const d = await api(`/api/rpg/battles/${b.id}/leave`, { token: myToken });
             if (d.char) me = d.char;
-            if (story) return openStory();
+            if (story && !d.stakeLost && !d.warded) return openStory();
             if (d.warded) { $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = ''; $('bResult').innerHTML = `${esc(d.message || '')}<br><br><button id="btnRunBack">돌아가기</button>`; $('btnRunBack').addEventListener('click', goHome); return; }
             if (d.stakeLost) { $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = ''; $('bResult').innerHTML = `${esc(d.message || '')}${d.qi ? `<br><span class="hint">명예의 전당에 전사로 올랐고 선기 +${d.qi} 가 계정에 남았습니다.</span>` : ''}<br><br><button id="btnRunBack">돌아가기</button>`; $('btnRunBack').addEventListener('click', () => { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); }); return; }
             if (fought) { $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = ''; $('bResult').innerHTML = `${esc(d.message || '')}<br><br><button id="btnRunBack">돌아가기</button>`; $('btnRunBack').addEventListener('click', goHome); refreshLeaderboard(true); }
@@ -1343,9 +1346,9 @@ const Snd = (() => {
         } catch { goHome(); }
         finally { for (const id of ['btnAttack', 'btnDefend', 'btnUlt', 'btnRun']) $(id).disabled = false; }
     });
-    // 기획: 캐릭터가 사라지는 건 AI 전투 패배뿐 (자동 비무 참가자와의 전투에서 지면 기록만)
+    // 기획(2026-10): 캐릭터가 사라지는 건 생사결 패배뿐 — 보통 전투는 어디서 져도 기록만
     $('btnBattleBack').addEventListener('click', () => {
-        const b = battle, gone = b && b.winner === 2 && (b.deleted || (b.mode === 'pve' && !b.saved && !b.nightmare && !b.warded));   // 깨지 않는 꿈·악몽 초대장·꿈 이야기는 캐릭터 유지
+        const b = battle, gone = b && b.winner === 2 && b.deleted;   // 캐릭터가 사라지는 건 생사결(·생사결 꿈) 패배뿐
         battle = null; saveSess(null);
         if (gone) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); } else if (b?.mode === 'story') openStory(); else goHome();
     });
@@ -1404,7 +1407,7 @@ const Snd = (() => {
         stopPoll(); room = null; roomSeq++; saveSess(null); $('btnOLeave').disabled = true;
         try { await api(`/api/rpg/rooms/${r.code}/leave`, { token: r.token }); } catch {}
         finally { $('btnOLeave').disabled = false; }
-        if (r.state.stake && ((playing && !(me?.stakeWard > 0)) || r.state.p[r.slot]?.deleted)) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); return true; }
+        if (r.state.stake && ((playing && !(me?.stakeWard > 0) && !(me?.bag?.insurance > 0)) || r.state.p[r.slot]?.deleted)) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); return true; }
         await loadMe();   // 전적·보상이 반영된 캐릭터 다시 읽기
         if (me) goHome(); else show('s-create');
         return true;
@@ -1480,7 +1483,7 @@ const Snd = (() => {
             const winner = s.p[s.winner];
             const unr = s.unranked === 'no_round' ? '<br><span class="hint">한 라운드도 끝나지 않아 전적·승점에 기록하지 않았습니다.</span>' : s.unranked === 'same_player' ? '<br><span class="hint">같은 사람(계정·기기·IP)끼리의 대전이라 전적·승점에 기록하지 않았습니다.</span>' : '';
             const sk = !s.stake ? '' : s.unranked ? '<br><span class="hint">기록하지 않는 대전이라 생사결도 무효입니다 (캐릭터는 그대로).</span>'
-                : mine.warded ? '<br><span class="hint">생사결 패배 — 생사결 호신부가 대신 부서졌습니다 (HP·ATK −10%, 캐릭터는 남음).</span>'
+                : mine.warded ? `<br><span class="hint">생사결 패배 — ${mine.warded === 'insurance' ? '깨지 않는 꿈이 대신 깨졌습니다 (HP·ATK −5%' : '생사결 호신부가 대신 부서졌습니다 (HP·ATK −10%'}, 캐릭터는 남음).</span>`
                 : mine.deleted ? `<br><b>생사결 패배 — ${esc(mine.char.name)}은(는) 꿈에서 사라졌습니다.</b>${mine.fellQi ? ` <span class="hint">선기 +${mine.fellQi} 가 계정에 남았습니다.</span>` : ''}`
                 : mine.reward ? `<br><span class="hint">생사결 보상: HP 최대치 +${mine.reward.hp} · ATK +${mine.reward.atk}${mine.reward.tags?.length ? ' · ' + mine.reward.tags.map(esc).join(' · ') : ''}${mine.dream ? ` · 꿈 조각 +${mine.dream}` : ''}</span>` : '';
             $('oResult').innerHTML = unr + sk + (s.winner === 0 || !winner ? `모두 쓰러졌다… 무승부 <span class="hint">(${mine.left ? '기권했으므로 패배로 기록' : '무승부로 기록 — 먼저 쓰러졌거나 기권한 사람은 패배'})</span>` : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(winner.char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
@@ -1646,7 +1649,7 @@ const Snd = (() => {
         tea: ['깨어남의 차', 125, '필살기 게이지 1칸 찬 채로 전투 시작'], sight: ['또렷한 시선', 175, '이번 전투 명중 +8 (등급 상한까지)'], guard: ['단단한 꿈', 175, '이번 전투 방어 +8%p (등급 상한까지)'],
         bandage: ['꿈결 붕대', 200, '한 턴 행동 대신 최대 HP 25% 회복 (전투당 1회)'], smoke: ['연막 구름', 125, '도망 성공 확률 +25%p, 붙잡혀도 손실 절반'],
         map: ['꿈길 지도', 100, 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기'], nightmare: ['악몽 초대장', 200, '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음'],
-        insurance: ['깨지 않는 꿈', 300, 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)', 1], key: ['설정 보강 열쇠', 1500, '설정 보강의 100승 대기를 바로 풂 (하루 1회)'],
+        insurance: ['깨지 않는 꿈', 1200, '생사결에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%, 생사결 호신부가 먼저 쓰임)', 1], key: ['설정 보강 열쇠', 1500, '설정 보강의 100승 대기를 바로 풂 (하루 1회)'],
         relic: ['꿈의 유물', 600, '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 300)'], star: ['별 표식', [1500, 3000, 6000], '순위표 이름 옆 장식 (3단계)'],
         salve: ['꿈 연고', 80, '가장 심한 부상 하나를 바로 낫게 함 (사면 바로 쓰임, 흉터 없음)'], charm: ['용기의 부적', 150, '모든 상대에 대한 공포를 바로 없앰 (사면 바로 쓰임)'], sleep: ['깊은 잠', 250, '모든 부상과 피로를 바로 씻어 냄 (사면 바로 쓰임, 흉터 없음)'],
     };
@@ -1703,6 +1706,8 @@ const Snd = (() => {
         $('storyHint').textContent = run ? `제${run.chapter}장 진행 중 · 장면 ${run.node + 1}/7` : `제${s.chapter}장${s.clears ? ` · 지금까지 ${s.clears}장 클리어` : ''}`;
         $('btnStory').textContent = run ? '이어서 꾸기' : `제${s.chapter}장 시작`;
         $('storyHardcore').closest('label').style.display = run ? 'none' : '';
+        const hl = stakeLocked(); $('storyHardcore').disabled = hl; if (hl) $('storyHardcore').checked = false;
+        $('storyHardText').textContent = hl ? `생사결 꿈 — 처음 3전을 마치면 걸 수 있어요 (지금 ${(me.wins || 0) + (me.losses || 0)}/3전)` : `생사결 꿈 — 클리어 보상 능력치 ×4 · 꿈 조각 ×2, 대신 지거나 전투에서 첫 턴 뒤 도망치면 캐릭터가 사라짐${isAcctChar() ? ' (계정 캐릭터도)' : ''}`;
         $('storyStatus').textContent = run ? '' : s.ready ? '꿈이 준비되어 있습니다.' : '처음 들어갈 때 약 30초 동안 내 설정으로 꿈을 짓습니다.';
         // 미리 짓기: 한 번이라도 이긴 캐릭터는 홈에 오면 다음 장을 미리 지어 둔다 (기다림 줄이기, AI 호출 1회)
         const key = me.id + ':' + s.chapter;
@@ -1725,6 +1730,7 @@ const Snd = (() => {
                         break;
                     }
                 }
+                if ($('storyHardcore').checked && !confirm(`생사결 꿈으로 들어갈까요?\n이번 장을 깨면 보상 능력치 ×4 · 꿈 조각 ×2.\n중간 전투에서 지거나 첫 턴 뒤에 도망치면 「${me.name}」이(가) 사라집니다${isAcctChar() ? ' (계정 캐릭터도 — 30승 이상이면 선기 절반은 남음)' : ''}.\n${me.stakeWard > 0 ? '생사결 호신부가 한 번 막아 줍니다.' : me.bag?.insurance > 0 ? '깨지 않는 꿈이 한 번 막아 줍니다.' : '지켜 줄 물건이 없습니다.'}`)) return;
                 const d = await api(`/api/rpg/chars/${me.id}/story/start`, { token: myToken, hardcore: $('storyHardcore').checked });
                 storyState = d.story; me = d.char;
             }
@@ -1982,9 +1988,9 @@ const Snd = (() => {
             ['방어 (행동)', '이번 턴은 막는 데 집중해요. 받는 피해가 절반이 되고 게이지가 2칸 차요.', '', ''],
             ['★강적', '이기고 있을수록 더 강한 상대가 자주 나와요. ★가 붙은 상대는 특히 강하지만, 이기면 보상도 커요.', '', '(승 − 패)가 많을수록(최대 3) 강한 적이 뽑힐 확률이 오름. 적의 HP·ATK 는 내 현재 값 × 적 강함 × (0.72 − 0.18 × 성장도), 방어·속도·명중·회피는 내 값과 같음 — 그래서 등급에 막 올라왔을 땐 약 85%, 상한 근처에선 약 94% 이김. 처음 3전은 약한 상대. 보상은 상대 등급이 한 단계 높을 때마다 +25%.'],
             ['도망', '싸움에서 빠져나가요. 빠르고 잘 피하는 캐릭터일수록 성공하기 쉬워요. 실패하면 진 것으로 기록되고 능력치가 조금 깎여요.', '', '한 턴도 싸우지 않았으면 항상 성공. 그 뒤엔 성공 확률 = 75% + (내 속도 − 상대 속도) ÷ 1.2 %p + 내 회피 ÷ 2 %p − 내 등급 단계 × 10%p + 상대 등급 단계 × 4%p (HP 30% 미만이면 −10%p), 20~95% 사이. 도망 버튼을 누르면 예상 확률이 나옵니다. 실패하면 패배 기록 + HP 최대치 2~6% · ATK 1~4% 감소(등급 단계마다 ×1.6씩 커짐). 캐릭터는 남음.'],
-            ['패배하면', 'AI 상대에게 지면 (로그인하지 않은) 캐릭터가 사라져요. 생사결을 걸었다면 계정 캐릭터도 사라져요. 그 밖의 싸움에서 지면 패배 기록만 남고 캐릭터는 그대로예요.', '', 'AI 상대: 로그인하지 않은 캐릭터는 서버에서도 삭제됨(계정 캐릭터는 목록에 남음, 깨지 않는 꿈이 있으면 대신 깨지고 HP·ATK −5%, 악몽 초대장 전투는 기록만) · 다른 플레이어 캐릭터와 전투 · 자동 비무 · 온라인 대전: 패배 기록만 · 도망 실패: 패배 기록 + HP·ATK 조금 감소.'],
+            ['패배하면', '보통 싸움은 어디서 져도 패배 기록만 남고 캐릭터는 그대로예요. 캐릭터가 사라지는 건 직접 건 생사결(과 생사결 꿈)에서 졌을 때뿐이에요 — 로그인한 계정 캐릭터도요.', '', 'AI 전투 · 다른 플레이어 캐릭터와 전투 · 자동 비무 · 온라인 대전 · 꿈 이야기: 패배 기록만 · 도망 실패: 패배 기록 + HP·ATK 조금 감소. 생사결 패배: 삭제(선계 생사결 호신부 → 가방의 깨지 않는 꿈 순서로 한 번 막아 줌, HP·ATK −10% / −5%). 생사결 꿈(꿈 이야기): 다른 생사결과 같음 — 계정 캐릭터도 삭제, 전투에서 첫 턴 뒤 도망 = 패배, 클리어 보상 능력치 ×4 · 꿈 조각 ×2.'],
             ['꿈의 압력 · 선계 가호', '등급이 높을수록 AI 전투·꿈 이야기의 적이 강해져요(꿈의 압력). 대신 선계에서 산 강화로 얻은 힘은 적이 따라오지 않아서(선계 가호), 계정을 키울수록 AI 전투가 쉬워져요.', '예: 신화 등급이면 적이 19% 더 강하지만, 타고난 몸 5단을 산 계정의 캐릭터는 적이 11% 약해져요.', '꿈의 압력(적 HP·ATK): 평범 −8% · 숙련 0 · 초인 +7% · 전설 +13% · 신화 +19% · ??? +25% (처음 3전은 제외). 선계 가호 = 1 + 0.5 × (타고난 몸 5%/단계 + 혼돈신체 10%/단계 + 등선 선물 시작 보정), 적 HP·ATK 를 그만큼 나눔 (전부 사면 ×1.35 → 적 −26%). 타고난 몸·등선 선물은 그 뒤에 만든 캐릭터에, 혼돈신체는 지금 캐릭터에도. 시뮬레이션(성장 50%일 때 승률): 강화 없음 평범 86% · 초인 71% · 신화 56% · ??? 53% / 가호 ×1.2 신화 79% / 전부 신화 89%. 신화 상한까지: 강화 없음 약 2300라운드 · 전부 약 1500라운드.'],
-            ['생사결', '캐릭터를 걸고 싸우는 방식이에요. 이기면 보상이 몇 배로 커지고, 지면 캐릭터가 사라져요 — 로그인한 계정 캐릭터도요. 막 만든 캐릭터는 크게 걸어 볼 만하고, 오래 키운 캐릭터는 신중하게.', '예: 2단을 걸고 이기면 보통 승리 보상의 8배를 한 번에 받아요.', '단계: 1단 상대 그대로·보상 ×5 / 2단 상대 ×1.15·×8 / 3단 상대 ×1.3·×12 (능력치·꿈 조각, 방어 등 부가 능력치는 +2~3). 홈의 생사결 칸에서 고르면 AI 상대·다른 플레이어 캐릭터 전투에 적용(다른 플레이어 캐릭터가 약하면 생사결 수준까지 강해짐). 온라인은 코드 초대 방에서 방장이 고르고, 들어오는 사람도 확인 — 승자 보상은 진 사람 수만큼 더(최대 3배), 지거나 기권한 사람은 사라짐, 무승부·같은 사람끼리 대전은 무효. 처음 3전·악몽 초대장과 같이 못 씀, 깨지 않는 꿈이 지켜 주지 않음, 첫 턴 뒤 도망 = 패배. 계정 캐릭터가 30승 이상이면 등선 선기의 절반이 남고 명예의 전당에 전사로 기록. 시뮬레이션(갓 만든 평범 캐릭터, 각 1만 명): 상한까지 살아남을 확률 1단 32% · 2단 17% · 3단 13% (보통 전투는 100%).'],
+            ['생사결', '캐릭터를 걸고 싸우는 방식이에요. 이기면 보상이 몇 배로 커지고, 지면 캐릭터가 사라져요 — 로그인한 계정 캐릭터도요. 막 만든 캐릭터는 크게 걸어 볼 만하고, 오래 키운 캐릭터는 신중하게.', '예: 2단을 걸고 이기면 보통 승리 보상의 8배를 한 번에 받아요.', '단계: 1단 상대 그대로·보상 ×5 / 2단 상대 ×1.15·×8 / 3단 상대 ×1.3·×12 (능력치·꿈 조각, 방어 등 부가 능력치는 +2~3). 홈의 생사결 칸에서 고르면 AI 상대·다른 플레이어 캐릭터 전투에 적용(다른 플레이어 캐릭터가 약하면 생사결 수준까지 강해짐). 온라인은 코드 초대 방에서 방장이 고르고, 들어오는 사람도 확인 — 승자 보상은 진 사람 수만큼 더(최대 3배), 지거나 기권한 사람은 사라짐, 무승부·같은 사람끼리 대전은 무효. 처음 3전 뒤부터(칸은 처음부터 보임)·악몽 초대장과 같이 못 씀, 선계 생사결 호신부(−10%) → 깨지 않는 꿈(−5%, 꿈 시장 1200) 순서로 한 번 막아 줌, 첫 턴 뒤 도망 = 패배. 계정 캐릭터가 30승 이상이면 등선 선기의 절반이 남고 명예의 전당에 전사로 기록. 시뮬레이션(갓 만든 평범 캐릭터, 각 1만 명): 상한까지 살아남을 확률 1단 32% · 2단 17% · 3단 13% (보통 전투는 100%).'],
         ]],
         ['성장 · 그 밖', [
             ['승리 보상', '이길 때마다 HP·ATK 가 오르고, 방어·속도·명중·회피도 가끔 올라요. 내 등급이 높을수록, 강한 상대를 이길수록 많이 올라요. 온라인 대전은 승점만 주고 능력치는 오르지 않아요.', '', 'HP +10~30, ATK +1~4 에 보상 배율 = 내 등급 배율 × (1 + 상대 등급 단계 × 0.25) × (자동 비무이면 1.3)을 곱함. 방어·속도·명중·회피는 각각 35% 확률로 +1. 5% 확률 대성공이면 HP·ATK 2배, 나머지는 65% 확률로 +2. 모두 등급 상한까지.'],
@@ -1994,7 +2000,7 @@ const Snd = (() => {
             ['승점 · 순위표', '이기면 점수를 얻고, 점수가 높을수록 순위가 올라가요. 사람과 싸워 이기면 더 많이 받아요.', '', 'AI 상대 승리 1점 · 자동 비무 승리 2점(부재 중 자동 전투, 다른 플레이어 캐릭터와 전투 모두) · 온라인 대전 승리 3점. 순위표에는 승점 1점 이상인 상위 20명, 승점이 같으면 먼저 만든 캐릭터가 위.'],
             ['온라인 대전', '사람끼리 2~6명이 싸워요. 이기면 승점 3점을 받지만 능력치는 오르지 않아요.', '', '첫 제출 뒤 60초가 지나면 누구나 \'건너뛰기\'를 누를 수 있고, 건너뛰어진 사람은 자동 방어. 3번 연속이면 기권. 도중에 나가면 기권 패배. 마지막 라운드에 모두 쓰러지면 무승부(그 전에 쓰러졌거나 기권한 사람은 패배). 랜덤 대전은 2분 안에 만들어진 방끼리만 짝지어짐. 방은 3시간 동안 아무 일이 없으면 사라짐.'],
             ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 상점 탭의 꿈 시장에서 그 전투에서만 효과가 있는 소모품과 보험, 그리고 영구히 남는 꾸미기(꿈의 유물·별 표식)와 설정 보강 열쇠(설정을 영구히 바꿈)를 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 비무 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
-            ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
+            ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요 (생사결 꿈을 켰을 때만 사라짐).', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 클리어 보상 능력치 ×4 · 꿈 조각 ×2, 대신 지거나 전투에서 첫 턴 뒤 도망치면 캐릭터가 사라짐(계정 캐릭터도, 처음 3전 뒤부터).'],
             ['흔적 (부상·피로·기세·공포)', '전투의 영향이 캐릭터에 남아요. 크게 다치면 부상이 다음 싸움에도 이어지고, 같은 상대를 다시 만나면 지난 싸움에 따라 얕보거나(방심) 긴장하거나 겁에 질리거나(공포) 복수심에 불타요(투지). 게임 마스터도 그걸 기억해 말해요. 캐릭터 탭에서 볼 수 있어요.', '예: 왼팔을 크게 다치면 며칠 동안 주먹이 무뎌지고, 나으면 흉터가 남아요.', '부상: 지면 45%, 이겨도 HP 30% 미만이면 25%·60% 미만이면 8% (받은 크리티컬마다 +6%p). 부위별 효과 — 팔 ATK −8%/−15%, 다리 속도 −10%/−20%(중상은 도망 −10%p), 머리 명중 −5/−10, 몸통 방어 −4%p/−8%p(중상은 시작 HP −10%). 경상은 3전 또는 6시간, 중상은 6전 또는 24시간 뒤 낫고 중상은 흉터를 남김(효과 없음). 같은 부위를 또 다치면 중상으로 악화. 최대 3개. 피로: 1시간에 15판 넘게 싸우면 속도 −10%·명중 −5. 기세: 3연승부터 게이지 +1. 마음가짐(상대별 최근 7일 기록으로): 공포 — 연달아 2패 또는 상대 HP 를 70% 넘게 남기고 짐 → 명중 −5, 이기면 극복 / 투지 — 지난번에 짐 → ATK +5% / 긴장 — 지난번이 아슬아슬(이긴 쪽 HP 30% 미만)하거나 승패가 섞임 → 방어 +3%p·속도 −5% / 방심 — 진 적 없이 2번 이상 HP 60% 넘게 남기고 이김 → 명중 +3·방어 −4%p. 의기소침: 3연패부터 명중 −3. 숙적: 같은 상대와 5번 이상. 최근 3일 동안 다시 만나면 "요즘 자주 만난다"고 서술. AI 전투·자동 비무 상대·꿈 이야기에만 적용(온라인 대전 제외). 상점의 꿈 연고·깊은 잠·용기의 부적으로 바로 없앨 수 있음.'],
             ['등선 · 선기 · 선계', '계정 캐릭터를 꿈에서 떠나보내면(삭제) 계정에 선기가 쌓여요. 선기로 선계 강화를 사면 다음에 만드는 캐릭터가 더 강하게 시작하거나 캐릭터 칸이 늘어나요. 등선한 캐릭터는 명예의 전당에 남아요.', '', '30승부터 등선 가능, 로그인한 계정 캐릭터만. 선기 = 등급 기본값(평범 1 · 숙련 3 · 초인 6 · 전설 10 · 신화 16 · ??? 150) + 평범에서 오른 등급 수(환생 또는 높게 태어나 건너뛴 등급) + 100승마다 1. 숙련 이상은 다음 캐릭터 선물도: 숙련 상위 등급 확률(초인 ×1.5) / 초인 꿈 조각 300·확률(초인 ×2·전설 ×1.5) / 전설 꿈 조각 500·깨지 않는 꿈·최소 숙련·확률(×2.5·×2·신화 ×1.5) / 신화 꿈 조각 800·깨지 않는 꿈·최소 숙련·시작 HP·ATK +10%·확률(×3·×3·×2) / ??? 꿈 조각 1200·깨지 않는 꿈·최소 초인·+15%·확률(×4·×4·×3). 꿈 조각·아이템은 쌓이고 확률·보정은 가장 큰 값만, 다음 캐릭터 하나에 한 번에 쓰임. 예: ??? 등선 뒤 심사 80 이면 전설 0.08% → 0.28%. 강화: 캐릭터 칸 +1(선기 3·6·10) · 시작 HP·ATK +5%/단계 · 심사 위력 +3/단계 · 개연성 바닥 +2%p/단계 · 시작 꿈 조각 +150/단계 (각 최대 5단계) · 꿈의 가속 승리 보상 +6%/단계(4·6·8·10·12) · 환생의 기억 환생 직후 최소 능력치 +3%p/단계(6·10·14) · 생사결 호신부 새 캐릭터마다 생사결 패배 1회 무효·HP·ATK −10%(15) · 꿈 명부 다시 짓기(5, 쓸 때마다) · 천상 수련 칭호만(10·20·30…, 끝없음). ??? 등선한 계정만: 천상 칸 +1(40, 최대 6칸) · 천상의 씨앗 다음 캐릭터 최소 전설·5% 로 ???(80, 한 번에 하나) · 혼돈신체 모든 계정 캐릭터(지금 있는 것 포함) HP·ATK 와 그 상한 +10%/단계(120·180·250, 가장 강함 — 성장 속도·AI 상대는 그대로, 최종 능력치만 커짐. 시뮬레이션: 같은 ??? 끼리 1단 73% · 3단 95% 승, 하루 170라운드면 3단까지 약 1년). 계정 캐릭터는 기본 2개까지. 시뮬레이션: 신화에서 등선을 반복하면 1000라운드당 선기 약 13, ??? 는 한 번에 약 165(1000승 필요).'],
             ['꿈의 명부 (AI 전투 상대)', 'AI 전투의 적은 내 캐릭터 설정을 읽고 지어진 꿈속 존재들이에요. 캐릭터마다 다른 12명이 나와요.', '', '강함·능력 배분·필살기 종류는 코드가 정한 12개 자리 그대로, 이름·설명·필살기 이름만 AI 가 캐릭터당 한 번 지음(약 25초, 홈에 오면 미리 지어 둠). 생성 전이거나 실패한 자리는 기본 적이 나옴.'],

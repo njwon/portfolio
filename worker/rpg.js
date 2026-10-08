@@ -1177,7 +1177,8 @@ const ITEMS = {
   smoke: { name: '연막 구름', price: 125, kind: 'bag', desc: '도망 성공 확률 +25%p, 붙잡혀도 손실 절반' },
   map: { name: '꿈길 지도', price: 100, kind: 'use', desc: 'AI 전투 첫 턴 전에 상대를 한 번 다시 뽑기' },
   nightmare: { name: '악몽 초대장', price: 200, kind: 'use', desc: '다음 AI 전투 상대가 훨씬 강해지고, 이기면 꿈 조각 2.5배. 져도 캐릭터는 남음' },
-  insurance: { name: '깨지 않는 꿈', price: 300, kind: 'use', max: 1, desc: 'AI 전투에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%)' },
+  // 1200: 생사결 1단 승리 꿈 조각(~100) × 패배 간격(~7판)보다 비싸게 — 매번 사서 생사결을 위험 없이 도는 것 방지
+  insurance: { name: '깨지 않는 꿈', price: 1200, kind: 'use', max: 1, desc: '생사결에서 지면 자동으로 쓰여 캐릭터가 사라지지 않음 (HP·ATK 최대치 −5%, 생사결 호신부가 먼저 쓰임)' },
   key: { name: '설정 보강 열쇠', price: 1500, kind: 'use', desc: '설정 보강의 100승 대기를 바로 풂 (하루 1회)' },
   relic: { name: '꿈의 유물', price: 600, kind: 'relic', desc: '12자 이내의 물건 하나를 지님. 능력은 없지만 심사관이 설정의 일부로 봄 (바꾸기 300)' },
   star: { name: '별 표식', price: [1500, 3000, 6000], kind: 'star', desc: '순위표 이름 옆 장식 (3단계)' },
@@ -1592,7 +1593,7 @@ async function startStory(id, body, env) {
   const c = await updateChar(env, c0.id, x => {
     x.story ||= { next: 1, clears: 0, deaths: 0 };
     if (x.story.run) return;   // 이미 진행 중이면 그대로 이어감
-    x.story.run = { chapter: ch, src, node: 0, hp: x.stats.hp, gauge: 0, flags: {}, shards: 0, hardcore: !!body.hardcore, log: [], started: Date.now() };
+    x.story.run = { chapter: ch, src, node: 0, hp: x.stats.hp, gauge: 0, flags: {}, shards: 0, hardcore: !!body.hardcore && (x.wins || 0) + (x.losses || 0) >= EASY_FIRST, log: [], started: Date.now() };   // 생사결 꿈은 처음 3전 뒤부터
   }, c0);
   return json(await storyState(env, c));
 }
@@ -1610,8 +1611,10 @@ function clearChapter(x, run) {
   const full = dayCount(x, 'story', 3);
   const rw = rollReward(x, { stats: { tier: '초인' } }, 'pve');
   if (full) { rw.hp *= 2; rw.atk *= 2; } else { rw.hp = Math.round(rw.hp * 0.3); rw.atk = Math.round(rw.atk * 0.3); rw.stats = {}; rw.tags = []; }
+  // 생사결 꿈(2026-10): 이제 계정 캐릭터도 걸리므로 클리어 보상 능력치 ×4 · 꿈 조각 ×2 (장 하나 = 잡몹·거울·악몽 3~4전을 내리 이겨야 함)
+  if (run.hardcore) { rw.hp *= 4; rw.atk *= 4; rw.tags = ['생사결 꿈 ×4', ...rw.tags]; }
   applyReward(x, rw);
-  run.shards += Math.round((full ? 60 : 15) * (run.hardcore ? 1.5 : 1));
+  run.shards += Math.round((full ? 60 : 15) * (run.hardcore ? 2 : 1));
   x.story.clears = (x.story.clears || 0) + 1; x.story.next = Math.max(x.story.next || 1, run.chapter + 1);
   const shards = endRun(x, 'clear');
   return { hp: rw.hp, atk: rw.atk, tags: rw.tags, shards, full, chapter: run.chapter };
@@ -1695,9 +1698,10 @@ async function storyBattleEnd(env, st, c) {
     } else { run.log.push({ node: st.storyNode, label: '전투', text: String(nc.lose || '').slice(0, 200), ok: false }); hardcoreDeath = !!run.hardcore; endRun(x, 'dead'); }
   }, c);
   st.me.char = out ? publicChar(out) : st.me.char; st.storyResult = { reward, text: st.winner === 1 ? nc.win : nc.lose, ended: !out?.story?.run, last: out?.story?.last || null };
-  if (hardcoreDeath) {   // 생사결 꿈: 손님 캐릭터는 사라진다 (계정 캐릭터는 남음)
-    const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
-    if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
+  if (hardcoreDeath) {   // 생사결 꿈: 다른 생사결과 같이 계정 캐릭터도 사라진다 (호신부·깨지 않는 꿈이 한 번 막음, 30승 이상 계정 캐릭터는 선기 절반)
+    const d = await stakeLose(env, out || c);
+    if (d?.warded) { st.warded = d.warded; st.me.char = publicChar(d.char); }
+    else if (d) { st.deleted = true; st.fellQi = d.qi || 0; st.fell = !!d.fell; }
   }
 }
 async function storyQuit(id, body, env) {
@@ -1991,12 +1995,16 @@ async function stakeDeath(env, c) {
   }
   return out;
 }
-// 생사결 패배 처리: 선계 '생사결 호신부'가 남아 있으면 한 번 막아 준다(HP·ATK −10%), 없으면 사라짐
+// 생사결 패배 처리: 선계 '생사결 호신부'(HP·ATK −10%) → 가방의 '깨지 않는 꿈'(−5%) 순서로 한 번 막아 주고, 없으면 사라짐
 async function stakeLose(env, c) {
-  if ((c.stakeWard || 0) > 0) {
-    let used = false;
-    const out = await updateChar(env, c.id, x => { used = false; if ((x.stakeWard || 0) > 0) { x.stakeWard--; x.stats.hp = Math.round(x.stats.hp * 0.9); x.stats.atk = Math.round(x.stats.atk * 0.9); used = true; } }, c);
-    if (used) return { warded: true, char: out };
+  if ((c.stakeWard || 0) > 0 || (c.bag?.insurance || 0) > 0) {
+    let used = null;
+    const out = await updateChar(env, c.id, x => {
+      used = null; const cut = f => { x.stats.hp = Math.round(x.stats.hp * f); x.stats.atk = Math.round(x.stats.atk * f); };
+      if ((x.stakeWard || 0) > 0) { x.stakeWard--; cut(0.9); used = 'ward'; }
+      else if ((x.bag?.insurance || 0) > 0) { x.bag.insurance--; cut(0.95); used = 'insurance'; }
+    }, c);
+    if (used) return { warded: used, char: out };
   }
   return stakeDeath(env, c);
 }
@@ -2098,14 +2106,20 @@ async function leaveBattle(id, body, env) {
   let result = { ok: true, escaped: true };
   if (st.mode === 'spar') return json({ ok: true, escaped: true, message: '연습 대결을 그만뒀습니다. (기록 없음)' });
   if (st.mode === 'story') {   // 스토리 전투에서 도망 = 꿈에서 깸 (이번 회차 끝, 조각 절반)
-    const out = await updateChar(env, c0.id, x => { if (x.story?.run?.battleId === st.id) endRun(x, 'fled'); }, c0);
+    let hard = false;
+    const out = await updateChar(env, c0.id, x => { hard = false; if (x.story?.run?.battleId === st.id) { hard = !!x.story.run.hardcore && st.log.length > 0; endRun(x, hard ? 'dead' : 'fled'); } }, c0);
+    if (hard) {   // 생사결 꿈의 전투에서 첫 턴 뒤 도망 = 패배
+      const d = await stakeLose(env, out);
+      if (d?.warded) return json({ ok: true, escaped: false, story: true, warded: d.warded, char: publicChar(d.char), message: `생사결 꿈에서 등을 보였다… 그러나 ${d.warded === 'ward' ? '생사결 호신부가 대신 부서졌습니다 (HP·ATK −10%)' : '깨지 않는 꿈이 대신 깨졌습니다 (HP·ATK −5%)'}.` });
+      return json({ ok: true, escaped: false, story: true, stakeLost: true, deleted: !!d?.deleted, qi: d?.qi || 0, message: `생사결 꿈에서 등을 보였다. ${c0.name}은(는) 꿈에서 사라졌습니다.` });
+    }
     return json({ ok: true, escaped: true, story: true, char: publicChar(out), message: '꿈에서 깨어났습니다. 이번 회차에서 모은 꿈 조각은 절반만 남습니다.' });
   }
   if (st.stake && st.status === 'playing' && st.log.length) {   // 생사결은 첫 턴 뒤 도망칠 수 없다 — 나가면 패배(캐릭터 사라짐)
     const c = await updateChar(env, c0.id, x => { x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1; }, c0);
     if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, { ...st, winner: 2 }, c);
     const d = await stakeLose(env, c);
-    if (d?.warded) return json({ ok: true, escaped: false, warded: true, char: publicChar(d.char), message: `생사결에서 등을 보였다… 그러나 생사결 호신부가 대신 부서졌습니다. 패배 기록 · HP·ATK 최대치 −10%` });
+    if (d?.warded) return json({ ok: true, escaped: false, warded: d.warded, char: publicChar(d.char), message: d.warded === 'ward' ? '생사결에서 등을 보였다… 그러나 생사결 호신부가 대신 부서졌습니다. 패배 기록 · HP·ATK 최대치 −10%' : '생사결에서 등을 보였다… 그러나 깨지 않는 꿈이 대신 깨졌습니다. 패배 기록 · HP·ATK 최대치 −5%' });
     return json({ ok: true, escaped: false, stakeLost: true, deleted: !!d?.deleted, qi: d?.qi || 0, message: `생사결에서 등을 보였다. ${c.name}은(는) 꿈에서 사라졌습니다.` });
   }
   if (st.status === 'playing' && st.log.length) {                         // 한 턴이라도 싸운 뒤의 도망만 판정 (시작 직후엔 자유)
@@ -2162,9 +2176,7 @@ async function battleTurn(id, body, env, ip) {
         st.dream = earnDream(x, base * (st.stake ? STAKES[st.stake].mult : 1) + dailyFirst(x));
       } else {
         x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1;
-        // 깨지 않는 꿈: AI 전투에서 지면 자동으로 써서 캐릭터를 지킨다 (HP·ATK 최대치 −5%)
-        st.saved = undefined;
-        if (st.mode === 'pve' && !st.nightmare && !st.stake && (x.bag?.insurance || 0) > 0) { x.bag.insurance--; x.stats.hp = Math.round(x.stats.hp * 0.95); x.stats.atk = Math.round(x.stats.atk * 0.95); st.saved = true; }
+        // (2026-10) 보통 AI 전투 패배는 기록만 — 캐릭터 삭제는 생사결에서만. 깨지 않는 꿈은 생사결 패배를 막는 물건으로 바뀜(stakeLose)
       }
       condAfter(x, st);   // 흔적: 부상·흉터·피로·연승·상대 기억
     }, c);
@@ -2173,11 +2185,8 @@ async function battleTurn(id, body, env, ip) {
     // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 비무 상대와의 전투·악몽 초대장·깨지 않는 꿈은 예외
     if (st.winner === 2 && st.stake) {   // 생사결 패배: 계정 캐릭터도 사라진다
       const d = await stakeLose(env, fresh);
-      if (d?.warded) { st.warded = true; st.me.char = publicChar(d.char); }
+      if (d?.warded) { st.warded = d.warded; st.me.char = publicChar(d.char); }
       else if (d) { st.deleted = true; st.fellQi = d.qi || 0; st.fell = !!d.fell; }
-    } else if (st.winner === 2 && st.mode === 'pve' && !st.nightmare && !st.saved) {
-      const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
-      if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
     }
     }
   } else st.turn++;
@@ -2345,7 +2354,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
           else earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c));
         } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; }
       }, s.p[k].char);
-      if (m && !won && !draw) { const d = await stakeLose(env, s.p[k].char); if (d?.warded) { s.p[k].warded = true; s.p[k].char = d.char; } else if (d) { s.p[k].deleted = true; s.p[k].fellQi = d.qi || 0; } }
+      if (m && !won && !draw) { const d = await stakeLose(env, s.p[k].char); if (d?.warded) { s.p[k].warded = d.warded; s.p[k].char = d.char; } else if (d) { s.p[k].deleted = true; s.p[k].fellQi = d.qi || 0; } }
     }
   } else s.round++;
   s.moves = {}; delete s.busy;
