@@ -337,6 +337,13 @@
                     <button id="btnAutoFight" class="choice ghost"><b>다른 플레이어의 캐릭터와 전투</b><span class="sub">자동 생사결 참가자의 캐릭터를 AI가 조종합니다 (이기면 승점 2 · 보상 1.3배, 져도 캐릭터 유지)</span></button>
                     <button id="btnOnline" class="choice ghost"><b>온라인 대전</b><span class="sub">사람끼리 2~6명, 랜덤 매칭 또는 코드로 초대 (이기면 승점 3, 능력치 보상은 없음)</span></button>
                 </div>
+                <div class="card" id="sparCard" hidden>
+                    <h3>연습 대결 <span class="hint">(내 계정 캐릭터끼리)</span></h3>
+                    <p class="meta" style="margin:4px 0 8px">내 다른 캐릭터를 AI 가 조종해 상대합니다. <b>전적·승점·보상·흔적이 남지 않는</b> 연습이고, 져도 캐릭터는 그대로예요.</p>
+                    <label for="sparPick" class="sr-only">상대할 내 캐릭터</label>
+                    <select id="sparPick" style="width:100%;min-height:44px;background:transparent;color:#eee;border:0.5px dashed #eee;border-radius:4px;padding:6px;font:inherit"></select>
+                    <div class="btn-row" style="margin:10px 0 0"><button id="btnSpar">연습 대결 시작</button></div>
+                </div>
                 <div class="card" id="storyCard">
                     <h3>꿈 이야기 <span class="hint" id="storyHint"></span></h3>
                     <p class="meta" style="margin:4px 0 8px">내 설정으로 지어지는 7장면짜리 꿈입니다. 선택과 전투를 거쳐 마지막엔 <b>내 약점이 형상화된 악몽</b>과 싸웁니다. 져도 캐릭터는 남고(꿈에서 깸), 승점에는 들어가지 않습니다.</p>
@@ -940,7 +947,7 @@ const Snd = (() => {
         $('rebirthRow').style.display = ready ? '' : 'none';
         if (ready) $('btnRebirth').textContent = me.stats.tier === '???' ? '최고 등급 — 환생 불가' : maxTier ? `??? 로 환생하려면 1000승 필요 (${me.wins || 0}/1000)` : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
         $('btnRebirth').disabled = maxTier;
-        show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine(); renderBag(); renderShop(); refreshStoryCard(); renderAscend(); refreshAccount(); prefetchFoes();
+        show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine(); renderBag(); renderShop(); refreshStoryCard(); renderAscend(); refreshAccount(); prefetchFoes(); renderSpar();
     }
     // 등급별 성장 상한 (서버와 같은 표). HP·ATK 둘 다 상한이면 환생 가능
     const TIER_CAPS = { '평범': { hp: 1500, atk: 200, def: 20, spd: 60, acc: 85, eva: 20 }, '숙련': { hp: 2200, atk: 300, def: 30, spd: 75, acc: 90, eva: 28 }, '초인': { hp: 3000, atk: 420, def: 40, spd: 90, acc: 94, eva: 35 }, '전설': { hp: 4200, atk: 580, def: 50, spd: 105, acc: 97, eva: 42 }, '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 }, '???': { hp: 8000, atk: 1000, def: 65, spd: 130, acc: 99, eva: 55 } };
@@ -1096,7 +1103,7 @@ const Snd = (() => {
         $('btnItem').style.display = pl && battle.items?.bandage > 0 ? '' : 'none'; $('btnItem').disabled = busy;
         $('rerollRow').style.display = pl && battle.mode === 'pve' && !battle.log.length && !battle.rerolled && (me?.bag?.map || 0) > 0 ? '' : 'none';
         $('btnRun').textContent = battle.mode === 'story' ? '꿈에서 깨기' : '도망';
-        $('bBag').textContent = [battle.cond?.length ? '상태: ' + battle.cond.join(' · ') : '', battle.nightmare ? '악몽 초대장 — 이기면 꿈 조각 2.5배, 져도 캐릭터는 남음' : '', battle.bagUsed?.length ? '가방: ' + battle.bagUsed.map(k => ITEM_INFO[k][0]).join(' · ') : '', battle.mode === 'story' ? `꿈 이야기 ${battle.boss ? '보스 전투' : '전투 (요약 서술)'} — 져도 캐릭터는 남음 (생사결 꿈 제외)` : ''].filter(Boolean).join(' · ');
+        $('bBag').textContent = [battle.cond?.length ? '상태: ' + battle.cond.join(' · ') : '', battle.nightmare ? '악몽 초대장 — 이기면 꿈 조각 2.5배, 져도 캐릭터는 남음' : '', battle.bagUsed?.length ? '가방: ' + battle.bagUsed.map(k => ITEM_INFO[k][0]).join(' · ') : '', battle.mode === 'story' ? `꿈 이야기 ${battle.boss ? '보스 전투' : '전투 (요약 서술)'} — 져도 캐릭터는 남음 (생사결 꿈 제외)` : battle.mode === 'spar' ? '연습 대결 — 기록·보상 없음' : ''].filter(Boolean).join(' · ');
     }
     let starting = false;   // 홈 버튼 연타로 전투·방이 두 개 생기지 않게
     const HOME_BTNS = ['btnBattle', 'btnAutoFight', 'btnOnline', 'btnWake'];
@@ -1175,7 +1182,8 @@ const Snd = (() => {
         $('bLog').innerHTML = ''; $('bLb').style.display = 'none'; $('bAction').value = ''; $('bResult').style.display = 'none'; $('bEnd').style.display = 'none'; $('bActionGroup').style.display = ''; $('bBtns').style.display = ''; $('bStatus').textContent = '';
         if (battle.intro) logLine($('bLog'), `<span class="st-scene">${esc(battle.intro)}</span>`);
         const mm = battle.memo;
-        if (mm) logLine($('bLog'), `<span class="hint">${mm.recent >= 1 ? `또 만났다 — 최근 3일 동안 ${mm.recent + 1}번째 대결` : `${mm.n + 1}번째 대결`} · 지금까지 ${mm.w}승 ${mm.l}패${mm.rival ? ' · <b>숙적</b>' : ''}${mm.mood ? ' · ' + ({ fear: '이 상대가 두렵다', grit: '지난번 패배를 갚을 투지', tense: '지난번처럼 아슬아슬할까 긴장된다', cocky: '쉬운 상대라 얕보는 마음' }[mm.mood] || '') : ''}${mm.overcame ? ' · 예전에 공포를 이겨낸 상대' : ''}</span>`);
+        if (mm?.own) logLine($('bLog'), '<span class="hint">내 계정 캐릭터와의 연습 대결 — 전적·보상·흔적이 남지 않습니다</span>');
+        else if (mm) logLine($('bLog'), `<span class="hint">${mm.recent >= 1 ? `또 만났다 — 최근 3일 동안 ${mm.recent + 1}번째 대결` : `${mm.n + 1}번째 대결`} · 지금까지 ${mm.w}승 ${mm.l}패${mm.rival ? ' · <b>숙적</b>' : ''}${mm.mood ? ' · ' + ({ fear: '이 상대가 두렵다', grit: '지난번 패배를 갚을 투지', tense: '지난번처럼 아슬아슬할까 긴장된다', cocky: '쉬운 상대라 얕보는 마음' }[mm.mood] || '') : ''}${mm.overcame ? ' · 예전에 공포를 이겨낸 상대' : ''}</span>`);
         logLine($('bLog'), `<b>${esc(battle.foe.char.name)}</b>(${esc(battle.foe.char.fiction)})이(가) 나타났다!${battle.mode === 'auto' ? ' <span class="hint">— 자동 생사결 참가자의 캐릭터 (AI 조종)</span>' : ''}<br><span class="hint">${esc(battle.foe.char.info)}</span>`);
         for (const l of battle.log) logLine($('bLog'), roundHtml(`턴 ${l.turn}`, { 1: battle.me.char.name, 2: battle.foe.char.name }, l, battleSec()));   // 재접속이면 지난 턴 복원
         if (battle.log.length) logLine($('bLog'), '<span class="hint">— 이어서 진행합니다 —</span>');
@@ -1188,11 +1196,13 @@ const Snd = (() => {
         $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('rerollRow').style.display = 'none'; $('bResult').style.display = '';
         const rw = b.reward, tags = r => r?.tags?.length ? ' · ' + r.tags.map(esc).join(' · ') : '';
         let html;
-        if (b.mode === 'story') {
+        if (b.mode === 'spar' && won) html = `연습 대결 승리!<br><span class="hint">연습이라 기록·보상은 없습니다.</span>`;
+        else if (b.mode === 'story') {
             const sr = b.storyResult || {}, cr = sr.reward;
             html = won ? (cr ? `악몽을 물리쳤다! 제${cr.chapter}장 클리어<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${cr.hp} · ATK +${cr.atk}${tags(cr)}`} · 꿈 조각 +${cr.shards}${cr.full ? '' : ' (오늘 3장을 넘게 깨서 보상 감소)'} — 다음 장이 열렸습니다</span>` : `이겼다!<br><span class="hint">${esc(sr.text || '')}</span>`)
                 : b.deleted ? '당신은 쓰러졌다… 생사결 꿈이었기에 캐릭터가 사라집니다.' : `당신은 쓰러졌다… 꿈에서 깹니다.<br><span class="hint">${esc(sr.text || '')} 캐릭터는 그대로이고, 이번 회차에 모은 꿈 조각은 절반(+${sr.last?.shards ?? 0})만 남았습니다.</span>`;
         } else if (won) html = `적이 쓰러졌다! 승리!${rw ? `<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${rw.hp} · ATK +${rw.atk}${tags(rw)}`}${b.dream ? ` · 꿈 조각 +${b.dream}` : ''} — 홈의 성장 탭에서 상한까지 얼마나 왔는지 볼 수 있습니다</span>` : ''}`;
+        else if (b.mode === 'spar') html = `연습 대결 패배.<br><span class="hint">연습이라 기록·보상 없이 캐릭터는 그대로입니다.</span>`;
         else if (b.mode === 'auto') html = `당신은 쓰러졌다…<br><span class="hint">자동 생사결 참가자와의 전투라 패배 기록만 남고 캐릭터는 그대로입니다.</span>`;
         else if (b.saved) html = `당신은 쓰러졌다… 그러나 깨지 않는 꿈이 대신 깨졌습니다.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 5% 줄었습니다.</span>`;
         else if (b.nightmare) html = `악몽에 삼켜졌다…<br><span class="hint">악몽 초대장으로 들어간 꿈이라 캐릭터는 그대로입니다.</span>`;
@@ -1248,9 +1258,9 @@ const Snd = (() => {
     }
     $('btnRun').addEventListener('click', async () => {
         if (!battle) return goHome();
-        const story = battle.mode === 'story', fought = battle.status === 'playing' && battle.log.length > 0;
+        const story = battle.mode === 'story', b0mode = battle.mode, fought = battle.status === 'playing' && battle.log.length > 0;
         if (story && !confirm('꿈에서 깰까요? 이번 회차가 끝나고, 모은 꿈 조각은 절반만 남습니다 (캐릭터는 그대로).')) return;
-        if (!story && fought && !confirm(`도망칠까요? 성공 확률 약 ${escapeChance(battle.me, battle.foe, (battle.items?.smoke ? 0.25 : 0) - (battle.fleePenalty || 0))}%\n붙잡히면 패배로 기록되고 HP·ATK 최대치를 조금 잃습니다 (캐릭터는 남음).`)) return;
+        if (!story && b0mode !== 'spar' && fought && !confirm(`도망칠까요? 성공 확률 약 ${escapeChance(battle.me, battle.foe, (battle.items?.smoke ? 0.25 : 0) - (battle.fleePenalty || 0))}%\n붙잡히면 패배로 기록되고 HP·ATK 최대치를 조금 잃습니다 (캐릭터는 남음).`)) return;
         const b = battle; battle = null; saveSess(null);
         for (const id of ['btnAttack', 'btnDefend', 'btnUlt', 'btnRun']) $(id).disabled = true;
         try {
@@ -1459,11 +1469,13 @@ const Snd = (() => {
     function renderAccount() {
         const hint = $('accountHint');
         $('btnAcct').hidden = !gUser;   // 선계는 로그인 계정만
+        $('account').appendChild($('btnAcct'));   // 아래에서 hint 를 다시 그리기 전에 버튼을 밖으로 (같이 지워지지 않게)
         if (gUser) {
             const guest = readSlot(GUEST), guestLinked = guest && (acctChars.some(c => c.id === guest.id) || guestOwnedElsewhere);
             const opts = acctChars.map(c => `<option value="${esc(c.id)}"${me && c.id === me.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.tier || '')} ${c.wins}승 ${c.losses}패</option>`).join('')
                 + (guest && !guestLinked ? `<option value="__guest">손님 캐릭터를 계정에 추가</option>` : '') + `<option value="__new">+ 새 캐릭터 만들기${acctState ? ` (${acctState.slots.used}/${acctState.slots.limit})` : ''}</option>`;
             hint.innerHTML = `<b>${esc(gUser.name)}</b> <select id="charPick" title="캐릭터 교체">${opts}</select> <button type="button" class="mini ghost" id="btnLogout">로그아웃</button>`;
+            hint.insertBefore($('btnAcct'), $('btnLogout'));   // 캐릭터 선택 목록 ↔ 로그아웃 사이
             $('charPick').addEventListener('change', onPickChange);
             $('btnLogout').addEventListener('click', logout);
         } else {
@@ -1749,6 +1761,19 @@ const Snd = (() => {
         foesPrefetched.add(me.id); const id = me.id;
         api(`/api/rpg/chars/${id}/foes/prepare`, { token: myToken }).then(r => { if (r.status === 'ready' && me?.id === id) me.foes = 'ready'; }).catch(() => {});
     }
+
+    // ── 연습 대결: 같은 계정의 다른 캐릭터와 (기록·보상 없음) ──
+    function renderSpar() {
+        const others = gUser && me ? acctChars.filter(c => c.id !== me.id) : [];
+        $('sparCard').hidden = !others.length;
+        if (others.length) setHtml($('sparPick'), others.map(c => `<option value="${esc(c.id)}">${esc(c.name)} · ${esc(c.tier || '')} ${n0(c.wins)}승 ${n0(c.losses)}패</option>`).join(''));
+    }
+    $('btnSpar').addEventListener('click', async () => {
+        if (!me || starting) return; starting = true; $('btnSpar').disabled = true;
+        try { const d = await api('/api/rpg/battles', { charId: me.id, token: myToken, mode: 'spar', foeId: $('sparPick').value, session: gSession }); enterBattle(d.battle); }
+        catch (e) { alert(errMsg(e)); }
+        finally { starting = false; $('btnSpar').disabled = false; }
+    });
 
     // ── 턴 그림: 서버가 그린 PNG 를 토큰 헤더로 받아 blob URL 로 붙인다 (img src 로는 헤더를 못 보냄) ──
     const imgPref = () => lsGet('dreamrpg.img') !== '0';   // 기본 켜짐

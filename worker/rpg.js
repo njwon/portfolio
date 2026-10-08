@@ -1909,7 +1909,17 @@ async function createBattle(body, env) {
   let c = await loadChar(env, body.charId, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
   await env.DB.prepare('DELETE FROM rpg_battles WHERE updated < ?').bind(Date.now() - BATTLE_TTL).run();
-  let foe, mode = body.mode === 'auto' ? 'auto' : 'pve', foeId = null;
+  let foe, mode = body.mode === 'auto' ? 'auto' : body.mode === 'spar' ? 'spar' : 'pve', foeId = null;
+  if (mode === 'spar') {   // 연습 대결: 같은 계정의 다른 캐릭터(AI 조종). 기록·보상·흔적 없음
+    const sub = await sessionUser(env, body.session);
+    const own0 = sub && await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(c.id).first();
+    const row = sub && typeof body.foeId === 'string' && body.foeId !== c.id && await env.DB.prepare('SELECT id, json FROM rpg_chars WHERE id = ? AND user_sub = ?').bind(body.foeId, sub).first();
+    if (!sub || own0?.user_sub !== sub || !row) return json({ error: 'forbidden' }, 403);
+    foe = JSON.parse(row.json); foeId = row.id; foe.tier = 1;
+    const st = { id: uid(), charId: c.id, mode, foeId, me: { char: c, hp: c.stats.hp, gauge: 0, guard: false }, foe: { char: { name: foe.name, fiction: foe.fiction, info: foe.info, stats: foe.stats, ult: foe.ult, tier: 1, relic: foe.relic }, hp: foe.stats.hp, gauge: 0, guard: false }, turn: 1, log: [], status: 'playing', winner: null, memo: { n: 1, w: 0, l: 0, recent: 0, own: true } };
+    await env.DB.prepare('INSERT INTO rpg_battles (id, char_id, state, updated) VALUES (?, ?, ?, ?)').bind(st.id, c.id, JSON.stringify(st), Date.now()).run();
+    return json({ battle: st });
+  }
   if (mode === 'auto') {
     const row = await env.DB.prepare('SELECT id, json FROM rpg_chars WHERE auto = 1 AND id != ? ORDER BY RANDOM() LIMIT 1').bind(c.id).first();
     if (!row) return json({ error: 'no_auto' }, 404);
@@ -1977,6 +1987,7 @@ async function leaveBattle(id, body, env) {
   const del = await env.DB.prepare('DELETE FROM rpg_battles WHERE id = ? AND updated = ?').bind(id, row.updated).run();
   if (del.meta.changes !== 1) return json({ error: 'retry' }, 409);
   let result = { ok: true, escaped: true };
+  if (st.mode === 'spar') return json({ ok: true, escaped: true, message: '연습 대결을 그만뒀습니다. (기록 없음)' });
   if (st.mode === 'story') {   // 스토리 전투에서 도망 = 꿈에서 깸 (이번 회차 끝, 조각 절반)
     const out = await updateChar(env, c0.id, x => { if (x.story?.run?.battleId === st.id) endRun(x, 'fled'); }, c0);
     return json({ ok: true, escaped: true, story: true, char: publicChar(out), message: '꿈에서 깨어났습니다. 이번 회차에서 모은 꿈 조각은 절반만 남습니다.' });
@@ -2017,12 +2028,13 @@ async function battleTurn(id, body, env, ip) {
   const prevLog = st.log[st.log.length - 1];
   const t = await runRound(env, ip, { 1: st.me, 2: st.foe }, { 1: actMe, 2: actFoe }, { round: st.turn, prev: prevLog ? factsText({ 1: st.me.char.name, 2: st.foe.char.name }, prevLog.events).replace(/\n/g, ' / ') : '', noNarrate: st.mode === 'story' && !st.boss });   // 스토리 잡몹 전투는 서술 AI 생략 (챕터당 호출 예산)
   delete actMe.local;
-  const plaus = await applyPlaus(env, { 1: st.me }, { 1: actMe }, t.judge, [1]);
+  const plaus = st.mode === 'spar' ? {} : await applyPlaus(env, { 1: st.me }, { 1: actMe }, t.judge, [1]);   // 연습 대결은 개연성도 그대로
   st.log.push({ turn: st.turn, acts: { 1: actMe, 2: actFoe }, judge: t.judge, order: t.order, events: t.events, narration: t.narration, ai: t.usedAi, provider: t.provider, narrateUser: t.narrateUser, plaus, scene: t.scene || undefined });
   if (st.log.length > 40) st.log.shift();
   if (st.me.hp <= 0 || st.foe.hp <= 0) {
     st.status = 'finished'; st.winner = st.me.hp <= 0 ? 2 : 1;
     if (st.mode === 'story') await storyBattleEnd(env, st, c);
+    else if (st.mode === 'spar') st.spar = true;   // 연습 대결: 전적·승점·보상·흔적·삭제 모두 없음
     else {
     const fresh = await updateChar(env, c.id, x => {   // AI 서술을 기다리는 동안 다른 곳(cron·방)이 저장한 전적 위에 적용
       if (st.winner === 1) {
