@@ -1036,7 +1036,10 @@ function applyReward(c, rw) {
   c.rebirthReady = rebirthReady(c);
 }
 // 환생: HP·ATK 상한 도달 시. 다음 등급 하한 위력으로 기본 능력치를 다시 뽑고(성향 배분은 유지, 흔들림 없음) 환생 횟수당 +10%. ??? 는 최상위라 불가, 신화 → ??? 는 1000승 이상
-const SECRET_WINS = 1000;   // 300 이면 신화 상한(약 286승)과 같은 시점이라 약 12시간에 전원 도달 → 1000 (약 35시간 추정)
+const SECRET_WINS = 1000;
+// ??? 를 해낼수록 다음 ??? 가 쉬워진다: 계정의 ??? 등선 1회마다 필요 승수 ×0.8, 최소 300 (1000 → 800 → 640 → 512 → 410 → 328 → 300)
+//   시뮬레이션(기본 강화 전부): ??? 한 판 1000승 24.7k 라운드(1000라운드당 선기 6.7) · 640승 10.6 · 410승 ~18 · 300승 26.2 — 신화 반복(21.3)을 300승 근처에서 넘어선다
+const secretNeedOf = n => Math.max(300, Math.round(SECRET_WINS * Math.pow(0.8, n || 0)));   // 300 이면 신화 상한(약 286승)과 같은 시점이라 약 12시간에 전원 도달 → 1000 (약 35시간 추정)
 async function rebirthChar(id, body, env) {
   const c = await loadChar(env, id, body.token);
   if (!c) return json({ error: 'forbidden' }, 403);
@@ -1044,7 +1047,8 @@ async function rebirthChar(id, body, env) {
   const idx = TIERS.findIndex(t => t[0] === c.stats.tier);
   if (idx < 0 || idx >= TIERS.length - 1) return json({ error: 'max_tier' }, 409);
   const [name, lo] = TIERS[idx + 1];
-  if (name === '???' && (c.wins || 0) < SECRET_WINS) return json({ error: 'need_wins', needWins: SECRET_WINS }, 409);   // ??? 는 신화를 끝까지 키운 캐릭터만
+  const need = c.secretNeed || SECRET_WINS;
+  if (name === '???' && (c.wins || 0) < need) return json({ error: 'need_wins', needWins: need }, 409);   // ??? 는 신화를 끝까지 키운 캐릭터만
   const alloc = c.alloc || allocFromStats(c);                        // 옛 캐릭터는 현재 능력치 비율에서 성향을 역산
   const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
   const fresh = buildStats(alloc, c.stats.coherence, 1, name === '???' ? lo : lo + 2);
@@ -1122,6 +1126,7 @@ async function createChar(body, env, ip) {
   if (up.plaus) { c.ascPlaus = 0.02 * up.plaus; c.stats.stability = Math.round(Math.max(c.stats.stability, plausFloor(c)) * 1000) / 1000; }
   if (up.dream) c.dream = 150 * up.dream;
   if (up.rw) c.ascRw = 0.06 * up.rw;
+  if (acct?.secret) c.secretNeed = secretNeedOf(acct.secret);
   if (up.body) { c.ascCap = 0.1 * up.body; c.stats.hp = Math.round(c.stats.hp * (1 + c.ascCap)); c.stats.atk = Math.round(c.stats.atk * (1 + c.ascCap)); }
   if (up.mem) c.ascMem = 0.03 * up.mem;
   if (up.ward) c.stakeWard = 1;
@@ -1881,7 +1886,7 @@ const acctCharCount = async (env, sub) => (await env.DB.prepare('SELECT COUNT(*)
 async function accountView(env, sub) {
   const { a } = await loadAcct(env, sub);
   const upgrades = {}; for (const k in ASC_UP) upgrades[k] = { ...ASC_UP[k], price: upPrice(a, k), lock: upLock(a, k) };
-  return { account: { ...a, title: trainTitle(a.up?.train || 0) }, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
+  return { account: { ...a, title: trainTitle(a.up?.train || 0), secretNeed: secretNeedOf(a.secret) }, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
 }
 async function getAccount(env, session) {
   const sub = await sessionUser(env, session); if (!sub) return json({ error: 'forbidden' }, 403);
@@ -1933,6 +1938,11 @@ async function ascendChar(id, body, env) {
   lbCache.at = 0;
   const gift = ASC_TIER[c.stats?.tier]?.gift;
   await updateAcct(env, sub, a => { a.qi += qi; a.total = (a.total || 0) + qi; if (c.stats?.tier === '???') a.secret = (a.secret || 0) + 1; if (gift) a.gift = mergeGift(a.gift, gift); a.hall = [{ name: c.name, fiction: c.fiction, tier: c.stats?.tier, wins: c.wins || 0, losses: c.losses || 0, rebirths: c.rebirths || 0, qi, at: Date.now() }, ...(a.hall || [])].slice(0, 30); });
+  if (c.stats?.tier === '???') {   // 남은 계정 캐릭터들도 다음 ??? 가 쉬워짐
+    const { a } = await loadAcct(env, sub), need = secretNeedOf(a.secret);
+    const rows = (await env.DB.prepare('SELECT id FROM rpg_chars WHERE user_sub = ?').bind(sub).all())?.results || [];
+    for (const r of rows) await updateChar(env, r.id, x => { x.secretNeed = need; });
+  }
   return json({ ok: true, qi, gift: gift || null, ...(await accountView(env, sub)) });
 }
 

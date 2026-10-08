@@ -574,7 +574,7 @@
         <h3>등급표</h3>
         <p style="margin:0 0 6px">등급이 높을수록 이길 때 <b>더 많이</b>, 더 <b>높이까지</b> 자랍니다. 대신 도망치기 어렵고 붙잡히면 많이 잃어요.</p>
         <div id="tierTable"></div>
-        <details class="calc"><summary>등급은 어떻게 정해지나요? (등급 주사위 확률)</summary><p style="margin:4px 0">심사관이 매긴 위력 점수를 중심으로 주사위를 굴립니다. 점수가 등급 경계 근처면 위·아래 등급이 나올 수 있는데, 올라가기는 어렵고 내려가기는 쉽습니다. 처음 만들 때는 거의 <b>평범이나 숙련</b>이 나옵니다(심사 점수 0.8배). 초인·전설·신화는 심사 위력이 아주 높을 때만 아주 낮은 확률로 나오고, 보통은 이겨서 키우고 환생해서 올라가요. 일관성이 50 미만이면 평범까지, 70 미만이면 숙련까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.</p><div id="tierOdds"></div></details>
+        <details class="calc"><summary>등급은 어떻게 정해지나요? (등급 주사위 확률)</summary><p style="margin:4px 0">심사관이 매긴 위력 점수를 중심으로 주사위를 굴립니다. 점수가 등급 경계 근처면 위·아래 등급이 나올 수 있는데, 올라가기는 어렵고 내려가기는 쉽습니다. 처음 만들 때는 거의 <b>평범이나 숙련</b>이 나옵니다(심사 점수 0.8배). 초인·전설·신화는 심사 위력이 아주 높을 때만 아주 낮은 확률로 나오고, 보통은 이겨서 키우고 환생해서 올라가요. 일관성이 50 미만이면 평범까지, 70 미만이면 숙련까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다 (계정이 ??? 로 등선할 때마다 필요 승수 ×0.8, 최소 300: 1000 → 800 → 640 → 512 → 410 → 328 → 300).</p><div id="tierOdds"></div></details>
         <h3>용어</h3>
         <p class="hint" style="margin:0 0 4px">숫자가 궁금하면 각 항목의 '자세한 계산'을 펼쳐 보세요.</p>
         <div id="glossary"></div>
@@ -907,7 +907,7 @@ const Snd = (() => {
     function tierTableHtml(cur) {
         const f = x => (Math.round(x * 100) / 100).toFixed(2).replace(/0$/, '');
         const rows = TIER_RANGE.map(([n, lo, hi], i) => { const c = TIER_CAPS[n];
-            if (n === '???') return `<tr${n === cur ? ' class="me"' : ''}><th scope="row">???${n === cur ? ' <span class="hint">(나)</span>' : ''}</th><td>???</td><td>???</td><td>???</td><td>???</td><td>???</td><td>???</td></tr>`;
+            if (n === '???' && !seenSecret()) return `<tr${n === cur ? ' class="me"' : ''}><th scope="row">???${n === cur ? ' <span class="hint">(나)</span>' : ''}</th><td>???</td><td>???</td><td>???</td><td>???</td><td>???</td><td>???</td></tr>`;
             return `<tr${n === cur ? ' class="me"' : ''}><th scope="row">${n}${n === cur ? ' <span class="hint">(나)</span>' : ''}</th><td>${lo}~${hi}</td><td>×${f(powerMult(lo))}~${f(powerMult(hi))}</td><td>${c.hp} / ${c.atk}</td><td>${c.def}% / ${c.spd} / ${c.acc} / ${c.eva}</td><td>${PLAUS_CAP[n]}%</td><td>−${i * 6}%p · ×${f(1 + i * 0.6)}</td></tr>`; }).join('');
         return `<div class="tbl"><table class="tiers"><thead><tr><th scope="col">등급</th><th scope="col">위력 점수</th><th scope="col">성장 배율</th><th scope="col">HP / ATK 상한</th><th scope="col">방어 / 속도 / 명중 / 회피 상한</th><th scope="col">개연성 상한</th><th scope="col">도망 확률 · 실패 손실</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
@@ -921,7 +921,17 @@ const Snd = (() => {
     const STATS = [['hp', 'HP', v => v], ['atk', 'ATK', v => v], ['def', '방어', v => v + '%'], ['spd', '속도', v => v], ['acc', '명중', v => v], ['eva', '회피', v => v], ['stability', '개연성', v => Math.round(v * 100) + '%']];
     const tip = (k, html) => `<span title="${esc(STAT_TIP[k])}">${html}</span>`;
     // ??? 등급은 모든 수치를 ??? 로 가린다 (본인·상대·전투 기록·등급표 모두). 서버 값은 그대로, 보이는 것만
-    const Q = '???', isSecret = c => c?.stats?.tier === '???';
+    // ??? 를 한 번이라도 해낸 사람(이 기기에서 ??? 캐릭터를 가졌거나, 계정이 ??? 등선)에겐 ??? 로 가린 수치·도움말을 모두 보여 준다
+    const SEEN_SECRET = 'dreamrpg.seenSecret';
+    function seenSecret() {
+        if (lsGet(SEEN_SECRET)) return true;
+        let yes = me?.stats?.tier === '???';
+        try { yes ||= acctChars.some(c => c.tier === '???') || (acctState?.account?.secret || 0) > 0; } catch {}   // 아래쪽 let 이 아직 초기화 전일 때(시작 직후)
+        if (yes) lsSet(SEEN_SECRET, '1');
+        return yes;
+    }
+    const Q = '???', isSecret = c => c?.stats?.tier === '???' && !seenSecret();
+    const secretNeed = () => { try { return me?.secretNeed || acctState?.account?.secretNeed || 1000; } catch { return me?.secretNeed || 1000; } };
     function statLine(c) { const s = c.stats; if (isSecret(c)) return `위력 <b>???</b> · HP ??? · ATK ??? · 방어 ??? · 속도 ??? · 명중 ??? · 회피 ??? · 개연성 ???`; return `${s.tier ? tip('tier', `위력 <b>${esc(s.tier)}</b>${s.mult && s.mult !== 1 ? ` (×${s.mult})` : ''}`) + ' · ' : ''}${tip('hp', `HP ${s.hp}`)} · ${tip('atk', `ATK ${s.atk}`)} · ${tip('def', `방어 ${s.def}%`)} · ${tip('spd', `속도 ${s.spd}`)} · ${tip('acc', `명중 ${s.acc}`)} · ${tip('eva', `회피 ${s.eva}`)} · ${tip('stability', `개연성 ${Math.round(s.stability * 100)}%`)}`; }
     // 필살기 게이지: 모양(■□)과 숫자를 같이 — 색·기호만으로 상태를 알리지 않는다
     function gaugeHtml(g) { return `게이지 <span aria-hidden="true">${'■'.repeat(g) + '□'.repeat(ULT_COST - g)}</span> ${g}/${ULT_COST}${g >= ULT_COST ? ' <b>필살기 준비됨</b>' : ''}`; }
@@ -970,9 +980,9 @@ const Snd = (() => {
         setHtml($('homeCard'), charDetailHtml(me));
         setHtml($('growCard'), growHtml(me));
         // 환생: HP·ATK 가 등급 상한에 닿았고 ??? 가 아니면 버튼 표시 (신화 → ??? 는 1000승 이상)
-        const ready = rebirthReady(me), maxTier = me.stats.tier === '???' || (me.stats.tier === '신화' && (me.wins || 0) < 1000);
+        const ready = rebirthReady(me), maxTier = me.stats.tier === '???' || (me.stats.tier === '신화' && (me.wins || 0) < secretNeed());
         $('rebirthRow').style.display = ready ? '' : 'none';
-        if (ready) $('btnRebirth').textContent = me.stats.tier === '???' ? '최고 등급 — 환생 불가' : maxTier ? `??? 로 환생하려면 1000승 필요 (${me.wins || 0}/1000)` : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
+        if (ready) $('btnRebirth').textContent = me.stats.tier === '???' ? '최고 등급 — 환생 불가' : maxTier ? `??? 로 환생하려면 ${secretNeed()}승 필요 (${me.wins || 0}/${secretNeed()})` : `환생 → ${nextTier(me.stats.tier)} 등급으로`;
         $('btnRebirth').disabled = maxTier;
         show('s-home'); selectTab(lsGet('dreamrpg.tab') || 'play'); refreshLeaderboard(); refreshAuto(); refreshRefine(); renderBag(); renderShop(); refreshStoryCard(); renderAscend(); refreshAccount(); prefetchFoes(); renderSpar(); renderStake();
     }
@@ -1037,9 +1047,9 @@ const Snd = (() => {
             <p style="margin:0 0 6px"><b>${tp.text}</b> <span class="hint">(진행 ${tp.pct}%)</span></p>
             <p class="meta" style="margin:0">이길 때마다 HP·ATK 는 꼭 오르고, 방어·속도·명중·회피는 가끔 오릅니다. <b>* HP와 ATK</b>가 둘 다 최대에 닿으면 다음 등급으로 <b>환생</b>할 수 있습니다.</p>
             <div class="grow">${rows}</div>
-            ${last ? '' : nextTier(s.tier) === '???' ? `<p class="hint" style="margin:6px 0 0">다음 등급(???) 상한: ???</p>` : `<p class="hint" style="margin:6px 0 0">다음 등급(${nextTier(s.tier)}) 상한: HP ${TIER_CAPS[nextTier(s.tier)].hp} · ATK ${TIER_CAPS[nextTier(s.tier)].atk} · 개연성 ${PLAUS_CAP[nextTier(s.tier)]}%</p>`}
+            ${last ? '' : nextTier(s.tier) === '???' && !seenSecret() ? `<p class="hint" style="margin:6px 0 0">다음 등급(???) 상한: ???</p>` : `<p class="hint" style="margin:6px 0 0">다음 등급(${nextTier(s.tier)}) 상한: HP ${TIER_CAPS[nextTier(s.tier)].hp} · ATK ${TIER_CAPS[nextTier(s.tier)].atk} · 개연성 ${PLAUS_CAP[nextTier(s.tier)]}%</p>`}
             <details class="more"><summary>등급별 수치 전체 보기</summary>${tierTableHtml(s.tier)}</details>
-            <p class="hint" style="margin:6px 0 0">${last ? '??? 는 최고 등급입니다.' : ready && s.tier === '신화' && (c.wins || 0) < 1000 ? `상한에 닿았습니다. ??? 로 환생하려면 1000승이 필요합니다 (지금 ${c.wins || 0}승).` : ready ? `환생 준비 완료! 아래 버튼으로 ${nextTier(s.tier)} 등급이 됩니다 (능력치는 새 등급 기본값으로, 성향·전적·필살기는 그대로, 환생마다 영구 +10%).` : `환생까지 HP ${pct('hp')}% · ATK ${pct('atk')}%`}</p>`;
+            <p class="hint" style="margin:6px 0 0">${last ? '??? 는 최고 등급입니다.' : ready && s.tier === '신화' && (c.wins || 0) < secretNeed() ? `상한에 닿았습니다. ??? 로 환생하려면 ${secretNeed()}승이 필요합니다 (지금 ${c.wins || 0}승${secretNeed() < 1000 ? ' — ??? 를 해낸 계정이라 줄어든 값' : ''}).` : ready ? `환생 준비 완료! 아래 버튼으로 ${nextTier(s.tier)} 등급이 됩니다 (능력치는 새 등급 기본값으로, 성향·전적·필살기는 그대로, 환생마다 영구 +10%).` : `환생까지 HP ${pct('hp')}% · ATK ${pct('atk')}%`}</p>`;
     }
     $('btnRebirth').addEventListener('click', async () => {
         if (!me || !rebirthReady(me)) return;
@@ -1946,7 +1956,7 @@ const Snd = (() => {
     //   [용어, 쉬운 설명, 예시(선택), 자세한 계산(선택)]
     const GLOSSARY = [
         ['능력치', [
-            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 그 위에 거의 나오지 않는 ??? 가 있어요. 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'. 처음 만들 때는 거의 평범이나 숙련이 나오고(심사 점수 0.8배), 초인 0.1%·전설·신화는 그보다 훨씬 드물게 심사 위력이 아주 높을 때만 나옵니다. 보통은 승리와 환생으로 올라갑니다. 일관성이 50 미만이면 평범까지, 70 미만이면 숙련까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다.'],
+            ['위력 등급', '내 캐릭터가 얼마나 대단한 존재인지를 나타내요. 평범 → 숙련 → 초인 → 전설 → 신화 순으로 높아지고, 그 위에 거의 나오지 않는 ??? 가 있어요. 높을수록 이길 때 능력치가 많이 자라요.', '', '심사관이 설정의 구체성·한계·대가로 매긴 점수(0~100)를 확률표로 굴려 등급을 정합니다. 등급마다 배율(×)이 있어 그만큼 기본 HP·ATK 와 승리 보상이 커집니다. 등급별 수치는 위의 \'등급표\'. 처음 만들 때는 거의 평범이나 숙련이 나오고(심사 점수 0.8배), 초인 0.1%·전설·신화는 그보다 훨씬 드물게 심사 위력이 아주 높을 때만 나옵니다. 보통은 승리와 환생으로 올라갑니다. 일관성이 50 미만이면 평범까지, 70 미만이면 숙련까지만. 맨 위 ??? 는 신화 상한 + 1000승이 있어야 환생으로 갈 수 있습니다 (계정이 ??? 로 등선할 때마다 필요 승수 ×0.8, 최소 300: 1000 → 800 → 640 → 512 → 410 → 328 → 300).'],
             ['HP', '체력이에요. 0이 되면 싸움에서 집니다.', '', '이길 때마다 +10~30 × 보상 배율(아래 \'승리 보상\'). 상한은 등급마다 달라요: 평범 1500 ~ 신화 6000, ??? 는 ???.'],
             ['ATK', '공격이 맞았을 때 얼마나 아프게 때리는지예요.', '', '피해 = ATK × (필살기 배율) × 0.9~1.1 × 적합도(0.85~1.15) × (1 − 상대 방어%). 맞으면 10% 확률로 크리티컬(1.5배), 상대가 방어 중이면 절반. 이길 때마다 +1~4 × 보상 배율. 상한: 평범 200 ~ 신화 800, ??? 는 ???.'],
             ['방어', '맞을 때 받는 피해를 줄여 줘요.', '방어 10% 면 100 들어올 공격이 90 만 들어와요.', '받는 피해를 이 비율만큼 줄임. 이기면 35% 확률로 +1%. 상한: 평범 20% ~ 신화 60%, ??? 는 ???.'],
