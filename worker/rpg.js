@@ -1048,7 +1048,7 @@ async function rebirthChar(id, body, env) {
   const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
   const fresh = buildStats(alloc, c.stats.coherence, 1, name === '???' ? lo : lo + 2);
   const prevCap = capsOf(c);
-  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus), Math.round(prevCap[k] * 0.85));   // 환생 직후 하한 = 직전 등급 상한의 85% (시뮬레이션: 65% 면 직전 등급 상한 캐릭터에게 PvP 4~7% 승, 85% 면 32~48%)
+  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus), Math.round(prevCap[k] * (0.85 + (c.ascMem || 0))));   // ascMem: 선계 '환생의 기억'   // 환생 직후 하한 = 직전 등급 상한의 85% (시뮬레이션: 65% 면 직전 등급 상한 캐릭터에게 PvP 4~7% 승, 85% 면 32~48%)
   fresh.stability = Math.round(Math.min(PLAUS_CAP[name], Math.max(0.55 + n * 0.03, Math.max(fresh.stability, c.stats.stability || 0))) * 1000) / 1000;   // 개연성은 유지하되 환생 횟수만큼 하한 상승
   for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
   const prevTier = c.stats.tier;
@@ -1120,6 +1120,19 @@ async function createChar(body, env, ip) {
   if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); }
   if (up.plaus) { c.ascPlaus = 0.02 * up.plaus; c.stats.stability = Math.round(Math.max(c.stats.stability, plausFloor(c)) * 1000) / 1000; }
   if (up.dream) c.dream = 150 * up.dream;
+  if (up.rw) c.ascRw = 0.06 * up.rw;
+  if (up.mem) c.ascMem = 0.03 * up.mem;
+  if (up.ward) c.stakeWard = 1;
+  if (acct?.seed) {   // 천상의 씨앗: 최소 전설, 5% 로 ??? (쓰면 사라짐)
+    const want = rnd() < 0.05 ? '???' : '전설', t = TIERS.find(x => x[0] === want);
+    if ((TIER_IDX[c.stats.tier] ?? 0) < (TIER_IDX[want] ?? 0)) {
+      const keep = { stability: c.stats.stability, coherence: c.stats.coherence };
+      c.stats = { ...buildStats(c.alloc, keep.coherence, 1, want === '???' ? t[1] : t[1] + 2, true), stability: keep.stability };
+      if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); }
+    }
+    c.luck = { ...c.luck, seed: want };
+    await updateAcct(env, sub, a => { a.seed = false; });
+  }
   if (acct && Object.keys(up).length) c.ascBonus = { ...up };
   // 등선 선물(일회성): 최소 등급 보장 · 시작 HP·ATK 보정 · 꿈 조각 · 아이템. 쓰면 계정에서 비운다
   const gift = acct?.gift;
@@ -1806,7 +1819,20 @@ const ASC_UP = {
   power: { name: '꿈의 깊이', max: 5, cost: [2, 4, 6, 8, 10], desc: '새 캐릭터 심사 위력 +3 (등급 주사위가 조금 위로)' },
   plaus: { name: '단단한 꿈', max: 5, cost: [1, 2, 3, 4, 5], desc: '새 캐릭터 개연성 바닥 +2%p' },
   dream: { name: '꿈 조각 유산', max: 5, cost: [1, 2, 3, 4, 5], desc: '새 캐릭터 시작 꿈 조각 +150' },
+  // 2026-10 확장: 선기 쓸 곳이 109 뿐이라 ??? 등선(1000승)에 선기를 크게 줄 수 없었다 → 실효 있는 강화·소모성·??? 전용·끝없는 수련 추가
+  //   시뮬레이션(신화 등선 반복): AI 적이 내 능력치에 맞춰 나와 '타고난 몸'은 효율 +5% 뿐, 승리 보상 +30% 는 신화까지 143승 → 108승(효율 +34%)
+  rw: { name: '꿈의 가속', max: 5, cost: [4, 6, 8, 10, 12], desc: '새 캐릭터 승리 보상(HP·ATK) +6%' },
+  mem: { name: '환생의 기억', max: 3, cost: [6, 10, 14], desc: '새 캐릭터가 환생한 직후 최소 능력치 +3%p (직전 등급 상한의 85% → 최대 94%)' },
+  ward: { name: '생사결 호신부', max: 1, cost: [15], desc: '새 캐릭터마다 생사결 패배를 한 번 무효로 (대신 HP·ATK −10%)' },
+  roster: { name: '꿈 명부 다시 짓기', repeat: true, cost: [5], desc: '지금 고른 캐릭터의 AI 전투 적 이름·설명을 새로 지음 (강함은 그대로)' },
+  heaven: { name: '천상 칸', max: 1, cost: [40], need: '???', desc: '캐릭터 칸 +1 (최대 6칸) — ??? 등선한 계정만' },
+  seed: { name: '천상의 씨앗', repeat: true, cost: [80], need: '???', desc: '다음 캐릭터가 최소 전설로 태어나고 5% 확률로 ??? — ??? 등선한 계정만, 한 번에 하나' },
+  train: { name: '천상 수련', endless: true, cost: [10], desc: '능력치 없이 선인 칭호가 오름 (단계마다 비용 +10)' },
 };
+const TRAIN_TITLES = [[1, '입문 선인'], [3, '수련 선인'], [6, '진선'], [10, '천선'], [15, '금선'], [25, '대라금선']];
+const trainTitle = lv => [...TRAIN_TITLES].reverse().find(([n]) => lv >= n)?.[1] || '';
+const upPrice = (a, k) => { const u = ASC_UP[k], lv = a.up?.[k] || 0; if (u.endless) return 10 * (lv + 1); if (u.repeat) return k === 'seed' && a.seed ? null : u.cost[0]; return lv >= u.max ? null : u.cost[lv]; };
+const upLock = (a, k) => ASC_UP[k].need === '???' && !(a.secret > 0) ? '??? 등급으로 등선하면 열림' : k === 'seed' && a.seed ? '이미 하나 있음 (다음 캐릭터에 쓰임)' : null;
 // 등급별 등선 보상: 선기(기본) + 다음 캐릭터 일회성 선물. 높은 등급일수록 훨씬 크다. 선기 = 등급 기본값 + 환생 횟수 + 100승마다 1
 //   rar: 다음 캐릭터 생성 때 상위 등급 희귀 배율(CREATE_RARITY)을 곱함 — 시뮬레이션: ??? 등선 뒤에도 심사 80 의 전설 0.08% → 0.28%, 심사 95 의 전설 3.1% → 7.3% (희귀함은 유지)
 const ASC_TIER = {
@@ -1815,9 +1841,10 @@ const ASC_TIER = {
   '초인': { qi: 6, gift: { dream: 300, rar: { '초인': 2, '전설': 1.5 } } },
   '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련', rar: { '초인': 2.5, '전설': 2, '신화': 1.5 } } },
   '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10, rar: { '초인': 3, '전설': 3, '신화': 2 } } },
-  '???': { qi: 25, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15, rar: { '초인': 4, '전설': 4, '신화': 3 } } },
+  '???': { qi: 150, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15, rar: { '초인': 4, '전설': 4, '신화': 3 } } },
 };
-const qiOf = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + (c.rebirths || 0) + Math.floor((c.wins || 0) / 100);
+// 환생 횟수 대신 '평범에서 몇 단계 올라왔나'(높게 태어나 건너뛴 등급도 인정 — 꿈의 깊이·최소 등급 보장으로 높게 시작해도 선기 손해 없음)
+const qiOf = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + Math.max(c.rebirths || 0, TIER_IDX[c.stats?.tier] ?? 0) + Math.floor((c.wins || 0) / 100);
 // 선물은 쌓인다: 꿈 조각·아이템은 더하고, 최소 등급·능력 보정은 큰 쪽
 function mergeGift(g = {}, add = {}) {
   const items = { ...(g.items || {}) }; for (const [k, n] of Object.entries(add.items || {})) items[k] = Math.min(own(ITEMS, k) ? (ITEMS[k].max || STACK) : 1, (items[k] || 0) + n);
@@ -1846,11 +1873,12 @@ async function updateAcct(env, sub, fn) {   // 낙관적 잠금 (updateChar 와 
   }
   throw new Error('busy');
 }
-const slotLimit = a => BASE_SLOTS + (a.up?.slot || 0);
+const slotLimit = a => BASE_SLOTS + (a.up?.slot || 0) + (a.up?.heaven || 0);
 const acctCharCount = async (env, sub) => (await env.DB.prepare('SELECT COUNT(*) AS n FROM rpg_chars WHERE user_sub = ?').bind(sub).first())?.n ?? 0;
 async function accountView(env, sub) {
   const { a } = await loadAcct(env, sub);
-  return { account: a, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades: ASC_UP, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
+  const upgrades = {}; for (const k in ASC_UP) upgrades[k] = { ...ASC_UP[k], price: upPrice(a, k), lock: upLock(a, k) };
+  return { account: { ...a, title: trainTitle(a.up?.train || 0) }, slots: { used: await acctCharCount(env, sub), limit: slotLimit(a) }, upgrades, ascendMinWins: ASCEND_MIN_WINS, tierRewards: ASC_TIER };
 }
 async function getAccount(env, session) {
   const sub = await sessionUser(env, session); if (!sub) return json({ error: 'forbidden' }, 403);
@@ -1859,14 +1887,22 @@ async function getAccount(env, session) {
 async function buyUpgrade(body, env) {
   const sub = await sessionUser(env, body.session); if (!sub) return json({ error: 'forbidden' }, 403);
   const key = String(body.key || ''); if (!own(ASC_UP, key)) return json({ error: 'bad_request' }, 400);
+  if (key === 'roster') {   // 꿈 명부 다시 짓기: 내 계정 캐릭터만
+    const row = typeof body.charId === 'string' && await env.DB.prepare('SELECT user_sub FROM rpg_chars WHERE id = ?').bind(body.charId).first();
+    if (row?.user_sub !== sub) return json({ error: 'forbidden' }, 403);
+  }
   let err = null;
   await updateAcct(env, sub, a => {
-    err = null; const lv = a.up[key] || 0, u = ASC_UP[key];
-    if (lv >= u.max) { err = 'max_item'; return; }
-    if (a.qi < u.cost[lv]) { err = 'no_qi'; return; }
-    a.qi -= u.cost[lv]; a.up = { ...a.up, [key]: lv + 1 };
+    err = null; const lv = a.up[key] || 0, price = upPrice(a, key);
+    if (upLock(a, key)) { err = 'locked'; return; }
+    if (price == null) { err = 'max_item'; return; }
+    if (a.qi < price) { err = 'no_qi'; return; }
+    a.qi -= price;
+    if (key === 'seed') a.seed = true;
+    else if (key !== 'roster') a.up = { ...a.up, [key]: lv + 1 };
   });
   if (err) return json({ error: err }, 409);
+  if (key === 'roster') { await ensureFoesTable(env); await env.DB.prepare('DELETE FROM rpg_foes WHERE char_id = ?').bind(body.charId).run(); }
   return json(await accountView(env, sub));
 }
 async function ascendChar(id, body, env) {
@@ -1887,7 +1923,7 @@ async function ascendChar(id, body, env) {
   ]);
   lbCache.at = 0;
   const gift = ASC_TIER[c.stats?.tier]?.gift;
-  await updateAcct(env, sub, a => { a.qi += qi; a.total = (a.total || 0) + qi; if (gift) a.gift = mergeGift(a.gift, gift); a.hall = [{ name: c.name, fiction: c.fiction, tier: c.stats?.tier, wins: c.wins || 0, losses: c.losses || 0, rebirths: c.rebirths || 0, qi, at: Date.now() }, ...(a.hall || [])].slice(0, 30); });
+  await updateAcct(env, sub, a => { a.qi += qi; a.total = (a.total || 0) + qi; if (c.stats?.tier === '???') a.secret = (a.secret || 0) + 1; if (gift) a.gift = mergeGift(a.gift, gift); a.hall = [{ name: c.name, fiction: c.fiction, tier: c.stats?.tier, wins: c.wins || 0, losses: c.losses || 0, rebirths: c.rebirths || 0, qi, at: Date.now() }, ...(a.hall || [])].slice(0, 30); });
   return json({ ok: true, qi, gift: gift || null, ...(await accountView(env, sub)) });
 }
 
@@ -1929,6 +1965,15 @@ async function stakeDeath(env, c) {
     out.qi = qi; out.fell = true;
   }
   return out;
+}
+// 생사결 패배 처리: 선계 '생사결 호신부'가 남아 있으면 한 번 막아 준다(HP·ATK −10%), 없으면 사라짐
+async function stakeLose(env, c) {
+  if ((c.stakeWard || 0) > 0) {
+    let used = false;
+    const out = await updateChar(env, c.id, x => { used = false; if ((x.stakeWard || 0) > 0) { x.stakeWard--; x.stats.hp = Math.round(x.stats.hp * 0.9); x.stats.atk = Math.round(x.stats.atk * 0.9); used = true; } }, c);
+    if (used) return { warded: true, char: out };
+  }
+  return stakeDeath(env, c);
 }
 // 생사결 승리 보상: 보통 승리 보상(능력치·꿈 조각)에 단계 배율
 function stakeReward(rw, mult) {
@@ -1997,7 +2042,7 @@ async function getBattle(id, token, env) {
 // 승리 보상: HP·ATK 는 매번, 방어·속도·명중·회피는 각각 35% 확률로 +1(대성공이면 +2). 상한: 방어 60% · 속도 120 · 명중 99 · 회피 50
 const STAT_CAP = { def: 60, spd: 120, acc: 99, eva: 50 }, STAT_KO = { def: '방어', spd: '속도', acc: '명중', eva: '회피' };
 function rollReward(c, foe, mode) {
-  const mult = (c.stats.mult || 1), ft = (TIER_IDX[foe.stats?.tier] ?? 1), scale = mult * (1 + ft * 0.25) * (mode === 'auto' ? 1.3 : 1);
+  const mult = (c.stats.mult || 1), ft = (TIER_IDX[foe.stats?.tier] ?? 1), scale = mult * (1 + ft * 0.25) * (mode === 'auto' ? 1.3 : 1) * (1 + (c.ascRw || 0));   // ascRw: 선계 '꿈의 가속'
   const r = { hp: Math.round((10 + rnd() * 20) * scale), atk: Math.round((1 + rnd() * 3) * scale), stats: {}, tags: [] };
   const big = rnd() < 0.05; if (big) { r.hp *= 2; r.atk *= 2; r.tags.push('대성공'); }
   for (const k of ['def', 'spd', 'acc', 'eva']) if (rnd() < 0.35 + (big ? 0.3 : 0)) { r.stats[k] = big ? 2 : 1; r.tags.push(`${STAT_KO[k]} +${r.stats[k]}${k === 'def' ? '%' : ''}`); }
@@ -2034,7 +2079,8 @@ async function leaveBattle(id, body, env) {
   if (st.stake && st.status === 'playing' && st.log.length) {   // 생사결은 첫 턴 뒤 도망칠 수 없다 — 나가면 패배(캐릭터 사라짐)
     const c = await updateChar(env, c0.id, x => { x.losses++; if (st.mode === 'auto') x.autoLosses = (x.autoLosses || 0) + 1; }, c0);
     if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, { ...st, winner: 2 }, c);
-    const d = await stakeDeath(env, c);
+    const d = await stakeLose(env, c);
+    if (d?.warded) return json({ ok: true, escaped: false, warded: true, char: publicChar(d.char), message: `생사결에서 등을 보였다… 그러나 생사결 호신부가 대신 부서졌습니다. 패배 기록 · HP·ATK 최대치 −10%` });
     return json({ ok: true, escaped: false, stakeLost: true, deleted: !!d?.deleted, qi: d?.qi || 0, message: `생사결에서 등을 보였다. ${c.name}은(는) 꿈에서 사라졌습니다.` });
   }
   if (st.status === 'playing' && st.log.length) {                         // 한 턴이라도 싸운 뒤의 도망만 판정 (시작 직후엔 자유)
@@ -2101,8 +2147,9 @@ async function battleTurn(id, body, env, ip) {
     if (st.mode === 'auto' && st.foeId) await recordAutoResult(env, st, fresh);
     // 기획: AI 전투에서 지면 캐릭터가 사라진다 → 손님(계정 없는) 캐릭터는 서버에서도 삭제. 계정 캐릭터는 목록에 남김. 자동 비무 상대와의 전투·악몽 초대장·깨지 않는 꿈은 예외
     if (st.winner === 2 && st.stake) {   // 생사결 패배: 계정 캐릭터도 사라진다
-      const d = await stakeDeath(env, fresh);
-      if (d) { st.deleted = true; st.fellQi = d.qi || 0; st.fell = !!d.fell; }
+      const d = await stakeLose(env, fresh);
+      if (d?.warded) { st.warded = true; st.me.char = publicChar(d.char); }
+      else if (d) { st.deleted = true; st.fellQi = d.qi || 0; st.fell = !!d.fell; }
     } else if (st.winner === 2 && st.mode === 'pve' && !st.nightmare && !st.saved) {
       const del = await env.DB.prepare('DELETE FROM rpg_chars WHERE id = ? AND user_sub IS NULL').bind(c.id).run();
       if (del.meta.changes) { st.deleted = true; lbCache.at = 0; }
@@ -2273,7 +2320,7 @@ async function settleRoom(env, ip, code, s, v, slot) {
           else earnDream(c, (dayCount(c, 'online', 3) ? 15 : 0) + dailyFirst(c));
         } else if (draw) { c.draws = (c.draws || 0) + 1; c.pvpDraws = (c.pvpDraws || 0) + 1; } else { c.losses++; c.pvpLosses = (c.pvpLosses || 0) + 1; }
       }, s.p[k].char);
-      if (m && !won && !draw) { const d = await stakeDeath(env, s.p[k].char); if (d) { s.p[k].deleted = true; s.p[k].fellQi = d.qi || 0; } }
+      if (m && !won && !draw) { const d = await stakeLose(env, s.p[k].char); if (d?.warded) { s.p[k].warded = true; s.p[k].char = d.char; } else if (d) { s.p[k].deleted = true; s.p[k].fellQi = d.qi || 0; } }
     }
   } else s.round++;
   s.moves = {}; delete s.busy;

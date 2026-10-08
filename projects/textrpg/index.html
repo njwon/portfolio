@@ -222,6 +222,7 @@
         .bag-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 0; }
         .bag-row label { display: inline-flex; gap: 6px; align-items: center; min-height: 36px; margin: 0; cursor: pointer; }
         .shop-item { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-top: 0.5px dashed #444; }
+        .shop-item.locked { opacity: .6; }
         .shop-item:first-child { border-top: none; }
         .shop-item .meta { font-size: 0.8125rem; }
         .stars { color: #fae069; letter-spacing: 1px; }
@@ -1152,7 +1153,7 @@ const Snd = (() => {
     const isAcctChar = () => gUser && me && acctChars.some(c => c.id === me.id);
     function stakeWarn(n, mode) {
         const i = STAKE_INFO[n];
-        return `생사결 ${n}단 — ${mode === 'auto' ? '상대가 약하면 생사결 수준까지 강해집니다' : '상대 ' + i.foe}.\n이기면 능력치·꿈 조각 보상 ×${i.mult}.\n지거나 첫 턴 뒤에 도망치면 「${me.name}」이(가) 사라집니다${isAcctChar() ? ' (계정 캐릭터도 삭제 — 30승 이상이면 등선 선기의 절반은 남음)' : ''}.\n깨지 않는 꿈은 지켜 주지 못합니다. 걸까요?`;
+        return `생사결 ${n}단 — ${mode === 'auto' ? '상대가 약하면 생사결 수준까지 강해집니다' : '상대 ' + i.foe}.\n이기면 능력치·꿈 조각 보상 ×${i.mult}.\n지거나 첫 턴 뒤에 도망치면 「${me.name}」이(가) 사라집니다${isAcctChar() ? ' (계정 캐릭터도 삭제 — 30승 이상이면 등선 선기의 절반은 남음)' : ''}.\n${me.stakeWard > 0 ? '생사결 호신부가 있어 한 번은 막아 줍니다 (HP·ATK −10%).' : '깨지 않는 꿈은 지켜 주지 못합니다.'} 걸까요?`;
     }
     function renderStake() {
         if (!me) return;
@@ -1249,6 +1250,7 @@ const Snd = (() => {
             html = won ? (cr ? `악몽을 물리쳤다! 제${cr.chapter}장 클리어<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${cr.hp} · ATK +${cr.atk}${tags(cr)}`} · 꿈 조각 +${cr.shards}${cr.full ? '' : ' (오늘 3장을 넘게 깨서 보상 감소)'} — 다음 장이 열렸습니다</span>` : `이겼다!<br><span class="hint">${esc(sr.text || '')}</span>`)
                 : b.deleted ? '당신은 쓰러졌다… 생사결 꿈이었기에 캐릭터가 사라집니다.' : `당신은 쓰러졌다… 꿈에서 깹니다.<br><span class="hint">${esc(sr.text || '')} 캐릭터는 그대로이고, 이번 회차에 모은 꿈 조각은 절반(+${sr.last?.shards ?? 0})만 남았습니다.</span>`;
         } else if (won) html = `적이 쓰러졌다! 승리!${rw ? `<br><span class="hint">보상: ${isSecret(me) ? 'HP 최대치 +??? · ATK +???' : `HP 최대치 +${rw.hp} · ATK +${rw.atk}${tags(rw)}`}${b.dream ? ` · 꿈 조각 +${b.dream}` : ''} — 홈의 성장 탭에서 상한까지 얼마나 왔는지 볼 수 있습니다</span>` : ''}`;
+        else if (b.stake && b.warded) html = `생사결에서 쓰러졌다… 그러나 생사결 호신부가 대신 부서졌습니다.<br><span class="hint">캐릭터는 남고, HP·ATK 최대치가 10% 줄었습니다.</span>`;
         else if (b.stake) html = `생사결에서 쓰러졌다…<br><span class="hint">${esc(b.me.char?.name || '')}은(는) 꿈에서 영영 사라집니다.${b.fell ? ` 명예의 전당에 전사로 올랐고${b.fellQi ? ` 선기 +${b.fellQi} 가 계정에 남았습니다` : ' (30승 미만이라 선기는 없음)'}.` : ''}</span>`;
         else if (b.mode === 'spar') html = `연습 대결 패배.<br><span class="hint">연습이라 기록·보상 없이 캐릭터는 그대로입니다.</span>`;
         else if (b.mode === 'auto') html = `당신은 쓰러졌다…<br><span class="hint">자동 비무 참가자와의 전투라 패배 기록만 남고 캐릭터는 그대로입니다.</span>`;
@@ -1316,6 +1318,7 @@ const Snd = (() => {
             const d = await api(`/api/rpg/battles/${b.id}/leave`, { token: myToken });
             if (d.char) me = d.char;
             if (story) return openStory();
+            if (d.warded) { $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = ''; $('bResult').innerHTML = `${esc(d.message || '')}<br><br><button id="btnRunBack">돌아가기</button>`; $('btnRunBack').addEventListener('click', goHome); return; }
             if (d.stakeLost) { $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = ''; $('bResult').innerHTML = `${esc(d.message || '')}${d.qi ? `<br><span class="hint">명예의 전당에 전사로 올랐고 선기 +${d.qi} 가 계정에 남았습니다.</span>` : ''}<br><br><button id="btnRunBack">돌아가기</button>`; $('btnRunBack').addEventListener('click', () => { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); }); return; }
             if (fought) { $('bActionGroup').style.display = 'none'; $('bBtns').style.display = 'none'; $('bResult').style.display = ''; $('bResult').innerHTML = `${esc(d.message || '')}<br><br><button id="btnRunBack">돌아가기</button>`; $('btnRunBack').addEventListener('click', goHome); refreshLeaderboard(true); }
             else goHome();
@@ -1324,7 +1327,7 @@ const Snd = (() => {
     });
     // 기획: 캐릭터가 사라지는 건 AI 전투 패배뿐 (자동 비무 참가자와의 전투에서 지면 기록만)
     $('btnBattleBack').addEventListener('click', () => {
-        const b = battle, gone = b && b.winner === 2 && (b.deleted || (b.mode === 'pve' && !b.saved && !b.nightmare));   // 깨지 않는 꿈·악몽 초대장·꿈 이야기는 캐릭터 유지
+        const b = battle, gone = b && b.winner === 2 && (b.deleted || (b.mode === 'pve' && !b.saved && !b.nightmare && !b.warded));   // 깨지 않는 꿈·악몽 초대장·꿈 이야기는 캐릭터 유지
         battle = null; saveSess(null);
         if (gone) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); } else if (b?.mode === 'story') openStory(); else goHome();
     });
@@ -1383,7 +1386,7 @@ const Snd = (() => {
         stopPoll(); room = null; roomSeq++; saveSess(null); $('btnOLeave').disabled = true;
         try { await api(`/api/rpg/rooms/${r.code}/leave`, { token: r.token }); } catch {}
         finally { $('btnOLeave').disabled = false; }
-        if (r.state.stake && (playing || r.state.p[r.slot]?.deleted)) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); return true; }
+        if (r.state.stake && ((playing && !(me?.stakeWard > 0)) || r.state.p[r.slot]?.deleted)) { lsDel(curSlot()); if (gUser) lsDel(ACCT); location.reload(); return true; }
         await loadMe();   // 전적·보상이 반영된 캐릭터 다시 읽기
         if (me) goHome(); else show('s-create');
         return true;
@@ -1459,6 +1462,7 @@ const Snd = (() => {
             const winner = s.p[s.winner];
             const unr = s.unranked === 'no_round' ? '<br><span class="hint">한 라운드도 끝나지 않아 전적·승점에 기록하지 않았습니다.</span>' : s.unranked === 'same_player' ? '<br><span class="hint">같은 사람(계정·기기·IP)끼리의 대전이라 전적·승점에 기록하지 않았습니다.</span>' : '';
             const sk = !s.stake ? '' : s.unranked ? '<br><span class="hint">기록하지 않는 대전이라 생사결도 무효입니다 (캐릭터는 그대로).</span>'
+                : mine.warded ? '<br><span class="hint">생사결 패배 — 생사결 호신부가 대신 부서졌습니다 (HP·ATK −10%, 캐릭터는 남음).</span>'
                 : mine.deleted ? `<br><b>생사결 패배 — ${esc(mine.char.name)}은(는) 꿈에서 사라졌습니다.</b>${mine.fellQi ? ` <span class="hint">선기 +${mine.fellQi} 가 계정에 남았습니다.</span>` : ''}`
                 : mine.reward ? `<br><span class="hint">생사결 보상: HP 최대치 +${mine.reward.hp} · ATK +${mine.reward.atk}${mine.reward.tags?.length ? ' · ' + mine.reward.tags.map(esc).join(' · ') : ''}${mine.dream ? ` · 꿈 조각 +${mine.dream}` : ''}</span>` : '';
             $('oResult').innerHTML = unr + sk + (s.winner === 0 || !winner ? `모두 쓰러졌다… 무승부 <span class="hint">(${mine.left ? '기권했으므로 패배로 기록' : '무승부로 기록 — 먼저 쓰러졌거나 기권한 사람은 패배'})</span>` : s.winner === my ? '승리! 마지막까지 서 있었다.' : `${esc(winner.char.name)} 승리 — 당신은 ${mine.left ? '기권했다…' : '쓰러졌다…'}`) + '<br><br><button id="btnOBack">돌아가기</button>';
@@ -1765,8 +1769,8 @@ const Snd = (() => {
     // ── 선계: 등선 · 계정 강화 · 캐릭터 칸 ──
     let acctState = null; const foesPrefetched = new Set();
     // 등급별 등선 보상 (서버 ASC_TIER 와 같음)
-    const ASC_TIER = { '평범': { qi: 1 }, '숙련': { qi: 3, gift: { rar: { '초인': 1.5 } } }, '초인': { qi: 6, gift: { dream: 300, rar: { '초인': 2, '전설': 1.5 } } }, '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련', rar: { '초인': 2.5, '전설': 2, '신화': 1.5 } } }, '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10, rar: { '초인': 3, '전설': 3, '신화': 2 } } }, '???': { qi: 25, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15, rar: { '초인': 4, '전설': 4, '신화': 3 } } } };
-    const qiPreview = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + (c.rebirths || 0) + Math.floor((c.wins || 0) / 100);
+    const ASC_TIER = { '평범': { qi: 1 }, '숙련': { qi: 3, gift: { rar: { '초인': 1.5 } } }, '초인': { qi: 6, gift: { dream: 300, rar: { '초인': 2, '전설': 1.5 } } }, '전설': { qi: 10, gift: { dream: 500, items: { insurance: 1 }, minTier: '숙련', rar: { '초인': 2.5, '전설': 2, '신화': 1.5 } } }, '신화': { qi: 16, gift: { dream: 800, items: { insurance: 1 }, minTier: '숙련', statPct: 10, rar: { '초인': 3, '전설': 3, '신화': 2 } } }, '???': { qi: 150, gift: { dream: 1200, items: { insurance: 1 }, minTier: '초인', statPct: 15, rar: { '초인': 4, '전설': 4, '신화': 3 } } } };
+    const qiPreview = c => (ASC_TIER[c.stats?.tier]?.qi ?? 1) + Math.max(c.rebirths || 0, TIER_IDX[c.stats?.tier] ?? 0) + Math.floor((c.wins || 0) / 100);
     const giftText = g => !g ? '' : [Object.keys(g.rar || {}).length ? '상위 등급 확률 ' + Object.entries(g.rar).map(([t, x]) => `${t} ×${x}`).join('·') : '', g.minTier ? `최소 ${g.minTier} 보장` : '', g.statPct ? `시작 HP·ATK +${g.statPct}%` : '', g.dream ? `꿈 조각 ${g.dream}` : '', ...Object.entries(g.items || {}).filter(([, n]) => n > 0).map(([k, n]) => `${ITEM_INFO[k]?.[0] || k} ${n}개`)].filter(Boolean).join(' · ');
     async function refreshAccount() {
         $('btnAcct').hidden = $('btnAcct2').hidden = !gUser;
@@ -1777,18 +1781,21 @@ const Snd = (() => {
     function renderAcct() {
         const v = acctState; if (!v) return;
         const a = v.account, up = a.up || {};
-        $('qiHint').textContent = `선기 ${a.qi} · 캐릭터 칸 ${v.slots.used}/${v.slots.limit}`;
-        const canBuy = Object.entries(v.upgrades).some(([k, u]) => (up[k] || 0) < u.max && a.qi >= u.cost[up[k] || 0]);
+        $('qiHint').textContent = `선기 ${a.qi} · 캐릭터 칸 ${v.slots.used}/${v.slots.limit}${a.title ? ' · ' + a.title : ''}${a.secret ? ` · ??? 등선 ${a.secret}회` : ''}`;
+        const canBuy = Object.entries(v.upgrades).some(([k, u]) => u.price != null && !u.lock && k !== 'roster' && k !== 'train' && a.qi >= u.price);
         $('acctBadge').hidden = !a.qi; $('acctBadge').textContent = a.qi; $('acctBadge').title = canBuy ? '살 수 있는 강화가 있어요' : '';
         $('btnAcct').setAttribute('aria-label', `선계 — 계정 강화, 선기 ${a.qi}${canBuy ? ', 살 수 있는 강화 있음' : ''}`);
         $('acctBadge2').textContent = `(선기 ${a.qi}${canBuy ? ' · 살 수 있는 강화 있음' : ''})`;
         const gt = giftText(a.gift);
         $('giftLine').innerHTML = gt ? `<b>다음 캐릭터 선물</b>: ${esc(gt)} <span class="hint">(새 캐릭터를 만들 때 한 번에 쓰임)</span>` : '';
         // 지금 가격 낮은 순 (최대 단계는 맨 아래, 같으면 원래 순서)
-        const price = ([k, u]) => (up[k] || 0) >= u.max ? Infinity : u.cost[up[k] || 0];
+        // 잠긴(??? 전용) 것은 최대 단계 바로 위, 최대 단계는 맨 아래
+        const price = ([, u]) => u.price == null ? Infinity : u.lock ? 1e6 + u.price : u.price;
         const ordered = Object.entries(v.upgrades).map((e, i) => [e, i]).sort((x, y) => price(x[0]) - price(y[0]) || x[1] - y[1]).map(([e]) => e);
-        setHtml($('upList'), ordered.map(([k, u]) => { const lv = up[k] || 0, full = lv >= u.max, cost = full ? 0 : u.cost[lv];
-            return `<div class="shop-item"><div><b>${esc(u.name)}</b> <span class="hint">${lv}/${u.max}단계</span><div class="meta">${esc(u.desc)}</div></div><button type="button" class="mini" data-up="${k}"${full || a.qi < cost ? ' disabled' : ''}>${full ? '최대' : `선기 ${cost}`}</button></div>`; }).join(''));
+        setHtml($('upList'), ordered.map(([k, u]) => { const lv = up[k] || 0, full = u.price == null, cost = u.price;
+            const lvText = u.endless ? `${lv}단계` : u.repeat ? (k === 'seed' && a.seed ? '보유 중' : '쓸 때마다') : `${lv}/${u.max}단계`;
+            const noChar = k === 'roster' && !isAcctChar();
+            return `<div class="shop-item${u.lock ? ' locked' : ''}"><div><b>${u.need ? '✦ ' : ''}${esc(u.name)}</b> <span class="hint">${lvText}</span><div class="meta">${esc(u.desc)}${u.lock ? ` <span class="hint">· ${esc(u.lock)}</span>` : ''}${noChar ? ' <span class="hint">· 계정 캐릭터를 고른 상태에서</span>' : ''}</div></div><button type="button" class="mini" data-up="${k}"${full || u.lock || noChar || a.qi < cost ? ' disabled' : ''}>${full ? (k === 'seed' ? '보유' : '최대') : u.lock ? '잠김' : `선기 ${cost}`}</button></div>`; }).join(''));
         setHtml($('hallList'), (a.hall || []).length ? a.hall.map(h => `<div>• <b>${esc(h.name)}</b> (${esc(h.fiction || '')}) — ${esc(h.tier || '')} · ${n0(h.wins)}승 ${n0(h.losses)}패${h.rebirths ? ` · 환생 ${n0(h.rebirths)}회` : ''} ${h.fell ? ' · <b>생사결 전사</b>' : ''} → 선기 +${n0(h.qi)} <span class="hint">${new Date(h.at).toLocaleDateString('ko-KR')}</span></div>`).join('') : '<span class="hint">아직 등선한 캐릭터가 없습니다.</span>');
     }
     function renderAscend() {
@@ -1797,7 +1804,7 @@ const Snd = (() => {
         let h;
         if (!isAcct) h = '<p class="hint" style="margin:0">Google 로그인한 <b>계정 캐릭터</b>만 등선할 수 있어요. 선기는 계정에 쌓이기 때문입니다.</p>';
         else if ((me.wins || 0) < need) h = `<p class="hint" style="margin:0">${need}승부터 등선할 수 있어요 (지금 ${me.wins || 0}승). 지금 등선하면 받을 선기: ${qiPreview(me)}</p>`;
-        else h = `<p class="meta" style="margin:0 0 6px">지금 등선하면 선기 <b>+${qiPreview(me)}</b> (${esc(me.stats.tier)} 기본 ${ASC_TIER[me.stats.tier]?.qi ?? 1} + 환생 ${me.rebirths || 0} + 100승마다 1)${ASC_TIER[me.stats.tier]?.gift ? `<br>다음 캐릭터 선물: <b>${esc(giftText(ASC_TIER[me.stats.tier].gift))}</b>` : ''}</p>
+        else h = `<p class="meta" style="margin:0 0 6px">지금 등선하면 선기 <b>+${qiPreview(me)}</b> (${esc(me.stats.tier)} 기본 ${ASC_TIER[me.stats.tier]?.qi ?? 1} + 오른 등급 ${Math.max(me.rebirths || 0, TIER_IDX[me.stats.tier] ?? 0)} + 100승마다 1)${ASC_TIER[me.stats.tier]?.gift ? `<br>다음 캐릭터 선물: <b>${esc(giftText(ASC_TIER[me.stats.tier].gift))}</b>` : ''}</p>
             <details class="more"><summary>등급별 등선 보상</summary><div class="meta">${Object.entries(ASC_TIER).map(([t, r]) => `<div>${t}: 선기 ${r.qi}${r.gift ? ' · ' + esc(giftText(r.gift)) : ''}</div>`).join('')}</div></details>
             <label for="ascendConfirm" class="hint" style="display:block;margin:4px 0">되돌릴 수 없습니다. <b>등선</b>이라고 입력하세요</label><input type="text" id="ascendConfirm" autocomplete="off">
             <button type="button" id="btnAscend" class="ghost danger full" style="margin-top:8px" disabled>${esc(me.name)} 등선하기</button>`;
@@ -1820,8 +1827,14 @@ const Snd = (() => {
     for (const id of ['btnAcct', 'btnAcct2']) $(id).addEventListener('click', async () => { await refreshAccount(); $('dlgAcct').showModal(); });
     $('upList').addEventListener('click', async e => {
         const b = e.target.closest('[data-up]'); if (!b || b.disabled) return;
+        const key = b.dataset.up;
+        if (key === 'roster' && !confirm(`「${me.name}」의 AI 전투 적 12명의 이름·설명을 새로 지을까요? (선기 ${acctState.upgrades.roster.price}, 강함은 그대로)`)) return;
         b.disabled = true;
-        try { acctState = await api('/api/rpg/account/upgrade', { session: gSession, key: b.dataset.up }); renderAcct(); renderAccount(); $('acctStatus').textContent = '강화했습니다. 다음에 만드는 캐릭터부터 적용돼요.'; }
+        try {
+            acctState = await api('/api/rpg/account/upgrade', { session: gSession, key, charId: key === 'roster' ? me.id : undefined }); renderAcct(); renderAccount();
+            $('acctStatus').textContent = key === 'roster' ? '꿈 명부를 새로 짓는 중… (다음 AI 전투부터)' : key === 'train' ? `수련했습니다${acctState.account.title ? ' — ' + acctState.account.title : ''}.` : key === 'heaven' ? '캐릭터 칸이 하나 늘었습니다.' : key === 'seed' ? '천상의 씨앗을 얻었습니다. 다음에 만드는 캐릭터에 쓰여요.' : '강화했습니다. 다음에 만드는 캐릭터부터 적용돼요.';
+            if (key === 'roster') { foesPrefetched.delete(me.id); prefetchFoes(); }
+        }
         catch (err) { $('acctStatus').textContent = errMsg(err); b.disabled = false; }
     });
     // 꿈의 명부(캐릭터별 AI 적): 홈에 오면 아직 없을 때 미리 짓는다 (AI 1회)
@@ -1963,7 +1976,7 @@ const Snd = (() => {
             ['꿈 조각 · 꿈 시장', '이기거나 꿈 이야기를 깨면 모이는 재화예요. 상점 탭의 꿈 시장에서 그 전투에서만 효과가 있는 소모품과 보험, 그리고 영구히 남는 꾸미기(꿈의 유물·별 표식)와 설정 보강 열쇠(설정을 영구히 바꿈)를 살 수 있어요. 능력치를 영구히 올리는 물건은 없어요.', '', 'AI 전투 승리 10~22 (악몽이면 2.5배) · 하루 첫 승 +20 · 자동 비무 상대 12 · 온라인 대전 15 (하루 3승까지) · 부재 중 자동 전투 3 (하루 5승까지) · 환생 +50 · 꿈 이야기 클리어 60 (하루 3장 뒤엔 15). 최대 9999. 가방은 한 전투에 3개까지, 온라인 대전에는 못 가져감.'],
             ['꿈 이야기', '내 설정으로 AI 가 지은 7장면짜리 꿈이에요. 선택지를 고르거나 직접 행동을 써서 나아가고, 마지막엔 내 약점이 형상화된 악몽과 싸워요. 져도 캐릭터는 남아요.', '', '장면 순서·판정·보상은 코드가 정하고 AI 는 글만 씀 (장 하나에 생성 1회). 생성에 실패하면 손으로 쓴 「막차 정류장」. 체력은 장면을 넘어 이어짐. 지거나 포기하면 그 회차의 꿈 조각은 절반만. 클리어하면 다음 장이 열리고 보스가 조금씩 강해짐. 승점에는 들어가지 않음. 생사결 꿈을 켜면 조각 1.5배, 대신 지면 손님 캐릭터가 사라짐.'],
             ['흔적 (부상·피로·기세·공포)', '전투의 영향이 캐릭터에 남아요. 크게 다치면 부상이 다음 싸움에도 이어지고, 같은 상대를 다시 만나면 지난 싸움에 따라 얕보거나(방심) 긴장하거나 겁에 질리거나(공포) 복수심에 불타요(투지). 게임 마스터도 그걸 기억해 말해요. 캐릭터 탭에서 볼 수 있어요.', '예: 왼팔을 크게 다치면 며칠 동안 주먹이 무뎌지고, 나으면 흉터가 남아요.', '부상: 지면 45%, 이겨도 HP 30% 미만이면 25%·60% 미만이면 8% (받은 크리티컬마다 +6%p). 부위별 효과 — 팔 ATK −8%/−15%, 다리 속도 −10%/−20%(중상은 도망 −10%p), 머리 명중 −5/−10, 몸통 방어 −4%p/−8%p(중상은 시작 HP −10%). 경상은 3전 또는 6시간, 중상은 6전 또는 24시간 뒤 낫고 중상은 흉터를 남김(효과 없음). 같은 부위를 또 다치면 중상으로 악화. 최대 3개. 피로: 1시간에 15판 넘게 싸우면 속도 −10%·명중 −5. 기세: 3연승부터 게이지 +1. 마음가짐(상대별 최근 7일 기록으로): 공포 — 연달아 2패 또는 상대 HP 를 70% 넘게 남기고 짐 → 명중 −5, 이기면 극복 / 투지 — 지난번에 짐 → ATK +5% / 긴장 — 지난번이 아슬아슬(이긴 쪽 HP 30% 미만)하거나 승패가 섞임 → 방어 +3%p·속도 −5% / 방심 — 진 적 없이 2번 이상 HP 60% 넘게 남기고 이김 → 명중 +3·방어 −4%p. 의기소침: 3연패부터 명중 −3. 숙적: 같은 상대와 5번 이상. 최근 3일 동안 다시 만나면 "요즘 자주 만난다"고 서술. AI 전투·자동 비무 상대·꿈 이야기에만 적용(온라인 대전 제외). 상점의 꿈 연고·깊은 잠·용기의 부적으로 바로 없앨 수 있음.'],
-            ['등선 · 선기 · 선계', '계정 캐릭터를 꿈에서 떠나보내면(삭제) 계정에 선기가 쌓여요. 선기로 선계 강화를 사면 다음에 만드는 캐릭터가 더 강하게 시작하거나 캐릭터 칸이 늘어나요. 등선한 캐릭터는 명예의 전당에 남아요.', '', '30승부터 등선 가능, 로그인한 계정 캐릭터만. 선기 = 등급 기본값(평범 1 · 숙련 3 · 초인 6 · 전설 10 · 신화 16 · ??? 25) + 환생 횟수 + 100승마다 1. 숙련 이상은 다음 캐릭터 선물도: 숙련 상위 등급 확률(초인 ×1.5) / 초인 꿈 조각 300·확률(초인 ×2·전설 ×1.5) / 전설 꿈 조각 500·깨지 않는 꿈·최소 숙련·확률(×2.5·×2·신화 ×1.5) / 신화 꿈 조각 800·깨지 않는 꿈·최소 숙련·시작 HP·ATK +10%·확률(×3·×3·×2) / ??? 꿈 조각 1200·깨지 않는 꿈·최소 초인·+15%·확률(×4·×4·×3). 꿈 조각·아이템은 쌓이고 확률·보정은 가장 큰 값만, 다음 캐릭터 하나에 한 번에 쓰임. 예: ??? 등선 뒤 심사 80 이면 전설 0.08% → 0.28%. 강화: 캐릭터 칸 +1(선기 3·6·10) · 시작 HP·ATK +5%/단계 · 심사 위력 +3/단계 · 개연성 바닥 +2%p/단계 · 시작 꿈 조각 +150/단계 (각 최대 5단계). 계정 캐릭터는 기본 2개까지.'],
+            ['등선 · 선기 · 선계', '계정 캐릭터를 꿈에서 떠나보내면(삭제) 계정에 선기가 쌓여요. 선기로 선계 강화를 사면 다음에 만드는 캐릭터가 더 강하게 시작하거나 캐릭터 칸이 늘어나요. 등선한 캐릭터는 명예의 전당에 남아요.', '', '30승부터 등선 가능, 로그인한 계정 캐릭터만. 선기 = 등급 기본값(평범 1 · 숙련 3 · 초인 6 · 전설 10 · 신화 16 · ??? 150) + 평범에서 오른 등급 수(환생 또는 높게 태어나 건너뛴 등급) + 100승마다 1. 숙련 이상은 다음 캐릭터 선물도: 숙련 상위 등급 확률(초인 ×1.5) / 초인 꿈 조각 300·확률(초인 ×2·전설 ×1.5) / 전설 꿈 조각 500·깨지 않는 꿈·최소 숙련·확률(×2.5·×2·신화 ×1.5) / 신화 꿈 조각 800·깨지 않는 꿈·최소 숙련·시작 HP·ATK +10%·확률(×3·×3·×2) / ??? 꿈 조각 1200·깨지 않는 꿈·최소 초인·+15%·확률(×4·×4·×3). 꿈 조각·아이템은 쌓이고 확률·보정은 가장 큰 값만, 다음 캐릭터 하나에 한 번에 쓰임. 예: ??? 등선 뒤 심사 80 이면 전설 0.08% → 0.28%. 강화: 캐릭터 칸 +1(선기 3·6·10) · 시작 HP·ATK +5%/단계 · 심사 위력 +3/단계 · 개연성 바닥 +2%p/단계 · 시작 꿈 조각 +150/단계 (각 최대 5단계) · 꿈의 가속 승리 보상 +6%/단계(4·6·8·10·12) · 환생의 기억 환생 직후 최소 능력치 +3%p/단계(6·10·14) · 생사결 호신부 새 캐릭터마다 생사결 패배 1회 무효·HP·ATK −10%(15) · 꿈 명부 다시 짓기(5, 쓸 때마다) · 천상 수련 칭호만(10·20·30…, 끝없음). ??? 등선한 계정만: 천상 칸 +1(40, 최대 6칸) · 천상의 씨앗 다음 캐릭터 최소 전설·5% 로 ???(80, 한 번에 하나). 계정 캐릭터는 기본 2개까지. 시뮬레이션: 신화에서 등선을 반복하면 1000라운드당 선기 약 13, ??? 는 한 번에 약 165(1000승 필요).'],
             ['꿈의 명부 (AI 전투 상대)', 'AI 전투의 적은 내 캐릭터 설정을 읽고 지어진 꿈속 존재들이에요. 캐릭터마다 다른 12명이 나와요.', '', '강함·능력 배분·필살기 종류는 코드가 정한 12개 자리 그대로, 이름·설명·필살기 이름만 AI 가 캐릭터당 한 번 지음(약 25초, 홈에 오면 미리 지어 둠). 생성 전이거나 실패한 자리는 기본 적이 나옴.'],
             ['캐릭터 보관', '로그인하지 않으면 캐릭터는 이 브라우저에만 기억돼요. 브라우저 기록을 지우면 잃어버리니, 오래 키울 캐릭터는 Google 로그인을 권해요.', '', '계정 탈퇴는 ⚙ 설정 → 계정에서 (계정 캐릭터와 기록이 모두 지워짐). 로그인하지 않았고 승점이 0이며 90일 동안 쓰지 않은 캐릭터는 서버에서 정리됨. 진행 중인 AI 전투는 6시간 뒤 만료.'],
             ['오늘 몽상', '하루에 AI 를 쓸 수 있는 횟수예요. 다 쓰면 싸움은 계속되지만 이야기 서술이 빠지고 새 캐릭터를 만들 수 없어요.', '', '서버 전체 용량을 오늘 이용자 수로 나눈 것이 "내 몫". AI 제공자마다 정해진 시각(또는 매시간)에 다시 찹니다 — 위 한도 표시줄의 "자세히"에서 충전 시각 확인. 선언한 턴 하나에 약 2회(심사 + 서술), 온라인 대전은 라운드당 2회를 살아 있는 사람끼리 나눠 냄.'],
