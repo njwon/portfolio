@@ -129,6 +129,7 @@
         .quota .warn { color: #f7a6da; }
         .quota details > summary { min-height: 0; padding: 0; font-size: 0.8125rem; opacity: .85; }
         .quota details[open] > summary { margin-bottom: 4px; }
+        .quota .row > details { flex-basis: 100%; }   /* 자세히는 각 막대 바로 밑 한 줄 (막대마다 따로 펼침) */
         #quotaWarn { margin-top: 6px; }
         #quotaWarn:empty { display: none; }
 
@@ -286,12 +287,13 @@
                 <span>오늘 몽상</span>
                 <div class="bar" aria-hidden="true"><i id="quotaBar"></i></div>
                 <span id="quotaShort">확인 중…</span>
-                <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div><div id="quotaImg" style="margin-top:6px" hidden></div></details>
+                <details><summary>자세히</summary><div id="quotaText"></div><div id="quotaIp" class="hint"></div></details>
             </div>
             <div class="row" id="imgQuotaRow" style="margin-top:6px" hidden>
                 <span>오늘 몽상 시각화</span>
                 <div class="bar" aria-hidden="true"><i id="imgBar" style="background:#69c9fa"></i></div>
                 <span id="imgShort"></span>
+                <details id="imgDetails"><summary>자세히</summary><div id="quotaImg"></div></details>
             </div>
             <div id="quotaWarn"></div>
         </div>
@@ -746,11 +748,11 @@ const Snd = (() => {
         imgQuotaState = iq;
         // 자세히: 그림 한도도 글 AI 처럼 근거까지
         const fl = iq.flux || {}, lines = [
-            `<b>그림</b> — 내 몫${scope ? `(${scope})` : ''} ${iq.left}/${iq.limit}장 남음${iq.used != null ? ` · 오늘 ${iq.used}장 그림` : ''}${iq.resetsAt ? ` · 매일 ${hm(iq.resetsAt)} 충전` : ''}${iq.personal != null && iq.left < iq.personal ? ` <span class="hint">(내 몫은 ${iq.personal}장이지만 서버 사정으로 지금은 ${iq.left}장)</span>` : ''}`,
+            `내 몫${scope ? `(${scope})` : ''} ${iq.left}/${iq.limit}장 남음${iq.used != null ? ` · 오늘 ${iq.used}장 그림` : ''}${iq.resetsAt ? ` · 매일 ${hm(iq.resetsAt)} 충전` : ''}${iq.personal != null && iq.left < iq.personal ? ` <span class="hint">(내 몫은 ${iq.personal}장이지만 서버 사정으로 지금은 ${iq.left}장)</span>` : ''}`,
             `고화질(FLUX) 서버 전체 ${fl.left ?? '?'}/${fl.limit ?? '?'}장 남음${fl.used != null ? ` · 오늘 ${fl.used}장` : ''}${fl.paused ? ` · 실패해 ${hm(fl.paused)}까지 쉬는 중` : fl.byBudget != null && fl.byBudget < (fl.limit - (fl.used || 0)) ? ` · 글 AI 예산 몫을 지키느라 ${fl.byBudget}장까지만` : ''}`,
             `기본 그림(SDXL Lightning, 무료 모델) ${iq.sdxl === false ? `실패해 ${iq.sdxlPausedUntil ? hm(iq.sdxlPausedUntil) + '까지 ' : ''}쉬는 중` : '정상 · 서버 전체 제한 없음'}`,
             `<span class="hint">그림 한 장 = 내 몫 1장. 고화질이 남아 있으면 고화질로, 아니면 기본 그림으로 그립니다. 실패한 그림은 세지 않아요.${imgPref() ? '' : ' 지금은 설정에서 그림이 꺼져 있어요.'}</span>`];
-        $('quotaImg').hidden = false; $('quotaImg').innerHTML = lines.map(x => `<div>${x}</div>`).join('');
+        $('quotaImg').innerHTML = lines.map(x => `<div>${x}</div>`).join('');
     }
     let imgQuotaState = null;
     function applyQuota(q) {
