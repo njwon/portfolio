@@ -1023,7 +1023,8 @@ const TIER_CAPS = {
   '신화': { hp: 6000, atk: 800, def: 60, spd: 120, acc: 99, eva: 50 },
   '???': { hp: 8000, atk: 1000, def: 65, spd: 130, acc: 99, eva: 55 },
 };
-const capsOf = c => TIER_CAPS[c.stats?.tier] || TIER_CAPS['신화'];
+// ascCap: 선계 '천상의 몸'(??? 전용) — 계정 캐릭터의 HP·ATK 와 그 상한이 같이 커진다 (성장도·적 매칭은 그대로, 최종 능력치만 높아짐)
+const capsOf = c => { const t = TIER_CAPS[c.stats?.tier] || TIER_CAPS['신화'], m = 1 + (c.ascCap || 0); return m === 1 ? t : { ...t, hp: Math.round(t.hp * m), atk: Math.round(t.atk * m) }; };
 const rebirthReady = c => { const cap = capsOf(c); return c.stats.hp >= cap.hp && c.stats.atk >= cap.atk; };
 function applyReward(c, rw) {
   const cap = capsOf(c);
@@ -1048,7 +1049,7 @@ async function rebirthChar(id, body, env) {
   const n = (c.rebirths || 0) + 1, bonus = 1 + n * 0.1;
   const fresh = buildStats(alloc, c.stats.coherence, 1, name === '???' ? lo : lo + 2);
   const prevCap = capsOf(c);
-  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus), Math.round(prevCap[k] * (0.85 + (c.ascMem || 0))));   // ascMem: 선계 '환생의 기억'   // 환생 직후 하한 = 직전 등급 상한의 85% (시뮬레이션: 65% 면 직전 등급 상한 캐릭터에게 PvP 4~7% 승, 85% 면 32~48%)
+  for (const k of ['hp', 'atk']) fresh[k] = Math.max(Math.round(fresh[k] * bonus * (1 + (c.ascCap || 0))), Math.round(prevCap[k] * (0.85 + (c.ascMem || 0))));   // ascMem: 선계 '환생의 기억'   // 환생 직후 하한 = 직전 등급 상한의 85% (시뮬레이션: 65% 면 직전 등급 상한 캐릭터에게 PvP 4~7% 승, 85% 면 32~48%)
   fresh.stability = Math.round(Math.min(PLAUS_CAP[name], Math.max(0.55 + n * 0.03, Math.max(fresh.stability, c.stats.stability || 0))) * 1000) / 1000;   // 개연성은 유지하되 환생 횟수만큼 하한 상승
   for (const k of ['def', 'spd', 'acc', 'eva']) fresh[k] = Math.min(TIER_CAPS[name][k], Math.round(fresh[k] * bonus));
   const prevTier = c.stats.tier;
@@ -1121,6 +1122,7 @@ async function createChar(body, env, ip) {
   if (up.plaus) { c.ascPlaus = 0.02 * up.plaus; c.stats.stability = Math.round(Math.max(c.stats.stability, plausFloor(c)) * 1000) / 1000; }
   if (up.dream) c.dream = 150 * up.dream;
   if (up.rw) c.ascRw = 0.06 * up.rw;
+  if (up.body) { c.ascCap = 0.1 * up.body; c.stats.hp = Math.round(c.stats.hp * (1 + c.ascCap)); c.stats.atk = Math.round(c.stats.atk * (1 + c.ascCap)); }
   if (up.mem) c.ascMem = 0.03 * up.mem;
   if (up.ward) c.stakeWard = 1;
   if (acct?.seed) {   // 천상의 씨앗: 최소 전설, 5% 로 ??? (쓰면 사라짐)
@@ -1128,7 +1130,7 @@ async function createChar(body, env, ip) {
     if ((TIER_IDX[c.stats.tier] ?? 0) < (TIER_IDX[want] ?? 0)) {
       const keep = { stability: c.stats.stability, coherence: c.stats.coherence };
       c.stats = { ...buildStats(c.alloc, keep.coherence, 1, want === '???' ? t[1] : t[1] + 2, true), stability: keep.stability };
-      if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); }
+      if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); } if (c.ascCap) { c.stats.hp = Math.round(c.stats.hp * (1 + c.ascCap)); c.stats.atk = Math.round(c.stats.atk * (1 + c.ascCap)); }
     }
     c.luck = { ...c.luck, seed: want };
     await updateAcct(env, sub, a => { a.seed = false; });
@@ -1141,7 +1143,7 @@ async function createChar(body, env, ip) {
     if (want && (TIER_IDX[c.stats.tier] ?? 0) < (TIER_IDX[gift.minTier] ?? 0)) {
       const keep = { stability: c.stats.stability, coherence: c.stats.coherence };
       c.stats = { ...buildStats(c.alloc, keep.coherence, 1, want[1] + 2, true), stability: keep.stability };
-      if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); }   // 다시 만든 능력치에도 선계 강화
+      if (up.stat) { c.stats.hp = Math.round(c.stats.hp * (1 + 0.05 * up.stat)); c.stats.atk = Math.round(c.stats.atk * (1 + 0.05 * up.stat)); } if (c.ascCap) { c.stats.hp = Math.round(c.stats.hp * (1 + c.ascCap)); c.stats.atk = Math.round(c.stats.atk * (1 + c.ascCap)); }   // 다시 만든 능력치에도 선계 강화
       c.luck = { ...c.luck, gifted: gift.minTier };
     }
     if (gift.statPct) { c.stats.hp = Math.round(c.stats.hp * (1 + gift.statPct / 100)); c.stats.atk = Math.round(c.stats.atk * (1 + gift.statPct / 100)); }
@@ -1826,6 +1828,7 @@ const ASC_UP = {
   ward: { name: '생사결 호신부', max: 1, cost: [15], desc: '새 캐릭터마다 생사결 패배를 한 번 무효로 (대신 HP·ATK −10%)' },
   roster: { name: '꿈 명부 다시 짓기', repeat: true, cost: [5], desc: '지금 고른 캐릭터의 AI 전투 적 이름·설명을 새로 지음 (강함은 그대로)' },
   heaven: { name: '천상 칸', max: 1, cost: [40], need: '???', desc: '캐릭터 칸 +1 (최대 6칸) — ??? 등선한 계정만' },
+  body: { name: '천상의 몸', max: 3, cost: [120, 180, 250], need: '???', desc: '모든 계정 캐릭터(지금 있는 캐릭터 포함)의 HP·ATK 와 그 상한 +10% — ??? 등선한 계정만, 가장 강하고 가장 비쌈' },
   seed: { name: '천상의 씨앗', repeat: true, cost: [80], need: '???', desc: '다음 캐릭터가 최소 전설로 태어나고 5% 확률로 ??? — ??? 등선한 계정만, 한 번에 하나' },
   train: { name: '천상 수련', endless: true, cost: [10], desc: '능력치 없이 선인 칭호가 오름 (단계마다 비용 +10)' },
 };
@@ -1902,6 +1905,12 @@ async function buyUpgrade(body, env) {
     else if (key !== 'roster') a.up = { ...a.up, [key]: lv + 1 };
   });
   if (err) return json({ error: err }, 409);
+  if (key === 'body') {   // 천상의 몸: 지금 있는 계정 캐릭터에도 바로 (이전 단계만큼은 이미 적용돼 있으니 차이만)
+    const { a } = await loadAcct(env, sub), nx = 0.1 * (a.up.body || 0);
+    const rows = (await env.DB.prepare('SELECT id FROM rpg_chars WHERE user_sub = ?').bind(sub).all())?.results || [];
+    for (const r of rows) await updateChar(env, r.id, x => { const m = (1 + nx) / (1 + (x.ascCap || 0)); if (m === 1) return; x.stats.hp = Math.round(x.stats.hp * m); x.stats.atk = Math.round(x.stats.atk * m); x.ascCap = nx; });
+    lbCache.at = 0;
+  }
   if (key === 'roster') { await ensureFoesTable(env); await env.DB.prepare('DELETE FROM rpg_foes WHERE char_id = ?').bind(body.charId).run(); }
   return json(await accountView(env, sub));
 }
@@ -2042,7 +2051,7 @@ async function getBattle(id, token, env) {
 // 승리 보상: HP·ATK 는 매번, 방어·속도·명중·회피는 각각 35% 확률로 +1(대성공이면 +2). 상한: 방어 60% · 속도 120 · 명중 99 · 회피 50
 const STAT_CAP = { def: 60, spd: 120, acc: 99, eva: 50 }, STAT_KO = { def: '방어', spd: '속도', acc: '명중', eva: '회피' };
 function rollReward(c, foe, mode) {
-  const mult = (c.stats.mult || 1), ft = (TIER_IDX[foe.stats?.tier] ?? 1), scale = mult * (1 + ft * 0.25) * (mode === 'auto' ? 1.3 : 1) * (1 + (c.ascRw || 0));   // ascRw: 선계 '꿈의 가속'
+  const mult = (c.stats.mult || 1), ft = (TIER_IDX[foe.stats?.tier] ?? 1), scale = mult * (1 + ft * 0.25) * (mode === 'auto' ? 1.3 : 1) * (1 + (c.ascRw || 0)) * (1 + (c.ascCap || 0));   // ascRw: 선계 '꿈의 가속' · ascCap: '천상의 몸'(상한이 커진 만큼 보상도 — 성장 속도는 그대로)
   const r = { hp: Math.round((10 + rnd() * 20) * scale), atk: Math.round((1 + rnd() * 3) * scale), stats: {}, tags: [] };
   const big = rnd() < 0.05; if (big) { r.hp *= 2; r.atk *= 2; r.tags.push('대성공'); }
   for (const k of ['def', 'spd', 'acc', 'eva']) if (rnd() < 0.35 + (big ? 0.3 : 0)) { r.stats[k] = big ? 2 : 1; r.tags.push(`${STAT_KO[k]} +${r.stats[k]}${k === 'def' ? '%' : ''}`); }
