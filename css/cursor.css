@@ -1,0 +1,34 @@
+/* ── 도끼 커서 ──────────────────────────────────────────────────────
+   네이티브 CSS 커서라 JS·리페인트 비용 0. 이미지는 scripts/make-cursors.py 로 생성
+   (핫스팟 좌표도 그 스크립트가 출력 — 이미지 바꾸면 아래 숫자도 같이 갱신).
+   화면 폭이 아니라 "마우스가 있는 기기"인지로 판단 → 창을 좁혀도(에디터 미리보기 등) 도끼 유지, 터치 기기는 기본.
+   다른 페이지에 쓰려면 <link rel="stylesheet" href="(경로)/css/cursor.css"> 한 줄만 추가. */
+@media (hover: hover) and (pointer: fine) {
+    /* 기본 */
+    * {
+        cursor: url(../img/cursor/axe.png) 4 14, auto;
+        cursor: image-set(url(../img/cursor/axe.png) 1x, url(../img/cursor/axe@2x.png) 2x) 4 14, auto;
+    }
+
+    /* 클릭 가능 */
+    a[href], a[href] *, button, button *, label, summary, select,
+    [onclick], [onclick] *, [role="button"],
+    input[type=button], input[type=submit], input[type=checkbox], input[type=radio], input[type=range] {
+        cursor: url(../img/cursor/axe-pointer.png) 8 9, pointer;
+        cursor: image-set(url(../img/cursor/axe-pointer.png) 1x, url(../img/cursor/axe-pointer@2x.png) 2x) 8 9, pointer;
+    }
+
+    /* 누르는 중 (내려찍기) */
+    a[href]:active, a[href]:active *, button:active, button:active *,
+    [onclick]:active, [onclick]:active *, [role="button"]:active,
+    input[type=button]:active, input[type=submit]:active {
+        cursor: url(../img/cursor/axe-active.png) 2 22, pointer;
+        cursor: image-set(url(../img/cursor/axe-active.png) 1x, url(../img/cursor/axe-active@2x.png) 2x) 2 22, pointer;
+    }
+
+    /* 불가 */
+    :disabled, :disabled *, [aria-disabled="true"], [aria-disabled="true"] * {
+        cursor: url(../img/cursor/axe-not-allowed.png) 4 14, not-allowed;
+        cursor: image-set(url(../img/cursor/axe-not-allowed.png) 1x, url(../img/cursor/axe-not-allowed@2x.png) 2x) 4 14, not-allowed;
+    }
+}

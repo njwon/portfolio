@@ -1,7 +1,3 @@
-@media all and (max-width:1279px) {
-    * { cursor: auto; }
-}
-
 /* 노트북 & 태블릿 가로 (1024px ~ 1279px) */
 @media all and (min-width:1024px) and (max-width:1279px) {
     menu ul { justify-content: center; }

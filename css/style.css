@@ -5,8 +5,8 @@ html {
     overscroll-behavior: none;
 }
 
+/* 커서는 css/cursor.css */
 * {
-    cursor: none;
     box-sizing: border-box;
 }
 
@@ -31,7 +31,7 @@ body {
 }
 
 /* ── 블러 ─────────────────────────────────────────────────────────
-   화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용. 커서(.cursor)는 항상 선명.
+   화면 전체 블러(구 body filter)를 요소 단위로 나눠 적용.
    섹션은 filter 를 "고유 효과(--fx) + 블러(--blur)" 합성으로 쓴다 — #section3 의 sepia,
    #section4 의 grayscale 처럼 섹션 자체 filter 가 있어도 블러가 덮어써지지 않게.
    선명하게 만들 요소에 data-blur="off" 를 붙이면 main.js(applyBlurOptOut) 가 시작 시 한 번:
@@ -55,18 +55,6 @@ body {
 
 a {
     text-decoration-line: none;
-}
-
-.cursor {
-    pointer-events: none;
-    width: 5px;
-    height: 5px;
-    background-color: #000000;
-    border-radius: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 10005;                 /* 노이즈·대화상자보다 위 */
 }
 
 .noise {
@@ -1398,7 +1386,6 @@ footer div {
     right: 20px;
     z-index: 9998;
     text-decoration: none;
-    cursor: none;
     display: flex;
     flex-direction: column;
     align-items: center;

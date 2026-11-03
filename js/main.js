@@ -11,7 +11,6 @@ const tv           = $('.tv');
 const aboutContent = $('.amain');
 const aboutBanner  = $('.about-banner');
 const cards        = $('.charts-wrap');
-const cursor       = $('.cursor');
 const sections     = $$('.section');
 const contactItems = $$('.con');
 const totalSections = sections.length;
@@ -24,18 +23,6 @@ const sectionAnimations = [
     () => { initProjSlider(); },
     () => contactItems.forEach(el => el.classList.add('scrollAnimation9')),
 ];
-
-if (cursor) {
-    const move = e => { cursor.style.left = `${e.clientX}px`; cursor.style.top = `${e.clientY}px`; };
-    // innerWidth 는 스크립트 실행 중 전체 페이지 레이아웃을 강제하므로 matchMedia 로 판정
-    const mq = window.matchMedia('(min-width: 1280px)');
-    const sync = () => {
-        cursor.style.display = mq.matches ? 'block' : 'none';
-        window[mq.matches ? 'addEventListener' : 'removeEventListener']('mousemove', move);
-    };
-    sync();
-    mq.addEventListener('change', sync);
-}
 
 window.addEventListener('load', () => {
     Object.assign(load.style, { opacity: '0', zIndex: '10003', backgroundColor: '#dbe3e311' });
