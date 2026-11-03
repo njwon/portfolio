@@ -370,11 +370,80 @@ menu ul li a {
     margin-bottom: 17%;
 }
 
-video {
+/* TV 화면(유리): 영상 + 금 간 자국을 같은 상자에 겹침. 프레임 이미지(z-index 1) 아래라 금도 화면 구멍 안에서만 보임 */
+.tv-glass {
+    position: relative;
     width: 70%;
     height: 60%;
     margin-top: 15%;
     margin-right: 5%;
+}
+.tv-glass video {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.tv-cracks {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* tv.webp 의 화면 구멍(48,40 ~ 436,328 / 599×416)을 .tv-glass 기준으로 환산한 영역만 보이게 */
+    clip-path: inset(8.7% 6% 15.2% 1.5% round 7%);
+}
+:is(.tv-cracks, .tv-fly) path,
+:is(.tv-cracks, .tv-fly) polygon {
+    fill: none;
+    vector-effect: non-scaling-stroke;   /* 화면 비율대로 늘려도 선 굵기는 그대로 */
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.tv-cracks .crack-shadow { stroke: rgba(0, 0, 0, 0.55); stroke-width: 2.6px; }
+.tv-cracks .crack-line   { stroke: rgba(255, 255, 255, 0.9); stroke-width: 1.1px; }
+.tv-cracks .crack-shard  { fill: rgba(255, 255, 255, 0.18); stroke: none; }
+/* 유리가 떨어져 나간 구멍: 브라운관 속이 보이는 검은색 (같은 색 얇은 선으로 칸 사이 이음매를 메움) */
+.tv-cracks .crack-hole   { fill: #050506; stroke: #050506; stroke-width: 1px; }
+/* 깨진 가장자리: 유리 두께의 그림자(어두운 굵은 선) + 단면에 빛이 맺힌 흰 선 */
+.tv-cracks .crack-edge   { fill: none; stroke: rgba(0, 0, 0, 0.6); stroke-width: 3px; }
+.tv-cracks .crack-rim    { fill: none; stroke: rgba(225, 235, 240, 0.7); stroke-width: 1px; }
+/* 떨어지는 유리 조각: 좌표는 조각 무게중심 기준, transform 은 JS 가 계산한 궤적 */
+:is(.tv-cracks, .tv-fly) .crack-fall,
+:is(.tv-cracks, .tv-fly) .crack-chip {
+    transform-box: view-box;
+    transform-origin: 0 0;
+}
+:is(.tv-cracks, .tv-fly) .crack-fall .fall-face { fill: rgba(200, 214, 224, 0.55); stroke: none; }
+:is(.tv-cracks, .tv-fly) .crack-fall .fall-edge { fill: none; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1px; }
+:is(.tv-cracks, .tv-fly) .crack-chip   { fill: rgba(235, 242, 248, 0.85); stroke: none; }
+/* 앞으로 떨어지는 조각 전용 레이어: body 바로 아래 fixed, TV 유리와 같은 좌표계(0~1000)로 맞춰 둔다.
+   잘라내기 없이 TV 프레임 위에 그려져 화면 밖까지 튀어나와 떨어짐 (JS tvFlyLayer) */
+.tv-fly {
+    position: fixed;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 9000;
+    /* 섹션 밖(body)에 있어서 섹션 블러가 안 걸리므로 직접: TV 프레임과 같은 흑백 + 사이트 공통 블러 */
+    filter: grayscale(100%) var(--blur);
+}
+/* 밝은 배경 위로 나와도 보이게 조금 더 불투명한 유리 (테두리는 기본 흰 단면선만) */
+.tv-fly .crack-fall .fall-face { fill: rgba(222, 233, 240, 0.82); }
+.tv-fly .crack-chip { fill: rgba(240, 246, 250, 0.95); }
+
+/* 내려칠 때 흔들림 */
+.tv-container.tv-hit {
+    animation: tvHit 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+@keyframes tvHit {
+    0%   { transform: translate(0, 0) rotate(0); }
+    15%  { transform: translate(-6px, 4px) rotate(-1.2deg); }
+    35%  { transform: translate(5px, -3px) rotate(0.9deg); }
+    55%  { transform: translate(-3px, 2px) rotate(-0.5deg); }
+    75%  { transform: translate(2px, -1px) rotate(0.3deg); }
+    100% { transform: translate(0, 0) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tv-container.tv-hit { animation: none; }
 }
 
 #section2 {

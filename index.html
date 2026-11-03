@@ -158,15 +158,19 @@
                         CLICK THIS CLICK THIS CLICK THIS</p>
                 </div>
                 <div class="tv">
-                    <div class="tv-container scroll-spy" onclick="changeVideo()">
+                    <div class="tv-container scroll-spy" onclick="changeVideo(event)">
                         <img class="gray" src="img/home/tv.webp" width="599" height="416" alt="TV 이미지"
                             style="width: 90%; height: auto; position: absolute; z-index: 1;" />
                         <div class="screen">
-
-                            <video id="tvVideo" autoplay muted loop playsinline width="600" height="542">
-                                <source src="img/home/first.webm" type="video/webm" />
-                                브라우저가 비디오 태그를 지원하지 않습니다.
-                            </video>
+                            <div class="tv-glass">
+                                <video id="tvVideo" autoplay muted loop playsinline width="600" height="542">
+                                    <source src="img/home/first.webm" type="video/webm" />
+                                    브라우저가 비디오 태그를 지원하지 않습니다.
+                                </video>
+                                <!-- 클릭할 때마다 금이 쌓임 (새로고침 전까지 유지) -->
+                                <svg class="tv-cracks" id="tvCracks" viewBox="0 0 1000 1000"
+                                    preserveAspectRatio="none" aria-hidden="true"></svg>
+                            </div>
                         </div>
                     </div>
                 </div>
