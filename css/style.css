@@ -39,6 +39,8 @@ body {
    - 조상 체인의 '다른' 자식들에 .blur-sib 를 붙여 각자 블러를 건다 (자기 filter 가 있는 요소는 덮어써지므로 주의)
    (:has() 선택자로도 되지만 로드 시 스타일 계산이 수백 ms 늘어나 JS 로 처리) */
 :root { --blur: blur(0.7px); }
+/* 윈도우95 창 색 (자격증 창 .w95, 나무위키 패널 .about 공용) */
+:root { --w95-face: #c0c0c0; --w95-light: #fff; --w95-shadow: #808080; --w95-dark: #404040; }
 .load, .menuwrap, .noise, .clippy-link, .blog-dialog {
     filter: var(--blur);
 }
@@ -480,10 +482,11 @@ menu ul li a {
     margin: 0;
     padding: 0;
     color: #0275d8;
+    transition: color .2s ease, text-decoration-color .2s ease;     /* 나갈 때도 서서히 */
 }
 
 .about-link:hover {
-    transition: color .05s ease-in;
+    transition: color .2s ease, text-decoration-color .2s ease;
     text-decoration-line: underline;
     text-decoration-color: #014076;
     color: #014076;
@@ -496,7 +499,6 @@ menu ul li a {
 
 .about {
     margin: 0 auto;
-    border-radius: 5px;
     width: 65vw;
     height: 90vh;
     background-color: #f5f5f5;
@@ -509,81 +511,163 @@ menu ul li a {
     overflow: auto;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    border: 1px solid #ccc;
-    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+    /* 윈도우95 창 테두리 (자격증 창과 같은 볼록 테두리·그림자) */
+    border: 2px solid;
+    border-color: var(--w95-light) var(--w95-dark) var(--w95-dark) var(--w95-light);
+    box-shadow: 1px 1px 0 #000, 8px 10px 0 rgba(0, 0, 0, .22);
 }
 
 .about::-webkit-scrollbar {
     display: none;
 }
 
-/* ── 자격증 세로 무한 마퀴 배너 (흑백 + 3D 원근) ──
-   무한 세로 스크롤 기법 참고: Kevin Powell / CodePen stan65 (YzorVZe) */
+/* ── 나무위키 패널의 인터넷 익스플로러 창 틀 ──
+   제목·메뉴·주소창은 위에, 상태 표시줄은 아래에 sticky 로 붙임 (스크롤 상자 .about 안이라 JS 변경 최소).
+   창 틀엔 사이트 필터(흑백 + 블러). 마우스를 올리면 자격증 창처럼 색만 돌아옴(블러는 유지).
+   안쪽 위키 내용은 원래대로 요소별 흑백 → 마우스 올린 요소만 컬러(.about-gray). 이 섹션은 blur-off 라 --blur 가 비어 있어서 블러 값은 직접 씀 */
+.ie-chrome,
+.ie-status {
+    position: sticky;
+    z-index: 3;
+    background: var(--w95-face);
+    font-family: 'Tahoma', 'MS Sans Serif', 'Pretendard', 'Pretendard Fallback', sans-serif;
+    font-size: 13px;
+    color: #000;
+    line-height: 1.3;
+    filter: grayscale(100%) blur(0.7px);
+    transition: filter .5s ease;
+}
+.ie-chrome { top: 0; padding-bottom: 4px; border-bottom: 2px solid var(--w95-shadow); }
+.ie-status { bottom: 0; display: flex; gap: 2px; padding: 2px; border-top: 1px solid var(--w95-light); }
+.ie-status span { padding: 2px 6px; white-space: nowrap; }
+.ie-status span:first-child { flex: 1; }
+.about:hover .ie-chrome,
+.about:hover .ie-status { filter: grayscale(0) blur(0.7px); }   /* 함수 목록을 같게 둬야 트랜지션이 걸림 */
+.ie-addr { display: flex; align-items: center; gap: 6px; padding: 2px 6px 0; }
+.ie-url { flex: 1; min-width: 0; padding: 2px 6px; background: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ie-go { padding: 1px 10px; background: var(--w95-face); }
+@media (max-width: 767px) {
+    .ie-chrome .w95-menu, .ie-addr { display: none; }
+}
+
+/* ── 자격증 배너: 윈도우95 창 '자격증.exe' (Clippy 대화상자와 같은 레트로 톤) ──
+   목록에서 항목을 고르면 아래 '속성' 칸에 발급 기관·취득 연도·상태가 나옴 (main.js initCertWindow).
+   자격증 추가: index.html 의 .w95-list 에 <li> 하나만 추가 (data-org / data-year / data-status). 개수·상태 합계는 자동 */
 .about-banner {
     width: 25vw;
     height: 90vh;
     margin-left: 5%;
-    border: 1px solid #ccc;
-    border-radius: 5px;
     position: relative;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #2c2c2c 0%, #0d0d0d 100%);
-    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
 }
-.cert-title {
-    text-align: center;
-    padding: 18px 0 12px;
-    letter-spacing: .3em;
-    font-size: .78rem;
-    font-weight: 700;
-    color: #f0f0f0;
-    border-bottom: 1px solid rgba(255, 255, 255, .12);
-}
-.cert-scroller {
+/* 창은 배너(소개 패널과 같은 높이)를 꽉 채움 — 목록 아래는 빈 흰 칸, 화면이 낮으면 목록이 스크롤.
+   색은 단계별: 평소 전부 흑백 → 창에 마우스를 올리면 창(테두리·제목·속성)만 컬러 → 목록 항목(li)에 올린 그 항목만 컬러 */
+.w95 {
     flex: 1;
-    overflow: hidden;
-    position: relative;
-    perspective: 900px;
-    perspective-origin: 50% 50%;
-    -webkit-mask: linear-gradient(transparent, #000 14%, #000 86%, transparent);
-            mask: linear-gradient(transparent, #000 14%, #000 86%, transparent);
-}
-.cert-track {
-    list-style: none;
-    margin: 0;
-    padding: 0 18px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    transform-style: preserve-3d;
-    animation: certScroll 28s linear infinite;
+    background: var(--w95-face);
+    border: 2px solid;
+    border-color: var(--w95-light) var(--w95-dark) var(--w95-dark) var(--w95-light);
+    box-shadow: 1px 1px 0 #000, 8px 10px 0 rgba(0, 0, 0, .22);
+    filter: grayscale(100%);
+    transition: filter .5s ease;
+    font-family: 'Tahoma', 'MS Sans Serif', 'Pretendard', 'Pretendard Fallback', sans-serif;
+    font-size: 13px;
+    color: #000;
 }
-.cert-scroller:hover .cert-track { animation-play-state: paused; }
-@keyframes certScroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
-.cert-card {
-    background: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 14px 12px;
-    margin-bottom: 16px;
+/* 볼록(버튼)·오목(입력칸) 테두리 */
+.w95-raised { border: 2px solid; border-color: var(--w95-light) var(--w95-dark) var(--w95-dark) var(--w95-light); }
+.w95-sunken { border: 2px solid; border-color: var(--w95-shadow) var(--w95-light) var(--w95-light) var(--w95-shadow); }
+
+.w95-title {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 4px;
-    transform: rotateY(-15deg);
-    transform-origin: left center;
-    box-shadow: -7px 6px 18px rgba(0, 0, 0, .45);
-    transition: transform .35s ease, box-shadow .35s ease;
+    justify-content: space-between;
+    gap: 6px;
+    margin: 2px 2px 0;
+    padding: 3px 3px 3px 6px;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: #fff;
+    font-weight: 700;
+    white-space: nowrap;
 }
-.cert-card:hover {
-    transform: rotateY(0deg) translateZ(30px) scale(1.03);
-    box-shadow: -2px 5px 24px rgba(0, 0, 0, .6);
+.w95-title-text { display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; }
+.w95-btns { display: flex; gap: 2px; }
+.w95-btns b {
+    width: 18px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+    background: var(--w95-face);
+    color: #000;
+    font-size: 11px;
+    line-height: 1;
 }
-.cert-name { font-weight: 700; color: #111; font-size: .95rem; line-height: 1.3; }
-.cert-org { font-size: .72rem; color: #666; }
-@media (prefers-reduced-motion: reduce) { .cert-track { animation: none; } }
+.w95-menu { display: flex; gap: 14px; padding: 4px 8px 3px; }
+.w95-menu u { text-underline-offset: 2px; }
+
+.w95-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    list-style: none;
+    margin: 2px 6px 0;
+    padding: 4px 2px;
+    background: #fff;
+}
+.w95-list > li {
+    filter: grayscale(100%);
+    transition: filter .5s ease;
+}
+.w95:hover,
+.w95:has(:focus-visible),
+.w95-list > li:hover,
+.w95-list > li:has(:focus-visible) { filter: none; }
+.w95-item {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;                /* 진행 막대(.w95-prog)가 버튼 안에서 다음 줄로 내려가게 */
+    align-items: center;
+    gap: 4px 8px;
+    padding: 6px 6px;
+    border: 1px dotted transparent;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    transition: background-color .3s ease, color .3s ease;
+}
+.w95-item:hover { background: #e8e8f4; }
+.w95-item:focus-visible { outline: none; border-color: #000; }
+.w95-item[aria-selected="true"] { background: #000080; color: #fff; }
+.w95-item[aria-selected="true"] .w95-year { color: #fff; }
+.w95-icon { width: 16px; height: 16px; flex: none; }
+.w95-name { flex: 1; display: flex; flex-direction: column; line-height: 1.35; }
+.w95-name small { font-size: 11px; color: #666; transition: color .3s ease; }
+.w95-item[aria-selected="true"] .w95-name small { color: #c8d0ff; }
+.w95-year { color: #555; font-size: 12px; transition: color .3s ease; }
+/* 준비 중: 윈도우 복사 진행 막대 — 버튼 안 마지막 줄, 아이콘(16px)+간격(8px)만큼 들여서 이름 아래에 맞춤 */
+.w95-prog { display: block; flex: 0 0 calc(100% - 24px); margin-left: 24px; height: 14px; padding: 1px; background: #fff; }
+.w95-prog i {
+    display: block;
+    height: 100%;
+    width: var(--p, 50%);
+    background: repeating-linear-gradient(90deg, #000080 0 8px, transparent 8px 10px);
+}
+
+/* 속성: 윈도우 그룹 상자(fieldset) */
+.w95-props { margin: 10px 6px 6px; padding: 10px 10px 8px; position: relative; }
+.w95-props legend { padding: 0 4px; }
+.w95-props dl { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; margin: 0; }
+.w95-props dt { color: #333; }
+.w95-props dd { margin: 0; font-weight: 700; }
+
+.w95-status { display: flex; gap: 2px; margin: 0 4px 4px; font-size: 12px; }
+.w95-status span { flex: 1; padding: 2px 6px; white-space: nowrap; }
+.w95-status span:last-child { flex: 1.4; }
 
 .scrollAnimation10 {
     animation: scrollAnimation4 4s;
@@ -819,7 +903,7 @@ menu ul li a {
     font-size: .6333333333em;
 }
 /* 나무위키 문서 링크 (개념어·학교·자격증 등) — 위키처럼 파란 글자, 마우스 올리면 밑줄 */
-.wiki-link { color: #0275d8; text-decoration: none; }
+.wiki-link { color: #0275d8; text-decoration: none; transition: color .2s ease; }
 .wiki-link:hover { text-decoration: underline; color: #014076; }
 
 .about-one {

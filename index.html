@@ -178,6 +178,15 @@
             <section class="section" id="section2">
                 <div class="in-section2">
                     <div class="about amain">
+                        <!-- 나무위키 패널을 감싼 인터넷 익스플로러 창 틀 (장식). 스크롤해도 위·아래에 붙어 있음 -->
+                        <div class="ie-chrome" aria-hidden="true">
+                            <div class="w95-title">
+                                <span class="w95-title-text"><img class="w95-icon" src="img/icons/ie.png" width="16" height="16" alt="">노정원 - 나무위키 - Microsoft Internet Explorer</span>
+                                <span class="w95-btns"><b class="w95-raised">ㅡ</b><b class="w95-raised">ㅁ</b><b class="w95-raised">×</b></span>
+                            </div>
+                            <div class="w95-menu"><span><u>파</u>일</span><span><u>편</u>집</span><span><u>보</u>기</span><span><u>즐</u>겨찾기</span><span><u>도</u>구</span><span><u>도</u>움말</span></div>
+                            <div class="ie-addr"><span>주소(<u>D</u>)</span><span class="ie-url w95-sunken">https://namu.wiki/w/노정원</span><span class="ie-go w95-raised">이동</span></div>
+                        </div>
                         <div class="aboutmain" data-blur="off">
                             <h1 class="about-gray"><a class="h1" href="#section2"
                                     onclick="return scrollAbout('top')">노정원</a></h1>
@@ -532,69 +541,84 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="ie-status" aria-hidden="true"><span class="w95-sunken">완료</span><span class="w95-sunken">🌐 인터넷</span></div>
                     </div>
+                    <!-- 자격증 배너: 윈도우95 창. 자격증 추가는 .w95-list 에 <li> 하나 (개수·합계·속성 칸은 main.js 가 채움) -->
                     <div class="about-banner">
-                        <div class="cert-title">CERTIFICATIONS</div>
-                        <div class="cert-scroller">
-                            <ul class="cert-track">
-                                <li class="cert-card">
-                                    <span class="cert-name">네트워크 관리사 2급</span>
-                                    <span class="cert-org">한국정보통신자격협회 · 2026</span>
+                        <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+                            <symbol id="w95-cert" viewBox="0 0 16 16"><path d="M2 1h9l3 3v11H2z" fill="#fff" stroke="#000"/><path d="M4 5h7M4 7h7M4 9h4" stroke="#000080"/><circle cx="11" cy="11" r="2.4" fill="#c00" stroke="#600"/><path d="M10 13l-1 2.5 2-1 2 1-1-2.5" fill="#c00"/></symbol>
+                            <symbol id="w95-wait" viewBox="0 0 16 16"><path d="M3 1h10M3 15h10M4 1c0 5 4 5 4 7s-4 2-4 7M12 1c0 5-4 5-4 7s4 2 4 7" fill="none" stroke="#000"/><path d="M5.5 13.5h5L8 10.5z" fill="#c8a000"/></symbol>
+                            <symbol id="w95-folder" viewBox="0 0 16 16"><path d="M1 3h5l1 2h8v9H1z" fill="#ffd94a" stroke="#000"/></symbol>
+                        </svg>
+                        <section class="w95" aria-label="자격증">
+                            <div class="w95-title">
+                                <span class="w95-title-text"><svg class="w95-icon" aria-hidden="true"><use href="#w95-folder"></use></svg>자격증.exe</span>
+                                <span class="w95-btns" aria-hidden="true"><b class="w95-raised">ㅡ</b><b class="w95-raised">ㅁ</b><b class="w95-raised">×</b></span>
+                            </div>
+                            <div class="w95-menu" aria-hidden="true"><span><u>파</u>일</span><span><u>편</u>집</span><span><u>보</u>기</span><span><u>도</u>움말</span></div>
+                            <ul class="w95-list w95-sunken" id="certList" role="listbox" aria-label="자격증 목록">
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="한국정보통신자격협회" data-year="2026" data-status="취득">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-cert"></use></svg>
+                                        <span class="w95-name">네트워크 관리사 2급<small>한국정보통신자격협회</small></span><span class="w95-year">2026</span>
+                                    </button>
                                 </li>
-                                <li class="cert-card">
-                                    <span class="cert-name">프로그래밍 기능사</span>
-                                    <span class="cert-org">한국산업인력공단 · 2026</span>
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="한국산업인력공단" data-year="2026" data-status="취득">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-cert"></use></svg>
+                                        <span class="w95-name">프로그래밍 기능사<small>한국산업인력공단</small></span><span class="w95-year">2026</span>
+                                    </button>
                                 </li>
-                                <li class="cert-card">
-                                    <span class="cert-name">SQLD</span>
-                                    <span class="cert-org">한국데이터산업진흥원 · 2026</span>
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="한국데이터산업진흥원" data-year="2026" data-status="취득">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-cert"></use></svg>
+                                        <span class="w95-name">SQLD<small>한국데이터산업진흥원</small></span><span class="w95-year">2026</span>
+                                    </button>
                                 </li>
-                                <li class="cert-card">
-                                    <span class="cert-name">RHCSA (EX200)</span>
-                                    <span class="cert-org">Red Hat · 2026 예정</span>
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="Red Hat" data-year="2026 예정" data-status="준비 중">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-wait"></use></svg>
+                                        <span class="w95-name">RHCSA (EX200)<small>Red Hat</small></span><span class="w95-year">예정</span>
+                                        <span class="w95-prog w95-sunken" style="--p: 60%" aria-hidden="true"><i></i></span>
+                                    </button>
                                 </li>
-                                <li class="cert-card">
-                                    <span class="cert-name">GTQ 2급</span>
-                                    <span class="cert-org">한국생산성본부 · 2025</span>
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="한국생산성본부" data-year="2025" data-status="취득">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-cert"></use></svg>
+                                        <span class="w95-name">GTQ 2급<small>한국생산성본부</small></span><span class="w95-year">2025</span>
+                                    </button>
                                 </li>
-                                <li class="cert-card">
-                                    <span class="cert-name">AICE Basic</span>
-                                    <span class="cert-org">KT·과기정통부 · 2024</span>
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="KT·과기정통부" data-year="2024" data-status="취득">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-cert"></use></svg>
+                                        <span class="w95-name">AICE Basic<small>KT·과기정통부</small></span><span class="w95-year">2024</span>
+                                    </button>
                                 </li>
-                                <li class="cert-card">
-                                    <span class="cert-name">ITQ 아래한글 A</span>
-                                    <span class="cert-org">한국생산성본부 · 2024</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">네트워크 관리사 2급</span>
-                                    <span class="cert-org">한국정보통신자격협회 · 2026</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">프로그래밍 기능사</span>
-                                    <span class="cert-org">한국산업인력공단 · 2026</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">SQLD</span>
-                                    <span class="cert-org">한국데이터산업진흥원 · 2026</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">RHCSA (EX200)</span>
-                                    <span class="cert-org">Red Hat · 2026 예정</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">GTQ 2급</span>
-                                    <span class="cert-org">한국생산성본부 · 2025</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">AICE Basic</span>
-                                    <span class="cert-org">KT·과기정통부 · 2024</span>
-                                </li>
-                                <li class="cert-card" aria-hidden="true">
-                                    <span class="cert-name">ITQ 아래한글 A</span>
-                                    <span class="cert-org">한국생산성본부 · 2024</span>
+                                <li role="none">
+                                    <button type="button" class="w95-item" role="option" aria-selected="false"
+                                        data-org="한국생산성본부" data-year="2024" data-status="취득">
+                                        <svg class="w95-icon" aria-hidden="true"><use href="#w95-cert"></use></svg>
+                                        <span class="w95-name">ITQ 아래한글 A<small>한국생산성본부</small></span><span class="w95-year">2024</span>
+                                    </button>
                                 </li>
                             </ul>
-                        </div>
+                            <fieldset class="w95-props w95-sunken" id="certProps">
+                                <legend>속성</legend>
+                                <dl aria-live="polite">
+                                    <dt>이름</dt><dd data-prop="name">-</dd>
+                                    <dt>발급 기관</dt><dd data-prop="org">-</dd>
+                                    <dt>취득</dt><dd data-prop="year">-</dd>
+                                    <dt>상태</dt><dd data-prop="status">-</dd>
+                                </dl>
+                            </fieldset>
+                            <div class="w95-status"><span class="w95-sunken" id="certCount">7개 개체</span><span class="w95-sunken" id="certSum">취득 6 · 준비 1</span></div>
+                        </section>
                     </div>
                 </div>
 

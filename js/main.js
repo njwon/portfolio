@@ -101,7 +101,7 @@ function scrollAbout(id) {
     if (id === 'top') box.scrollTo({ top: 0, behavior: 'smooth' });
     else {
         const el = document.getElementById(id);
-        if (el) box.scrollTo({ top: el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12, behavior: 'smooth' });
+        if (el) box.scrollTo({ top: el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12 - (box.querySelector('.ie-chrome')?.offsetHeight || 0), behavior: 'smooth' });  // 위에 붙은 창 틀 높이만큼 더
     }
     return false;
 }
@@ -634,6 +634,36 @@ function updateProjUI() {
         const hard = (p && p.nodeType === 1 && (p.tagName === 'B' || p.tagName === 'BR')) || (q && q.nodeType === 1 && q.tagName === 'BR');
         if (!hard) br.classList.add('br-soft');
     });
+})();
+
+// ── 자격증 배너 (윈도우95 '자격증.exe') ──────────────────────────────
+// 목록 항목을 고르면 '속성' 칸을 채우고, 상태 표시줄의 개수·합계는 목록에서 센다 (자격증은 HTML <li> 만 추가하면 됨)
+(function initCertWindow() {
+    const list = document.getElementById('certList');
+    if (!list) return;
+    const items = [...list.querySelectorAll('.w95-item')];
+    const props = document.getElementById('certProps');
+    const done = items.filter(b => b.dataset.status === '취득').length;
+    document.getElementById('certCount').textContent = `${items.length}개 개체`;
+    document.getElementById('certSum').textContent = `취득 ${done} · 준비 ${items.length - done}`;
+
+    const select = (btn, focus) => {
+        items.forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+        const set = (k, v) => { props.querySelector(`[data-prop="${k}"]`).textContent = v; };
+        set('name', btn.querySelector('.w95-name').firstChild.textContent.trim());
+        set('org', btn.dataset.org);
+        set('year', btn.dataset.year);
+        set('status', btn.dataset.status);
+        if (focus) btn.focus();
+    };
+    list.addEventListener('click', e => { const b = e.target.closest('.w95-item'); if (b) select(b); });
+    list.addEventListener('keydown', e => {                       // 위·아래 화살표로 이동 (섹션 이동 키와 겹치지 않게 막음)
+        const i = items.indexOf(document.activeElement);
+        if (i < 0 || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+        e.preventDefault(); e.stopPropagation();
+        select(items[Math.max(0, Math.min(items.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))], true);
+    });
+    select(items[0]);
 })();
 
 // ── 블러 선택 해제 (style.css '블러' 주석 참고) ─────────────────────
