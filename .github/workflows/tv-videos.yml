@@ -1,0 +1,39 @@
+name: TV Video List
+
+# img/tv/ 에 영상을 넣거나 빼고 푸시하면 img/tv/videos.json 을 다시 만들어 커밋한다
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'img/tv/**'
+      - '!img/tv/videos.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tv-video-list
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 영상 목록 생성
+        run: python3 scripts/build-tv-list.py
+
+      - name: 변경 사항 커밋
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add img/tv/videos.json
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "chore(tv): 영상 목록 갱신"
+            git pull --rebase
+            git push
+          fi

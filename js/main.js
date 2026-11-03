@@ -1,4 +1,4 @@
-let currentSection = 0, touchStartY = 0, touchStartX = 0, scrolling = false, currentVideoIndex = 0;
+let currentSection = 0, touchStartY = 0, touchStartX = 0, scrolling = false;
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -106,7 +106,15 @@ function scrollAbout(id) {
     return false;
 }
 
-const videos = ['img/home/core1.webm', 'img/home/core2.webm', 'img/home/core3.webm', 'img/home/core4.webm', 'img/home/core5.webm', 'img/home/core6.webm', 'img/home/core7.webm', 'img/home/core8.webm', 'img/home/core9.webm', 'img/home/core10.webm'];
+// ── TV 영상 ──────────────────────────────────────────────────────
+// img/tv/ 에 영상만 넣으면 됨: 목록(img/tv/videos.json)은 scripts/build-tv-list.py 가 만들고,
+// 푸시하면 GitHub Actions(tv-videos.yml)가 자동 갱신. 클릭할 때마다 목록에서 방금 것만 빼고 무작위로 고름
+const TV_DIR = 'img/tv/';
+let tvVideoList = null, tvCurrentVideo = '';
+const loadTvVideos = () => tvVideoList ??= fetch(TV_DIR + 'videos.json')
+    .then(r => (r.ok ? r.json() : []))
+    .then(list => (Array.isArray(list) ? list : []))
+    .catch(() => []);
 
 // ── TV 깨기 ──────────────────────────────────────────────────────
 // 클릭한 자리에 거미줄 모양 금을 SVG 로 한 번 그려 쌓는다 (애니메이션 루프 없음, 새로고침하면 사라짐)
@@ -527,11 +535,14 @@ function tvLayers(svg) {
     return svg._layers;
 }
 
-function changeVideo(e) {
-    crackTV(e);
+async function changeVideo(e) {
+    crackTV(e);                                                        // 클릭 좌표를 쓰므로 기다리기 전에 먼저
+    const pool = (await loadTvVideos()).filter(name => name !== tvCurrentVideo);
+    if (!pool.length) return;
+    tvCurrentVideo = pool[Math.floor(Math.random() * pool.length)];
     const v = document.getElementById('tvVideo');
     v.pause();
-    v.src = videos[currentVideoIndex = (currentVideoIndex + 1) % videos.length];
+    v.src = TV_DIR + tvCurrentVideo;
     v.load();
     v.onloadeddata = () => v.play();
 }
