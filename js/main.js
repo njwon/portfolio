@@ -138,10 +138,14 @@ setInterval(updateDateTime, 1000);
 updateDateTime();
 
 // ── Project Slider ────────────────────────────────────────────────
+// 프로젝트는 index.html 의 .proj-slide 블록만 추가/삭제/이동하면 됨.
+// 개수·카운터·진행바·폴라로이드 기울기·링크는 전부 DOM 에서 계산한다.
 let projCurrent = 0, projX = 0, projTarget = 0, projRaf = null, projReady = false;
-let projTrack, projFillEl, projCounterEl, projSlideEls, projNumEls;
+let projTrack, projFillEl, projCounterEl, projSlideEls = [], projNumEls;
+let PROJ_N = 0;
 
-const PROJ_N = 11;
+// 폴라로이드 기울기 기본값 (인라인 --rot 이 없을 때 순서대로 돌려 씀)
+const PROJ_ROTS = [3.5, -2.5, -3, 2.5, 2, -4.5, 1.5, -2];
 
 function initProjSlider() {
     if (projReady) return;
@@ -149,10 +153,26 @@ function initProjSlider() {
     projTrack     = document.getElementById('projTrack');
     projFillEl    = document.getElementById('projFill');
     projCounterEl = document.getElementById('projCounter');
-    projSlideEls  = document.querySelectorAll('.proj-slide');
+    projSlideEls  = projTrack ? projTrack.querySelectorAll('.proj-slide') : [];
     projNumEls    = document.querySelectorAll('.proj-num');
-    document.querySelectorAll('.proj-canvas').forEach((c, i) => drawProjPattern(c, i));
-    projSlideEls.forEach((s, i) => s.classList.toggle('active', i === 0));
+    PROJ_N        = projSlideEls.length;
+    projSlideEls.forEach((s, i) => {
+        s.classList.toggle('active', i === 0);
+        const pol = s.querySelector('.proj-polaroid');
+        if (!pol) return;
+        if (!pol.style.getPropertyValue('--rot')) pol.style.setProperty('--rot', `${PROJ_ROTS[i % PROJ_ROTS.length]}deg`);
+        const link = s.querySelector('.proj-link');
+        if (link && !pol.getAttribute('href')) {
+            pol.href = link.getAttribute('href');
+            pol.target = '_blank';
+            pol.rel = 'noopener';
+        }
+        if (!pol.hasAttribute('aria-label')) {
+            const title = s.querySelector('.proj-title')?.textContent.trim() ?? '';
+            const label = link?.textContent.replace(/->/, '').trim() ?? '';
+            pol.setAttribute('aria-label', label ? `${title} — ${label}` : title);
+        }
+    });
     updateProjUI();
 }
 
