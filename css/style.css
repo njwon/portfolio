@@ -379,11 +379,32 @@ menu ul li a {
     height: 60%;
     margin-top: 15%;
     margin-right: 5%;
+    /* 영상 뒤에 깔린 지지직 화면: 영상이 아직 안 그려졌을 때(첫 로딩·채널 전환) 비어 있는 영상 너머로 보임 */
+    background: #111 url('../img/home/tv-static.webp') 0 0 / 60% auto;
+}
+/* 로딩 중일 때만 노이즈가 지글거림 (영상이 재생되면 JS 가 클래스를 떼서 애니메이션도 멈춤 → 평소 비용 0) */
+.tv-glass.tv-loading {
+    animation: tvStatic .3s steps(1) infinite;
+}
+@keyframes tvStatic {
+    0%   { background-position: 0 0; }
+    25%  { background-position: -37% 21%; }
+    50%  { background-position: 18% -44%; }
+    75%  { background-position: -52% -13%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tv-glass.tv-loading { animation: none; }
 }
 .tv-glass video {
     display: block;
     width: 100%;
     height: 100%;
+    transition: opacity .15s ease;
+}
+/* 로딩 중엔 영상을 숨김: 브라우저가 새 영상이 올 때까지 이전 영상의 마지막 장면을 계속 띄워서 노이즈가 가려지므로 */
+.tv-glass.tv-loading video {
+    opacity: 0;
+    transition: none;
 }
 .tv-cracks {
     position: absolute;

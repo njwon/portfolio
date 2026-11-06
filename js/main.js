@@ -116,6 +116,9 @@ const loadTvVideos = () => tvVideoList ??= fetch(TV_DIR + 'videos.json')
     .then(list => (Array.isArray(list) ? list : []))
     .catch(() => []);
 
+// 영상이 실제로 재생되기 시작하면 노이즈(.tv-loading) 끔. 첫 영상·채널 전환 모두 이 한 곳에서 처리
+document.getElementById('tvVideo')?.addEventListener('playing', e => e.target.parentElement.classList.remove('tv-loading'));
+
 // ── TV 깨기 ──────────────────────────────────────────────────────
 // 클릭한 자리에 거미줄 모양 금을 SVG 로 한 번 그려 쌓는다 (애니메이션 루프 없음, 새로고침하면 사라짐)
 //
@@ -541,6 +544,7 @@ async function changeVideo(e) {
     if (!pool.length) return;
     tvCurrentVideo = pool[Math.floor(Math.random() * pool.length)];
     const v = document.getElementById('tvVideo');
+    v.parentElement.classList.add('tv-loading');                      // 새 영상이 뜰 때까지 노이즈
     v.pause();
     v.src = TV_DIR + tvCurrentVideo;
     v.load();
