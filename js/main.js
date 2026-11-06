@@ -116,8 +116,18 @@ const loadTvVideos = () => tvVideoList ??= fetch(TV_DIR + 'videos.json')
     .then(list => (Array.isArray(list) ? list : []))
     .catch(() => []);
 
-// 영상이 실제로 재생되기 시작하면 노이즈(.tv-loading) 끔. 첫 영상·채널 전환 모두 이 한 곳에서 처리
-document.getElementById('tvVideo')?.addEventListener('playing', e => e.target.parentElement.classList.remove('tv-loading'));
+// 영상 첫 장면이 준비되면 노이즈(.tv-loading) 끔. 첫 영상·채널 전환 모두 이 한 곳에서 처리.
+// 'playing' 만 기다리면 모바일에서 자동 재생이 막혔을 때(저전력 모드·데이터 절약 등) 영원히 노이즈만 보이므로
+// 첫 장면 준비(loadeddata)에도 끄고, 스크립트보다 영상이 먼저 준비된 경우도 바로 처리한다.
+(function initTvStatic() {
+    const v = document.getElementById('tvVideo');
+    if (!v) return;
+    const ready = () => v.parentElement.classList.remove('tv-loading');
+    v.addEventListener('loadeddata', ready);
+    v.addEventListener('playing', ready);
+    if (v.readyState >= 2) ready();                                   // HAVE_CURRENT_DATA 이상 = 이미 첫 장면 있음
+    v.play?.().catch(() => {});                                       // 자동 재생이 늦게 막혔으면 한 번 더 시도 (막히면 첫 장면 정지 화면)
+})();
 
 // ── TV 깨기 ──────────────────────────────────────────────────────
 // 클릭한 자리에 거미줄 모양 금을 SVG 로 한 번 그려 쌓는다 (애니메이션 루프 없음, 새로고침하면 사라짐)
